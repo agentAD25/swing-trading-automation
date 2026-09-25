@@ -23,7 +23,8 @@ exact artifact, scope, expiry, and authenticated TradeStation SIM environment.
 
 ## Future entry criteria
 
-- named human owner, risk owner, security owner, and release decider;
+- named human system, risk, security, and release sign-off owners; these are
+  future operational attestations, not Phase 1 acceptance deciders;
 - accepted architecture, safety, data, event, and test ADRs;
 - approved strategy/data/risk research contracts;
 - deterministic implementation and pinned build artifact;

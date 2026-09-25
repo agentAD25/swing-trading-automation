@@ -59,7 +59,9 @@ environment ownership; calendar; data vendor; strategy; risk and capital
 limits; cost/fee model; rounding/tick/lot rules; retention; backup and recovery
 objectives; availability/freshness/latency thresholds; alert routes and
 staffing; incident/change processes; report recipients; waiver authority; SIM
-certification deciders; and all `LIVE` decisions.
+certification sign-off owners (not Phase 1 acceptance deciders); and all
+future `LIVE` decisions reserved to the human Operator after every promotion
+condition is met.
 
 ## Broker-dependent unknowns
 

@@ -34,8 +34,9 @@ All of the following require affirmative evidence:
 - staged exposure plan and independent reconciliation proven before any
   increase.
 - a frozen exact artifact/evidence digest and successful final preflight; and
-- an explicit, bounded, expiring `LIVE` decision by the Operator acting as sole
-  decider, recorded only after every other condition is independently attested.
+- an explicit, bounded, expiring `LIVE` decision by the human Operator acting
+  as sole promotion decider, recorded only after every other condition is
+  independently attested.
 
 If any prerequisite is unknown, stale, or waived without authority, promotion
 is denied.
