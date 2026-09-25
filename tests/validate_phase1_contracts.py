@@ -196,6 +196,21 @@ def validate_report(report: dict, events: list[dict]) -> None:
         raise ContractError("unreconciled report lacks mandatory warning")
 
 
+def validate_trade_scope(scenario: dict, report: dict, events: list[dict]) -> None:
+    scope = scenario["ids"]["trade_scope_id"]
+    if report["trade"]["trade_scope_id"] != scope:
+        raise ContractError("report trade scope mismatch")
+    event_scopes = {
+        event["payload"]["trade_scope_id"]
+        for event in events
+        if event["event_type"] in {"trade.opened.v1", "trade.closed.v1"}
+    }
+    if event_scopes != {scope}:
+        raise ContractError("trade event scope mismatch")
+    if "account" in json.dumps([scenario, report, events]).lower():
+        raise ContractError("offline fixture contains account semantics")
+
+
 def validate_fixture() -> tuple[dict, dict, list[dict]]:
     validate_manifest()
     scenario, report, events = load_fixture()
@@ -205,6 +220,7 @@ def validate_fixture() -> tuple[dict, dict, list[dict]]:
         )
     validate_idempotency(scenario, events)
     validate_report(report, events)
+    validate_trade_scope(scenario, report, events)
     return scenario, report, events
 
 
@@ -278,7 +294,7 @@ if __name__ == "__main__":
     regression_test_required_transition_fields(fixture_events)
     regression_test_reconciliation_evidence(fixture_report, fixture_events)
     print(
-        "Phase 1 contracts: manifest, C01, C02, C03 PASS; "
+        "Phase 1 contracts: manifest, C01, C02, C03, C04 PASS; "
         "required-field omission regression PASS; reconciliation evidence "
         "negative/positive regressions PASS"
     )
