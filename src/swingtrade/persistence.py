@@ -101,16 +101,16 @@ class PostgresIntentRepository:
                 select(OrderIntentRow).where(
                     OrderIntentRow.idempotency_key == intent.idempotency_key
                 )
-            ).scalar_one_or_none()
+            ).one_or_none()
             if row is None:
                 row = connection.execute(
                     select(OrderIntentRow).where(OrderIntentRow.intent_id == intent.intent_id)
-                ).scalar_one()
+                ).one()
             persisted = PersistedIntent(
-                row.idempotency_key,
-                row.intent_id,
-                row.input_digest,
-                row.canonical_intent,
+                row._mapping["idempotency_key"],
+                row._mapping["intent_id"],
+                row._mapping["input_digest"],
+                row._mapping["canonical_intent"],
             )
             if persisted != PersistedIntent(
                 intent.idempotency_key, intent.intent_id, digest, payload

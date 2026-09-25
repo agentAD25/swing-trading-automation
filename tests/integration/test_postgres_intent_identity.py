@@ -55,8 +55,8 @@ def test_same_canonical_intent_converges_and_conflict_rolls_back(engine) -> None
 
     with engine.connect() as connection:
         assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
-        persisted = connection.execute(select(OrderIntentRow)).scalar_one()
-        assert persisted.input_digest == first.input_digest
+        persisted = connection.execute(select(OrderIntentRow)).one()
+        assert persisted._mapping["input_digest"] == first.input_digest
 
 
 def test_concurrent_creators_produce_one_durable_identity(engine) -> None:
