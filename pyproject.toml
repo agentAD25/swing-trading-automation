@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "swingtrade"
+version = "0.1.0"
+description = "Broker-neutral, offline swing-trading foundation"
+requires-python = ">=3.12"
+dependencies = [
+  "alembic>=1.16.5",
+  "fastapi>=0.117.1",
+  "psycopg[binary]>=3.2.10",
+  "pydantic-settings>=2.11.0",
+  "sqlalchemy>=2.0.43",
+  "uvicorn>=0.37.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.28.1",
+  "mypy>=1.18.2",
+  "pytest>=8.4.2",
+  "ruff>=0.13.2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/swingtrade"]
+
+[tool.pytest.ini_options]
+addopts = "-q --disable-warnings --strict-markers"
+testpaths = [
+  "tests/unit",
+  "tests/integration",
+  "tests/financial",
+  "tests/state_machine",
+  "tests/idempotency",
+  "tests/reconciliation",
+  "tests/failure_injection",
+  "tests/broker_sim",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["swingtrade"]

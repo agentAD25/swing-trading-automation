@@ -1,10 +1,10 @@
 # Swing Trading Automation
 
 This repository is governed for incremental development of a swing-trading
-automation system. Phase 1A established governance; Phases 1B–1D draft,
-reconcile, and correct a broker-neutral foundation design and deterministic
-synthetic fixture. The repository does not contain production code or accepted
-broker, market-data, strategy, or risk decisions.
+automation system. Phase 1A established governance; Phases 1B–1D accepted a
+broker-neutral foundation design and deterministic synthetic fixture. Phase 1E
+implements the minimal typed, offline Python foundation. It does not implement
+broker connectivity, a production strategy, or production risk decisions.
 
 ## Safety status
 
@@ -21,8 +21,22 @@ broker, market-data, strategy, or risk decisions.
 - `.cursor/agents/` — scoped agent role definitions
 - `config/` — future non-secret configuration contracts
 - `docs/` — authority, decisions, state, journal, and research outputs
-- `src/` — future implementation (currently intentionally empty)
-- `tests/` — deterministic fixtures and future automated verification
+- `src/swingtrade/` — typed domain, safety, DRY_RUN, persistence, and fixture code
+- `tests/` — deterministic fixtures and offline automated verification
+
+## Local verification
+
+Python 3.12 is required. Install the development extra and run:
+
+```sh
+python -m pytest
+python tests/validate_phase1_contracts.py
+python -m ruff check .
+python -m mypy src
+```
+
+`docker compose up postgres` starts a loopback-bound development database.
+It is optional for the offline test suite and is not a deployment configuration.
 
 Start with [agent authority](docs/AGENT_AUTHORITY.md) and
 [current state](docs/CURRENT_STATE.md). The proposed design begins at
