@@ -5,6 +5,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from datetime import date
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -56,11 +57,11 @@ def load_wdc_fixture(root: Path) -> WdcFixture:
             symbol=row["symbol"],
             interval=row["interval"],
             session_date=date.fromisoformat(row["session_date"]),
-            open=row["open"],
-            high=row["high"],
-            low=row["low"],
-            close=row["close"],
-            volume=row["volume"],
+            open=Decimal(row["open"]),
+            high=Decimal(row["high"]),
+            low=Decimal(row["low"]),
+            close=Decimal(row["close"]),
+            volume=Decimal(row["volume"]),
             currency=row["currency"],
             source=row["source"],
             revision=int(row["revision"]),

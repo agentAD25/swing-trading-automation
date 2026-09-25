@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 from typing import Protocol
 
 from swingtrade.domain import ExecutionMode, OrderIntent, OrderObservation
@@ -59,7 +60,7 @@ class DryRunAdapter:
                 intent_id=intent.intent_id,
                 state="PENDING",
                 requested_quantity=intent.quantity,
-                cumulative_quantity="0",
+                cumulative_quantity=Decimal("0"),
                 effective_at=self._clock,
             ),
         )

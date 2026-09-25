@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -8,7 +8,7 @@ from swingtrade.domain import ExecutionMode, OrderIntent, Side
 from swingtrade.idempotency import idempotency_key
 from swingtrade.safety import AuthorizationDenied, DispatchAuthorization
 
-NOW = datetime(2024, 1, 1, tzinfo=timezone.utc)
+NOW = datetime(2024, 1, 1, tzinfo=UTC)
 INPUT = {
     "decision_id": "dec_1",
     "intent_id": "int_1",

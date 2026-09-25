@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
@@ -35,7 +35,7 @@ def decimal_value(value: Decimal | str) -> Decimal:
 
 
 def utc_instant(value: datetime) -> datetime:
-    if value.tzinfo is None or value.utcoffset() != timezone.utc.utcoffset(value):
+    if value.tzinfo is None or value.utcoffset() != UTC.utcoffset(value):
         raise DomainValidationError("instant must be UTC")
     return value
 

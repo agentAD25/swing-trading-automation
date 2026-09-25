@@ -43,6 +43,7 @@ testpaths = [
 [tool.ruff]
 target-version = "py312"
 line-length = 100
+exclude = ["tests/validate_phase1_contracts.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -9,7 +9,7 @@ from swingtrade.state_machine import (
     TransitionEvidence,
 )
 
-NOW = datetime(2024, 1, 1, tzinfo=timezone.utc)
+NOW = datetime(2024, 1, 1, tzinfo=UTC)
 
 
 def evidence(

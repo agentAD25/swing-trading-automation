@@ -3,8 +3,9 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Generic, TypeVar
+from typing import Any, TypeVar, cast
 
 T = TypeVar("T")
 _TOKEN = re.compile(r"^[a-z0-9_]+$")
@@ -29,7 +30,7 @@ def idempotency_key(operation: str, scope: str, business_input: object) -> str:
 
 
 @dataclass(frozen=True)
-class IdempotencyRecord(Generic[T]):
+class IdempotencyRecord[T]:
     input_digest: str
     result: T
 
@@ -46,7 +47,7 @@ class InMemoryIdempotencyStore:
         if existing:
             if existing.input_digest != digest:
                 raise IdempotencyConflict("idempotency key reused with different input")
-            return existing.result
+            return cast(T, existing.result)
         result = effect()
         self._records[key] = IdempotencyRecord(digest, result)
         return result
