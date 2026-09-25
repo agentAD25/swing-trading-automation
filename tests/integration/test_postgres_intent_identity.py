@@ -63,7 +63,7 @@ def test_concurrent_creators_produce_one_durable_identity(engine) -> None:
     repository = PostgresIntentRepository(engine)
     with ThreadPoolExecutor(max_workers=12) as executor:
         results = list(executor.map(lambda _: repository.create_or_get(make_intent()), range(24)))
-    assert len(set(results)) == 1
+    assert all(result == results[0] for result in results)
     with engine.connect() as connection:
         assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
 
