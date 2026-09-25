@@ -14,6 +14,7 @@ def test_minimal_persistence_schema_has_unique_boundaries() -> None:
     assert set(Base.metadata.tables) == {
         "domain_events",
         "idempotency_records",
+        "order_intents",
         "outbox_items",
     }
     assert Base.metadata.tables["outbox_items"].c.idempotency_key.unique

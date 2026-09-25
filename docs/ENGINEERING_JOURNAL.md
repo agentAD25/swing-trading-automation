@@ -906,3 +906,50 @@ These checks establish only immutable evidence metadata for the accepted
 offline baseline. They do not alter the accepted tree, resolve any deferred
 question, authorize implementation or later phases, or permit broker/LIVE
 activity.
+
+## 2026-09-25 — Phase 1E bounded remediation baseline
+
+### Human authorization and immutable baseline
+
+The human Operator authorized one surgical remediation on draft PR #6,
+strictly limited to P1E-01 through P1E-05. This is valid implementation
+authority for that bounded local offline work only. It does not authorize
+Phase 2, broker access, credentials/OAuth, account access, TradeStation `SIM`,
+queries, confirmations, order actions, deployment, real capital, or `LIVE`.
+
+The immutable accepted reference remains:
+
+```text
+commit  abc1fb6a9cc3554e7ad13f438685ba3c3c044dab
+tree    cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808
+tag     phase1-accepted-abc1fb6
+files   45
+```
+
+Phase 1D is closed. Phase 1E does not rewrite that accepted commit, tree, tag,
+manifest, contracts, fixture bytes, governance, or broker research.
+
+### Pre-edit record
+
+The remediation began from clean pushed branch
+`cursor/phase-1e-foundation-1b77` at
+`70346f3459efa20c20d6f0d33c82f6254052b1c0`, merge base
+`e06b5b26fba5ae1f9283f5bffb676d40332fe297`, on Python `3.12.3`.
+Docker and PostgreSQL executables were initially absent. Baseline commands
+returned 35 passing strict tests, contract-validator PASS, Ruff PASS, and mypy
+PASS over 11 source files. The P1E findings were missing assurance rather than
+pre-existing test failures:
+
+- P1E-01 lacked durable atomic canonical-intent creation and engine-backed
+  concurrency/reconnect evidence.
+- P1E-02 checked only a subset of required reconciliation evidence.
+- P1E-03 did not explicitly enforce every calendar cardinality/order invariant.
+- P1E-04 did not enforce transition event types or nondecreasing event times.
+- P1E-05 status text still said Phase 1E was unauthorized and unstarted.
+
+Expected edits were limited to `src/swingtrade/persistence.py`,
+`src/swingtrade/reconciliation.py`, `src/swingtrade/state_machine.py`,
+`src/swingtrade/wdc.py`, a new Alembic revision, adversarial tests under the
+already authorized offline test directories, and status/evidence updates to
+`docs/CURRENT_STATE.md` and this journal. No accepted fixture or contract file
+was an expected edit.

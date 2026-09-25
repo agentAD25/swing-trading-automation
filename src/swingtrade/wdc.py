@@ -80,10 +80,8 @@ def _validate_fixture(
     events: tuple[dict[str, Any], ...],
     report: dict[str, Any],
 ) -> None:
-    sessions = [date.fromisoformat(value) for value in scenario["calendar"]["sessions"]]
-    actual_sessions = [bar.session_date for bar in bars]
-    if len(set(actual_sessions)) != len(actual_sessions) or actual_sessions != sessions:
-        raise FixtureError("bars must uniquely match the ordered fixture calendar")
+    sessions = tuple(date.fromisoformat(value) for value in scenario["calendar"]["sessions"])
+    _validate_calendar(bars, sessions)
     signal_index = next(
         (index for index, bar in enumerate(bars) if bar.close > bar.open),
         None,
@@ -126,9 +124,8 @@ def evaluate_daily_close_protective(
     bars: tuple[Bar, ...], calendar_sessions: tuple[date, ...]
 ) -> tuple[DailyCloseSignal, ...]:
     """Evaluate a protective breakout only at close against prior-session high."""
+    _validate_calendar(bars, calendar_sessions)
     by_session = {bar.session_date: bar for bar in bars}
-    if len(by_session) != len(bars) or set(by_session) != set(calendar_sessions):
-        raise FixtureError("bars must map one-to-one to the supplied trading calendar")
     signals = []
     for prior_session, session in zip(calendar_sessions, calendar_sessions[1:], strict=False):
         prior, current = by_session[prior_session], by_session[session]
@@ -141,6 +138,21 @@ def evaluate_daily_close_protective(
             )
         )
     return tuple(signals)
+
+
+def _validate_calendar(bars: tuple[Bar, ...], calendar_sessions: tuple[date, ...]) -> None:
+    actual_sessions = tuple(bar.session_date for bar in bars)
+    if (
+        not calendar_sessions
+        or len(actual_sessions) != len(calendar_sessions)
+        or len(set(actual_sessions)) != len(actual_sessions)
+        or len(set(calendar_sessions)) != len(calendar_sessions)
+        or tuple(sorted(calendar_sessions)) != calendar_sessions
+        or actual_sessions != calendar_sessions
+    ):
+        raise FixtureError(
+            "bars must exactly match unique ascending supplied trading-calendar sessions"
+        )
 
 
 evaluate_daily_close_breakout = evaluate_daily_close_protective
