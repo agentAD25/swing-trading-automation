@@ -1,14 +1,27 @@
 # Current State
 
 - Last updated: 2026-09-25
-- Current phase: Phase 1C — coordinator reconciliation
-- Phase status: Integrated and reconciled for review; freeze blockers remain
-- Authorized execution mode: `SIM` only
+- Current phase: Phase 1D — approved correction implementation
+- Phase status: Corrections in progress; Operator acceptance not yet recorded
+- Authorized execution mode: `DRY_RUN` only (local, deterministic, non-network)
+- TradeStation `SIM`: Reserved for a future connectivity phase; unauthorized
 - `LIVE` status: Unauthorized
 - Foundation implementation: Not started and not authorized
 - Phase 2: Unstarted and unauthorized
 - Design baseline: Phase 1A governance commit `ae1aa85`
 - Contract acceptance: `PROPOSED / FREEZE_BLOCKED`; not `PHASE1_ACCEPTED`
+
+## Operator acceptance model
+
+- **Sole decider:** the Operator. Agents prepare evidence and proposals only.
+- **Bounded meaning:** `PHASE1_ACCEPTED`, if the Operator later records it,
+  accepts only the broker-neutral, offline, deterministic baseline.
+- **No implied authority:** that status does not authorize implementation,
+  credentials, accounts, broker or network activity, TradeStation `SIM`, order
+  submission, Phase 2, real capital, or `LIVE`.
+- **Current result:** the Operator has approved these Phase 1D corrections for
+  implementation, but has not yet marked the corrected baseline
+  `PHASE1_ACCEPTED`.
 
 ## Established
 
@@ -27,6 +40,8 @@
   unresolved
 - Phase 1A governance failure scenarios and the Phase 1B design and broker
   outputs are reconciled in `PHASE_1C_RECONCILIATION.md`
+- Four verified contract/fixture contradictions are corrected and audited in
+  `PHASE_1D_CORRECTIONS.md`
 
 ## Not established
 
@@ -57,8 +72,10 @@ direction.
 
 ## Unresolved items
 
-1. Human owner(s), operators, and ADR decider(s) are not named.
-2. ADR-0001 and the Phase 1B contracts are Proposed, not Accepted.
+1. The Operator is the sole acceptance decider; the person's authenticated
+   identity and durable acceptance mechanism remain to be recorded before
+   acceptance.
+2. ADR-0001 and the corrected contracts remain Proposed, not Accepted.
 3. Twelve production-critical broker behavior groups remain unresolved;
    strategy/data and risk/operations facts remain unresearched.
 4. Legal, regulatory, entitlement, security, and data-licensing obligations
@@ -66,8 +83,9 @@ direction.
 5. Technology, persistence, deployment, operating thresholds, recovery
    objectives, and risk limits are unknown.
 6. Phase 2 entry criteria and authority are not granted.
-7. Critical governance enforcement, authenticated authority, execution
-   isolation, and zero-order-attempt controls are not established.
+7. External governance enforcement and authenticated Operator identity are not
+   established. `DRY_RUN` remains structurally non-network; future broker
+   connectivity and zero-order-attempt controls are not authorized.
 
 ## Evidence
 

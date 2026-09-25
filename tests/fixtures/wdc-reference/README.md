@@ -5,6 +5,9 @@ recognizable instrument key. Prices, volumes, dates, decisions, and results are
 invented. They are not historical WDC observations, investment advice, a
 strategy recommendation, or evidence of efficacy.
 
+The fixture runs only in `DRY_RUN`: local, deterministic, and non-network. It
+does not represent TradeStation `SIM` or any broker interaction.
+
 ## Contract
 
 - `bars.csv` contains five synthetic daily bars in ascending session order.
@@ -14,12 +17,20 @@ strategy recommendation, or evidence of efficacy.
 - `expected-report.json` is canonical JSON with no trailing whitespace except
   one final newline.
 - `manifest.json` supplies SHA-256 digests for all four files.
+- `scenario.json` declares canonical idempotency inputs whose SHA-256 values
+  must reproduce every non-null idempotency key.
 
 The test-only rule enters two units at the next bar open after the first bar
 whose close is above its open, then exits at the open of the third session
 after the signal session. It exists only to force an intent, two fills, an open
 trade, and an exactly flat close. No production or research strategy may
 import or cite this rule.
+
+Each entry and exit intent emits `created`, `validated`,
+`dispatch_requested`, and `dispatched` events. The offline trade scope is the
+run/strategy/instrument tuple and contains no account identity. The report
+content digest follows `docs/REPORTING.md` and excludes only its own
+`content_digest` member from the hashed canonical object.
 
 The fixture assumes zero fees and exact fills because it tests data/event/report
 wiring, not execution realism. No TradeStation behavior is represented.

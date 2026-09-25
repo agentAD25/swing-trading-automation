@@ -27,5 +27,6 @@ Each finding must include:
 - unresolved questions requiring reconciliation or human input.
 
 Prefer first-party sources. Record conflicting evidence without silently
-choosing a winner. Research outputs must state that `SIM` is the only
-authorized mode and that `LIVE` is unauthorized.
+choosing a winner. Research outputs must state that local non-network
+`DRY_RUN` is the only authorized mode and that TradeStation `SIM`, broker
+activity, Phase 2, and `LIVE` are unauthorized.

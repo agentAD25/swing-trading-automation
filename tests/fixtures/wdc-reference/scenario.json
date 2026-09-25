@@ -32,9 +32,32 @@
     "exit_order_id": "ord_wdc_exit_001",
     "report_id": "rpt_wdc_ref_001",
     "run_id": "run_wdc_ref_001",
-    "trade_id": "trd_wdc_ref_001"
+    "trade_id": "trd_wdc_ref_001",
+    "trade_scope_id": "tsc_wdc_ref_001"
   },
-  "mode": "SIM",
+  "idempotency_inputs": {
+    "entry_dispatch": {
+      "decision_id": "dec_wdc_entry_001",
+      "intent_id": "int_wdc_entry_001",
+      "mode": "DRY_RUN",
+      "quantity": "2",
+      "side": "BUY"
+    },
+    "exit_dispatch": {
+      "decision_id": "dec_wdc_exit_001",
+      "intent_id": "int_wdc_exit_001",
+      "mode": "DRY_RUN",
+      "quantity": "2",
+      "side": "SELL"
+    },
+    "report": {
+      "report_id": "rpt_wdc_ref_001",
+      "run_id": "run_wdc_ref_001",
+      "schema_version": 2,
+      "source_high_water_mark": "evt_wdc_018"
+    }
+  },
+  "mode": "DRY_RUN",
   "rule": {
     "entry": "first close strictly greater than open; buy fixed quantity at next session open",
     "exit": "sell complete position at open of third session after signal session",
@@ -42,7 +65,7 @@
     "production_use": "PROHIBITED",
     "version": "1"
   },
-  "schema_version": 1,
+  "schema_version": 2,
   "seed": 20240102,
   "synthetic": true
 }

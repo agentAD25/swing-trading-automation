@@ -2,8 +2,10 @@
 
 ## Status
 
-This is a proposed evidence gate, not a certification result. Phase 1B contains
-no implementation to certify.
+This is a proposed future TradeStation SIM connectivity evidence gate, not a
+certification result. TradeStation `SIM`, credentials, broker networking, and
+implementation are currently unauthorized. The Phase 1 offline baseline uses
+local non-network `DRY_RUN`; its fixture validation is not SIM certification.
 
 ## Entry criteria
 

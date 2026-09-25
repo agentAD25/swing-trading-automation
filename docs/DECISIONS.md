@@ -1,4 +1,4 @@
-# Phase 1B Decision Register
+# Phase 1 Decision Register
 
 ## Status vocabulary
 
@@ -8,22 +8,30 @@ accepts the corresponding ADR. `UNRESOLVED` means no selection may be inferred.
 Phase 1C assigns the overall state `PROPOSED / FREEZE_BLOCKED`; no decision in
 this register is `PHASE1_ACCEPTED`.
 
+The Operator is the sole acceptance decider. Phase 1D implementation of an
+Operator-approved correction is not acceptance of the corrected baseline.
+`PHASE1_ACCEPTED`, if later recorded, is bounded to the broker-neutral,
+offline, deterministic baseline and grants no implementation, credentials,
+broker/network/account activity, TradeStation `SIM`, Phase 2, order submission,
+real capital, or `LIVE`.
+
 ## Design contracts
 
 | ID | Status | Decision | Rationale |
 | --- | --- | --- | --- |
-| D-001 | CONTRACT / Proposed ADR | Ports-and-adapters domain with a SIM-only execution port | Isolates broker uncertainty and external effects |
+| D-001 | CONTRACT / Proposed ADR | Ports-and-adapters domain with a local, non-network DRY_RUN execution port | Isolates broker uncertainty and external effects |
 | D-002 | CONTRACT / Proposed ADR | Append-only events with rebuildable projections | Auditability and deterministic replay |
 | D-003 | CONTRACT / Proposed ADR | Atomic intent/outbox boundary plus stable idempotency keys | Survives at-least-once processing without duplicate logical intent |
 | D-004 | CONTRACT / Proposed ADR | Decimal strings, UTC instants, explicit session dates, supplied clock | Removes platform and locale ambiguity |
 | D-005 | CONTRACT / Proposed ADR | Ambiguity and unknown state fail closed into reconciliation | Prevents guessed execution state |
 | D-006 | CONTRACT / Proposed ADR | Reports bind to immutable inputs and an event high-water mark | Makes results reproducible and auditable |
-| D-007 | CONTRACT / Proposed ADR | `SIM` is the only possible authorization; no live-capable adapter | Preserves the current authority boundary |
+| D-007 | CONTRACT / Proposed ADR | `DRY_RUN` is the only possible authorization; no broker-capable adapter | Preserves the current authority boundary |
 | D-008 | CONTRACT / Proposed ADR | Deterministic synthetic WDC fixture is conformance data, not research data | Tests contracts without efficacy claims |
+| D-009 | OPERATOR-DIRECTED / Proposed ADR | Operator is sole decider; Phase 1 acceptance is bounded to the broker-neutral offline deterministic baseline | Separates baseline acceptance from implementation or connectivity authority |
 
 The umbrella record is
 [ADR-0001](adr/0001-phase-1b-foundation-contracts.md). It intentionally remains
-Proposed because human deciders have not been named.
+Proposed because the Operator has not yet accepted the corrected baseline.
 
 ## Dependencies
 
@@ -41,7 +49,8 @@ Proposed because human deciders have not been named.
 
 ## Unresolved operator choices
 
-Technology stack; persistence and queue products; deployment topology;
+Authenticated Operator identity and acceptance mechanism; technology stack;
+persistence and queue products; deployment topology;
 environment ownership; calendar; data vendor; strategy; risk and capital
 limits; cost/fee model; rounding/tick/lot rules; retention; backup and recovery
 objectives; availability/freshness/latency thresholds; alert routes and
@@ -62,8 +71,9 @@ simulator fidelity, retention, outages, or reconciliation facilities. See
 
 ## Phase 1C disposition
 
-- D-001 through D-008 remain internally coherent proposals.
-- ADR-0001 remains Proposed with unassigned human deciders.
+- D-001 through D-009 remain internally coherent proposals or
+  Operator-directed acceptance semantics.
+- ADR-0001 remains Proposed pending the sole Operator's acceptance.
 - FM-01 through FM-24 remain open safety findings; later design narrows but
   does not close selected findings.
 - The exact implementation-freeze blockers and human decisions are maintained

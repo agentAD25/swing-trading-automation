@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Date: YYYY-MM-DD
-- Deciders: Human owner(s)
+- Sole decider: Operator
 - Scope: Component or concern
 - Supersedes: None
 - Superseded by: None
@@ -15,9 +15,9 @@ needed. Separate verified facts from assumptions.
 ## Safety impact
 
 State effects on execution mode, credentials, accounts, capital, data,
-fail-closed behavior, observability, and rollback. `LIVE` remains unauthorized
-unless separately and explicitly human-approved; an ADR alone does not grant
-that authority.
+fail-closed behavior, observability, and rollback. A denied capability remains
+unauthorized; an ADR alone cannot override current state or the conjunctive
+promotion gates.
 
 ## Options considered
 

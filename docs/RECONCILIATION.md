@@ -2,9 +2,10 @@
 
 ## Objective
 
-Reconciliation detects disagreement; it does not manufacture agreement. In
-Phase 1B, all checks are against deterministic fixtures or SIM state. Broker
-reconciliation fields and timing remain unresolved.
+Reconciliation detects disagreement; it does not manufacture agreement. The
+corrected offline baseline checks deterministic fixtures and local non-network
+DRY_RUN state only. Broker reconciliation fields and timing remain unresolved.
+TradeStation SIM reconciliation remains a future connectivity contract.
 
 ## Check layers
 
@@ -12,7 +13,7 @@ reconciliation fields and timing remain unresolved.
    aggregate versions.
 2. **Projection:** rebuild and compare orders, positions, trades, and report
    high-water marks.
-3. **Execution:** compare intents and expected SIM observations with simulator
+3. **Execution:** compare intents and expected DRY_RUN observations with local
    orders, fills, quantities, and states.
 4. **Cash and valuation:** proposed only; blocked until currency, fee,
    settlement, and valuation contracts are selected.

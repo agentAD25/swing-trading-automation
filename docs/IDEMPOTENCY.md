@@ -18,6 +18,12 @@ input includes the operation's semantic fields and relevant contract version.
 It excludes trace ids, retry counters, and `recorded_at`. The complete key and
 input digest are persisted before any effect.
 
+The digest component is exactly 64 lowercase hexadecimal characters. The
+fixture canonicalizes the declared input object using the JSON rules in
+`DATA_MODEL.md`, hashes those UTF-8 bytes with SHA-256, and records the input
+object in `scenario.json` so the key is independently reproducible. Labels,
+abbreviated hashes, and hand-authored suffixes are invalid.
+
 ## Required behavior
 
 | Boundary | Duplicate behavior |
@@ -25,7 +31,7 @@ input digest are persisted before any effect.
 | Command receipt | Return the original result for the same key and input |
 | Event append | Identical event is a no-op; conflicting reuse is critical |
 | Intent/outbox | Unique intent key; atomic create plus dispatch eligibility |
-| SIM dispatch | Return the original simulated order identity and observations |
+| DRY_RUN dispatch | Return the original local order identity and observations |
 | Projection | Record processed event id in the same transaction as the update |
 | Report generation | Reuse byte-identical artifact for identical report key |
 

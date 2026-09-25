@@ -1,7 +1,8 @@
 # Architecture Contract
 
 - Status: Phase 1B design contract; implementation not authorized
-- Execution authorization: `SIM` only; `LIVE` unauthorized
+- Execution authorization: local non-network `DRY_RUN` only; TradeStation
+  `SIM` and `LIVE` unauthorized
 - Broker facts: limited to accepted evidence; unresolved behavior cannot be
   inferred from the existence of research
 
@@ -32,7 +33,7 @@ The foundation must:
 | Decision engine | Apply a versioned strategy contract to immutable inputs | Read wall-clock time or call a broker |
 | Risk gate | Return explicit allow/block decisions and evidence | Route orders or default unknown checks to allow |
 | Intent ledger | Persist immutable order intent before dispatch | Treat intent as broker acknowledgement |
-| Execution port | In `SIM`, model effects behind a broker-neutral contract | Claim undocumented TradeStation semantics |
+| Execution port | In `DRY_RUN`, model local effects behind a broker-neutral contract | Claim broker connectivity or TradeStation semantics |
 | Event ledger | Append canonical domain events with uniqueness constraints | Mutate or delete accepted events |
 | Projectors | Build orders, positions, trades, and reports from events | Become the source of truth |
 | Reconciler | Compare internal and external snapshots and quarantine drift | Auto-correct ambiguous discrepancies |
@@ -43,18 +44,18 @@ TradeStation or any transport. A future broker adapter may be designed only
 after every affected behavior has sufficient evidence and human acceptance.
 The current public-document research leaves twelve production-critical groups
 unresolved. The external-execution port therefore remains an unresolved
-boundary and only the deterministic, non-network simulator is eligible for use.
+boundary and only the deterministic, non-network DRY_RUN adapter is eligible.
 
 ## Control flow
 
-1. Create a `Run` with `mode=SIM`, an as-of cutoff, supplied clock, input
+1. Create a `Run` with `mode=DRY_RUN`, an as-of cutoff, supplied clock, input
    manifest, configuration digest, and component versions.
 2. Ingest and validate data; any unresolved critical defect stops the run.
 3. Produce decisions and risk results as immutable events.
 4. Persist an order intent and outbox record atomically.
-5. Dispatch only to the SIM adapter, using the intent idempotency key.
+5. Dispatch only to the local DRY_RUN adapter, using the intent idempotency key.
 6. Append execution observations; project order, position, and trade state.
-7. Reconcile source events, projections, simulator state, and generated report.
+7. Reconcile source events, projections, DRY_RUN state, and generated report.
 8. Finalize the report only when required reconciliation checks pass.
 
 ## Storage and consistency boundaries

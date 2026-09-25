@@ -12,7 +12,8 @@ place of its owner and do not begin implementation unless the current state
 explicitly authorizes it.
 
 Require every handoff to identify sources, evidence, assumptions, unresolved
-questions, validation, and changed files. Enforce `SIM`-only operation and
-escalate any request involving `LIVE`, credentials, real accounts, or real
-capital. Architectural decisions require an accepted ADR; you may draft but
-must not self-approve one.
+questions, validation, and changed files. Enforce local non-network
+`DRY_RUN`-only operation and escalate any request involving TradeStation
+`SIM`, `LIVE`, credentials, accounts, broker/network activity, or real capital.
+Architectural decisions require Operator acceptance; you may draft but cannot
+decide or self-approve one.

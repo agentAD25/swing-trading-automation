@@ -4,14 +4,20 @@
 
 Promotion to `LIVE` is unauthorized and out of scope. There is no promotion
 date, procedure, credential plan, live adapter, or approved broker behavior.
-This document lists minimum prerequisites so SIM work cannot accidentally be
-treated as live readiness.
+This document lists conjunctive prerequisites so future TradeStation `SIM`
+work cannot accidentally be treated as live readiness.
+
+No instruction, approval, ADR, repository edit, current-state edit,
+configuration, waiver, emergency claim, or test result can authorize `LIVE`
+alone. Every condition below must be satisfied concurrently, and ambiguity
+denies promotion.
 
 ## Hard prerequisites
 
-All of the following require affirmative evidence and named human approval:
+All of the following require affirmative evidence:
 
-- current SIM certification and independent safety review;
+- separately authorized and current TradeStation SIM certification plus
+  independent safety review;
 - completed first-party TradeStation capability evidence, with every
   production-facing unresolved behavior closed, including
   authentication, environments, account/order/fill semantics, identifiers,
@@ -27,6 +33,9 @@ All of the following require affirmative evidence and named human approval:
 - separate live artifact and infrastructure with deny-by-default policy;
 - staged exposure plan and independent reconciliation proven before any
   increase.
+- a frozen exact artifact/evidence digest and successful final preflight; and
+- an explicit, bounded, expiring `LIVE` decision by the Operator acting as sole
+  decider, recorded only after every other condition is independently attested.
 
 If any prerequisite is unknown, stale, or waived without authority, promotion
 is denied.
@@ -44,15 +53,18 @@ invented by an agent.
 
 1. Freeze a candidate artifact and evidence bundle.
 2. Obtain independent technical, risk, security, compliance, and operations
-   sign-off from named humans.
-3. Accept dedicated ADRs and explicitly authorize a new phase in
+   attestations from named humans. These are required evidence, not additional
+   acceptance deciders.
+3. The Operator accepts dedicated ADRs and explicitly authorizes a new phase in
    `docs/CURRENT_STATE.md`.
 4. Conduct a preflight proving identities, environment, account scope,
    network policy, limits, monitoring, reconciliation, and abort path.
-5. Require a final two-person human authorization for the bounded launch.
+5. Require the Operator's final explicit authorization for the bounded,
+   expiring launch after all attestations and controls remain current.
 
-No flag, environment variable, configuration edit, ADR alone, successful SIM
-run, or favorable performance report can perform these steps.
+No flag, environment variable, configuration edit, ADR alone, current-state
+edit alone, successful SIM run, or favorable performance report can perform
+these steps.
 
 ## Automatic stop and rollback
 

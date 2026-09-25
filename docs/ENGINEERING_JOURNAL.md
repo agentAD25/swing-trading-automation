@@ -286,3 +286,28 @@ These checks establish integrated documentation, link, fixture, safety-language,
 and scope conformance only. They do not close a freeze blocker, accept an ADR,
 certify implementation, authorize credentials/accounts/orders, start Phase 2,
 or authorize `LIVE`.
+
+## 2026-09-25 — Phase 1D approved corrections
+
+### Scope
+
+Implemented the Operator-approved acceptance model and four verified
+contract/fixture contradiction corrections. The Operator is the sole decider;
+any future `PHASE1_ACCEPTED` status is bounded to the broker-neutral, offline,
+deterministic baseline. `DRY_RUN` is local/non-network; TradeStation `SIM` is a
+future connectivity capability. Broker activity, credentials, Phase 2, order
+submission, real capital, and `LIVE` remain unauthorized.
+
+Added a non-overridable authority rule and conjunctive future TradeStation
+`SIM`/`LIVE` promotion gates. Corrected fixture idempotency keys, intent
+transitions, report metadata/digest semantics, and offline trade grouping.
+Exact contradictions, evidence, rationale, files, and affected validation are
+recorded in `docs/PHASE_1D_CORRECTIONS.md`.
+
+This work does not mark `PHASE1_ACCEPTED`, accept ADR-0001, implement code, use
+credentials, connect to a broker, or begin Phase 1E or Phase 2.
+
+### Validation
+
+Pending for the pushed Phase 1D review revision. Exact commands and outcomes
+will be appended after validation.

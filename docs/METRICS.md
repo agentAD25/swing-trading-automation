@@ -19,7 +19,7 @@ reports.
 | `decision_total` | counter | domain decisions by action/reason |
 | `risk_result_total` | counter | allow/block results |
 | `order_intent_total` | counter | intents by lifecycle outcome |
-| `dispatch_attempt_total` | counter | SIM attempts by outcome |
+| `dispatch_attempt_total` | counter | DRY_RUN attempts by outcome |
 | `idempotency_dedup_total` | counter | safely suppressed duplicates |
 | `idempotency_conflict_total` | counter | key/input conflicts |
 | `event_consumer_lag_events` | gauge | ledger-to-projector sequence lag |
@@ -45,13 +45,13 @@ The following conditions are release or run blockers, not performance targets:
 - any report published from an unreconciled high-water mark.
 
 Thresholds for freshness, latency, availability, retry rate, and backlog are
-not selected. Owners must set them from measured SIM baselines and operational
+not selected. Owners must set them from measured DRY_RUN baselines and operational
 needs before certification; this document does not invent values.
 
 ## Strategy analytics boundary
 
 Return, drawdown, turnover, exposure, hit rate, and similar analytics may be
-reported for deterministic simulation, clearly labeled `SIM` and
+reported for deterministic offline runs, clearly labeled `DRY_RUN` and
 non-predictive. They are never service-health metrics and cannot authorize
 `LIVE`, establish efficacy, or be optimized without an approved research
 protocol. Calculation formulas, benchmark, corporate-action treatment, costs,

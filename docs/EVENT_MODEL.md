@@ -36,7 +36,14 @@ domain correlation or causation ids.
   operator review required.
 - Reconciliation: check completed, discrepancy opened, acknowledged, resolved.
 - Reporting: report requested, generated, withheld, published.
-- Authorization: authorization denied. No Phase 1B event can grant `LIVE`.
+- Authorization: authorization denied. No Phase 1 event can grant TradeStation
+  `SIM` or `LIVE`.
+
+The required order-intent path emits one event for each state transition:
+`order_intent.created.v1`, `order_intent.validated.v1`,
+`order_intent.dispatch_requested.v1`, and
+`order_intent.dispatched.v1`. Immediate DRY_RUN processing does not permit
+elision of an intermediate event.
 
 ## Append and delivery semantics
 

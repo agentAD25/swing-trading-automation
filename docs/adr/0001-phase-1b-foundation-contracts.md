@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Date: 2026-09-25
-- Deciders: Unassigned human owner(s)
+- Sole decider: Operator
 - Scope: Foundation architecture and safety
 - Supersedes: None
 - Superseded by: None
@@ -11,7 +11,9 @@
 
 The repository needs a deterministic, auditable design before implementation.
 Broker, strategy, data, risk, operational, legal, and technology choices are
-not yet validated. Current authority permits `SIM` only and prohibits `LIVE`.
+not yet validated. Only local, deterministic, non-network `DRY_RUN` is
+authorized. TradeStation `SIM`, broker activity, Phase 2, and `LIVE` remain
+unauthorized.
 
 ## Safety impact
 
@@ -31,7 +33,7 @@ proposal.
 
 Persist immutable inputs and events, build replaceable projections, create
 intent before effects, require stable idempotency, and isolate execution behind
-a SIM-only port. This adds modeling and operational complexity but exposes
+a local non-network DRY_RUN port. This adds modeling and operational complexity but exposes
 ambiguity and supports deterministic evidence.
 
 ### Option C — Defer all architecture
@@ -52,6 +54,12 @@ idempotency, reconciliation, and deterministic fixture work become mandatory.
 Storage and queue technologies remain selectable later. More design validation
 is required before implementation, but unsafe assumptions remain visible.
 
+If the Operator later changes this ADR to Accepted and records
+`PHASE1_ACCEPTED`, that acceptance is bounded to the broker-neutral, offline,
+deterministic baseline. It grants no implementation, credentials,
+broker/network/account activity, TradeStation `SIM`, Phase 2, order submission,
+real capital, or `LIVE`.
+
 ## Validation and rollback
 
 Validate links, terminology, state transitions, fixture digests/canonical
@@ -61,9 +69,9 @@ account state exists.
 
 ## Unresolved questions
 
-Named deciders; Phase 1B acceptance criteria; technology stack; broker facts;
-strategy/data/risk contracts; operator thresholds and owners; security,
-licensing, legal, and compliance requirements.
+Authenticated Operator identity and durable acceptance mechanism; technology
+stack; broker facts; strategy/data/risk contracts; operator thresholds and
+owners; security, licensing, legal, and compliance requirements.
 
 ## Evidence
 
@@ -75,3 +83,6 @@ licensing, legal, and compliance requirements.
 - Repository reference: `docs/ENGINEERING_JOURNAL.md`, accessed 2026-09-25.
   Supports the Phase 1A baseline and unresolved decisions. These repository
   sources do not establish external broker behavior.
+- Repository reference: `docs/PHASE_1D_CORRECTIONS.md`, accessed 2026-09-25.
+  Records the Operator-directed acceptance model and four resolved
+  contract/fixture contradictions. It does not mark this ADR Accepted.

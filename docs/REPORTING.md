@@ -11,7 +11,8 @@
 - **Operations report:** data quality, retries, lag, alerts, discrepancies, and
   withheld outputs.
 - **Simulation analytics:** optional research measures, visibly labeled
-  `SIM`, synthetic/backtest as applicable, with assumptions and limitations.
+  `DRY_RUN`, synthetic/backtest as applicable, with assumptions and
+  limitations.
 
 ## Publication rules
 
@@ -19,6 +20,13 @@ Reports are projections, not sources of truth. Every report has a schema
 version, generation time from the supplied clock, source high-water mark,
 canonical content digest, producer version, mode banner, data cutoff, and
 reconciliation result. Generation is idempotent.
+
+The canonical content digest is lowercase SHA-256 over the canonical UTF-8 JSON
+object with the top-level `content_digest` member omitted. Verification removes
+that one member, serializes by `DATA_MODEL.md`, hashes the bytes, and compares
+the result to `content_digest`. This non-recursive rule is mandatory; hashing
+the file including its digest field or relying only on the manifest hash is
+invalid.
 
 A final report is withheld when inputs are unverified, a required projection
 lags its high-water mark, a critical/high discrepancy is open, state is
@@ -49,6 +57,11 @@ remain undefined until their domain contracts are approved.
 for a synthetic conformance run. It validates ordering, decimal
 representation, linkage, lifecycle, and report reconciliation. It is not a
 backtest, strategy selection, or observation of WDC market prices.
+
+The reference must contain `report_id`, `report_type`, `run_id`,
+`schema_version`, `generated_at`, `producer_version`, `mode`, `mode_banner`,
+`data_cutoff`, `source_high_water_mark`, `content_digest`, and
+`reconciliation_result`.
 
 ## Access and retention
 

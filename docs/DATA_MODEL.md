@@ -31,9 +31,9 @@
 | `OrderObservation` | observation id, source, source order id if any, mapped state, raw status, cumulative quantities, source/effective/recorded times |
 | `Fill` | fill id, order, instrument, side, quantity, price, currency, fee components, effective and recorded times |
 | `PositionSnapshot` | scope, instrument, signed quantity, cost basis method/version, as-of event sequence |
-| `TradeProjection` | trade id, lifecycle state, entry/exit intent ids, quantity, realized values, opening/closing event sequences |
+| `TradeProjection` | trade id, offline trade scope id, lifecycle state, entry/exit intent ids, quantity, realized values, opening/closing event sequences |
 | `ReconciliationCase` | case id, run/scope, check type, severity, expected/observed values, status, owner, evidence |
-| `ReportArtifact` | report id, run, schema version, source high-water mark, content digest, reconciliation status |
+| `ReportArtifact` | report id/type, run, schema version, generated-at, producer version, mode/banner, data cutoff, source high-water mark, content digest, reconciliation result |
 
 ## Keys and constraints
 
@@ -64,6 +64,10 @@ new manifest and run.
 The Phase 1B model contains no credentials, secrets, personal data, brokerage
 account identifiers, or live-capital fields. A future account-scope model
 requires separate security, retention, and authorization decisions.
+
+The offline `trade_scope_id` is not an account scope. It identifies the
+immutable `(run_id, strategy_version, instrument_id)` tuple and must not contain
+or imply a brokerage account identifier.
 
 ## Open model choices
 

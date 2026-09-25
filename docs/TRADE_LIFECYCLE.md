@@ -11,7 +11,13 @@ states or promise that any broker exposes equivalent transitions.
 - An `Order` records observations about one attempted execution.
 - A `Position` is the signed quantity derived from fills.
 - A `Trade` groups a flat-to-nonflat-to-flat position episode for one strategy,
-  symbol, and account scope.
+  instrument, and trade scope.
+
+For the offline baseline, `trade_scope_id` is an opaque identity derived from
+the immutable `(run_id, strategy_version, instrument_id)` tuple. It contains no
+brokerage account identity. Account-scoped grouping is deferred until a future
+connectivity phase approves account identity, authorization, sensitivity,
+retention, and mapping contracts.
 
 An order is not a trade, submission is not acceptance, and acceptance is not a
 fill. Broker payloads, if later researched, must first be retained as source
@@ -23,8 +29,14 @@ observations and then mapped explicitly.
 
 Terminal alternatives are `BLOCKED`, `CANCELLED_BEFORE_DISPATCH`, and
 `OPERATOR_REVIEW`. Only an explicit risk result may produce `VALIDATED`.
-Unknown validation produces `BLOCKED`. `DISPATCHED` means the SIM port accepted
-the command for processing, not that an order was filled.
+Unknown validation produces `BLOCKED`. `DISPATCHED` means the DRY_RUN port
+accepted the command for local processing, not that an order was filled.
+
+Each required arrow is represented by its own accepted event:
+`order_intent.created.v1`, `order_intent.validated.v1`,
+`order_intent.dispatch_requested.v1`, and
+`order_intent.dispatched.v1`. A fixture or projection may not skip a required
+state even when DRY_RUN handling is immediate.
 
 ## Order-observation lifecycle
 

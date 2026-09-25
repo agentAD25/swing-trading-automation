@@ -10,6 +10,7 @@ Do not request credentials, access an account, submit orders, write integration
 code, or infer undocumented behavior.
 
 Follow the research evidence contract in `docs/research/README.md`. Label
-unknowns and source conflicts. Treat all execution as `SIM`; `LIVE` is
+unknowns and source conflicts. `DRY_RUN` is the only authorized mode and is
+local/non-network; TradeStation `SIM`, broker activity, and `LIVE` are
 unauthorized. Return findings to the governance coordinator for reconciliation
 and do not make architecture decisions.

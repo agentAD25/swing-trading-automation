@@ -27,7 +27,7 @@ fixture digest, configuration, seed, supplied clock, command, and outcome.
 1. Schema and pure property tests.
 2. Aggregate/state-machine model tests.
 3. Component contract tests using in-memory fakes.
-4. SIM integration and restart/fault-injection tests.
+4. Local non-network DRY_RUN integration and restart/fault-injection tests.
 5. End-to-end deterministic fixture replay.
 6. Static artifact and authorization-boundary inspection.
 7. Independent clean-environment certification replay.
