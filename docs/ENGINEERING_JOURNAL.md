@@ -192,3 +192,23 @@ questions; no behavior was guessed.
 Validation evidence will be appended before handoff. Planned checks are
 Markdown/source-reference inspection, safety/scope assertions,
 `git diff --check`, and repository diff review.
+
+### Final validation evidence
+
+- `git diff --check cursor/phase-1a-governance-e1ba...HEAD` passed with no
+  whitespace errors.
+- `git diff --name-only cursor/phase-1a-governance-e1ba...HEAD` returned only
+  `docs/BROKER_CONTRACT.md` and `docs/ENGINEERING_JOURNAL.md`, confirming
+  documentation-only scope.
+- Eight first-party source URLs listed in `docs/BROKER_CONTRACT.md` were
+  requested without authentication using `curl -L`; every URL returned HTTP
+  200 on 2026-09-25.
+- Source-marker inspection found 37 classified material findings in
+  `docs/BROKER_CONTRACT.md`; each cites a source identifier and the
+  `2026-09-25T18:05:40Z` access timestamp.
+- Safety/scope inspection confirmed explicit `SIM`-only,
+  `LIVE`-unauthorized, no-credentials/no-orders, and no production
+  implementation statements.
+- `git status --short --branch` was clean and synchronized with
+  `origin/cursor/phase-1b-broker-research-e23f` before this validation evidence
+  was appended.
