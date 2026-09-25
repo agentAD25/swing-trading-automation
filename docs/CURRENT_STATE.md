@@ -2,8 +2,8 @@
 
 - Last updated: 2026-09-25
 - Current phase: Phase 1D — surgical verifier remediation
-- Phase status: Freeze-candidate corrections in review; not frozen, certified,
-  or accepted
+- Phase status: Freeze-candidate commit validated; not frozen, certified, or
+  accepted
 - Authorized execution mode: `DRY_RUN` only (local, deterministic, non-network)
 - TradeStation `SIM`: Reserved for a future connectivity phase; unauthorized
 - `LIVE` status: Unauthorized
@@ -33,7 +33,7 @@
 | Phase 1A | Governance baseline `ae1aa85`; governance bootstrap complete, not Phase 1 acceptance |
 | Phase 1B | Architecture/design contracts and fixture, broker research, and failure model integrated from the recorded specialist commits; all remain proposed inputs |
 | Phase 1C | Coordinator reconciliation through `98731e7`; conflicts and freeze blockers recorded, no acceptance |
-| Phase 1D | Approved corrections plus this four-failure surgical remediation; exact freeze-candidate commit is recorded in the immediate follow-up state/evidence commit after candidate creation |
+| Phase 1D | Surgical freeze candidate `42ac8cd2e879732e456a7ed452510e7f5434a03e`; four-failure remediation validation passed; not frozen, certified, or accepted |
 | Phase 1E | Not started and not authorized |
 | Phase 2 | Not started and not authorized |
 

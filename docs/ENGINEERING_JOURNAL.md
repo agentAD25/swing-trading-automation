@@ -447,3 +447,97 @@ certification, acceptance, or `LIVE` action occurred.
 
 Pending against the pushed surgical freeze-candidate commit. Exact commands,
 hashes, and results will be appended in a follow-up evidence commit.
+
+### Surgical candidate validation evidence
+
+Validated pushed freeze candidate
+`42ac8cd2e879732e456a7ed452510e7f5434a03e` without credentials, accounts,
+broker/network access, queries, or orders.
+
+1. Command:
+
+   ```sh
+   python3 tests/validate_phase1_contracts.py
+   ```
+
+   Result:
+
+   ```text
+   Phase 1 contracts: manifest, C01, C02, C03 PASS; required-field omission regression PASS
+   ```
+
+   The validator checked all four manifest hashes; canonical event structure;
+   both four-event intent paths; all transition payload/envelope fields;
+   continuity of state, causation, initiating cause, correlation, and aggregate
+   sequence; C01 idempotency keys; and C03 report digest/high-water mark. Its
+   negative regression removed `prior_state`, `next_state`, and `reason_code`
+   one at a time and required `ContractError` for each omission.
+
+2. Command:
+
+   ```sh
+   sha256sum tests/fixtures/wdc-reference/expected-events.jsonl \
+     tests/fixtures/wdc-reference/scenario.json \
+     tests/fixtures/wdc-reference/expected-report.json \
+     tests/fixtures/wdc-reference/bars.csv
+   ```
+
+   Result:
+
+   ```text
+   cda0fb3d537ca0df9330795f49b8743f4736650ce81cc457276dcb3b006b727d  expected-events.jsonl
+   bd7af4205b9896bfd7fbe52bbf80ab0b4979c81116b2c8d8ce2520a49a91a501  scenario.json
+   e7255f12616beabdde6269501bf52d234c99e987e6f5ffd96605bc1fb39eeb99  expected-report.json
+   e194cdef7ca448a8ceadb64d06699f35ef4c59da131786d7835099861df5e3bc  bars.csv
+   ```
+
+3. A separate Python 3 recomputation printed and matched:
+
+   ```text
+   entry_dispatch c4131ccda4608e4604adf5f36a49265ccf5e57e4f1754f1b6ff2f2403f180b0f
+   exit_dispatch 92949cf1b3481ce27b71360ccf67ae3580dc03d913088aee60fedefd5c2bbfa3
+   report 54b3b57426148284b3ca7f7423902f6218f7b2813dfd743ce4d6ee9d7a4e989f
+   report_content 96191e0646f7c2db231c44a3925eec620102ffeb94903f132f70338bf327c06b
+   manifest, C01 idempotency inputs, and C03 report digest: PASS
+   ```
+
+4. A Python Markdown-link procedure iterated
+   `docs/**/*.md`, `tests/**/*.md`, `README.md`, and `config/README.md`,
+   resolved every non-HTTP target relative to its source, asserted existence,
+   and printed:
+
+   ```text
+   relative Markdown links (29 files): PASS
+   ```
+
+5. Commands:
+
+   ```sh
+   git diff --check cursor/phase-1a-governance-e1ba...HEAD
+   git status --porcelain | test ! -s /dev/stdin
+   ```
+
+   Result:
+
+   ```text
+   whitespace and clean Git candidate: PASS
+   ```
+
+6. Fail-fast Python assertions inspected the canonical authority files listed
+   above, future LIVE promotion, SIM certification, and current-state history.
+   `rg` assertions excluded identified historical snapshots and rejected the
+   removed plural acceptance phrases and stale active SIM authority. Results:
+
+   ```text
+   sole-human-Operator, future-LIVE, SIM temporal, phase-history, and no-acceptance assertions: PASS
+   canonical conflict and DRY_RUN regressions: PASS
+   ```
+
+   One earlier harness assertion compared an unnormalized line-wrapped current
+   state phrase and failed even though the words were present. It changed no
+   artifact. The final fail-fast assertion normalized whitespace and passed.
+
+Current state records candidate `42ac8cd2e879732e456a7ed452510e7f5434a03e`.
+The evidence commit containing this journal entry is not a replacement
+freeze candidate and grants no acceptance or authority. Phase 1E and Phase 2
+remain not started; `LIVE` remains unauthorized.
