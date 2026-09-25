@@ -39,6 +39,11 @@ EXPECTED_STATES = [
     ("VALIDATED", "DISPATCH_PENDING"),
     ("DISPATCH_PENDING", "DISPATCHED"),
 ]
+REQUIRED_RECONCILIATION_CHECKS = {
+    "LEDGER_INTEGRITY",
+    "PROJECTION",
+    "EXECUTION",
+}
 
 
 class ContractError(ValueError):
@@ -130,6 +135,36 @@ def validate_idempotency(scenario: dict, events: list[dict]) -> None:
             raise ContractError(f"{aggregate_id}: invalid idempotency key")
 
 
+def derive_reconciliation_result(
+    events: list[dict], source_high_water_mark: str, run_id: str
+) -> str:
+    by_id = {event["event_id"]: event for event in events}
+    completion = by_id.get(source_high_water_mark)
+    if completion is None or completion["event_type"] != "reconciliation.check_completed.v1":
+        return "UNRECONCILED"
+    payload = completion.get("payload", {})
+    checked_through = payload.get("checked_through_event_id")
+    try:
+        completion_index = events.index(completion)
+        checked_index = next(
+            index
+            for index, event in enumerate(events)
+            if event["event_id"] == checked_through
+        )
+    except (StopIteration, ValueError):
+        return "UNRECONCILED"
+    qualifies = (
+        completion["run_id"] == run_id
+        and checked_index < completion_index
+        and completion["causation_id"] == checked_through
+        and payload.get("result") == "PASS"
+        and set(payload.get("required_checks", [])) == REQUIRED_RECONCILIATION_CHECKS
+        and payload.get("open_critical_discrepancies") == 0
+        and payload.get("open_high_discrepancies") == 0
+    )
+    return "PASS" if qualifies else "UNRECONCILED"
+
+
 def validate_report(report: dict, events: list[dict]) -> None:
     body = dict(report)
     claimed = body.pop("content_digest")
@@ -141,6 +176,24 @@ def validate_report(report: dict, events: list[dict]) -> None:
         raise ContractError("report event digest mismatch")
     if report_event["causation_id"] != report["source_high_water_mark"]:
         raise ContractError("report high-water mark mismatch")
+    derived = derive_reconciliation_result(
+        events, report["source_high_water_mark"], report["run_id"]
+    )
+    if report["reconciliation_result"] != derived:
+        raise ContractError(
+            f"report reconciliation overclaim: {report['reconciliation_result']} != {derived}"
+        )
+    if report_event["payload"]["reconciliation_result"] != derived:
+        raise ContractError("report event reconciliation result mismatch")
+    expected_event_type = (
+        "report.generated.v1" if derived == "PASS" else "report.withheld.v1"
+    )
+    if report_event["event_type"] != expected_event_type:
+        raise ContractError("report publication event contradicts reconciliation")
+    if derived == "UNRECONCILED" and not report["warning"].startswith(
+        "UNRECONCILED — DO NOT USE FOR EXECUTION"
+    ):
+        raise ContractError("unreconciled report lacks mandatory warning")
 
 
 def validate_fixture() -> tuple[dict, dict, list[dict]]:
@@ -167,10 +220,65 @@ def regression_test_required_transition_fields(events: list[dict]) -> None:
         raise AssertionError(f"omission of {field} was not rejected")
 
 
+def regression_test_reconciliation_evidence(report: dict, events: list[dict]) -> None:
+    if derive_reconciliation_result(
+        events, report["source_high_water_mark"], report["run_id"]
+    ) != "UNRECONCILED":
+        raise AssertionError("missing completion evidence did not derive UNRECONCILED")
+
+    overclaim = copy.deepcopy(report)
+    overclaim["reconciliation_result"] = "PASS"
+    overclaim_body = dict(overclaim)
+    overclaim_body.pop("content_digest")
+    overclaim["content_digest"] = hashlib.sha256(canonical(overclaim_body)).hexdigest()
+    overclaim_events = copy.deepcopy(events)
+    overclaim_events[-1]["event_type"] = "report.generated.v1"
+    overclaim_events[-1]["payload"]["content_digest"] = overclaim["content_digest"]
+    overclaim_events[-1]["payload"]["reconciliation_result"] = "PASS"
+    try:
+        validate_report(overclaim, overclaim_events)
+    except ContractError:
+        pass
+    else:
+        raise AssertionError("PASS without qualifying completion evidence was accepted")
+
+    completion = {
+        "aggregate_id": "rec_wdc_positive_001",
+        "aggregate_type": "reconciliation",
+        "aggregate_version": 1,
+        "causation_id": "evt_wdc_018",
+        "correlation_id": "cor_wdc_ref_001",
+        "effective_at": "2024-01-09T00:00:00.000018Z",
+        "event_id": "evt_wdc_positive_reconciliation_001",
+        "event_type": "reconciliation.check_completed.v1",
+        "idempotency_key": None,
+        "payload": {
+            "checked_through_event_id": "evt_wdc_018",
+            "open_critical_discrepancies": 0,
+            "open_high_discrepancies": 0,
+            "required_checks": sorted(REQUIRED_RECONCILIATION_CHECKS),
+            "result": "PASS",
+        },
+        "producer": "fixture-validator",
+        "producer_version": "1",
+        "recorded_at": "2024-01-09T00:00:00.000018Z",
+        "run_id": "run_wdc_ref_001",
+        "schema_version": 1,
+        "source": {"kind": "fixture-regression"},
+    }
+    positive_events = events[:-1] + [completion]
+    if derive_reconciliation_result(
+        positive_events, completion["event_id"], report["run_id"]
+    ) != "PASS":
+        raise AssertionError("qualifying completion evidence did not derive PASS")
+
+
 if __name__ == "__main__":
-    _, _, fixture_events = validate_fixture()
+    _, fixture_report, fixture_events = validate_fixture()
     regression_test_required_transition_fields(fixture_events)
+    regression_test_reconciliation_evidence(fixture_report, fixture_events)
     print(
         "Phase 1 contracts: manifest, C01, C02, C03 PASS; "
-        "required-field omission regression PASS"
+        "required-field omission regression PASS; reconciliation evidence "
+        "negative/positive regressions PASS"
     )

@@ -60,6 +60,9 @@ In addition to byte comparison, validation independently:
   then ties that digest and high-water mark to the report event; and
 - verifies one non-account `trade_scope_id` across scenario, trade events, and
   report.
+- rejects report `PASS` when no qualifying
+  `reconciliation.check_completed.v1` exists, and derives `PASS` when a
+  complete valid reconciliation event is supplied.
 
 Run the standard-library regression validator from the repository root:
 

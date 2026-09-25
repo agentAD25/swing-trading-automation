@@ -53,6 +53,11 @@ timestamps, immediate cause, and end-to-end correlation. Absence of any
 required transition payload or envelope field is a schema error, not an
 optional projection detail.
 
+`reconciliation.check_completed.v1` is the sole source event that can support a
+report reconciliation result of `PASS`. Its payload requirements are defined
+in `RECONCILIATION.md`. A report projection, flat position, absent discrepancy,
+or report field cannot substitute for this source event.
+
 ## Append and delivery semantics
 
 The ledger is append-only. Producers append with optimistic aggregate version

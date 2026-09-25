@@ -3,8 +3,8 @@
   "purpose": "deterministic architecture conformance only",
   "sha256": {
     "bars.csv": "e194cdef7ca448a8ceadb64d06699f35ef4c59da131786d7835099861df5e3bc",
-    "expected-events.jsonl": "cda0fb3d537ca0df9330795f49b8743f4736650ce81cc457276dcb3b006b727d",
-    "expected-report.json": "e7255f12616beabdde6269501bf52d234c99e987e6f5ffd96605bc1fb39eeb99",
+    "expected-events.jsonl": "7b50e2475326283832df77a23e03b6e46e97eaf98342c88cd9dbdcc332e6447a",
+    "expected-report.json": "95585e7b1ba762a95719a154b02b5c06eeea5b1ff9e1428b80bb36e3ebdd909c",
     "scenario.json": "bd7af4205b9896bfd7fbe52bbf80ab0b4979c81116b2c8d8ce2520a49a91a501"
   },
   "synthetic": true,

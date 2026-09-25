@@ -541,3 +541,103 @@ Current state records candidate `42ac8cd2e879732e456a7ed452510e7f5434a03e`.
 The evidence commit containing this journal entry is not a replacement
 freeze candidate and grants no acceptance or authority. Phase 1E and Phase 2
 remain not started; `LIVE` remains unauthorized.
+
+## 2026-09-25 — Candidate provenance and WDC reconciliation remediation
+
+### Surgical scope and pre-edit audit
+
+This single pass is limited to:
+
+1. freeze-candidate identity/provenance; and
+2. the WDC source-event/report reconciliation conflict.
+
+Pre-edit files inspected were `CURRENT_STATE.md`, `ENGINEERING_JOURNAL.md`,
+`EVENT_MODEL.md`, `RECONCILIATION.md`, `REPORTING.md`, `TEST_PLAN.md`,
+`tests/validate_phase1_contracts.py`, and all WDC scenario/event/report/manifest
+artifacts.
+
+### Candidate ancestry, completeness, and stale identity
+
+Commands:
+
+```sh
+git rev-parse 42ac8cd^{tree}
+git rev-parse d459850^{tree}
+git merge-base --is-ancestor 42ac8cd d459850
+git log --oneline --ancestry-path 42ac8cd..d459850
+git diff --name-status 42ac8cd..d459850
+git log --format='%H %T %s' 42ac8cd^..d459850
+```
+
+Evidence:
+
+- `42ac8cd2e879732e456a7ed452510e7f5434a03e` has tree
+  `3ed2b143d5dd0f06a62c0080323142c03da3b7f8`.
+- `merge-base --is-ancestor` exited 0, proving `42ac8cd` is an ancestor of
+  `d459850`.
+- Descendants were `3cbfcaf` (validation evidence) and `d459850` (future
+  sign-off authority clarification).
+- `d45985023cdfd60f5af9fb3226c483394fd2bb27` has tree
+  `873246382a7fb83051fc9e0e90c2681fa481b117`.
+- The descendant range changed `CURRENT_STATE.md`, `DECISIONS.md`,
+  `ENGINEERING_JOURNAL.md`, `LIVE_PROMOTION.md`, and
+  `SIM_CERTIFICATION.md`. Four are normative state/decision/safety contracts.
+
+Therefore the current-state pointer to `42ac8cd` was stale and incomplete for
+the normative head. It was true historical provenance, not a complete current
+candidate. No history was rewritten or fabricated.
+
+The replacement mechanism is: commit the complete candidate tree first; then
+use a descendant evidence-only commit to record the candidate commit/tree,
+ancestry, normative diff scope, hashes, and tests. The evidence commit is not
+part of the candidate. Any later normative delta invalidates that identity.
+This is coherent because it never attempts to embed a commit hash in the tree
+that creates the same hash.
+
+### Reconciliation classification
+
+Classification: **`REPORT_OVERCLAIMS_EVIDENCE`**.
+
+Evidence:
+
+- The source ledger through `evt_wdc_018` contains decisions, risk results,
+  intent transitions, fills, and `trade.closed.v1`, but no
+  `reconciliation.check_completed.v1`.
+- `expected-report.json` nevertheless claimed
+  `reconciliation_result=PASS`.
+- `evt_wdc_019` likewise used `report.generated.v1` and claimed `PASS`.
+- `EVENT_MODEL.md` names reconciliation completion as a source event;
+  `RECONCILIATION.md` requires checks at finalization; `ARCHITECTURE.md`
+  permits report finalization only after required reconciliation checks pass;
+  and `REPORTING.md` requires an unreconciled preliminary marker when final
+  evidence is unavailable.
+
+`SOURCE_EVENT_MISSING` is not selected because no independent artifact proves
+that a reconciliation check actually ran or that a completion event was
+constructed and lost. Adding one would fabricate history.
+`CONTRACT_CONFLICT` is not selected because `REPORTING.md` already supports the
+weaker `UNRECONCILED — DO NOT USE FOR EXECUTION` state. `OTHER` is therefore
+unnecessary.
+
+### Contract-supported resolution and expected result
+
+- Define qualifying durable completion evidence precisely.
+- Require report `PASS` to derive from that event at the report high-water
+  mark.
+- Change the WDC report to `UNRECONCILED`, emit `report.withheld.v1`, preserve
+  the event history, and recompute report/manifest digests.
+- Add a negative regression proving no qualifying completion evidence can
+  yield `PASS`.
+- Add a positive regression proving a complete valid reconciliation event can
+  derive `PASS`.
+- Preserve all prior C01–C04, DRY_RUN, idempotency, SIM/LIVE, link, and
+  cleanliness checks.
+
+No freeze, acceptance, Phase 1E/2, credential, broker connection, query, order,
+or `LIVE` activity is authorized or performed.
+
+### Validation
+
+Pending against the replacement candidate commit/tree. Exact results and the
+immutable candidate identity will be recorded by its descendant evidence-only
+commit.

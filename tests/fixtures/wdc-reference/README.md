@@ -47,7 +47,8 @@ wiring, not execution realism. No TradeStation behavior is represented.
 - Exit: `2 × 55.0000`
 - Ending quantity: `0`
 - Synthetic realized difference before costs: `8.0000 USD`
-- Reconciliation: `PASS`
+- Reconciliation: `UNRECONCILED` because the source ledger contains no
+  `reconciliation.check_completed.v1`; the report is withheld
 
 ## Verification
 

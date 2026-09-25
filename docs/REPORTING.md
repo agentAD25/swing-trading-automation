@@ -33,6 +33,13 @@ lags its high-water mark, a critical/high discrepancy is open, state is
 unknown, or mode authorization is invalid. Preliminary output must be marked
 `UNRECONCILED — DO NOT USE FOR EXECUTION`.
 
+`reconciliation_result` is `PASS` only when the report high-water mark is a
+qualifying `reconciliation.check_completed.v1` event under
+`RECONCILIATION.md`. Without that event the only contract-supported value is
+`UNRECONCILED`, the report event is `report.withheld.v1`, and the artifact must
+contain the exact preliminary-output warning above. Report generation cannot
+manufacture reconciliation evidence.
+
 Reports must not contain credentials, account identifiers, personal data, raw
 broker payloads, or claims of profitability/safety. A favorable simulation is
 not evidence of future performance.
@@ -57,6 +64,10 @@ remain undefined until their domain contracts are approved.
 for a synthetic conformance run. It validates ordering, decimal
 representation, linkage, lifecycle, and report reconciliation. It is not a
 backtest, strategy selection, or observation of WDC market prices.
+
+The current WDC source ledger contains no reconciliation-completion event.
+Accordingly its reference report is `UNRECONCILED` and withheld. This is a
+negative conformance case, not a failed or fabricated reconciliation run.
 
 The reference must contain `report_id`, `report_type`, `run_id`,
 `schema_version`, `generated_at`, `producer_version`, `mode`, `mode_banner`,

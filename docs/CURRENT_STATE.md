@@ -2,8 +2,8 @@
 
 - Last updated: 2026-09-25
 - Current phase: Phase 1D — surgical verifier remediation
-- Phase status: Freeze-candidate commit validated; not frozen, certified, or
-  accepted
+- Phase status: Replacement freeze candidate being assembled; not frozen,
+  certified, or accepted
 - Authorized execution mode: `DRY_RUN` only (local, deterministic, non-network)
 - TradeStation `SIM`: Reserved for a future connectivity phase; unauthorized
 - `LIVE` status: Unauthorized
@@ -33,12 +33,29 @@
 | Phase 1A | Governance baseline `ae1aa85`; governance bootstrap complete, not Phase 1 acceptance |
 | Phase 1B | Architecture/design contracts and fixture, broker research, and failure model integrated from the recorded specialist commits; all remain proposed inputs |
 | Phase 1C | Coordinator reconciliation through `98731e7`; conflicts and freeze blockers recorded, no acceptance |
-| Phase 1D | Surgical freeze candidate `42ac8cd2e879732e456a7ed452510e7f5434a03e`; four-failure remediation validation passed; not frozen, certified, or accepted |
+| Phase 1D | Prior candidate `42ac8cd2e879732e456a7ed452510e7f5434a03e` is stale because descendants changed normative artifacts; replacement identity pending the descendant attestation mechanism below |
 | Phase 1E | Not started and not authorized |
 | Phase 2 | Not started and not authorized |
 
 `LIVE` remains unauthorized. “Freeze candidate” means a commit submitted for
 verification; it does not mean frozen, certified, accepted, or authorized.
+
+## Exact-tree candidate mechanism
+
+Git commit identity cannot be embedded in the tree that determines that same
+identity. Therefore:
+
+1. a candidate commit contains all normative documents, fixtures, tests, and
+   pre-validation audit text, but does not claim its own hash;
+2. its immutable Git tree object is the exact candidate content identity;
+3. a descendant evidence-only commit records the candidate commit and tree
+   hashes plus ancestry, diff-scope, test, and cleanliness results;
+4. the evidence commit is not silently part of the candidate tree; and
+5. any later normative delta makes the recorded candidate stale and requires a
+   new candidate commit/tree and descendant attestation.
+
+This mechanism avoids impossible self-reference while making completeness
+auditable. No candidate or attestation implies freeze or acceptance.
 
 ## Established
 

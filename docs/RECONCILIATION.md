@@ -68,3 +68,23 @@ unexpected negative/reversed position, stale observation, projection
 corruption repaired by rebuild, ambiguous identity, and report high-water-mark
 mismatch. Each scenario asserts discrepancy severity, quarantine behavior,
 dispatch inhibition, evidence, and deterministic rerun.
+
+## Completion evidence
+
+A report may claim reconciliation `PASS` only when its
+`source_high_water_mark` names a durable
+`reconciliation.check_completed.v1` event for the same run. That completion
+event must record:
+
+- `result=PASS`;
+- `checked_through_event_id`, naming an earlier event in the same run;
+- the required checks `LEDGER_INTEGRITY`, `PROJECTION`, and `EXECUTION`;
+- zero open critical and high discrepancies; and
+- the canonical envelope identity, sequence, timestamps, causation, and
+  correlation required by `EVENT_MODEL.md`.
+
+The completion event's immediate `causation_id` is
+`checked_through_event_id`. A report generated without this qualifying evidence
+is `UNRECONCILED`; absence of a discrepancy event is not proof of a clean
+check. Reconciliation evidence is append-only and must never be reconstructed
+as historical fact merely because projected values appear consistent.
