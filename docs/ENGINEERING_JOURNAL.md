@@ -641,3 +641,107 @@ or `LIVE` activity is authorized or performed.
 Pending against the replacement candidate commit/tree. Exact results and the
 immutable candidate identity will be recorded by its descendant evidence-only
 commit.
+
+### Replacement candidate identity and validation results
+
+The complete replacement candidate is:
+
+- commit:
+  `abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`;
+- exact Git tree:
+  `cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`;
+- parent chain:
+  `abc1fb6` → `3f7c22a` → `d459850` → `3cbfcaf` → `42ac8cd`;
+- base target: `cursor/phase-1a-governance-e1ba`.
+
+The candidate is complete because both
+`git merge-base --is-ancestor 42ac8cd abc1fb6` and
+`git merge-base --is-ancestor d459850 abc1fb6` exited 0. The normative delta
+from `d459850` is exactly the following 11 files:
+
+```text
+docs/CURRENT_STATE.md
+docs/ENGINEERING_JOURNAL.md
+docs/EVENT_MODEL.md
+docs/RECONCILIATION.md
+docs/REPORTING.md
+docs/TEST_PLAN.md
+tests/fixtures/wdc-reference/README.md
+tests/fixtures/wdc-reference/expected-events.jsonl
+tests/fixtures/wdc-reference/expected-report.json
+tests/fixtures/wdc-reference/manifest.json
+tests/validate_phase1_contracts.py
+```
+
+This descendant evidence commit updates only current state and this append-only
+journal. It attests the candidate but is not part of candidate tree
+`cb5fc1f9...`. Its own SHA cannot coherently be embedded in its own tree; the
+full pushed evidence-commit SHA is returned by Git/PR metadata. Any later
+normative change invalidates the candidate under the recorded mechanism.
+
+#### Exact regression command
+
+```sh
+python3 tests/validate_phase1_contracts.py
+```
+
+Result:
+
+```text
+Phase 1 contracts: manifest, C01, C02, C03, C04 PASS; required-field omission regression PASS; reconciliation evidence negative/positive regressions PASS
+```
+
+The reconciliation negative test proves a source ledger with no qualifying
+`reconciliation.check_completed.v1` cannot yield report `PASS`. The positive
+test supplies a complete in-memory source event with same-run identity,
+checked-through causation, all required checks, and zero open critical/high
+discrepancies, and proves that evidence derives `PASS`. It does not append that
+synthetic regression event to WDC history.
+
+#### Event → derivation → report → digest evidence
+
+The persisted WDC source ledger contains no reconciliation completion event.
+Derivation therefore returns `UNRECONCILED`; `expected-report.json` records
+that value and the mandatory warning; `evt_wdc_019` is
+`report.withheld.v1` with the same value, source high-water mark, reason, and
+content digest.
+
+Recomputed hashes:
+
+```text
+bars.csv             e194cdef7ca448a8ceadb64d06699f35ef4c59da131786d7835099861df5e3bc
+scenario.json         bd7af4205b9896bfd7fbe52bbf80ab0b4979c81116b2c8d8ce2520a49a91a501
+expected-events.jsonl 7b50e2475326283832df77a23e03b6e46e97eaf98342c88cd9dbdcc332e6447a
+expected-report.json  95585e7b1ba762a95719a154b02b5c06eeea5b1ff9e1428b80bb36e3ebdd909c
+report content digest f9a969c5f151133bad5d14f39a7cd17fafb033f9da87a1b5d8f53de04b2b3f46
+```
+
+C01 idempotency digests remained:
+
+```text
+entry  c4131ccda4608e4604adf5f36a49265ccf5e57e4f1754f1b6ff2f2403f180b0f
+exit   92949cf1b3481ce27b71360ccf67ae3580dc03d913088aee60fedefd5c2bbfa3
+report 54b3b57426148284b3ca7f7423902f6218f7b2813dfd743ce4d6ee9d7a4e989f
+```
+
+Additional exact checks and results:
+
+- `git diff --check cursor/phase-1a-governance-e1ba...abc1fb6` — exit 0.
+- `git status --porcelain | test ! -s /dev/stdin` — exit 0.
+- relative-link Python procedure over 29 Markdown files —
+  `relative Markdown links (29 files): PASS`.
+- active-authority `rg` checks found no stale SIM authorization.
+- WDC `rg` checks found no persisted report/reconciliation `PASS` claim.
+- independent hash assertions printed
+  `C01/C03, manifest hashes, event→report→digest, and no-overclaim semantics:
+  PASS`.
+- contract assertions printed
+  `candidate mechanism, root-cause classification, contracts, and phase
+  denials: PASS`.
+- safety/semantic assertions printed
+  `links, DRY_RUN/SIM-LIVE, and WDC no-overclaim regressions: PASS`.
+
+These results validate a replacement freeze candidate only. The candidate is
+not frozen, certified, or `PHASE1_ACCEPTED`; Phase 1E and Phase 2 remain not
+started; credentials, broker connectivity, queries, and orders were not used;
+and `LIVE` remains unauthorized.
