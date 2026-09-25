@@ -1,0 +1,22 @@
+---
+description: Mandatory trading and credential safety boundaries
+alwaysApply: true
+---
+
+# Trading safety
+
+- `SIM` is the only authorized execution mode.
+- `LIVE` trading, live order routing, and live-capital deployment are
+  unauthorized. Do not add an override, fallback, feature flag, or default
+  that can reach `LIVE`.
+- Never request, store, expose, or use brokerage credentials. Future local
+  secret handling must use ignored environment files or an approved secret
+  manager.
+- Research and tests must use public documentation, fixtures, mocks, or
+  explicitly identified simulation facilities.
+- No component may submit an order until a later, approved phase defines and
+  verifies fail-closed execution controls.
+- Stop and escalate if a requested action could affect a real account, expose
+  secrets, or bypass a safety control.
+- Do not describe unvalidated performance as profitable, safe, or production
+  ready.

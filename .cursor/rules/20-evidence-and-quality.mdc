@@ -1,0 +1,18 @@
+---
+description: Evidence, testing, and documentation requirements
+alwaysApply: true
+---
+
+# Evidence and quality
+
+- Separate facts, inferences, assumptions, and open questions.
+- For research, record source title, canonical URL, access date, and the exact
+  claim supported. Prefer first-party sources.
+- For code changes, run the smallest relevant deterministic checks and record
+  commands and outcomes.
+- Tests must not require live accounts, live credentials, or live order
+  submission.
+- Fail closed when execution mode, environment, or authorization is unknown.
+- Keep `docs/CURRENT_STATE.md` factual: implemented and verified are distinct
+  states.
+- Do not silently resolve conflicts between sources; record them as unresolved.

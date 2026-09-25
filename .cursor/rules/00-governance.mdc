@@ -1,0 +1,21 @@
+---
+description: Repository authority and change-control rules
+alwaysApply: true
+---
+
+# Governance
+
+- Read `docs/AGENT_AUTHORITY.md` and `docs/CURRENT_STATE.md` before changing
+  this repository.
+- Stay within the assigned phase and role. Do not convert research tasks into
+  implementation.
+- Preserve existing valid work. Make assumptions explicit and record unknowns
+  rather than inventing facts.
+- Record durable architectural decisions as ADRs using
+  `docs/adr/ADR-TEMPLATE.md`.
+- Update `docs/ENGINEERING_JOURNAL.md` and `docs/CURRENT_STATE.md` when a change
+  alters evidence, decisions, risks, or readiness.
+- Do not commit generated data, secrets, credentials, tokens, account
+  identifiers, or personal information.
+- Claims must cite reproducible evidence. Clearly label proposals,
+  assumptions, and unverified findings.
