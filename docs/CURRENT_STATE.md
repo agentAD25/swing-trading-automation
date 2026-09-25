@@ -2,11 +2,12 @@
 
 - Last updated: 2026-09-25
 - Current phase: Phase 1A — governance bootstrap
-- Phase status: In progress
+- Phase status: Complete on governance branch; pending human review/merge
 - Authorized execution mode: `SIM` only
 - `LIVE` status: Unauthorized
 - Foundation implementation: Not started and not authorized by Phase 1A
 - Canonical baseline: `origin/main` at `8b37e20`
+- Research workstreams ready: Yes, after adoption of this governance baseline
 
 ## Established
 
@@ -37,6 +38,11 @@ The three workstreams may begin only after Phase 1A validation confirms:
 Each workstream must follow `docs/research/README.md`. Research permission does
 not authorize implementation or any interaction with an account.
 
+All listed readiness gates passed on 2026-09-25. The broker/API,
+strategy/data, and risk/operations workstreams are ready to begin independently
+once this governance baseline is adopted through merge or explicit human
+direction.
+
 ## Unresolved items
 
 1. Human owner(s) and ADR decider(s) are not named.
@@ -49,4 +55,5 @@ not authorize implementation or any interaction with an account.
 ## Evidence
 
 Starting-state and change evidence is recorded in
-`docs/ENGINEERING_JOURNAL.md`. Validation evidence is pending.
+`docs/ENGINEERING_JOURNAL.md`. Phase 1A validation completed successfully on
+2026-09-25.

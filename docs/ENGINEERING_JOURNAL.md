@@ -40,3 +40,30 @@ state. No TradeStation research or foundation implementation was performed.
 
 Pending at the time of this entry; exact commands and outcomes will be added
 before Phase 1A is handed off.
+
+## 2026-09-25 — Phase 1A validation
+
+### Evidence
+
+- `git diff --check origin/main...HEAD` passed with no whitespace errors.
+- Structure validation passed: all required placeholders exist, exactly four
+  `.cursor/agents/*.md` files and three `.cursor/rules/*.mdc` files are tracked,
+  every rule declares `alwaysApply: true`, and every agent declares `name` and
+  `description`.
+- Scope validation passed: all 19 tracked files are the preserved `Test` file
+  or governance Markdown/MDC/ignore files; no implementation file was added.
+- Secret-pattern validation found no tracked private-key marker, GitHub token
+  pattern, or AWS access-key pattern.
+- Safety-language validation confirmed tracked governance includes `SIM`-only
+  and `LIVE`-unauthorized statements.
+- `git status --short --branch` showed a clean branch synchronized with
+  `origin/cursor/phase-1a-governance-e1ba` before this evidence update.
+- `gh pr view 1 --json url,isDraft,state,headRefName,baseRefName,title`
+  confirmed an open draft PR from the governance branch to `main`.
+
+### Outcome
+
+All Phase 1A readiness gates passed. The three research workstreams are ready
+after this baseline is adopted by merge or explicit human direction. This does
+not authorize foundation implementation, account access, credentials, order
+submission, real capital, or `LIVE`.
