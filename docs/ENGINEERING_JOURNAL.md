@@ -242,3 +242,47 @@ deployment, `LIVE` authorization, or Phase 2 work was introduced.
 
 Pending for the integrated Phase 1C revision. Results will be appended after
 the review commit is pushed.
+
+### Final validation evidence
+
+Validation ran against pushed review commit `f0ec3b3`:
+
+- `git diff --check cursor/phase-1a-governance-e1ba...HEAD` passed with no
+  whitespace errors.
+- `git status --short --branch` showed a clean branch synchronized with
+  `origin/cursor/phase-1c-reconciliation-3eee`.
+- The diff inventory contained only Markdown, MDC, CSV, JSON, and JSONL
+  governance/design/fixture files; an implementation-extension allowlist check
+  passed.
+- A Python 3 standard-library check found all 18 required integrated documents
+  and validated every relative Markdown link; it printed `required documents
+  (18) and relative Markdown links: PASS`.
+- The deterministic fixture check verified manifest SHA-256 values, parsed all
+  CSV/JSON/JSONL, canonical JSONL bytes, 15 unique event ids, contiguous
+  aggregate versions, source high-water mark, reconciliation, flat ending
+  position, and `8.0000` arithmetic; it printed `fixture digests, canonical
+  events, sequences, and arithmetic: PASS`.
+- The first invocation of that custom fixture check referenced nonexistent
+  report fields (`event_high_water_mark`) and exited with `KeyError`; inspection
+  showed the fixture contract uses `source_high_water_mark` and nested trade
+  fields. The corrected check above passed without changing the fixture.
+- A Phase 1C boundary check confirmed explicit `PHASE1_ACCEPTED` denial,
+  `PROPOSED / FREEZE_BLOCKED`, all FM-01–FM-24 coverage, twelve broker blocker
+  groups, and no `LIVE` decision; it printed `acceptance, freeze, safety, and
+  blocker language: PASS`.
+- Sensitive-pattern scanning outside documentation and fixtures found no
+  private-key marker, GitHub token pattern, or AWS access-key pattern.
+- All eight unique first-party TradeStation documentation URLs in
+  `BROKER_CONTRACT.md` returned HTTP 200 via unauthenticated `curl -L`.
+- `git diff --exit-code` proved `BROKER_CONTRACT.md` is byte-identical to
+  source commit `f5e23b0` and `FAILURE_MODEL.md` is byte-identical to source
+  commit `fd5e37d`.
+- Integrated history contains architecture mappings `fd5adc3`→`7dfac71`,
+  `ba41e14`→`7c1efa4`, `edf2d96`→`caefbff`, `032794e`→`6ac4158`; broker
+  mappings `f5e23b0`→`177c58c`, `c12a3ca`→`2da5efc`; and failure-model mapping
+  `fd5e37d`→`749038d`.
+
+These checks establish integrated documentation, link, fixture, safety-language,
+and scope conformance only. They do not close a freeze blocker, accept an ADR,
+certify implementation, authorize credentials/accounts/orders, start Phase 2,
+or authorize `LIVE`.
