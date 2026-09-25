@@ -37,7 +37,7 @@ wiring, not execution realism. No TradeStation behavior is represented.
 From the repository root, verify bytes using only Python's standard library:
 
 ```sh
-python - <<'PY'
+python3 - <<'PY'
 import hashlib, json, pathlib
 root = pathlib.Path("tests/fixtures/wdc-reference")
 manifest = json.loads((root / "manifest.json").read_text())
