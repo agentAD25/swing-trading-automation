@@ -50,7 +50,7 @@ def test_daily_close_only_and_rolling_prior_trading_day_high() -> None:
 def test_duplicate_calendar_input_is_rejected() -> None:
     duplicate = bar("2024-01-05", "12", "11")
     with pytest.raises(FixtureError, match="one-to-one"):
-        evaluate_daily_close_breakout(
+        evaluate_daily_close_protective(
             (duplicate, duplicate),
             (date(2024, 1, 5), date(2024, 1, 5)),
         )
