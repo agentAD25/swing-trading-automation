@@ -826,3 +826,83 @@ Pending after committing the three authorized metadata files only:
 `PHASE_1_ACCEPTANCE_MANIFEST.md`. Validation will prove the diff scope, tag
 target/tree, 45-file inventory, stable hashes, links, candidate tests, and clean
 Git state before handoff.
+
+### Acceptance metadata validation results
+
+Metadata commit `402a4fb` and the annotated tag were pushed before validation.
+
+1. Tag verification:
+
+   ```sh
+   git cat-file -t phase1-accepted-abc1fb6
+   git rev-parse phase1-accepted-abc1fb6^{commit}
+   git rev-parse phase1-accepted-abc1fb6^{tree}
+   git ls-remote origin refs/tags/phase1-accepted-abc1fb6 \
+     'refs/tags/phase1-accepted-abc1fb6^{}'
+   ```
+
+   Result:
+
+   ```text
+   tag
+   abc1fb6a9cc3554e7ad13f438685ba3c3c044dab
+   cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808
+   197d22b06cf6a96bad8c4b1a49ad1b928b147ac0 refs/tags/phase1-accepted-abc1fb6
+   abc1fb6a9cc3554e7ad13f438685ba3c3c044dab refs/tags/phase1-accepted-abc1fb6^{}
+   local/remote annotated tag resolves exactly to accepted candidate/tree: PASS
+   ```
+
+2. A Python procedure parsed all 45 manifest rows, compared their paths/blob
+   OIDs to `git ls-tree -r abc1fb6`, read every candidate blob, recomputed every
+   SHA-256, checked set equality, and printed:
+
+   ```text
+   atomic 45-file candidate inventory, blob OIDs, and SHA-256 values: PASS
+   ```
+
+3. Exact accepted-tree and scope checks:
+
+   ```sh
+   python3 tests/validate_phase1_contracts.py
+   git rev-parse abc1fb6^{tree}
+   git diff --name-only abc1fb6..HEAD
+   git diff --exit-code abc1fb6 -- <all non-metadata paths>
+   ```
+
+   Result:
+
+   ```text
+   Phase 1 contracts: manifest, C01, C02, C03, C04 PASS; required-field omission regression PASS; reconciliation evidence negative/positive regressions PASS
+   accepted tree unchanged; metadata-only three-file delta; regressions PASS
+   ```
+
+   The only paths changed after the accepted candidate were
+   `docs/CURRENT_STATE.md`, `docs/ENGINEERING_JOURNAL.md`, and
+   `docs/PHASE_1_ACCEPTANCE_MANIFEST.md`.
+
+4. A link/status procedure verified all relative links in 30 Markdown files,
+   all 12 unresolved broker groups, exact candidate/tree/evidence identities,
+   `REPORT_OVERCLAIMS_EVIDENCE`, bounded meaning, and Phase 1E/2,
+   TradeStation SIM, and LIVE non-authorizations. Result:
+
+   ```text
+   links (30 Markdown files), 12 unresolved groups, bounded acceptance/non-authorizations: PASS
+   ```
+
+5. Commands:
+
+   ```sh
+   git diff --check cursor/phase-1a-governance-e1ba...HEAD
+   git status --porcelain | test ! -s /dev/stdin
+   ```
+
+   Result:
+
+   ```text
+   whitespace and clean Git metadata head: PASS
+   ```
+
+These checks establish only immutable evidence metadata for the accepted
+offline baseline. They do not alter the accepted tree, resolve any deferred
+question, authorize implementation or later phases, or permit broker/LIVE
+activity.
