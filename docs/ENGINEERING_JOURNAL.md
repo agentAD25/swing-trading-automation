@@ -67,3 +67,37 @@ All Phase 1A readiness gates passed. The three research workstreams are ready
 after this baseline is adopted by merge or explicit human direction. This does
 not authorize foundation implementation, account access, credentials, order
 submission, real capital, or `LIVE`.
+
+## 2026-09-25 — Phase 1B architecture/design contracts
+
+### Scope
+
+Under explicit human direction, drafted the broker-neutral architecture,
+lifecycle, data, event, idempotency, reconciliation, operations, reporting,
+test, SIM certification, and future promotion contracts. Added a deterministic
+synthetic WDC conformance fixture. No production code, credentials, broker
+access, order submission, or external broker claim was introduced.
+
+### Decisions and boundaries
+
+- Ports-and-adapters with append-only events, rebuildable projections, an
+  atomic intent/outbox boundary, stable idempotency, and fail-closed
+  reconciliation is the proposed foundation.
+- Material decisions are recorded in Proposed ADR-0001; no human decider is
+  named and nothing is Accepted.
+- The WDC fixture is invented contract-test data with a prohibited-for-
+  production mechanical rule; it is neither market data nor strategy evidence.
+- `SIM` remains the only authorized mode. Phase 2 and `LIVE` remain unstarted
+  and unauthorized.
+
+### Unresolved
+
+All TradeStation-specific behavior; strategy and market-data selection; risk
+limits; operating thresholds and owners; technology and deployment choices;
+security, legal, compliance, entitlement, and licensing obligations; and
+human decision authority.
+
+### Validation
+
+Pending. Exact commands, commit, and outcomes will be recorded after the
+draft is committed for review.

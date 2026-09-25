@@ -1,9 +1,10 @@
 # Swing Trading Automation
 
 This repository is governed for incremental development of a swing-trading
-automation system. Phase 1A establishes structure and safety boundaries only;
-it does not contain a trading foundation or validated broker, market-data, or
-strategy decisions.
+automation system. Phase 1A established governance; Phase 1B drafts a
+broker-neutral foundation design and deterministic synthetic fixture. It does
+not contain production code or validated broker, market-data, strategy, or risk
+decisions.
 
 ## Safety status
 
@@ -19,7 +20,9 @@ strategy decisions.
 - `config/` — future non-secret configuration contracts
 - `docs/` — authority, decisions, state, journal, and research outputs
 - `src/` — future implementation (currently intentionally empty)
-- `tests/` — future automated verification (currently intentionally empty)
+- `tests/` — deterministic fixtures and future automated verification
 
 Start with [agent authority](docs/AGENT_AUTHORITY.md) and
-[current state](docs/CURRENT_STATE.md).
+[current state](docs/CURRENT_STATE.md). The proposed design begins at
+[architecture](docs/ARCHITECTURE.md); decisions and unknowns are indexed in
+[the Phase 1B register](docs/DECISIONS.md).

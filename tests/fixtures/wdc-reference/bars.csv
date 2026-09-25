@@ -1,0 +1,6 @@
+instrument_id,symbol,interval,session_date,open,high,low,close,volume,currency,source,revision
+ins_wdc_fixture,WDC,1d,2024-01-02,50.0000,52.0000,49.0000,51.0000,1000000,USD,synthetic_fixture,1
+ins_wdc_fixture,WDC,1d,2024-01-03,51.0000,54.0000,50.0000,53.0000,1100000,USD,synthetic_fixture,1
+ins_wdc_fixture,WDC,1d,2024-01-04,53.0000,55.0000,52.0000,54.0000,900000,USD,synthetic_fixture,1
+ins_wdc_fixture,WDC,1d,2024-01-05,55.0000,56.0000,53.0000,54.0000,1200000,USD,synthetic_fixture,1
+ins_wdc_fixture,WDC,1d,2024-01-08,54.0000,57.0000,53.0000,56.0000,1050000,USD,synthetic_fixture,1
