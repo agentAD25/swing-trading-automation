@@ -953,3 +953,79 @@ Expected edits were limited to `src/swingtrade/persistence.py`,
 already authorized offline test directories, and status/evidence updates to
 `docs/CURRENT_STATE.md` and this journal. No accepted fixture or contract file
 was an expected edit.
+
+### Remediation and verification evidence
+
+P1E-01 now stores one canonical intent payload and SHA-256 input digest behind
+PostgreSQL unique constraints on idempotency key and intent id. Creation uses
+one transaction with `INSERT ... ON CONFLICT DO NOTHING`, then compares the
+durable row to the requested canonical identity. Identical requests converge;
+key or intent-id reuse with different content raises a conflict and rolls back.
+Engine-backed tests cover repeated creation, mixed concurrent creators,
+single-row convergence, conflict rollback, pool disposal, persistence, and
+reconnect.
+
+P1E-02 validates the complete reconciliation completion envelope and payload,
+same-run earlier checked event, exact required-check set, aggregate sequence,
+causation, zero critical/high discrepancies, and identical-versus-conflicting
+duplicate evidence. Missing, partial, contradictory, duplicate-conflicting, or
+wrong-run evidence derives only `UNRECONCILED`; repeated identical evidence
+and repeated derivation are idempotent.
+
+P1E-03 requires exact session cardinality, unique strictly ascending calendar
+sessions, and ordered equality with bars. Tests cover unsorted, duplicate,
+cardinality mismatch, weekend/holiday gaps defined only by the supplied
+calendar, prior/next-session selection, intraday non-trigger, and deterministic
+replay. No weekday or holiday policy was invented.
+
+P1E-04 enforces the accepted event type/state sequence, contiguous aggregate
+versions, immediate causation, stable initiating identity, and nondecreasing
+effective and recorded times without collapsing those distinct timestamps.
+Tests cover equal times, backward times, microsecond-separated rapid events,
+multi-transition chains, identical replay, and contradictory replay.
+
+The environment initially lacked Docker and PostgreSQL. A local-only
+PostgreSQL package was installed for verification; no broker or external
+service was contacted by the implementation or tests. The actual engine was:
+
+```text
+PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu,
+compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+```
+
+The first PostgreSQL-backed suite exposed three row-materialization failures;
+after correction it exposed one test-only unhashable assertion. Both were
+corrected before final verification. Final results:
+
+```text
+SWINGTRADE_TEST_POSTGRES_URL=postgresql+psycopg://.../swingtrade_test \
+  python3 -m pytest -W error
+62 passed in 0.65s
+
+python3 tests/validate_phase1_contracts.py
+Phase 1 contracts: manifest, C01, C02, C03, C04 PASS; required-field
+omission regression PASS; reconciliation evidence negative/positive
+regressions PASS
+
+python3 -m ruff check .
+All checks passed!
+
+python3 -m mypy src
+Success: no issues found in 11 source files
+```
+
+Alembic offline SQL rendering passed through revisions 0001 and 0002. Against
+the actual PostgreSQL engine, downgrade-to-base removed the foundation tables,
+upgrade-to-head recreated all four foundation tables plus Alembic metadata,
+and rollback/upgrade completed successfully. Compile/import checks passed.
+Secret, credential, broker-network, and live-order-path scans returned no
+matches.
+
+The annotated tag still resolves to tag object
+`197d22b06cf6a96bad8c4b1a49ad1b928b147ac0`, accepted commit
+`abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, and tree
+`cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`. Its 45 paths remain unchanged;
+only the two explicitly authorized status/evidence files among those paths
+changed on the Phase 1E descendant branch. This is implementation evidence,
+not self-certification. Phase 2 and all broker/SIM/LIVE capabilities remain
+unstarted and unauthorized.
