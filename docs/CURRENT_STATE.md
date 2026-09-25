@@ -2,7 +2,7 @@
 
 - Last updated: 2026-09-25
 - Current phase: Phase 1B — architecture/design contracts
-- Phase status: Drafted on isolated branch; pending validation and human review
+- Phase status: Drafted and validated on isolated branch; pending human review
 - Authorized execution mode: `SIM` only
 - `LIVE` status: Unauthorized
 - Foundation implementation: Not started and not authorized
@@ -66,4 +66,5 @@ direction.
 
 Starting-state and change evidence is recorded in
 `docs/ENGINEERING_JOURNAL.md`. Phase 1A validation completed successfully on
-2026-09-25. Phase 1B validation is pending.
+2026-09-25. Phase 1B design and fixture validation passed; human review and ADR
+acceptance remain pending.

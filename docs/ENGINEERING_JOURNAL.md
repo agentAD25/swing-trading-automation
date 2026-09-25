@@ -99,5 +99,27 @@ human decision authority.
 
 ### Validation
 
-Pending. Exact commands, commit, and outcomes will be recorded after the
-draft is committed for review.
+Validated after committing and pushing the review draft:
+
+- `git diff --check cursor/phase-1a-governance-e1ba...HEAD` and a clean-tree
+  assertion passed.
+- A Python 3 standard-library fixture procedure recalculated every manifest
+  SHA-256, parsed all CSV/JSON/JSONL, verified canonical UTF-8 JSON bytes, 15
+  unique event ids, contiguous per-aggregate versions, report/event
+  high-water-mark ties, reconciliation status, and entry/exit arithmetic; it
+  printed `fixture integrity, canonical bytes, arithmetic, and event
+  sequences: PASS`.
+- A Python 3 Markdown procedure verified all 14 required contract documents
+  and every relative Markdown link; it printed `required documents (14) and
+  relative Markdown links: PASS`.
+- A Python 3 boundary procedure asserted `SIM`-only, Phase 2/`LIVE`
+  unauthorized, no production code, and explicit TradeStation uncertainty
+  language; it printed `safety, phase, and broker-uncertainty language: PASS`.
+- `git diff --name-only cursor/phase-1a-governance-e1ba...HEAD` plus an
+  implementation-extension allowlist check confirmed documentation/fixture-
+  only scope.
+- `rg` sensitive-pattern scanning outside documentation and fixtures passed.
+
+The first fixture documentation check exposed that this environment provides
+`python3`, not `python`; the documented command was corrected and all listed
+checks then passed.
