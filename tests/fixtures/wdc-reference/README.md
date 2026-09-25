@@ -32,6 +32,12 @@ run/strategy/instrument tuple and contains no account identity. The report
 content digest follows `docs/REPORTING.md` and excludes only its own
 `content_digest` member from the hashed canonical object.
 
+Every intent transition carries prior/next state, reason code, and initiating
+event in its payload; its envelope carries durable aggregate/event identity,
+sequence, effective/recorded timestamps, immediate cause, and correlation.
+`tests/validate_phase1_contracts.py` validates these fields and proves that
+omitting prior state, next state, or reason code is rejected.
+
 The fixture assumes zero fees and exact fills because it tests data/event/report
 wiring, not execution realism. No TradeStation behavior is represented.
 

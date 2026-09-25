@@ -8,8 +8,8 @@
 
 ## Operator acceptance model
 
-The Operator is the sole decider. Agents may prepare evidence, reconcile
-contracts, and propose ADR text, but cannot accept the baseline.
+The human Operator is the sole Phase 1 decider. Agents may prepare evidence,
+reconcile contracts, and propose ADR text, but cannot accept the baseline.
 
 `PHASE1_ACCEPTED`, if the Operator later records it, has exactly this bounded
 meaning: acceptance of the broker-neutral, offline, deterministic baseline

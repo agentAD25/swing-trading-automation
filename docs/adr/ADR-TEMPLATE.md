@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Date: YYYY-MM-DD
-- Sole decider: Operator
+- Sole Phase 1 decider: Human Operator
 - Scope: Component or concern
 - Supersedes: None
 - Superseded by: None

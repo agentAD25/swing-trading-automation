@@ -1,20 +1,22 @@
 # Current State
 
 - Last updated: 2026-09-25
-- Current phase: Phase 1D — approved correction implementation
-- Phase status: Corrections implemented and validated; Operator
-  acceptance not yet recorded
+- Current phase: Phase 1D — surgical verifier remediation
+- Phase status: Freeze-candidate corrections in review; not frozen, certified,
+  or accepted
 - Authorized execution mode: `DRY_RUN` only (local, deterministic, non-network)
 - TradeStation `SIM`: Reserved for a future connectivity phase; unauthorized
 - `LIVE` status: Unauthorized
 - Foundation implementation: Not started and not authorized
+- Phase 1E: Not started and not authorized
 - Phase 2: Unstarted and unauthorized
 - Design baseline: Phase 1A governance commit `ae1aa85`
 - Contract acceptance: `PROPOSED / FREEZE_BLOCKED`; not `PHASE1_ACCEPTED`
 
 ## Operator acceptance model
 
-- **Sole decider:** the Operator. Agents prepare evidence and proposals only.
+- **Sole decider:** the human Operator. Agents prepare evidence and proposals
+  only.
 - **Bounded meaning:** `PHASE1_ACCEPTED`, if the Operator later records it,
   accepts only the broker-neutral, offline, deterministic baseline.
 - **No implied authority:** that status does not authorize implementation,
@@ -23,6 +25,20 @@
 - **Current result:** the Operator has approved these Phase 1D corrections for
   implementation, but has not yet marked the corrected baseline
   `PHASE1_ACCEPTED`.
+
+## Phase history and current candidate
+
+| Phase | Durable output/status |
+| --- | --- |
+| Phase 1A | Governance baseline `ae1aa85`; governance bootstrap complete, not Phase 1 acceptance |
+| Phase 1B | Architecture/design contracts and fixture, broker research, and failure model integrated from the recorded specialist commits; all remain proposed inputs |
+| Phase 1C | Coordinator reconciliation through `98731e7`; conflicts and freeze blockers recorded, no acceptance |
+| Phase 1D | Approved corrections plus this four-failure surgical remediation; exact freeze-candidate commit is recorded in the immediate follow-up state/evidence commit after candidate creation |
+| Phase 1E | Not started and not authorized |
+| Phase 2 | Not started and not authorized |
+
+`LIVE` remains unauthorized. “Freeze candidate” means a commit submitted for
+verification; it does not mean frozen, certified, accepted, or authorized.
 
 ## Established
 
@@ -74,9 +90,9 @@ direction.
 
 ## Unresolved items
 
-1. The Operator is the sole acceptance decider; the person's authenticated
-   identity and durable acceptance mechanism remain to be recorded before
-   acceptance.
+1. The human Operator is the sole Phase 1 acceptance decider; that person's
+   authenticated identity and durable acceptance mechanism remain to be
+   recorded before acceptance.
 2. ADR-0001 and the corrected contracts remain Proposed, not Accepted.
 3. Twelve production-critical broker behavior groups remain unresolved;
    strategy/data and risk/operations facts remain unresearched.

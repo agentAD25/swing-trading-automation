@@ -38,6 +38,10 @@ Each required arrow is represented by its own accepted event:
 `order_intent.dispatched.v1`. A fixture or projection may not skip a required
 state even when DRY_RUN handling is immediate.
 
+For `order_intent.created.v1`, `prior_state` is the explicit sentinel `NONE`
+and `next_state` is `CREATED`. Every later event's `prior_state` must equal the
+preceding event's `next_state`.
+
 ## Order-observation lifecycle
 
 The broker-neutral projection may use:
@@ -81,10 +85,15 @@ crosses through zero triggers `OPERATOR_REVIEW`.
 
 ## Required transition evidence
 
-Every transition records aggregate id, prior and next state, triggering event
-id, event sequence, effective time, recorded time, reason code, and causation
-id. Invalid transitions are rejected as conflicts and surfaced for review.
-Projectors must tolerate duplicate delivery but not contradictory facts.
+Every transition records `prior_state`, `next_state`, `reason_code`, and
+`initiating_event_id` in its payload. Its canonical event envelope records the
+durable aggregate id, aggregate version as event sequence, event id,
+`effective_at`, `recorded_at`, `causation_id`, and `correlation_id`.
+`initiating_event_id` remains stable across one intent's transition chain;
+`causation_id` identifies the immediate trigger. A missing required payload or
+envelope field is schema-invalid and rejected before append. Invalid
+transitions are rejected as conflicts and surfaced for review. Projectors must
+tolerate duplicate delivery but not contradictory facts.
 
 ## Restart and recovery
 

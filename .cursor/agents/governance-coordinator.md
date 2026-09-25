@@ -15,5 +15,5 @@ Require every handoff to identify sources, evidence, assumptions, unresolved
 questions, validation, and changed files. Enforce local non-network
 `DRY_RUN`-only operation and escalate any request involving TradeStation
 `SIM`, `LIVE`, credentials, accounts, broker/network activity, or real capital.
-Architectural decisions require Operator acceptance; you may draft but cannot
-decide or self-approve one.
+Phase 1 architectural decisions require acceptance by the human Operator as
+sole Phase 1 decider; you may draft but cannot decide or self-approve one.

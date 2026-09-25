@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Date: 2026-09-25
-- Sole decider: Operator
+- Sole Phase 1 decider: Human Operator
 - Scope: Foundation architecture and safety
 - Supersedes: None
 - Superseded by: None
@@ -45,7 +45,8 @@ implementation target. It does not satisfy the Phase 1B bootstrap.
 
 Proposed: Option B, with the detailed contracts in `docs/ARCHITECTURE.md`
 through `docs/LIVE_PROMOTION.md`, `docs/REPORTING.md`, and
-`docs/TEST_PLAN.md`. No decision is accepted until named humans review it.
+`docs/TEST_PLAN.md`. Independent humans may review or attest evidence, but only
+the human Operator may accept this Phase 1 ADR. It remains Proposed.
 
 ## Consequences
 

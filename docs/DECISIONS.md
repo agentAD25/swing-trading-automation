@@ -3,13 +3,15 @@
 ## Status vocabulary
 
 `CONTRACT` means this Phase 1B design set uses the decision for internal
-consistency. Material decisions remain **Proposed** until an identified human
-accepts the corresponding ADR. `UNRESOLVED` means no selection may be inferred.
+consistency. Material Phase 1 decisions remain **Proposed** until the human
+Operator acting as sole Phase 1 decider accepts the corresponding ADR.
+`UNRESOLVED` means no selection may be inferred.
 Phase 1C assigns the overall state `PROPOSED / FREEZE_BLOCKED`; no decision in
 this register is `PHASE1_ACCEPTED`.
 
-The Operator is the sole acceptance decider. Phase 1D implementation of an
-Operator-approved correction is not acceptance of the corrected baseline.
+The human Operator is the sole Phase 1 acceptance decider. Phase 1D
+implementation of an Operator-approved correction is not acceptance of the
+corrected baseline.
 `PHASE1_ACCEPTED`, if later recorded, is bounded to the broker-neutral,
 offline, deterministic baseline and grants no implementation, credentials,
 broker/network/account activity, TradeStation `SIM`, Phase 2, order submission,
@@ -27,7 +29,7 @@ real capital, or `LIVE`.
 | D-006 | CONTRACT / Proposed ADR | Reports bind to immutable inputs and an event high-water mark | Makes results reproducible and auditable |
 | D-007 | CONTRACT / Proposed ADR | `DRY_RUN` is the only possible authorization; no broker-capable adapter | Preserves the current authority boundary |
 | D-008 | CONTRACT / Proposed ADR | Deterministic synthetic WDC fixture is conformance data, not research data | Tests contracts without efficacy claims |
-| D-009 | OPERATOR-DIRECTED / Proposed ADR | Operator is sole decider; Phase 1 acceptance is bounded to the broker-neutral offline deterministic baseline | Separates baseline acceptance from implementation or connectivity authority |
+| D-009 | OPERATOR-DIRECTED / Proposed ADR | The human Operator is the sole Phase 1 decider; Phase 1 acceptance is bounded to the broker-neutral offline deterministic baseline | Separates baseline acceptance from implementation or connectivity authority |
 
 The umbrella record is
 [ADR-0001](adr/0001-phase-1b-foundation-contracts.md). It intentionally remains
@@ -45,7 +47,9 @@ Proposed because the Operator has not yet accepted the corrected baseline.
   objectives, recovery objectives, and operating procedures.
 - Legal/security review must address licensing, compliance, privacy, retention,
   secrets, and infrastructure.
-- Human owners must accept material ADRs and authorize any later phase.
+- The human Operator alone may accept Phase 1 ADRs or the Phase 1 baseline.
+  Future technical/risk/security/compliance/operations owners may provide
+  required attestations, but they are not additional Phase 1 deciders.
 
 ## Unresolved operator choices
 

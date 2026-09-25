@@ -23,5 +23,5 @@ alwaysApply: true
   identifiers, or personal information.
 - Claims must cite reproducible evidence. Clearly label proposals,
   assumptions, and unverified findings.
-- The Operator is the sole decider for Phase 1 acceptance. Agents may prepare
-  evidence and proposals but cannot accept their own or another agent's work.
+- The human Operator is the sole decider for Phase 1 acceptance. Agents may
+  prepare evidence and proposals but cannot decide or accept Phase 1 work.

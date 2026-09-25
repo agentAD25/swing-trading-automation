@@ -45,6 +45,14 @@ The required order-intent path emits one event for each state transition:
 `order_intent.dispatched.v1`. Immediate DRY_RUN processing does not permit
 elision of an intermediate event.
 
+Each of those events requires payload fields `prior_state`, `next_state`,
+`reason_code`, and `initiating_event_id`. The envelope's `aggregate_id`,
+`aggregate_version`, `event_id`, `effective_at`, `recorded_at`,
+`causation_id`, and `correlation_id` supply durable identity, ordering,
+timestamps, immediate cause, and end-to-end correlation. Absence of any
+required transition payload or envelope field is a schema error, not an
+optional projection detail.
+
 ## Append and delivery semantics
 
 The ledger is append-only. Producers append with optimistic aggregate version

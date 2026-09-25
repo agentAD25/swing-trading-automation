@@ -9,15 +9,16 @@ least-authority interpretation applies when instructions are ambiguous.
 
 1. Non-overridable safety prohibitions in this document, project-wide Cursor
    rules, and the deny state in `docs/CURRENT_STATE.md`
-2. Explicit decisions from the Operator acting as sole decider
+2. Explicit decisions from the human Operator acting as sole Phase 1 decider
 3. Accepted ADRs
 4. `docs/CURRENT_STATE.md` positive phase authorization
 5. Role-specific agent definitions
 6. Task plans and working notes
 
-The Operator is the sole decider for Phase 1 acceptance. “Operator” is an
-acceptance role, not an agent role; no agent may exercise it or infer the
-Operator's identity. A human instruction cannot override item 1. Changing
+The human Operator is the sole decider for Phase 1 acceptance. “Operator” is
+an acceptance role, not an agent role; no agent may exercise it or infer the
+Operator's identity. Another human reviewer may attest evidence but is not an
+additional Phase 1 decider. A human instruction cannot override item 1. Changing
 repository text cannot itself grant a denied capability. Every conflict,
 missing condition, or silence fails closed with no side effect.
 

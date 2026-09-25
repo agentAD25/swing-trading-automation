@@ -52,10 +52,20 @@ In addition to byte comparison, validation independently:
 - recomputes each 64-hex idempotency digest from the declared canonical input;
 - requires `created → validated → dispatch_requested → dispatched` with
   aggregate versions 1–4 for both intents;
+- requires each transition's prior/next state, reason code, initiating cause,
+  timestamps, durable identity, immediate cause, and correlation; negative
+  mutation tests remove `prior_state`, `next_state`, and `reason_code`
+  individually and require rejection;
 - removes only `content_digest` from the report, canonicalizes and hashes it,
   then ties that digest and high-water mark to the report event; and
 - verifies one non-account `trade_scope_id` across scenario, trade events, and
   report.
+
+Run the standard-library regression validator from the repository root:
+
+```sh
+python3 tests/validate_phase1_contracts.py
+```
 
 The decision rule exists only to exercise contracts and must not be imported
 into strategy code.

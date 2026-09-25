@@ -374,3 +374,76 @@ This evidence proves document/fixture/hash/link/safety-assertion conformance
 only. It does not mark `PHASE1_ACCEPTED`, accept ADR-0001, authorize
 implementation or connectivity, use credentials, begin Phase 1E or Phase 2,
 or authorize `LIVE`.
+
+## 2026-09-25 — Phase 1D surgical verifier remediation
+
+### Authorized scope and pre-edit findings
+
+Limited this pass to four verifier failures:
+
+1. P1D-C02 intent transition events lacked required prior/next state, reason
+   code, and explicit initiating cause even though lifecycle/event contracts
+   required complete transition evidence.
+2. `DECISIONS.md` declared one Operator decider but also said plural human
+   owners accept material ADRs; ADR-0001 similarly said named humans review
+   before acceptance.
+3. `CURRENT_STATE.md` lacked an explicit 1A→1D history, Phase 1E status, and
+   exact freeze-candidate identity/status.
+4. `SIM_CERTIFICATION.md` prohibited credentials/account dependency in its
+   future entry criteria even though authenticated TradeStation SIM
+   certification may require controlled OAuth, SIM account/endpoint, query,
+   and simulated order tests.
+
+The requirements were mutually satisfiable, so `CONTRACT_CONFLICT` was not
+triggered.
+
+### Authority occurrence audit
+
+Every repository occurrence returned by searches for `sole decider`, human
+approval/direction/decision/decider/owner, `Operator`, `Accepted`, and
+acceptance was inspected:
+
+- **Canonical Phase 1 decision authority corrected:** `DECISIONS.md` status
+  vocabulary, D-009, dependencies, and disposition;
+  `AGENT_AUTHORITY.md` hierarchy and acceptance gate;
+  `.cursor/rules/00-governance.mdc`; `CURRENT_STATE.md`; ADR-0001 metadata and
+  decision; `docs/adr/README.md`; `docs/adr/ADR-TEMPLATE.md`;
+  `PHASE_1D_CORRECTIONS.md`; the governance-coordinator role; and the
+  architecture adapter gate now consistently identify the **human Operator as
+  sole Phase 1 decider**.
+- **Future LIVE authority preserved:** `LIVE_PROMOTION.md` keeps independent
+  technical/risk/security/compliance/operations attestations as mandatory
+  evidence, not additional Phase 1 deciders, and keeps the human Operator's
+  final explicit bounded authorization plus every conjunctive gate.
+  `SIM_LIVE_BOUNDARY.md` remains aligned.
+- **Operational ownership is not acceptance authority:** owner/waiver language
+  in reconciliation, metrics, architecture unknowns, and future SIM
+  certification remains responsibility or evidence language, not a Phase 1
+  acceptance path.
+- **Historical evidence preserved:** prior journal entries,
+  `PHASE_1C_RECONCILIATION.md`, `FAILURE_MODEL.md`, and
+  `BROKER_CONTRACT.md` retain point-in-time human/authority wording and do not
+  control current authority.
+- **Non-authority uses:** lifecycle “acceptance” means broker order acceptance;
+  broker research uses API acceptance semantics; test “acceptance” means test
+  criteria. These were inspected and left unchanged.
+
+### Changes
+
+- Added complete transition payload evidence to all eight fixture intent
+  events without weakening lifecycle or event contracts.
+- Added `tests/validate_phase1_contracts.py`, which validates the fixture and
+  negatively mutates each of `prior_state`, `next_state`, and `reason_code` to
+  prove omission is rejected.
+- Reconciled sole-human-Operator wording across canonical authority artifacts.
+- Added phase history/current-candidate semantics to current state.
+- Split current SIM prohibition from future explicitly authorized,
+  authenticated TradeStation SIM certification requirements.
+
+No credential, account, broker connection, query, order, Phase 1E/2, freeze,
+certification, acceptance, or `LIVE` action occurred.
+
+### Validation
+
+Pending against the pushed surgical freeze-candidate commit. Exact commands,
+hashes, and results will be appended in a follow-up evidence commit.

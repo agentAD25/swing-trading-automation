@@ -41,7 +41,8 @@ The foundation must:
 
 The architecture is ports-and-adapters: domain contracts have no dependency on
 TradeStation or any transport. A future broker adapter may be designed only
-after every affected behavior has sufficient evidence and human acceptance.
+after every affected behavior has sufficient evidence, required specialist
+attestations, and explicit authorization by the governing human Operator.
 The current public-document research leaves twelve production-critical groups
 unresolved. The external-execution port therefore remains an unresolved
 boundary and only the deterministic, non-network DRY_RUN adapter is eligible.
