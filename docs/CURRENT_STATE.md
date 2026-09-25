@@ -2,7 +2,8 @@
 
 - Last updated: 2026-09-25
 - Current phase: Phase 1D — approved correction implementation
-- Phase status: Corrections in progress; Operator acceptance not yet recorded
+- Phase status: Corrections implemented and validated; Operator
+  acceptance not yet recorded
 - Authorized execution mode: `DRY_RUN` only (local, deterministic, non-network)
 - TradeStation `SIM`: Reserved for a future connectivity phase; unauthorized
 - `LIVE` status: Unauthorized
@@ -58,7 +59,8 @@ The three workstreams may begin only after Phase 1A validation confirms:
 - all required governance artifacts exist;
 - exactly four agent definitions exist;
 - all mandatory rules are always applied;
-- `SIM`-only and `LIVE`-unauthorized language is consistent;
+- the then-current `SIM`-only and `LIVE`-unauthorized Phase 1A language was
+  consistent (superseded for active authority by Phase 1D `DRY_RUN`);
 - no secrets or implementation were introduced; and
 - the governance branch is reviewable in a draft pull request.
 

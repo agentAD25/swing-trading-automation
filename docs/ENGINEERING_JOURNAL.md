@@ -311,3 +311,66 @@ credentials, connect to a broker, or begin Phase 1E or Phase 2.
 
 Pending for the pushed Phase 1D review revision. Exact commands and outcomes
 will be appended after validation.
+
+### Final validation evidence
+
+Validation ran against pushed correction commit `f5e23a4`, followed by the
+document-only review fixes included in the final validation commit:
+
+- `git diff --check cursor/phase-1a-governance-e1ba...HEAD` and
+  `git diff --check` passed.
+- A Python 3 standard-library fixture procedure verified all four manifest
+  SHA-256 values:
+  - `bars.csv`:
+    `e194cdef7ca448a8ceadb64d06699f35ef4c59da131786d7835099861df5e3bc`
+  - `scenario.json`:
+    `bd7af4205b9896bfd7fbe52bbf80ab0b4979c81116b2c8d8ce2520a49a91a501`
+  - `expected-events.jsonl`:
+    `9664c75e2e27bfdd39d40bc9aeaa7772cad21f799797e5a6be0ae611549a20bd`
+  - `expected-report.json`:
+    `e7255f12616beabdde6269501bf52d234c99e987e6f5ffd96605bc1fb39eeb99`
+- The same procedure parsed every CSV/JSON/JSONL artifact; verified 19
+  canonical, unique events and contiguous per-aggregate versions; recomputed
+  all three idempotency keys from `scenario.json`; required each intent's four
+  events and versions 1–4; recomputed the report content digest; tied the report
+  digest and `evt_wdc_018` high-water mark to `report.generated.v1`; verified
+  the shared non-account trade scope and `DRY_RUN — LOCAL NON-NETWORK`; and
+  printed `P1D fixture: 4 manifest hashes, 19 canonical unique events,
+  contiguous versions, 3 SHA-256 keys, 2 complete intent paths, report
+  digest/HWM, non-account scope PASS`.
+- The independently recomputed key digests were
+  `c4131ccda4608e4604adf5f36a49265ccf5e57e4f1754f1b6ff2f2403f180b0f`
+  (entry),
+  `92949cf1b3481ce27b71360ccf67ae3580dc03d913088aee60fedefd5c2bbfa3`
+  (exit), and
+  `54b3b57426148284b3ca7f7423902f6218f7b2813dfd743ce4d6ee9d7a4e989f`
+  (report). The recomputed report content digest was
+  `96191e0646f7c2db231c44a3925eec620102ffeb94903f132f70338bf327c06b`.
+- A Python Markdown procedure inspected 29 Markdown files and confirmed every
+  relative target exists; it printed `Markdown links: 29 files, all relative
+  targets PASS`.
+- Authority assertions confirmed sole-Operator semantics, explicit
+  `PHASE1_ACCEPTED` denial, `DRY_RUN` authorization, the non-overridable rule,
+  concurrent `LIVE` prerequisites, one entry for each P1D-C01 through P1D-C04,
+  and four instances of every required contradiction evidence field; they
+  printed `Authority/acceptance/LIVE conjunction and P1D-C01..C04 audit fields
+  PASS`.
+- Searches excluding explicitly identified historical snapshots found no
+  active stale `SIM`-only authorization. Diff-extension inspection found no
+  implementation file. Sensitive-pattern inspection outside documentation and
+  fixtures found no private-key marker, GitHub token pattern, or AWS access-key
+  pattern. The procedure printed `scope, stale-active-SIM, sensitive-pattern,
+  and whitespace assertions PASS`.
+- An independent read-only cross-document review verified P1D-C01–P1D-C04 and
+  found no substantive active safety contradiction. It identified stale
+  current-state, ADR evidence, and test-plan wording; those three findings were
+  corrected before final validation.
+- Two early assertion-harness invocations failed on case-sensitive expected
+  text (`Every` and bold `Sole`) even though the required text was present.
+  They changed no fixture or contract. The assertions were corrected to test
+  the intended semantics and the final fail-fast procedures above passed.
+
+This evidence proves document/fixture/hash/link/safety-assertion conformance
+only. It does not mark `PHASE1_ACCEPTED`, accept ADR-0001, authorize
+implementation or connectivity, use credentials, begin Phase 1E or Phase 2,
+or authorize `LIVE`.

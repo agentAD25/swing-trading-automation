@@ -47,12 +47,23 @@ fully prescribed test-only decision. A conforming implementation must:
 4. emit canonical report bytes exactly matching `expected-report.json`; and
 5. produce no network access or nondeterministic fields.
 
+In addition to byte comparison, validation independently:
+
+- recomputes each 64-hex idempotency digest from the declared canonical input;
+- requires `created → validated → dispatch_requested → dispatched` with
+  aggregate versions 1–4 for both intents;
+- removes only `content_digest` from the report, canonicalizes and hashes it,
+  then ties that digest and high-water mark to the report event; and
+- verifies one non-account `trade_scope_id` across scenario, trade events, and
+  report.
+
 The decision rule exists only to exercise contracts and must not be imported
 into strategy code.
 
 ## Negative acceptance
 
-Any `LIVE` acceptance, external network order call, duplicate logical effect,
+Any TradeStation `SIM` or `LIVE` acceptance, external network order call,
+duplicate logical effect,
 silent data correction, guessed identity/state, unreconciled final report,
 non-reproducible result, secret/account fixture, or missing evidence fails the
 suite.

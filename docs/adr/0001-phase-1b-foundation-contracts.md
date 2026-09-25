@@ -76,7 +76,8 @@ owners; security, licensing, legal, and compliance requirements.
 ## Evidence
 
 - Repository reference: `docs/AGENT_AUTHORITY.md`, accessed 2026-09-25.
-  Supports least authority, accepted-ADR requirement, and `SIM`-only boundary.
+  Supports least authority, accepted-ADR requirements, and the execution-mode
+  boundary as corrected by Phase 1D.
 - Repository reference: `docs/CURRENT_STATE.md`, accessed 2026-09-25. Supports
   that architecture, broker facts, and implementation were not established by
   Phase 1A.
