@@ -1,0 +1,48 @@
+{
+  "assumptions": {
+    "currency": "USD",
+    "fees": "0.0000",
+    "fill_model": "exact_next_selected_session_open",
+    "quantity": "2",
+    "short_sales": false
+  },
+  "calendar": {
+    "name": "fixture-calendar",
+    "sessions": [
+      "2024-01-02",
+      "2024-01-03",
+      "2024-01-04",
+      "2024-01-05",
+      "2024-01-08"
+    ],
+    "version": "1"
+  },
+  "clock": {
+    "recorded_at_start": "2024-01-09T00:00:00.000000Z",
+    "step_microseconds": 1,
+    "type": "fixed_sequence"
+  },
+  "ids": {
+    "correlation_id": "cor_wdc_ref_001",
+    "entry_decision_id": "dec_wdc_entry_001",
+    "entry_intent_id": "int_wdc_entry_001",
+    "entry_order_id": "ord_wdc_entry_001",
+    "exit_decision_id": "dec_wdc_exit_001",
+    "exit_intent_id": "int_wdc_exit_001",
+    "exit_order_id": "ord_wdc_exit_001",
+    "report_id": "rpt_wdc_ref_001",
+    "run_id": "run_wdc_ref_001",
+    "trade_id": "trd_wdc_ref_001"
+  },
+  "mode": "SIM",
+  "rule": {
+    "entry": "first close strictly greater than open; buy fixed quantity at next session open",
+    "exit": "sell complete position at open of third session after signal session",
+    "name": "fixture-wiring-rule",
+    "production_use": "PROHIBITED",
+    "version": "1"
+  },
+  "schema_version": 1,
+  "seed": 20240102,
+  "synthetic": true
+}

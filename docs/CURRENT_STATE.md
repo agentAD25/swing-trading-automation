@@ -1,13 +1,15 @@
 # Current State
 
 - Last updated: 2026-09-25
-- Current phase: Phase 1A — governance bootstrap
-- Phase status: Complete on governance branch; pending human review/merge
+- Current phase: Phase 1B — architecture/design contracts
+- Phase status: Drafted on isolated branch; pending validation and human review
 - Authorized execution mode: `SIM` only
 - `LIVE` status: Unauthorized
-- Foundation implementation: Not started and not authorized by Phase 1A
-- Canonical baseline: `origin/main` at `8b37e20`
-- Research workstreams ready: Yes, after adoption of this governance baseline
+- Foundation implementation: Not started and not authorized
+- Phase 2: Unstarted and unauthorized
+- Design baseline: Phase 1A governance commit `ae1aa85`
+- Research workstreams ready: Yes; broker-dependent design claims remain blocked
+  on evidence
 
 ## Established
 
@@ -17,12 +19,18 @@
 - Skeleton locations for configuration, documentation, source, and tests
 - Explicit fail-closed boundary around `LIVE`, credentials, real accounts, and
   real capital
+- Phase 1B architecture, lifecycle, data, event, idempotency, reconciliation,
+  monitoring, metrics, reporting, test, SIM certification, and promotion
+  contracts are drafted for review
+- Deterministic synthetic WDC conformance fixture is documented
 
 ## Not established
 
-No broker capability, API behavior, strategy, data source, risk threshold,
-technology stack, architecture, or deployment approach has been validated or
-selected. There is no trading, data, backtesting, or integration implementation.
+No broker capability or API behavior has been validated. No strategy, market
+data source, risk threshold, technology stack, deployment approach, or
+operational threshold has been selected. The architecture is a proposed design
+contract, not an accepted ADR. There is no trading, data, backtesting, or
+integration implementation.
 
 ## Research readiness gates
 
@@ -45,15 +53,17 @@ direction.
 
 ## Unresolved items
 
-1. Human owner(s) and ADR decider(s) are not named.
-2. Research acceptance criteria beyond the common evidence contract are not
-   yet approved.
+1. Human owner(s), operators, and ADR decider(s) are not named.
+2. ADR-0001 and the Phase 1B contracts are Proposed, not Accepted.
 3. Broker/API, strategy/data, and risk/operations facts remain unresearched.
-4. Legal, regulatory, entitlement, and data-licensing obligations are unknown.
-5. Later phase gates, implementation stack, and deployment target are unknown.
+4. Legal, regulatory, entitlement, security, and data-licensing obligations
+   are unknown.
+5. Technology, persistence, deployment, operating thresholds, recovery
+   objectives, and risk limits are unknown.
+6. Phase 2 entry criteria and authority are not granted.
 
 ## Evidence
 
 Starting-state and change evidence is recorded in
 `docs/ENGINEERING_JOURNAL.md`. Phase 1A validation completed successfully on
-2026-09-25.
+2026-09-25. Phase 1B validation is pending.

@@ -1,0 +1,12 @@
+{
+  "fixture": "wdc-reference-v1",
+  "purpose": "deterministic architecture conformance only",
+  "sha256": {
+    "bars.csv": "e194cdef7ca448a8ceadb64d06699f35ef4c59da131786d7835099861df5e3bc",
+    "expected-events.jsonl": "f805e5006eb49363953e7472273d8d583e9102f5f40f40fca1ec8c5cc9a51102",
+    "expected-report.json": "e3963c423a702e62344a3c30c9ded9f4d49a6bd99459364938cdbc0405ebe6d9",
+    "scenario.json": "347294bb40a617302eb094eed1e2fd9feba548b619db5eab1fc9054c0f8a943a"
+  },
+  "synthetic": true,
+  "version": 1
+}
