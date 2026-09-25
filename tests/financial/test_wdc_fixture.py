@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from swingtrade.domain import Bar
-from swingtrade.wdc import FixtureError, evaluate_daily_close_breakout, load_wdc_fixture
+from swingtrade.wdc import FixtureError, evaluate_daily_close_protective, load_wdc_fixture
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "wdc-reference"
 
@@ -40,7 +40,7 @@ def test_daily_close_only_and_rolling_prior_trading_day_high() -> None:
         bar("2024-01-09", "14", "13.5"),  # close > rolling prior high 13
     )
     calendar = tuple(item.session_date for item in bars)
-    signals = evaluate_daily_close_breakout(bars, calendar)
+    signals = evaluate_daily_close_protective(bars, calendar)
     assert [(item.prior_trading_day_high, item.triggered) for item in signals] == [
         ("12", False),
         ("13", True),

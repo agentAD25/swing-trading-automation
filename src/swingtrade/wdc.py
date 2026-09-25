@@ -122,10 +122,10 @@ def _validate_fixture(
         raise FixtureError("report reconciliation evidence mismatch")
 
 
-def evaluate_daily_close_breakout(
+def evaluate_daily_close_protective(
     bars: tuple[Bar, ...], calendar_sessions: tuple[date, ...]
 ) -> tuple[DailyCloseSignal, ...]:
-    """Evaluate strictly at close against the immediately prior declared session high."""
+    """Evaluate a protective breakout only at close against prior-session high."""
     by_session = {bar.session_date: bar for bar in bars}
     if len(by_session) != len(bars) or set(by_session) != set(calendar_sessions):
         raise FixtureError("bars must map one-to-one to the supplied trading calendar")
@@ -141,3 +141,6 @@ def evaluate_daily_close_breakout(
             )
         )
     return tuple(signals)
+
+
+evaluate_daily_close_breakout = evaluate_daily_close_protective
