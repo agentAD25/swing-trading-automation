@@ -68,6 +68,25 @@ def test_concurrent_creators_produce_one_durable_identity(engine) -> None:
         assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
 
 
+def test_concurrent_conflicting_creators_choose_one_identity(engine) -> None:
+    repository = PostgresIntentRepository(engine)
+
+    def create(quantity: str):
+        try:
+            return repository.create_or_get(make_intent(quantity=quantity))
+        except IntentIdentityConflict:
+            return None
+
+    with ThreadPoolExecutor(max_workers=12) as executor:
+        results = list(executor.map(create, ["2", "3"] * 12))
+    persisted = [result for result in results if result is not None]
+    assert persisted
+    assert all(result == persisted[0] for result in persisted)
+    assert any(result is None for result in results)
+    with engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
+
+
 def test_persistence_survives_pool_disposal_and_reconnect(engine) -> None:
     expected = PostgresIntentRepository(engine).create_or_get(make_intent())
     url = engine.url
