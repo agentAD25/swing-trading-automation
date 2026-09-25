@@ -29,8 +29,8 @@
 No broker capability or API behavior has been validated. No strategy, market
 data source, risk threshold, technology stack, deployment approach, or
 operational threshold has been selected. The architecture is a proposed design
-contract, not an accepted ADR. There is no trading, data, backtesting, or
-integration implementation.
+contract, not an accepted ADR. There is no production code or trading, data,
+backtesting, or integration implementation.
 
 ## Research readiness gates
 
