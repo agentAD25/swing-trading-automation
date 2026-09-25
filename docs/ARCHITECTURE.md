@@ -2,7 +2,8 @@
 
 - Status: Phase 1B design contract; implementation not authorized
 - Execution authorization: `SIM` only; `LIVE` unauthorized
-- Broker facts: unresolved unless supported by later broker research
+- Broker facts: limited to accepted evidence; unresolved behavior cannot be
+  inferred from the existence of research
 
 ## Purpose and invariants
 
@@ -39,9 +40,10 @@ The foundation must:
 
 The architecture is ports-and-adapters: domain contracts have no dependency on
 TradeStation or any transport. A future broker adapter may be designed only
-after its behavior is researched. Until then, the external-execution port is
-an unresolved boundary and only the deterministic simulator is eligible for
-use.
+after every affected behavior has sufficient evidence and human acceptance.
+The current public-document research leaves twelve production-critical groups
+unresolved. The external-execution port therefore remains an unresolved
+boundary and only the deterministic, non-network simulator is eligible for use.
 
 ## Control flow
 
@@ -96,8 +98,12 @@ an assumed success.
 
 ## Explicitly unresolved
 
-TradeStation authentication, endpoints, order types, identifiers, status
-vocabulary, timing, rate limits, session behavior, fill semantics, correction
-events, simulator parity, and availability are unknown. Technology stack,
-deployment topology, market-data source, exchange calendar, strategy, risk
-limits, retention, recovery objectives, and human ownership also remain open.
+TradeStation public documentation establishes selected environment, endpoint,
+schema, acknowledgement, read-limit, and rate-limit facts in
+[BROKER_CONTRACT.md](BROKER_CONTRACT.md). Key-specific authentication and
+entitlements, idempotency and timeout recovery, complete status transitions,
+stream recovery, group atomicity, precision/time semantics, fill/correction
+behavior, simulator parity, retention, and availability remain unresolved.
+Technology stack, deployment topology, market-data source, exchange calendar,
+strategy, risk limits, retention, recovery objectives, and human ownership
+also remain open.

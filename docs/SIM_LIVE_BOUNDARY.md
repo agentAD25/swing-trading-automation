@@ -49,9 +49,13 @@ Tests use mocks and fixtures only. A test that touches an account is invalid.
 
 ## Broker uncertainty
 
-No assertion is made about TradeStation SIM/LIVE URL separation, account
-classes, credential scopes, order-routing behavior, or environment labels.
-Those facts require first-party evidence and cannot weaken this boundary.
+TradeStation publicly documents separate v3 LIVE and SIM base URLs and
+describes SIM as using fake accounts/money and instant simulated fills; see
+[BROKER_CONTRACT.md](BROKER_CONTRACT.md). Those documentation facts do not
+prove runtime endpoint, DNS, proxy, network, certificate, account-class,
+credential, entitlement, fallback, or artifact isolation. They also do not
+establish simulator fidelity. Positive, independent isolation evidence remains
+a freeze blocker and no broker fact can weaken this boundary.
 
 ## Change control
 

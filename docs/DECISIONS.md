@@ -5,6 +5,8 @@
 `CONTRACT` means this Phase 1B design set uses the decision for internal
 consistency. Material decisions remain **Proposed** until an identified human
 accepts the corresponding ADR. `UNRESOLVED` means no selection may be inferred.
+Phase 1C assigns the overall state `PROPOSED / FREEZE_BLOCKED`; no decision in
+this register is `PHASE1_ACCEPTED`.
 
 ## Design contracts
 
@@ -26,8 +28,9 @@ Proposed because human deciders have not been named.
 ## Dependencies
 
 - Phase 1A governance must be adopted.
-- Broker/API research must supply first-party evidence before any adapter
-  contract is asserted.
+- Broker/API research must supply first-party evidence for every affected
+  behavior before any adapter contract is asserted. The current public-doc
+  handoff leaves twelve production-critical behavior groups unresolved.
 - Strategy/data research must define universe, signal, source, calendar,
   revisions, bias controls, and validation protocol.
 - Risk/operations research must define approved limits, owners, response
@@ -47,11 +50,26 @@ certification deciders; and all `LIVE` decisions.
 
 ## Broker-dependent unknowns
 
-TradeStation endpoint and environment separation, credential and account
-scopes, supported order terms, client ids/idempotency, status transitions,
-fills and corrections, pagination/snapshot semantics, timestamps, rate limits,
-maintenance/outage behavior, simulator parity, and reconciliation facilities
-are unresolved. No contract document should be read as a claim about them.
+Public documentation establishes separate v3 LIVE and SIM hosts, fake SIM
+accounts/money, instant simulated fills, selected endpoint schemas, command
+acknowledgement behavior, read limits, and default rate-limit mechanics.
+It does not prove runtime isolation or resolve key-specific scopes/quotas,
+client idempotency and timeout recovery, the complete order state machine,
+fills/corrections, stream recovery, group atomicity, precision/time semantics,
+simulator fidelity, retention, outages, or reconciliation facilities. See
+[BROKER_CONTRACT.md](BROKER_CONTRACT.md) and
+[PHASE_1C_RECONCILIATION.md](PHASE_1C_RECONCILIATION.md).
+
+## Phase 1C disposition
+
+- D-001 through D-008 remain internally coherent proposals.
+- ADR-0001 remains Proposed with unassigned human deciders.
+- FM-01 through FM-24 remain open safety findings; later design narrows but
+  does not close selected findings.
+- The exact implementation-freeze blockers and human decisions are maintained
+  in `PHASE_1C_RECONCILIATION.md`.
+- No repository document, validation result, or `CONTRACT` label grants phase
+  authority.
 
 ## Prohibited inferences
 

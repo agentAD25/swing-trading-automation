@@ -1,15 +1,14 @@
 # Current State
 
 - Last updated: 2026-09-25
-- Current phase: Phase 1B — architecture/design contracts
-- Phase status: Drafted and validated on isolated branch; pending human review
+- Current phase: Phase 1C — coordinator reconciliation
+- Phase status: Integrated and reconciled for review; freeze blockers remain
 - Authorized execution mode: `SIM` only
 - `LIVE` status: Unauthorized
 - Foundation implementation: Not started and not authorized
 - Phase 2: Unstarted and unauthorized
 - Design baseline: Phase 1A governance commit `ae1aa85`
-- Research workstreams ready: Yes; broker-dependent design claims remain blocked
-  on evidence
+- Contract acceptance: `PROPOSED / FREEZE_BLOCKED`; not `PHASE1_ACCEPTED`
 
 ## Established
 
@@ -23,14 +22,19 @@
   monitoring, metrics, reporting, test, SIM certification, and promotion
   contracts are drafted for review
 - Deterministic synthetic WDC conformance fixture is documented
+- Public TradeStation documentation establishes scoped API facts recorded in
+  `BROKER_CONTRACT.md`; twelve production-critical behavior groups remain
+  unresolved
+- Phase 1A governance failure scenarios and the Phase 1B design and broker
+  outputs are reconciled in `PHASE_1C_RECONCILIATION.md`
 
 ## Not established
 
-No broker capability or API behavior has been validated. No strategy, market
-data source, risk threshold, technology stack, deployment approach, or
-operational threshold has been selected. The architecture is a proposed design
-contract, not an accepted ADR. There is no production code or trading, data,
-backtesting, or integration implementation.
+No broker behavior has been accepted or verified against an account or runtime.
+No strategy, market-data source, risk threshold, technology stack, deployment
+approach, or operational threshold has been selected. The architecture is a
+proposed design contract, not an accepted ADR. There is no production code or
+trading, data, backtesting, or integration implementation.
 
 ## Research readiness gates
 
@@ -55,16 +59,20 @@ direction.
 
 1. Human owner(s), operators, and ADR decider(s) are not named.
 2. ADR-0001 and the Phase 1B contracts are Proposed, not Accepted.
-3. Broker/API, strategy/data, and risk/operations facts remain unresearched.
+3. Twelve production-critical broker behavior groups remain unresolved;
+   strategy/data and risk/operations facts remain unresearched.
 4. Legal, regulatory, entitlement, security, and data-licensing obligations
    are unknown.
 5. Technology, persistence, deployment, operating thresholds, recovery
    objectives, and risk limits are unknown.
 6. Phase 2 entry criteria and authority are not granted.
+7. Critical governance enforcement, authenticated authority, execution
+   isolation, and zero-order-attempt controls are not established.
 
 ## Evidence
 
 Starting-state and change evidence is recorded in
 `docs/ENGINEERING_JOURNAL.md`. Phase 1A validation completed successfully on
-2026-09-25. Phase 1B design and fixture validation passed; human review and ADR
-acceptance remain pending.
+2026-09-25. Phase 1B design and fixture validation passed within their stated
+scope. Phase 1C integrated-content validation is recorded in the journal.
+Human review and ADR acceptance remain pending; no safety freeze is lifted.

@@ -12,7 +12,8 @@ treated as live readiness.
 All of the following require affirmative evidence and named human approval:
 
 - current SIM certification and independent safety review;
-- completed first-party TradeStation capability research, including
+- completed first-party TradeStation capability evidence, with every
+  production-facing unresolved behavior closed, including
   authentication, environments, account/order/fill semantics, identifiers,
   idempotency, reconciliation, rate limits, outages, and corrections;
 - accepted ADRs for broker adapter, authorization, secrets, network isolation,
