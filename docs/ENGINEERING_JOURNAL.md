@@ -745,3 +745,84 @@ These results validate a replacement freeze candidate only. The candidate is
 not frozen, certified, or `PHASE1_ACCEPTED`; Phase 1E and Phase 2 remain not
 started; credentials, broker connectivity, queries, and orders were not used;
 and `LIVE` remains unauthorized.
+
+## 2026-09-25 — Bounded Phase 1 acceptance metadata
+
+### Acceptance evidence
+
+The human Operator reported that independent verification **PASSED**:
+
+- candidate commit:
+  `abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`;
+- candidate tree:
+  `cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`; and
+- evidence head:
+  `b3291a030b165315846b6703805afe9d28120bd8`.
+
+The verifier was identified as the independent verifier by the human Operator;
+no personal or service identifier was supplied, so none is invented here.
+
+The Operator records `PHASE1_ACCEPTED` as evidence-only metadata for that exact
+candidate/tree. Acceptance is bounded to the broker-neutral, offline,
+deterministic baseline and local non-network `DRY_RUN`. It does not authorize
+implementation, Phase 1E, Phase 2, credentials/OAuth, accounts, broker
+connectivity, TradeStation `SIM`, queries, confirmations, orders,
+replace/cancel, streams, deployment, real capital, or `LIVE`.
+
+### Candidate tag and immutable reference
+
+The repository had no existing tags or tag naming convention. Created the
+candidate-specific annotated tag `phase1-accepted-abc1fb6`, with tag object
+`197d22b06cf6a96bad8c4b1a49ad1b928b147ac0`. A candidate-specific name avoids
+the ambiguity of a moving `phase1-accepted` alias. The tag must never be moved
+or recreated; a later accepted candidate requires a new tag.
+
+Commands and results:
+
+```sh
+git cat-file -t phase1-accepted-abc1fb6
+# tag
+git rev-parse phase1-accepted-abc1fb6^{commit}
+# abc1fb6a9cc3554e7ad13f438685ba3c3c044dab
+git rev-parse phase1-accepted-abc1fb6^{tree}
+# cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808
+```
+
+The tag points to the accepted candidate, not this later metadata commit, so
+the accepted tree remains byte-for-byte unchanged and self-reference is
+avoided.
+
+### Acceptance manifest
+
+Added `docs/PHASE_1_ACCEPTANCE_MANIFEST.md` as evidence metadata outside the
+accepted tree. It records:
+
+- the exact candidate/tree/evidence head/tag/tag object;
+- verifier identity limitation and `PASSED` result;
+- bounded meaning and explicit non-authorizations;
+- an atomic 45-file candidate inventory with every Git blob OID and independent
+  SHA-256;
+- exact validation commands/results;
+- root cause `REPORT_OVERCLAIMS_EVIDENCE`;
+- stable fixture, report, and idempotency digests;
+- all twelve unresolved TradeStation behavior groups; and
+- deferred empirical questions and human decisions.
+
+Inventory commands:
+
+```sh
+git ls-tree -r abc1fb6 | wc -l
+# 45
+git ls-tree -r abc1fb6
+```
+
+The manifest does not resolve any broker unknown or modify any accepted
+contract, test, fixture, or source artifact.
+
+### Acceptance metadata validation
+
+Pending after committing the three authorized metadata files only:
+`CURRENT_STATE.md`, `ENGINEERING_JOURNAL.md`, and
+`PHASE_1_ACCEPTANCE_MANIFEST.md`. Validation will prove the diff scope, tag
+target/tree, 45-file inventory, stable hashes, links, candidate tests, and clean
+Git state before handoff.

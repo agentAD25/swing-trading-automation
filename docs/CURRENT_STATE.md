@@ -1,9 +1,9 @@
 # Current State
 
 - Last updated: 2026-09-25
-- Current phase: Phase 1D — surgical verifier remediation
-- Phase status: Replacement freeze candidate validated; not frozen, certified,
-  or accepted
+- Current phase: Phase 1 — bounded baseline acceptance recorded
+- Phase status: `PHASE1_ACCEPTED` for the exact broker-neutral offline
+  deterministic candidate only
 - Authorized execution mode: `DRY_RUN` only (local, deterministic, non-network)
 - TradeStation `SIM`: Reserved for a future connectivity phase; unauthorized
 - `LIVE` status: Unauthorized
@@ -11,7 +11,9 @@
 - Phase 1E: Not started and not authorized
 - Phase 2: Unstarted and unauthorized
 - Design baseline: Phase 1A governance commit `ae1aa85`
-- Contract acceptance: `PROPOSED / FREEZE_BLOCKED`; not `PHASE1_ACCEPTED`
+- Contract acceptance: `PHASE1_ACCEPTED` evidence metadata for candidate
+  `abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, tree
+  `cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`
 
 ## Operator acceptance model
 
@@ -22,9 +24,9 @@
 - **No implied authority:** that status does not authorize implementation,
   credentials, accounts, broker or network activity, TradeStation `SIM`, order
   submission, Phase 2, real capital, or `LIVE`.
-- **Current result:** the Operator has approved these Phase 1D corrections for
-  implementation, but has not yet marked the corrected baseline
-  `PHASE1_ACCEPTED`.
+- **Current result:** the human Operator records `PHASE1_ACCEPTED` for the exact
+  candidate/tree above after independent verification passed. This is
+  evidence-only acceptance and grants none of the prohibited capabilities.
 
 ## Phase history and current candidate
 
@@ -33,12 +35,14 @@
 | Phase 1A | Governance baseline `ae1aa85`; governance bootstrap complete, not Phase 1 acceptance |
 | Phase 1B | Architecture/design contracts and fixture, broker research, and failure model integrated from the recorded specialist commits; all remain proposed inputs |
 | Phase 1C | Coordinator reconciliation through `98731e7`; conflicts and freeze blockers recorded, no acceptance |
-| Phase 1D | Prior candidate `42ac8cd2e879732e456a7ed452510e7f5434a03e` is stale; replacement candidate commit `abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, exact tree `cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`, validated but not frozen, certified, or accepted |
+| Phase 1D | Prior candidate `42ac8cd2e879732e456a7ed452510e7f5434a03e` is stale; replacement candidate commit `abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, exact tree `cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`, independently verified and accepted only within the bounded Phase 1 meaning |
 | Phase 1E | Not started and not authorized |
 | Phase 2 | Not started and not authorized |
 
-`LIVE` remains unauthorized. “Freeze candidate” means a commit submitted for
-verification; it does not mean frozen, certified, accepted, or authorized.
+`LIVE` remains unauthorized. The candidate-specific annotated tag
+`phase1-accepted-abc1fb6` fixes the accepted commit without making the
+acceptance metadata part of its tree. Acceptance is not implementation,
+certification, deployment, or later-phase authorization.
 
 ## Exact-tree candidate mechanism
 
@@ -55,7 +59,8 @@ identity. Therefore:
    new candidate commit/tree and descendant attestation.
 
 This mechanism avoids impossible self-reference while making completeness
-auditable. No candidate or attestation implies freeze or acceptance.
+auditable. Candidate identity and verification alone did not imply acceptance;
+the later explicit human Operator decision recorded here does.
 
 ## Established
 
@@ -76,6 +81,9 @@ auditable. No candidate or attestation implies freeze or acceptance.
   outputs are reconciled in `PHASE_1C_RECONCILIATION.md`
 - Four verified contract/fixture contradictions are corrected and audited in
   `PHASE_1D_CORRECTIONS.md`
+- Exact Phase 1 acceptance evidence, the 45-file inventory, tag identity,
+  hashes, unresolved broker behaviors, and non-authorizations are recorded in
+  `PHASE_1_ACCEPTANCE_MANIFEST.md`
 
 ## Not established
 
@@ -107,10 +115,11 @@ direction.
 
 ## Unresolved items
 
-1. The human Operator is the sole Phase 1 acceptance decider; that person's
-   authenticated identity and durable acceptance mechanism remain to be
-   recorded before acceptance.
-2. ADR-0001 and the corrected contracts remain Proposed, not Accepted.
+1. The acceptance instruction identifies the human Operator by role; no
+   additional personal or service identifier is recorded in repository
+   evidence.
+2. Individual ADR statuses remain unchanged; bounded Phase 1 acceptance does
+   not expand any ADR or authorize implementation.
 3. Twelve production-critical broker behavior groups remain unresolved;
    strategy/data and risk/operations facts remain unresearched.
 4. Legal, regulatory, entitlement, security, and data-licensing obligations
@@ -128,4 +137,6 @@ Starting-state and change evidence is recorded in
 `docs/ENGINEERING_JOURNAL.md`. Phase 1A validation completed successfully on
 2026-09-25. Phase 1B design and fixture validation passed within their stated
 scope. Phase 1C integrated-content validation is recorded in the journal.
-Human review and ADR acceptance remain pending; no safety freeze is lifted.
+Independent verification passed the exact Phase 1 candidate, and bounded
+Operator acceptance is recorded in `PHASE_1_ACCEPTANCE_MANIFEST.md`. No
+implementation, broker, later-phase, or `LIVE` authority follows.
