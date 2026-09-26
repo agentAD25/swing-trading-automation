@@ -126,11 +126,13 @@ private-connectivity, and portability requirements.
   endpoints, and low application burden are positives ([S1]–[S5]). The
   retrievable first-party material does not document a generally available,
   production-supported synchronous multi-AZ database standby or failover
-  target comparable to RDS or Cloud SQL. A search index surfaced a “Multigres”
-  page, but direct retrieval of the canonical first-party URL returned `404`
-  on the same date. Because the underlying page and terms were not
-  reproducible, no claim from the search snippet is treated as evidence
-  ([S7]).
+  target comparable to RDS or Cloud SQL. Supabase does document Multigres with
+  consensus-backed writes and seconds-level automatic failover, but labels it
+  **Public Alpha**, outside the uptime SLA, and not intended for production or
+  mission-critical use; PITR and cross-region replicas are excluded ([S7]).
+  One independent retrieval succeeded while another direct retrieval returned
+  `404` on the same date, consistent with an unstable alpha/document rollout
+  and an additional reason not to treat it as an eligible `SIM` tier.
   PrivateLink and platform audit logs require Team or Enterprise; the Team
   plan starts at $599/month before project compute/PITR adjustments ([S4]).
   Restore makes the project inaccessible for size-dependent, unspecified
@@ -195,7 +197,8 @@ No `LIVE` objective is proposed; `LIVE` remains unconfigured and unauthorized.
 
 | Dimension | Supabase | Amazon RDS PostgreSQL | Neon PostgreSQL | Google Cloud SQL PostgreSQL |
 | --- | --- | --- | --- | --- |
-| HA/failover | No retrievable generally available production HA contract found; a search-indexed Multigres page returned `404` and is not credited ([S7]) | Multi-AZ provisions synchronous standby in another AZ; automatic failover typically 60–120s, but not a contractual RTO ([A1], [A2]) | Multi-AZ WAL/storage redundancy; compute is recreated/rescheduled: seconds for Postgres/VM, 1–2m node, 1–10m AZ; no cross-region replication ([N7], [N8]) | Regional HA synchronously writes persistent disks in two zones; expected failover interruption about 60s, environment-dependent, not a contractual RTO ([G1]) |
+| HA/failover | Multigres documents quorum writes and seconds-level failover, but is Public Alpha, excludes PITR/cross-region replicas, has no uptime SLA, and disclaims production/mission-critical use ([S7]) | Multi-AZ provisions synchronous standby in another AZ; automatic failover typically 60–120s, but not a contractual RTO ([A1], [A2]) | Multi-AZ WAL/storage redundancy; compute is recreated/rescheduled: seconds for Postgres/VM, 1–2m node, 1–10m AZ; no cross-region replication ([N7], [N8]) | Regional HA synchronously writes persistent disks in two zones; expected failover interruption about 60s, environment-dependent, not a contractual RTO ([G1]) |
+| Availability contract | Only Enterprise carries the published 99.9% uptime SLA; Multigres Alpha is excluded ([S10]) | RDS SLA publishes 99.95% monthly uptime for Multi-AZ; it does not establish RPO/RTO ([A16]) | Scale advertises an uptime SLA, but public details require contacting support ([N1]) | HA Enterprise publishes 99.95%; HA Enterprise Plus publishes 99.99%; exclusions and claim terms apply ([G12]) |
 | Backups/PITR | Paid plans: daily backups retained 7/14/up to 30 days. PITR paid add-on, Small compute minimum, worst-case two-minute RPO; restore takes project offline for size-dependent time ([S1], [S2]) | Automated backup retention 0–35 days; logs uploaded every five minutes; PITR creates a new instance ([A3], [A4]) | Root-branch instant restore: 6h Free, up to 7d Launch, 30d Scale; in-place overwrite, backup branch, brief connection interruption; child branches cannot PITR ([N1], [N4]) | Standard/enhanced incremental backups; retention from 1 day to 10 years depending on option; PITR creates a new instance; standalone PITR RPO typically 5m or less ([G1]–[G3]) |
 | RPO/RTO status | PITR RPO documented as worst-case 2m; restore RTO **UNKNOWN** | latest-restorable lag derives from 5m log uploads; HA loss target and contractual RTO **UNKNOWN**; typical failover 60–120s | Commit occurs after a WAL quorum acknowledgement; documented recovery ranges are not identified as contractual RTOs; cross-region RPO/RTO **UNKNOWN** ([N7], [N8]) | HA uses synchronous disks; ~60s expected failover; contractual RPO/RTO **UNKNOWN** |
 | Regions | One primary region per project; general and exact AWS regions documented; general regions do not support read replicas/API management ([S8]) | Region availability varies by engine version, class, extension, IAM, and proxy; exact combination must be rechecked ([A11], [A12]) | Eight AWS regions listed; project region is immutable and Azure creation is deprecated; products vary by region ([N10]) | Region/edition/machine/feature availability varies; exact combination must be rechecked ([G1], [G4]) |
@@ -239,8 +242,8 @@ Unknown usage and configuration make exact totals **UNKNOWN**.
 | --- | --- | --- | --- | --- | --- | --- |
 | Supabase | Pro starts $25/month; Small compute is about $15/month; one $10 compute credit is included per paid organization ([S2], [S4]) | 7d PITR about $100/month per project; 14d ~$200; 28d ~$400 | No separately priced synchronous standby found | 250GB egress included on Pro/Team, then published overage; private path requires Team/Enterprise | Metrics included Pro+; log drain $60/month plus usage; platform audit logs Team+ | Official one-project Pro + Small + 7d PITR example totals **$130/month** after credit ([S2]). It still lacks documented compute HA. Team starts $599/month before PITR/usage adjustments. |
 | RDS | Region/class/deployment hourly rate; exact static rate not exposed by the fetched page | Backup storage and retention growth can add cost; exact amount **UNKNOWN** | Multi-AZ deployment charges primary/standby resources; write I/O can double ([A7]) | Region/topology/egress dependent | Basic metrics plus optional logs, Enhanced Monitoring, Database Insights, alarms; exact amount **UNKNOWN** | **UNKNOWN** until an official calculator estimate fixes region and configuration. Required estimate must itemize DB hours, storage/IOPS, backups, transfer, logs/metrics/alarms, secrets/KMS, and support. |
-| Neon | Launch $0.106/CU-hour; Scale $0.222/CU-hour; 0.25 CU is 1GB RAM ([N1]) | Data $0.35/GB-month; history $0.20/GB-month; snapshots $0.09/GB-month | Multi-AZ storage included; separate compute HA charge/model not documented | 500GB public egress included on paid plans then $0.10/GB; Scale private transfer $0.01/GB | Scale includes 14d retention and export; external sink cost **UNKNOWN** | Always-on 0.25 CU on Scale is an illustrative **$40.52/month** compute (`0.25 × 730 × $0.222`) plus data, history, snapshots, private transfer, and external monitoring. Total is **UNKNOWN**; compute HA/RTO remains unproven. |
-| Cloud SQL | Region-, edition-, vCPU-, and memory-dependent | Storage/backups priced by GiB; enhanced backup-vault charges can differ | Regional HA CPU/memory and storage are approximately twice standalone ([G1], [G6]) | Same-region GCE is free; cross-region/internet rates apply ([G6]) | Built-in metrics; Logging, Monitoring, audit retention/ingestion/alerts can add cost | **UNKNOWN** until an official calculator estimate fixes region, edition, machine, HA storage, backup option, transfer, logs/metrics/alerts, KMS, DNS, and support. |
+| Neon | Launch $0.106/CU-hour; Scale $0.222/CU-hour; 0.25 CU is 1GB RAM ([N1]) | Data $0.35/GB-month; history $0.20/GB-month; snapshots $0.09/GB-month | Multi-AZ storage included; separate compute HA charge/model not documented | 500GB public egress included on paid plans then $0.10/GB; Scale private transfer $0.01/GB | Scale includes 14d retention and export; external sink cost **UNKNOWN** | Always-on 0.25 CU on Scale is an illustrative **$40.52/month** compute (`0.25 × 730 × $0.222`) plus data, history, snapshots, private transfer, and external monitoring. Total and contractual RTO are **UNKNOWN**. |
+| Cloud SQL | Region-, edition-, vCPU-, and memory-dependent; selected `us-central1` Enterprise HA list rates were $0.0826/vCPU-hour and $0.014/GiB-hour ([G4]) | Selected-page HA SSD was $0.000465753/GiB-hour and backup used $0.000109589/GiB-hour; enhanced backup-vault charges differ | Regional HA CPU/memory and storage are approximately twice standalone ([G1], [G6]) | Same-region GCE is free; cross-region/internet rates apply ([G6]) | Built-in metrics; Logging, Monitoring, audit retention/ingestion/alerts can add cost | Total is **UNKNOWN** until an official calculator estimate fixes region, edition, machine, HA storage, backup option, transfer, logs/metrics/alerts, KMS, DNS, and support. Unit rates are illustrative, not a quote. |
 
 The apparent Neon compute floor is not directly comparable to RDS/Cloud SQL:
 Neon uses quorum-backed storage plus ephemeral-compute rescheduling rather
@@ -572,10 +575,14 @@ not automatically contractual SLAs.
 - **[S6]** Supabase, “Postgres Extensions Overview,”
   <https://supabase.com/docs/guides/database/extensions>. Supports:
   preconfigured extension model and extension/software-upgrade coupling.
-- **[S7]** Supabase search index result for “Multigres,” canonical URL
-  <https://supabase.com/docs/guides/database/multigres>. **Limitation:** direct
-  retrieval returned `404` on 2026-09-26. The snippet is not reproducible
-  provider documentation, so this report credits no feature claim from it.
+- **[S7]** Supabase, “Multigres,”
+  <https://supabase.com/docs/guides/database/multigres>. An independent
+  first-party-document retrieval on 2026-09-26 supports consensus-backed
+  writes, seconds-level automatic failover, Public Alpha status, no uptime
+  SLA, no PITR/cross-region replicas, and explicit non-production/
+  non-mission-critical positioning. **Limitation/conflict:** a separate direct
+  retrieval returned `404` on the same date; availability and terms must be
+  reverified, and the alpha is not an eligible tier.
 - **[S8]** Supabase, “Available regions,”
   <https://supabase.com/docs/guides/platform/regions>. Supports: one primary
   region per project, general/specific AWS regions, data-residency caveats,
@@ -584,6 +591,9 @@ not automatically contractual SLAs.
   <https://supabase.com/docs/guides/platform/compute-and-disk>. Supports:
   compute classes, connection limits, storage/IO characteristics, and
   downtime during compute-size changes.
+- **[S10]** Supabase, “Service Level Agreement,”
+  <https://supabase.com/sla>. Supports: Enterprise-only 99.9% monthly uptime
+  commitment and exclusions. Limitation: Order Form and claim terms control.
 
 ### Amazon Web Services
 
@@ -648,6 +658,10 @@ not automatically contractual SLAs.
   <https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.DBInstanceClass.Types.html>.
   Supports: `db.t4g` burstable family and Unlimited-mode cost behavior.
   Limitation: does not validate `small` for this workload.
+- **[A16]** AWS, “Amazon RDS Service Level Agreement,”
+  <https://aws.amazon.com/rds/sla/>. Supports: 99.95% monthly uptime
+  commitment for Multi-AZ deployments. Limitation: availability commitment,
+  exclusions, and service credits do not constitute RPO or RTO guarantees.
 
 ### Neon
 
@@ -741,6 +755,10 @@ not automatically contractual SLAs.
   <https://docs.cloud.google.com/sql/docs/postgres/import-export/import-export-sql>.
   Supports: PostgreSQL SQL dump export/import workflow. Limitation: managed
   backup metadata remains provider-specific.
+- **[G12]** Google Cloud, “Cloud SQL Service Level Agreement,”
+  <https://cloud.google.com/sql/sla>. Supports: 99.95% monthly uptime for
+  Enterprise HA and 99.99% for Enterprise Plus HA. Limitation: exclusions,
+  claim terms, and credits apply; no numeric RPO/RTO follows.
 
 ## 14. Non-actions and completion boundary
 
