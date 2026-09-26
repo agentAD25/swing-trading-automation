@@ -86,14 +86,17 @@ def _valid_envelope(event: dict[str, Any]) -> bool:
     recorded_at = _canonical_instant(event.get("recorded_at"))
     return bool(
         all(isinstance(value, str) and value for value in nonempty)
-        and isinstance(event.get("aggregate_version"), int)
+        and type(event.get("aggregate_version")) is int
         and event["aggregate_version"] > 0
-        and isinstance(event.get("schema_version"), int)
+        and type(event.get("schema_version")) is int
         and event["schema_version"] > 0
         and isinstance(event.get("source"), dict)
         and (
             event.get("idempotency_key") is None
-            or isinstance(event.get("idempotency_key"), str)
+            or (
+                isinstance(event.get("idempotency_key"), str)
+                and bool(event.get("idempotency_key"))
+            )
         )
         and effective_at is not None
         and recorded_at is not None
@@ -133,15 +136,14 @@ def derive_reconciliation_result(
         if event.get("aggregate_id") == completion["aggregate_id"]
         and event.get("aggregate_type") == "reconciliation"
     ]
+    run_events = [
+        event
+        for event in unique[: completion_index + 1]
+        if event.get("run_id") == run_id
+    ]
     versions = [event.get("aggregate_version") for event in same_aggregate]
     checked_event = checked[1] if checked is not None else None
-    completion_effective = _canonical_instant(completion.get("effective_at"))
     completion_recorded = _canonical_instant(completion.get("recorded_at"))
-    checked_effective = (
-        _canonical_instant(checked_event.get("effective_at"))
-        if checked_event is not None
-        else None
-    )
     checked_recorded = (
         _canonical_instant(checked_event.get("recorded_at"))
         if checked_event is not None
@@ -154,6 +156,15 @@ def derive_reconciliation_result(
         and set(required_checks) == REQUIRED_CHECKS
         and len(required_checks) == len(REQUIRED_CHECKS)
     )
+    recorded_times = [_canonical_instant(event.get("recorded_at")) for event in run_events]
+    nondecreasing_recorded_times = (
+        all(value is not None for value in recorded_times)
+        and all(
+            left <= right
+            for left, right in zip(recorded_times, recorded_times[1:], strict=False)
+            if left is not None and right is not None
+        )
+    )
     qualifies = (
         completion.get("run_id") == run_id
         and checked is not None
@@ -163,15 +174,16 @@ def derive_reconciliation_result(
         and checked_event.get("run_id") == run_id
         and checked_event.get("correlation_id") == completion.get("correlation_id")
         and completion.get("causation_id") == payload.get("checked_through_event_id")
-        and completion_effective is not None
         and completion_recorded is not None
-        and checked_effective is not None
         and checked_recorded is not None
-        and completion_effective >= checked_effective
         and completion_recorded >= checked_recorded
+        and all(_valid_envelope(event) for event in run_events)
+        and nondecreasing_recorded_times
         and payload.get("result") == "PASS"
         and exact_required_checks
+        and type(payload.get("open_critical_discrepancies")) is int
         and payload.get("open_critical_discrepancies") == 0
+        and type(payload.get("open_high_discrepancies")) is int
         and payload.get("open_high_discrepancies") == 0
         and all(
             _valid_envelope(event)

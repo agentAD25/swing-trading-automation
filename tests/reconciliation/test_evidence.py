@@ -122,7 +122,6 @@ def test_partial_and_contradictory_evidence_never_increases_certainty() -> None:
         (1, "recorded_at", "2024-01-01T00:00:00.000002+00:00"),
         (1, "recorded_at", "2024-01-01T00:00:00Z"),
         (0, "recorded_at", "2023-12-31T23:59:59.999999Z"),
-        (1, "effective_at", "2023-12-31T23:59:59.999999Z"),
         (1, "recorded_at", "2023-12-31T23:59:59.999999Z"),
     ],
 )
@@ -131,6 +130,24 @@ def test_noncanonical_or_backward_temporal_evidence_fails_closed(
 ) -> None:
     events = completion()
     events[event_index][field] = value
+    assert derive_reconciliation_result(events, "evt_2", "run_1") == "UNRECONCILED"
+
+
+def test_late_effective_fact_does_not_override_recorded_sequence() -> None:
+    events = completion()
+    events[0]["effective_at"] = "2024-01-01T00:00:00.000001Z"
+    events[0]["recorded_at"] = "2024-01-01T00:00:00.000001Z"
+    events[1]["effective_at"] = "2024-01-01T00:00:00.000000Z"
+    assert derive_reconciliation_result(events, "evt_2", "run_1") == "PASS"
+
+
+def test_intervening_run_event_cannot_move_recorded_time_backward() -> None:
+    events = completion()
+    intervening = copy.deepcopy(events[0])
+    intervening["aggregate_id"] = "ord_2"
+    intervening["event_id"] = "evt_intervening"
+    intervening["recorded_at"] = "2024-01-01T00:00:00.000010Z"
+    events.insert(1, intervening)
     assert derive_reconciliation_result(events, "evt_2", "run_1") == "UNRECONCILED"
 
 
@@ -143,6 +160,8 @@ def test_noncanonical_or_backward_temporal_evidence_fails_closed(
         (0, "run_id", "run_other"),
         (1, "aggregate_type", "report"),
         (1, "aggregate_version", 2),
+        (1, "aggregate_version", True),
+        (1, "schema_version", True),
         (0, "aggregate_id", ""),
         (0, "causation_id", ""),
     ],
@@ -172,6 +191,8 @@ def test_missing_or_after_checkpoint_relation_fails_closed() -> None:
         {"required_checks": sorted(REQUIRED_CHECKS - {"EXECUTION"})},
         {"open_critical_discrepancies": 1},
         {"open_high_discrepancies": 1},
+        {"open_critical_discrepancies": False},
+        {"open_high_discrepancies": 0.0},
     ],
 )
 def test_incomplete_checks_or_discrepancies_fail_closed(

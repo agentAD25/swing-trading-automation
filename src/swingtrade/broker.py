@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from decimal import Decimal
 from typing import Protocol
 
 from swingtrade.domain import ExecutionMode, OrderIntent, OrderObservation
-from swingtrade.persistence import PostgresIntentRepository
+from swingtrade.persistence import (
+    PostgresIntentRepository,
+    materialize_dry_run_observation,
+)
 from swingtrade.safety import DispatchAuthorization, authorize_dispatch
 
 
@@ -53,12 +55,7 @@ class DryRunAdapter:
         )
         if intent.mode is not ExecutionMode.DRY_RUN:
             raise AssertionError("unreachable non-DRY_RUN dispatch")
-        self._repository.create_or_get(intent)
-        return OrderObservation(
-            order_id=f"dry_{intent.intent_id}",
-            intent_id=intent.intent_id,
-            state="PENDING",
-            requested_quantity=intent.quantity,
-            cumulative_quantity=Decimal("0"),
-            effective_at=self._clock,
+        persisted = self._repository.create_or_get(
+            intent, effective_at=self._clock
         )
+        return materialize_dry_run_observation(persisted)

@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass
+from datetime import datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import JSON, Engine, Integer, String, UniqueConstraint, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from swingtrade.domain import OrderIntent
+from swingtrade.domain import OrderIntent, OrderObservation, utc_instant
 from swingtrade.idempotency import canonical_json, idempotency_key, input_digest
 
 
@@ -52,6 +54,7 @@ class OrderIntentRow(Base):
     intent_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     input_digest: Mapped[str] = mapped_column(String(64), nullable=False)
     canonical_intent: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    canonical_observation: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
 
 class IntentIdentityConflict(RuntimeError):
@@ -62,12 +65,17 @@ class NonCanonicalIntentKey(RuntimeError):
     """An intent supplied or stored a key not derived from its canonical input."""
 
 
+class DurableObservationError(RuntimeError):
+    """A durable DRY_RUN observation is missing or noncanonical."""
+
+
 @dataclass(frozen=True)
 class PersistedIntent:
     idempotency_key: str
     intent_id: str
     input_digest: str
     canonical_intent: dict[str, Any]
+    canonical_observation: dict[str, Any]
 
 
 def dispatch_business_input(intent: OrderIntent) -> dict[str, str]:
@@ -85,13 +93,78 @@ def canonical_dispatch_key(intent: OrderIntent) -> str:
     return idempotency_key("dispatch", intent.intent_id, dispatch_business_input(intent))
 
 
-def _stored_dispatch_key(payload: dict[str, Any]) -> str:
+def _stored_dispatch_key(payload: object) -> str:
+    if not isinstance(payload, dict):
+        raise NonCanonicalIntentKey("stored canonical intent is not an object")
     required = ("decision_id", "intent_id", "mode", "quantity", "side")
     if any(not isinstance(payload.get(field), str) for field in required):
         raise NonCanonicalIntentKey("stored canonical intent lacks dispatch key input")
     intent_id = payload["intent_id"]
     business_input = {field: payload[field] for field in required}
     return idempotency_key("dispatch", intent_id, business_input)
+
+
+def _canonical_utc_instant(value: datetime) -> str:
+    utc_instant(value)
+    return value.isoformat(timespec="microseconds").replace("+00:00", "Z")
+
+
+def canonical_dry_run_observation(
+    intent: OrderIntent, effective_at: datetime
+) -> dict[str, str]:
+    return {
+        "cumulative_quantity": "0",
+        "effective_at": _canonical_utc_instant(effective_at),
+        "intent_id": intent.intent_id,
+        "order_id": f"dry_{intent.intent_id}",
+        "requested_quantity": str(intent.quantity),
+        "state": "PENDING",
+    }
+
+
+def materialize_dry_run_observation(persisted: PersistedIntent) -> OrderObservation:
+    payload = persisted.canonical_observation
+    required = {
+        "cumulative_quantity",
+        "effective_at",
+        "intent_id",
+        "order_id",
+        "requested_quantity",
+        "state",
+    }
+    if set(payload) != required or not all(
+        isinstance(payload[field], str) for field in required
+    ):
+        raise DurableObservationError("durable DRY_RUN observation is not canonical")
+    try:
+        effective_at = datetime.fromisoformat(payload["effective_at"].replace("Z", "+00:00"))
+        if _canonical_utc_instant(effective_at) != payload["effective_at"]:
+            raise ValueError("noncanonical instant")
+        observation = OrderObservation(
+            order_id=payload["order_id"],
+            intent_id=payload["intent_id"],
+            state=payload["state"],
+            requested_quantity=Decimal(payload["requested_quantity"]),
+            cumulative_quantity=Decimal(payload["cumulative_quantity"]),
+            effective_at=effective_at,
+        )
+    except (TypeError, ValueError) as error:
+        raise DurableObservationError(
+            "durable DRY_RUN observation is not canonical"
+        ) from error
+    canonical_intent_payload = persisted.canonical_intent
+    if (
+        observation.order_id != f"dry_{persisted.intent_id}"
+        or observation.intent_id != persisted.intent_id
+        or str(observation.requested_quantity)
+        != canonical_intent_payload.get("quantity")
+        or observation.state != "PENDING"
+        or observation.cumulative_quantity != 0
+    ):
+        raise DurableObservationError(
+            "durable DRY_RUN observation conflicts with canonical intent"
+        )
+    return observation
 
 
 def canonical_intent(intent: OrderIntent) -> dict[str, Any]:
@@ -114,7 +187,9 @@ class PostgresIntentRepository:
             raise ValueError("PostgresIntentRepository requires PostgreSQL")
         self._engine = engine
 
-    def create_or_get(self, intent: OrderIntent) -> PersistedIntent:
+    def create_or_get(
+        self, intent: OrderIntent, *, effective_at: datetime
+    ) -> PersistedIntent:
         expected_key = canonical_dispatch_key(intent)
         if intent.idempotency_key != expected_key:
             raise NonCanonicalIntentKey(
@@ -122,11 +197,13 @@ class PostgresIntentRepository:
             )
         payload = canonical_intent(intent)
         digest = input_digest(payload)
+        observation = canonical_dry_run_observation(intent, effective_at)
         values = {
             "idempotency_key": intent.idempotency_key,
             "intent_id": intent.intent_id,
             "input_digest": digest,
             "canonical_intent": payload,
+            "canonical_observation": observation,
         }
         with self._engine.begin() as connection:
             connection.execute(insert(OrderIntentRow).values(**values).on_conflict_do_nothing())
@@ -144,6 +221,7 @@ class PostgresIntentRepository:
                 row._mapping["intent_id"],
                 row._mapping["input_digest"],
                 row._mapping["canonical_intent"],
+                row._mapping["canonical_observation"],
             )
             stored_key = _stored_dispatch_key(persisted.canonical_intent)
             if (
@@ -153,8 +231,21 @@ class PostgresIntentRepository:
                 raise NonCanonicalIntentKey(
                     "durable intent row contains a noncanonical dispatch key"
                 )
-            if persisted != PersistedIntent(
-                intent.idempotency_key, intent.intent_id, digest, payload
+            if not isinstance(persisted.canonical_observation, dict):
+                raise DurableObservationError(
+                    "durable intent row lacks a canonical DRY_RUN observation"
+                )
+            materialize_dry_run_observation(persisted)
+            if (
+                persisted.idempotency_key,
+                persisted.intent_id,
+                persisted.input_digest,
+                persisted.canonical_intent,
+            ) != (
+                intent.idempotency_key,
+                intent.intent_id,
+                digest,
+                payload,
             ):
                 raise IntentIdentityConflict(
                     "idempotency key or intent id reused with different canonical intent"

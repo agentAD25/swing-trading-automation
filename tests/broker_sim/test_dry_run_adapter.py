@@ -48,11 +48,11 @@ def engine():
     value.dispose()
 
 
-def adapter(engine) -> DryRunAdapter:
+def adapter(engine, *, clock: datetime = NOW) -> DryRunAdapter:
     return DryRunAdapter(
         build_id="build_1",
         environment="local",
-        clock=NOW,
+        clock=clock,
         repository=PostgresIntentRepository(engine),
     )
 
@@ -146,7 +146,12 @@ def test_adapter_reconnect_replays_durable_identity(engine) -> None:
     engine.dispose()
     reconnected = create_engine(url)
     try:
-        assert adapter(reconnected).dispatch(intent(), grant()) == expected
+        assert (
+            adapter(reconnected, clock=NOW + timedelta(days=1)).dispatch(
+                intent(), grant(expires_at=NOW + timedelta(days=2))
+            )
+            == expected
+        )
         with reconnected.connect() as connection:
             assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
     finally:

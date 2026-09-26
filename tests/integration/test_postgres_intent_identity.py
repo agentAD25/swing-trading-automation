@@ -3,13 +3,16 @@ from __future__ import annotations
 import os
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
 from sqlalchemy import create_engine, func, insert, select, text
 
 from swingtrade.domain import ExecutionMode, OrderIntent, Side
+from swingtrade.idempotency import input_digest
 from swingtrade.persistence import (
+    DurableObservationError,
     IntentIdentityConflict,
     NonCanonicalIntentKey,
     OrderIntentRow,
@@ -17,29 +20,41 @@ from swingtrade.persistence import (
     canonical_dispatch_key,
     canonical_intent,
 )
-from swingtrade.idempotency import input_digest
 
 POSTGRES_URL = os.getenv("SWINGTRADE_TEST_POSTGRES_URL")
+NOW = datetime(2024, 1, 1, tzinfo=UTC)
 pytestmark = pytest.mark.skipif(
     not POSTGRES_URL, reason="SWINGTRADE_TEST_POSTGRES_URL is required"
 )
 
 
-def make_intent(*, quantity: str = "2", key: str | None = None) -> OrderIntent:
+def make_intent(
+    *,
+    decision_id: str = "dec_1",
+    intent_id: str = "int_1",
+    mode: ExecutionMode = ExecutionMode.DRY_RUN,
+    quantity: str = "2",
+    side: Side = Side.BUY,
+    key: str | None = None,
+) -> OrderIntent:
     candidate = OrderIntent(
-        intent_id="int_1",
+        intent_id=intent_id,
         run_id="run_1",
-        decision_id="dec_1",
+        decision_id=decision_id,
         instrument_id="ins_1",
-        side=Side.BUY,
+        side=side,
         quantity=Decimal(quantity),
-        mode=ExecutionMode.DRY_RUN,
+        mode=mode,
         idempotency_key="",
     )
     return replace(
         candidate,
         idempotency_key=canonical_dispatch_key(candidate) if key is None else key,
     )
+
+
+def create(repository: PostgresIntentRepository, value: OrderIntent):
+    return repository.create_or_get(value, effective_at=NOW)
 
 
 @pytest.fixture
@@ -56,11 +71,11 @@ def engine():
 
 def test_same_canonical_intent_converges_and_conflict_rolls_back(engine) -> None:
     repository = PostgresIntentRepository(engine)
-    first = repository.create_or_get(make_intent())
-    assert repository.create_or_get(make_intent()) == first
+    first = create(repository, make_intent())
+    assert create(repository, make_intent()) == first
 
     with pytest.raises(IntentIdentityConflict):
-        repository.create_or_get(make_intent(quantity="3"))
+        create(repository, make_intent(quantity="3"))
 
     with engine.connect() as connection:
         assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
@@ -74,19 +89,43 @@ def test_forged_key_fails_before_persistence_and_changed_economic_intent_conflic
     repository = PostgresIntentRepository(engine)
     forged = make_intent(key="v1:dispatch:int_1:" + "f" * 64)
     with pytest.raises(NonCanonicalIntentKey):
-        repository.create_or_get(forged)
+        create(repository, forged)
     with engine.connect() as connection:
         assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 0
 
-    repository.create_or_get(make_intent())
+    create(repository, make_intent())
     with pytest.raises(IntentIdentityConflict):
-        repository.create_or_get(make_intent(quantity="3"))
+        create(repository, make_intent(quantity="3"))
     with pytest.raises(NonCanonicalIntentKey):
-        repository.create_or_get(
+        create(
+            repository,
             make_intent(quantity="3", key=make_intent().idempotency_key)
         )
     with engine.connect() as connection:
         assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
+
+
+@pytest.mark.parametrize(
+    "changed",
+    [
+        {"decision_id": "dec_other"},
+        {"intent_id": "int_other"},
+        {"mode": ExecutionMode.SIM},
+        {"quantity": "3"},
+        {"side": Side.SELL},
+    ],
+)
+def test_each_canonical_dispatch_field_rejects_a_stale_supplied_key(
+    engine, changed: dict[str, object]
+) -> None:
+    original_key = make_intent().idempotency_key
+    with pytest.raises(NonCanonicalIntentKey):
+        create(
+            PostgresIntentRepository(engine),
+            make_intent(key=original_key, **changed),  # type: ignore[arg-type]
+        )
+    with engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 0
 
 
 def test_existing_noncanonical_durable_row_fails_closed(engine) -> None:
@@ -102,15 +141,49 @@ def test_existing_noncanonical_durable_row_fails_closed(engine) -> None:
             )
         )
     with pytest.raises(NonCanonicalIntentKey):
-        PostgresIntentRepository(engine).create_or_get(make_intent())
+        create(PostgresIntentRepository(engine), make_intent())
     with engine.connect() as connection:
         assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
+
+
+def test_malformed_existing_canonical_payload_raises_typed_failure(engine) -> None:
+    valid = make_intent()
+    malformed = ["not", "an", "object"]
+    with engine.begin() as connection:
+        connection.execute(
+            insert(OrderIntentRow).values(
+                idempotency_key=valid.idempotency_key,
+                intent_id=valid.intent_id,
+                input_digest=input_digest(malformed),
+                canonical_intent=malformed,
+                canonical_observation={},
+            )
+        )
+    with pytest.raises(NonCanonicalIntentKey):
+        create(PostgresIntentRepository(engine), valid)
+
+
+def test_malformed_existing_observation_raises_typed_failure(engine) -> None:
+    valid = make_intent()
+    payload = canonical_intent(valid)
+    with engine.begin() as connection:
+        connection.execute(
+            insert(OrderIntentRow).values(
+                idempotency_key=valid.idempotency_key,
+                intent_id=valid.intent_id,
+                input_digest=input_digest(payload),
+                canonical_intent=payload,
+                canonical_observation={},
+            )
+        )
+    with pytest.raises(DurableObservationError):
+        create(PostgresIntentRepository(engine), valid)
 
 
 def test_concurrent_creators_produce_one_durable_identity(engine) -> None:
     repository = PostgresIntentRepository(engine)
     with ThreadPoolExecutor(max_workers=12) as executor:
-        results = list(executor.map(lambda _: repository.create_or_get(make_intent()), range(24)))
+        results = list(executor.map(lambda _: create(repository, make_intent()), range(24)))
     assert all(result == results[0] for result in results)
     with engine.connect() as connection:
         assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
@@ -121,7 +194,8 @@ def test_concurrent_forged_keys_fail_without_durable_rows(engine) -> None:
 
     def create(index: int) -> None:
         repository.create_or_get(
-            make_intent(key=f"v1:dispatch:int_1:{index:064x}")
+            make_intent(key=f"v1:dispatch:int_1:{index:064x}"),
+            effective_at=NOW,
         )
 
     with ThreadPoolExecutor(max_workers=12) as executor:
@@ -136,7 +210,9 @@ def test_concurrent_conflicting_creators_choose_one_identity(engine) -> None:
 
     def create(quantity: str):
         try:
-            return repository.create_or_get(make_intent(quantity=quantity))
+            return repository.create_or_get(
+                make_intent(quantity=quantity), effective_at=NOW
+            )
         except IntentIdentityConflict:
             return None
 
@@ -151,11 +227,16 @@ def test_concurrent_conflicting_creators_choose_one_identity(engine) -> None:
 
 
 def test_persistence_survives_pool_disposal_and_reconnect(engine) -> None:
-    expected = PostgresIntentRepository(engine).create_or_get(make_intent())
+    expected = create(PostgresIntentRepository(engine), make_intent())
     url = engine.url
     engine.dispose()
     reconnected = create_engine(url)
     try:
-        assert PostgresIntentRepository(reconnected).create_or_get(make_intent()) == expected
+        assert (
+            PostgresIntentRepository(reconnected).create_or_get(
+                make_intent(), effective_at=NOW + timedelta(days=1)
+            )
+            == expected
+        )
     finally:
         reconnected.dispose()
