@@ -1525,3 +1525,85 @@ This is implementation evidence for independent verification, not
 self-certification. Phase 2, cloud/Supabase, credentials, broker connectivity,
 SIM, order activity, deployment, real capital, and LIVE remain unstarted and
 unauthorized.
+
+## 2026-09-26 — Gate B Phase 1 closure audit evidence
+
+This audit is evidence-only. It edits `docs/CURRENT_STATE.md`, this journal,
+and adds `docs/PHASE_1_CLOSURE.md`. It does not touch accepted contracts,
+fixtures, governance files, PR state, or Phase 2, and it preserves the
+verified implementation SHA/tree below unchanged from the evidence supplied
+for this audit.
+
+Preconditions supplied for this audit: independent Gate A verification
+(`bc-ba072c2e-4a7e-57ca-b044-2050ec311d13`) passed all F01–F06 and Phase 1E
+checks with 218 tests against PostgreSQL 16.15, at implementation SHA
+`eb4b3b550874b4729abf7902cda2df8bf01e70ba`, tree
+`858442c0b2dcf0537072e75e95bb0dd2b001bf49`.
+
+Independent checks re-run in this audit's environment against exact HEAD
+`eb4b3b5`:
+
+```text
+git rev-parse HEAD HEAD^{tree}
+# eb4b3b550874b4729abf7902cda2df8bf01e70ba
+# 858442c0b2dcf0537072e75e95bb0dd2b001bf49
+
+python -m pytest
+# 119 passed, 99 skipped, 1 warning in 0.60s
+# (PostgreSQL unavailable in this environment; 119 + 99 = 218 collected,
+# consistent with the supplied Gate A total. Skips are the PostgreSQL-only
+# integration tests.)
+
+python -m ruff check .
+# All checks passed!
+
+python -m mypy src
+# Success: no issues found in 11 source files
+
+python tests/validate_phase1_contracts.py
+# Phase 1 contracts: manifest, C01, C02, C03, C04 PASS; required-field
+# omission regression PASS; reconciliation evidence negative/positive
+# regressions PASS
+
+git status --porcelain   # clean
+git fsck --strict        # clean
+```
+
+Credential/secret-literal and broker-network-import scans against `src/`
+returned zero matches. `src/swingtrade/safety.py` `authorize_dispatch`
+confirmed present and continues to reject any non-`DRY_RUN` mode, mismatched
+identity, expired, replay, or reporting-flagged authorization.
+
+PR ancestry checks (`git merge-base --is-ancestor`), run against both the
+accepted candidate `abc1fb6a9cc3554e7ad13f438685ba3c3c044dab` and current
+HEAD:
+
+- PR #1 head `ae1aa85c76c53edadba823c3525bfdc2f72a8000` — ancestor of both.
+- PR #5 head `e06b5b26fba5ae1f9283f5bffb676d40332fe297` — ancestor of both.
+- PR #2/#3/#4 heads (`fd5e37dd...`, `c12a3cad...`, `032794e4...`) — ancestor
+  of neither; their subject matter (failure model, broker research,
+  architecture) is present in the accepted tree via distinct commits
+  (`749038d`, `177c58c`, `7dfac71`) authored on the Phase 1C reconciliation
+  lineage, not by git-merging those PR branches.
+- PR #6 is this branch; head equals current HEAD.
+
+`git diff --stat` of the accepted candidate against HEAD, restricted to the
+45 accepted manifest paths, shows exactly three changed paths (`README.md`,
+`docs/CURRENT_STATE.md`, `docs/ENGINEERING_JOURNAL.md`) and zero others; all
+42 remaining accepted files (governance, contracts, fixtures, ADR, contract
+validator) are byte-unchanged. The annotated tag `phase1-accepted-abc1fb6`
+still resolves to `abc1fb6`/`cb5fc1f9` at object
+`197d22b06cf6a96bad8c4b1a49ad1b928b147ac0`.
+
+Full detail, the 30-field closure report, and the phase-by-phase requirement
+audit are recorded in `docs/PHASE_1_CLOSURE.md`. Result: `PHASE1A_COMPLETE`,
+`PHASE1B_COMPLETE`, `PHASE1C_COMPLETE`, `PHASE1D_COMPLETE`,
+`PHASE1E_COMPLETE`, `PHASE1_COMPLETE` — bounded to governance, design,
+reconciliation, acceptance, and the offline `DRY_RUN` foundation only. Twelve
+TradeStation broker behavior groups and all deferred operator decisions
+remain unresolved and unauthorized. No credentials, broker/account/network
+activity, TradeStation `SIM`, order submission, deployment, real capital,
+`LIVE`, or Phase 2 activity was introduced, exercised, or authorized by this
+audit.
+
+Phase 2 has NOT been started.

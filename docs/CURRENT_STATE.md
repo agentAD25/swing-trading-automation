@@ -1,15 +1,21 @@
 # Current State
 
-- Last updated: 2026-09-25
-- Current phase: Phase 1E — bounded offline foundation remediation
-- Phase status: `PHASE1_ACCEPTED` for the exact broker-neutral offline
-  deterministic candidate only
+- Last updated: 2026-09-26
+- Current phase: Phase 1 closed (Gate B closure audit); Phase 2 not started
+- Phase status: `PHASE1_COMPLETE` for governance, design, reconciliation,
+  acceptance, and the offline `DRY_RUN` foundation; `PHASE1_ACCEPTED` remains
+  the bounded meaning of the exact broker-neutral offline deterministic
+  candidate within that closure
 - Authorized execution mode: `DRY_RUN` only (local, deterministic, non-network)
 - TradeStation `SIM`: Reserved for a future connectivity phase; unauthorized
 - `LIVE` status: Unauthorized
 - Foundation implementation: Minimal local non-network `DRY_RUN` foundation
-  authorized by the human Operator and under review in draft PR #6
-- Phase 1E: Started; bounded to P1E-01 through P1E-05 remediation only
+  implemented, remediated through findings F01–F06, and independently
+  verified (Gate A: 218 tests, PostgreSQL 16.15) at SHA
+  `eb4b3b550874b4729abf7902cda2df8bf01e70ba`, tree
+  `858442c0b2dcf0537072e75e95bb0dd2b001bf49`, in draft PR #6
+- Phase 1E: Complete — Gate A independent verification passed with no
+  remaining material findings; see `docs/PHASE_1_CLOSURE.md`
 - Phase 2: Unstarted and unauthorized
 - Design baseline: Phase 1A governance commit `ae1aa85`
 - Contract acceptance: `PHASE1_ACCEPTED` evidence metadata for candidate
@@ -37,7 +43,8 @@
 | Phase 1B | Architecture/design contracts and fixture, broker research, and failure model integrated from the recorded specialist commits; all remain proposed inputs |
 | Phase 1C | Coordinator reconciliation through `98731e7`; conflicts and freeze blockers recorded, no acceptance |
 | Phase 1D | Closed: replacement candidate commit `abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, exact tree `cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`, independently verified and accepted only within the bounded Phase 1 meaning; immutable tag `phase1-accepted-abc1fb6` |
-| Phase 1E | Human-authorized minimal offline foundation under review in draft PR #6; current remediation is limited to P1E-01 through P1E-05 |
+| Phase 1E | Complete: offline foundation implemented and remediated through findings F01–F06 at SHA `eb4b3b550874b4729abf7902cda2df8bf01e70ba`, tree `858442c0b2dcf0537072e75e95bb0dd2b001bf49`; Gate A independent verification passed with 218 tests (PostgreSQL 16.15); draft PR #6 remains open |
+| Phase 1 closure (Gate B) | Complete: evidence-only closure audit recorded in `docs/PHASE_1_CLOSURE.md`; `PHASE1A_COMPLETE` through `PHASE1E_COMPLETE` and `PHASE1_COMPLETE` |
 | Phase 2 | Not started and not authorized |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
@@ -144,7 +151,11 @@ Starting-state and change evidence is recorded in
 scope. Phase 1C integrated-content validation is recorded in the journal.
 Independent verification passed the exact Phase 1 candidate, and bounded
 Operator acceptance is recorded in `PHASE_1_ACCEPTANCE_MANIFEST.md`. The human
-Operator later authorized only the bounded Phase 1E offline implementation and
-P1E-01 through P1E-05 remediation recorded in the journal. No Phase 2, broker,
-TradeStation `SIM`, credential, account, order, deployment, real-capital, or
-`LIVE` authority follows.
+Operator authorized the bounded Phase 1E offline implementation; findings
+F01–F06 across all remediation rounds were corrected and independently
+re-verified, culminating in the Gate A pass (218 tests, PostgreSQL 16.15) at
+SHA `eb4b3b550874b4729abf7902cda2df8bf01e70ba`. The Gate B evidence-only
+closure audit in `docs/PHASE_1_CLOSURE.md` records `PHASE1A_COMPLETE` through
+`PHASE1E_COMPLETE` and `PHASE1_COMPLETE`. No Phase 2, broker, TradeStation
+`SIM`, credential, account, order, deployment, real-capital, or `LIVE`
+authority follows.
