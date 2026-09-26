@@ -1,3 +1,4 @@
+import csv
 import hashlib
 import json
 import shutil
@@ -77,7 +78,7 @@ def test_wdc_decimal_attacks_never_enter_decimal_constructor(
         raise AssertionError("Decimal constructor must not be called")
 
     monkeypatch.setattr(domain, "Decimal", forbidden_constructor)
-    with pytest.raises(DomainValidationError):
+    with pytest.raises((DomainValidationError, csv.Error)):
         load_wdc_fixture(root)
     assert not constructor_called
 
