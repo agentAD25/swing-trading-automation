@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, DecimalException
 from typing import Any
 
 from sqlalchemy import JSON, Engine, Integer, String, UniqueConstraint, select
@@ -136,6 +136,17 @@ def materialize_dry_run_observation(persisted: PersistedIntent) -> OrderObservat
         isinstance(payload[field], str) for field in required
     ):
         raise DurableObservationError("durable DRY_RUN observation is not canonical")
+    canonical_intent_payload = persisted.canonical_intent
+    if (
+        payload["order_id"] != f"dry_{persisted.intent_id}"
+        or payload["intent_id"] != persisted.intent_id
+        or payload["requested_quantity"] != canonical_intent_payload.get("quantity")
+        or payload["state"] != "PENDING"
+        or payload["cumulative_quantity"] != "0"
+    ):
+        raise DurableObservationError(
+            "durable DRY_RUN observation conflicts with canonical intent"
+        )
     try:
         effective_at = datetime.fromisoformat(payload["effective_at"].replace("Z", "+00:00"))
         if _canonical_utc_instant(effective_at) != payload["effective_at"]:
@@ -148,22 +159,10 @@ def materialize_dry_run_observation(persisted: PersistedIntent) -> OrderObservat
             cumulative_quantity=Decimal(payload["cumulative_quantity"]),
             effective_at=effective_at,
         )
-    except (TypeError, ValueError) as error:
+    except (TypeError, ValueError, DecimalException) as error:
         raise DurableObservationError(
             "durable DRY_RUN observation is not canonical"
         ) from error
-    canonical_intent_payload = persisted.canonical_intent
-    if (
-        observation.order_id != f"dry_{persisted.intent_id}"
-        or observation.intent_id != persisted.intent_id
-        or str(observation.requested_quantity)
-        != canonical_intent_payload.get("quantity")
-        or observation.state != "PENDING"
-        or observation.cumulative_quantity != 0
-    ):
-        raise DurableObservationError(
-            "durable DRY_RUN observation conflicts with canonical intent"
-        )
     return observation
 
 

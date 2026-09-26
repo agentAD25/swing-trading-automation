@@ -18,6 +18,7 @@ from swingtrade.persistence import (
     OrderIntentRow,
     PostgresIntentRepository,
     canonical_dispatch_key,
+    canonical_dry_run_observation,
     canonical_intent,
 )
 
@@ -174,6 +175,40 @@ def test_malformed_existing_observation_raises_typed_failure(engine) -> None:
                 input_digest=input_digest(payload),
                 canonical_intent=payload,
                 canonical_observation={},
+            )
+        )
+    with pytest.raises(DurableObservationError):
+        create(PostgresIntentRepository(engine), valid)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("cumulative_quantity", "bogus"),
+        ("cumulative_quantity", "0.0"),
+        ("cumulative_quantity", "-0"),
+        ("cumulative_quantity", "00"),
+        ("requested_quantity", "bogus"),
+        ("requested_quantity", "2.0"),
+        ("effective_at", "2024-01-01T00:00:00Z"),
+        ("state", "FILLED"),
+    ],
+)
+def test_noncanonical_existing_observation_values_raise_typed_failure(
+    engine, field: str, value: str
+) -> None:
+    valid = make_intent()
+    payload = canonical_intent(valid)
+    observation = canonical_dry_run_observation(valid, NOW)
+    observation[field] = value
+    with engine.begin() as connection:
+        connection.execute(
+            insert(OrderIntentRow).values(
+                idempotency_key=valid.idempotency_key,
+                intent_id=valid.intent_id,
+                input_digest=input_digest(payload),
+                canonical_intent=payload,
+                canonical_observation=observation,
             )
         )
     with pytest.raises(DurableObservationError):
