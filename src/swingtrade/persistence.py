@@ -11,6 +11,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from swingtrade.domain import (
     DomainValidationError,
+    MAX_DECIMAL_COEFFICIENT_DIGITS,
     OrderIntent,
     OrderObservation,
     decimal_value,
@@ -83,7 +84,7 @@ class PersistedIntent:
     canonical_observation: dict[str, Any]
 
 
-MAX_CANONICAL_DECIMAL_DIGIT_POSITIONS = 1000
+MAX_CANONICAL_DECIMAL_DIGIT_POSITIONS = MAX_DECIMAL_COEFFICIENT_DIGITS
 
 
 def _decimal_resource_error(
@@ -234,8 +235,8 @@ def materialize_dry_run_observation(persisted: PersistedIntent) -> OrderObservat
             order_id=payload["order_id"],
             intent_id=payload["intent_id"],
             state=payload["state"],
-            requested_quantity=Decimal(payload["requested_quantity"]),
-            cumulative_quantity=Decimal(payload["cumulative_quantity"]),
+            requested_quantity=decimal_value(payload["requested_quantity"]),
+            cumulative_quantity=decimal_value(payload["cumulative_quantity"]),
             effective_at=effective_at,
         )
     except (TypeError, ValueError, DecimalException) as error:

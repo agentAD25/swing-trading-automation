@@ -1276,6 +1276,48 @@ self-certification. Phase 2, credentials, broker connectivity, SIM, order
 activity, deployment, real capital, and LIVE remain unstarted and
 unauthorized.
 
+## 2026-09-26 — Gate A F06-A/B pre-edit record
+
+Gate A starts from fetched local/remote/PR head
+`6c84c3a1d5029a128ab51b8324449e7be86d7dc3`, tree
+`f7fbfafc26dd660db40b1d67e67b83d486c447a8`, with a clean worktree. The
+immutable accepted reference remains tag object
+`197d22b06cf6a96bad8c4b1a49ad1b928b147ac0`, commit
+`abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, tree
+`cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`, and 45 files. Prior F06 evidence
+records PostgreSQL 16.15, 177 warnings-strict tests, 48 targeted F06 tests, 90
+intent/DryRun tests, and validator/Ruff/mypy/Alembic/scans/integrity passes.
+
+Pre-edit inspection found:
+
+- The declared `decimal_value` input boundary is `Decimal | str`, but runtime
+  `isinstance`/fallback construction admitted bool, int, float subclasses,
+  `None`, Decimal/str subclasses, and arbitrary coercible objects.
+- String input reached `Decimal(raw)` before any lexical resource limit.
+  F06's tuple guard bounded fixed rendering after construction, but could not
+  prevent oversized coefficient, fraction, exponent-token, malformed, or
+  whitespace input from entering the Decimal parser.
+- Durable observation materialization also called `Decimal(string)` directly
+  rather than reusing the guarded declared boundary.
+
+No contract explicitly admits numeric primitives or custom coercion. Exact
+runtime `Decimal` and exact runtime `str` therefore implement the declared
+boundary without changing economic semantics. Gate A retains the accepted
+1000-digit canonical structural bound and adds lexical limits of **1024 raw
+characters**, **1000 coefficient digits**, **6 exponent digits**, and exponent
+magnitude at most **999999**. These limits admit every value allowed by the
+existing canonical output bound while ensuring preparse work is a single
+bounded linear scan. They are computational/input safety limits only: no
+rounding, quantization, locale, tick, lot, or economic precision is selected.
+No `CONTRACT_CONFLICT` exists.
+
+Expected edits are limited to `src/swingtrade/domain.py`,
+`src/swingtrade/persistence.py`, `tests/unit/test_domain_config.py`,
+`tests/integration/test_postgres_intent_identity.py`,
+`tests/broker_sim/test_dry_run_adapter.py`, and this journal. Any governance,
+contract, migration, WDC/state/safety behavior, adapter implementation,
+broker, cloud/Supabase, Phase 2, SIM, or LIVE change is outside Gate A.
+
 ## 2026-09-26 — P1E-F06 bounded Decimal resource remediation pre-edit record
 
 This F06-only pass starts from fetched local/remote/PR head

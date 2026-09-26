@@ -5,6 +5,12 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
+MAX_DECIMAL_RAW_LENGTH = 1024
+MAX_DECIMAL_COEFFICIENT_DIGITS = 1000
+MAX_DECIMAL_EXPONENT_DIGITS = 6
+MAX_DECIMAL_EXPONENT_MAGNITUDE = 999_999
+_DECIMAL_TYPE = Decimal
+
 
 class DomainValidationError(ValueError):
     """A value violates a broker-neutral domain invariant."""
@@ -22,13 +28,71 @@ class Side(StrEnum):
     SELL = "SELL"
 
 
+def _decimal_lexical_error(reason: str) -> DomainValidationError:
+    return DomainValidationError(
+        "invalid decimal input "
+        f"(reason={reason}, max_raw_length={MAX_DECIMAL_RAW_LENGTH}, "
+        f"max_coefficient_digits={MAX_DECIMAL_COEFFICIENT_DIGITS}, "
+        f"max_exponent_digits={MAX_DECIMAL_EXPONENT_DIGITS})"
+    )
+
+
+def _validate_decimal_string(raw: str) -> None:
+    raw_length = len(raw)
+    if raw_length == 0:
+        raise _decimal_lexical_error("empty")
+    if raw_length > MAX_DECIMAL_RAW_LENGTH:
+        raise _decimal_lexical_error("raw-length")
+    unsigned = raw[1:] if raw[0] in "+-" else raw
+    if unsigned.lower() in {"nan", "snan", "inf", "infinity"}:
+        raise DomainValidationError("decimal must be finite")
+
+    index = 1 if raw[0] in "+-" else 0
+    coefficient_digits = 0
+    seen_decimal_point = False
+    while index < raw_length and raw[index] not in "eE":
+        character = raw[index]
+        if "0" <= character <= "9":
+            coefficient_digits += 1
+            if coefficient_digits > MAX_DECIMAL_COEFFICIENT_DIGITS:
+                raise _decimal_lexical_error("coefficient-digits")
+        elif character == "." and not seen_decimal_point:
+            seen_decimal_point = True
+        else:
+            raise _decimal_lexical_error("syntax")
+        index += 1
+    if coefficient_digits == 0:
+        raise _decimal_lexical_error("missing-coefficient")
+    if index == raw_length:
+        return
+
+    index += 1
+    if index < raw_length and raw[index] in "+-":
+        index += 1
+    exponent_start = index
+    while index < raw_length and "0" <= raw[index] <= "9":
+        index += 1
+    exponent_digits = index - exponent_start
+    if exponent_digits == 0 or index != raw_length:
+        raise _decimal_lexical_error("exponent-syntax")
+    if exponent_digits > MAX_DECIMAL_EXPONENT_DIGITS:
+        raise _decimal_lexical_error("exponent-digits")
+    exponent_magnitude = int(raw[exponent_start:index])
+    if exponent_magnitude > MAX_DECIMAL_EXPONENT_MAGNITUDE:
+        raise _decimal_lexical_error("exponent-magnitude")
+
+
 def decimal_value(value: Decimal | str) -> Decimal:
-    if isinstance(value, float):
-        raise DomainValidationError("binary floating point is prohibited")
-    try:
-        result = value if isinstance(value, Decimal) else Decimal(value)
-    except Exception as error:
-        raise DomainValidationError("invalid decimal") from error
+    if type(value) is _DECIMAL_TYPE:
+        result = value
+    elif type(value) is str:
+        _validate_decimal_string(value)
+        try:
+            result = Decimal(value)
+        except Exception as error:
+            raise DomainValidationError("invalid decimal input") from error
+    else:
+        raise DomainValidationError("decimal input type must be exactly Decimal or str")
     if not result.is_finite():
         raise DomainValidationError("decimal must be finite")
     return result

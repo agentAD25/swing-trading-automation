@@ -96,6 +96,10 @@ def test_same_canonical_intent_converges_and_conflict_rolls_back(engine) -> None
         (("426.59", "426.590", "42659E-2"), "426.59"),
         (("-2", "-2.0", "-2.00"), "-2"),
         (("-426.59", "-426.590", "-42659E-2"), "-426.59"),
+        (("1E+2", "100", "100.0"), "100"),
+        (("1E-2", "0.01", "0.010"), "0.01"),
+        (("-1E+2", "-100", "-100.00"), "-100"),
+        (("-1E-2", "-0.01", "-0.010"), "-0.01"),
     ],
 )
 def test_canonical_decimal_collapses_only_economic_scale(
@@ -157,8 +161,8 @@ def test_canonical_decimal_boundary_plus_one_rejects_with_bounded_metadata(
         ("+000426.59000", "426.59"),
         ("-0", "0"),
         ("-0.000", "0"),
-        ("0E+1000000", "0"),
-        ("-0E-1000000", "0"),
+        ("0E+2", "0"),
+        ("-0E-2", "0"),
     ],
 )
 def test_canonical_decimal_preserves_safe_sign_zero_and_zero_padding(
@@ -190,8 +194,10 @@ def test_extreme_exponent_matrix_is_bounded(value: str, accepted: bool) -> None:
     if accepted:
         assert "E" not in canonical_decimal(value)
     else:
-        with pytest.raises(DomainValidationError, match="resource bound"):
+        with pytest.raises(DomainValidationError) as captured:
             canonical_decimal(value)
+        assert len(str(captured.value)) < 300
+        assert value not in str(captured.value)
 
 
 @pytest.mark.parametrize("value", ["NaN", "sNaN", "Infinity", "-Infinity"])
@@ -200,19 +206,18 @@ def test_nonfinite_decimal_values_fail_domain_validation(value: str) -> None:
         canonical_decimal(value)
 
 
-def test_extreme_rejection_occurs_before_fixed_point_formatting() -> None:
-    class FormatTrapDecimal(Decimal):
-        def as_tuple(self):
-            return Decimal("1").as_tuple()
+def test_extreme_rejection_occurs_before_fixed_point_formatting(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def forbidden_format(value: object, format_spec: str = "") -> str:
+        raise AssertionError("format must not run for rejected values")
 
-        def __format__(self, format_spec: str) -> str:
-            raise AssertionError("format must not run for rejected values")
-
+    monkeypatch.setattr(builtins, "format", forbidden_format)
     with pytest.raises(DomainValidationError, match="resource bound"):
-        canonical_decimal(FormatTrapDecimal("1E+1000000"))
+        canonical_decimal(Decimal("1E+1000000"))
 
 
-def test_accepted_decimal_subclass_cannot_spoof_tuple_or_format() -> None:
+def test_decimal_subclass_is_rejected_before_spoofed_tuple_or_format() -> None:
     class SpoofDecimal(Decimal):
         def as_tuple(self):
             return Decimal("1E+1000000").as_tuple()
@@ -220,7 +225,8 @@ def test_accepted_decimal_subclass_cannot_spoof_tuple_or_format() -> None:
         def __format__(self, format_spec: str) -> str:
             return "spoofed"
 
-    assert canonical_decimal(SpoofDecimal("2.00")) == "2"
+    with pytest.raises(DomainValidationError, match="exactly Decimal or str"):
+        canonical_decimal(SpoofDecimal("2.00"))
 
 
 def test_trailing_zero_coefficient_formats_only_bounded_canonical_tuple(

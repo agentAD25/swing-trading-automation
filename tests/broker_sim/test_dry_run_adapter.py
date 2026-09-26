@@ -112,6 +112,34 @@ def test_dry_run_extreme_decimal_fails_before_durable_row(engine) -> None:
         assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 0
 
 
+@pytest.mark.parametrize(
+    "quantity",
+    [
+        True,
+        False,
+        "9" * 1_000_000,
+        "0." + "9" * 1_000_000,
+        "1e" + "9" * 1_000_000,
+    ],
+)
+def test_dry_run_rejects_undeclared_or_oversized_input_without_row(
+    engine, quantity: object
+) -> None:
+    with pytest.raises(DomainValidationError):
+        OrderIntent(
+            "int_1",
+            "run_1",
+            "dec_1",
+            "ins_1",
+            Side.BUY,
+            quantity,  # type: ignore[arg-type]
+            ExecutionMode.DRY_RUN,
+            "v1:dispatch:int_1:" + "f" * 64,
+        )
+    with engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 0
+
+
 def test_missing_durable_repository_fails_closed() -> None:
     with pytest.raises(DurableRepositoryRequired):
         DryRunAdapter(
