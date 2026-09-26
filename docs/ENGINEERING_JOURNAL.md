@@ -1199,3 +1199,79 @@ Expected edits are limited to `src/swingtrade/persistence.py`,
 migration, accepted fixture/manifest, WDC/calendar, state-machine, safety,
 adapter, status, broker-network, SIM, LIVE, or Phase 2 file is expected to
 change.
+
+### P1E-F04/F05 implementation and verification evidence
+
+The implementation candidate before this evidence-only update is commit
+`71d3176887caa3ccadea647004f9badc593dbd86`, tree
+`38ca232390190cba37274332cf679619fff29b47`. It contains two ordinary
+fast-forward commits from the recorded start; no history was rewritten.
+
+P1E-F04 introduces one fixed-notation `canonical_decimal` representation and
+one `canonical_economic_intent` materialization. The repository materializes
+that economic object once, then uses it for the supplied-key check, canonical
+payload, digest, and durable observation. No float, locale, quantization,
+rounding, or scientific-format conversion participates. Scale-equivalent
+positive values, zero variants, and supported negative Decimal values collapse
+to one string; nearby unequal values remain distinct.
+
+The PostgreSQL boundary still verifies every supplied key directly before
+persistence and independently re-derives durable rows. A legacy
+scale-sensitive supplied key fails before a transaction. A stale durable row
+whose payload and key consistently contain the old scaled quantity is reported
+with typed `NonCanonicalIntentKey`; it is neither aliased nor rewritten.
+PostgreSQL tests cover scaled replay, 24 concurrent equivalent-scale calls,
+different economic values, reconnect using a scale variant, direct invocation,
+forged legacy keys, stale rows, durable cardinality, and all prior F01/F02
+cases.
+
+P1E-F05 fixes the accepted initial aggregate version at `1`, as established by
+the accepted validator/fixture, and validates every relevant stream through
+the reconciliation checkpoint. Stream identity is exactly
+`(aggregate_type, aggregate_id)`; each stream keeps one run, starts at `1`,
+and increments contiguously in ledger order. Global
+`(aggregate_type, aggregate_id, aggregate_version)` coordinates map to one
+event identity, and global event-ID deduplication still permits only an
+identical canonical duplicate as a no-op. Interleaved streams are partitioned
+without losing global coordinate/run integrity.
+
+The table-driven matrix covers valid interleaving, starts below and above one,
+middle gaps, identical and different-ID duplicates, conflicting global event
+IDs and coordinates, decreasing order, cross-run stream-coordinate reuse,
+cross-aggregate substitution, and one valid plus one invalid stream. A final
+adversarial review returned `PASS`; no contract conflict or scope violation
+was found.
+
+Fresh verification:
+
+```text
+PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu,
+compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+SWINGTRADE_TEST_POSTGRES_URL=postgresql+psycopg://.../swingtrade_test \
+  python3 -m pytest -W error
+130 passed in 1.55s (shell elapsed 1.830s)
+
+P1E-F04 PostgreSQL target: 31 passed in 1.03s (elapsed 1.321s)
+P1E-F05 stream matrix target: 55 passed in 0.09s (elapsed 0.283s)
+```
+
+The Phase 1 contract validator passed manifest/C01–C04, omission, and
+reconciliation regressions. Ruff passed; strict mypy reported no issues in 11
+source files; compile/import checks passed. PostgreSQL downgrade-to-base and
+upgrade-to-head passed through unchanged Alembic revisions 0001–0003; offline
+SQL rendered all three revisions in 57 lines.
+
+Runtime network-import, credential/secret-literal, and
+broker-network/LIVE-order-path scans returned zero matches. The exact diff is
+limited to the five expected files. Whitespace, strict Git object, ancestry,
+and clean-worktree checks passed. The accepted tag object, commit, and tree
+remain `197d22b06cf6a96bad8c4b1a49ad1b928b147ac0`,
+`abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, and
+`cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`; all 45 accepted manifest blob OIDs
+and SHA-256 values matched.
+
+This is implementation evidence for independent verification, not
+self-certification. Phase 2, credentials, broker connectivity, SIM, order
+activity, deployment, real capital, and LIVE remain unstarted and
+unauthorized.
