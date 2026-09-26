@@ -154,7 +154,7 @@ date.
 | Prior evidence | `BROKER_CONTRACT.md` findings 2–3 and unresolved item 5: fake accounts/fake money and instant simulated fills; realistic venue behavior not established. |
 | Current official evidence | TS3, accessed 2026-09-26: SIM is described as identical to LIVE except fake accounts/fake money and instant simulated fills; it is for experimentation without real-account effects. No detailed simulator model is published. |
 | Known / unknown | **Known:** documented instant-fill and fake-account model. **Unknown:** all listed edge behavior and whether data/account entitlements mirror any future configuration. |
-| Do docs resolve? | **No.** Primary `SIM_EXPERIMENT`. The broad “identical” sentence does not override the explicit instant-fill exception or prove fidelity. |
+| Do docs resolve? | **No.** Primary `SIM_EXPERIMENT`. **Inference (high confidence):** the broad “identical” sentence does not override the explicit instant-fill exception or prove fidelity for unstated dimensions. |
 | Future G2 read-only evidence | Inventory only the authorized SIM accounts, data flags, balances, positions, and existing orders; this does not establish order behavior. |
 | Future G3 SIM experiment | Bounded lifecycle matrix for fills/rejects/cancels/replaces/hours/buying power. Corporate-action and entitlement cases require controlled availability and may remain untestable. |
 | Operator/vendor clarification | Client Experience: enumerate simulator differences and deterministic controls, if any. Operator: define which fidelity gaps block certification; never infer LIVE parity. |
