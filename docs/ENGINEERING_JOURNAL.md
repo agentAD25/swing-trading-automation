@@ -1318,6 +1318,92 @@ Expected edits are limited to `src/swingtrade/domain.py`,
 contract, migration, WDC/state/safety behavior, adapter implementation,
 broker, cloud/Supabase, Phase 2, SIM, or LIVE change is outside Gate A.
 
+### Gate A implementation and verification evidence
+
+The implementation candidate before this evidence-only update is commit
+`31ada5759de8fe37d32f29711303d7cc9a27b40d`, tree
+`8d797adad2e576c17c9200c8e589e37731df3d7c`. It contains five ordinary
+fast-forward commits from the recorded start; no history was rewritten.
+
+The runtime boundary now accepts only `type(value) is Decimal` or
+`type(value) is str`. Bool, int, float, `None`, Decimal/str subclasses, and
+custom coercible objects raise bounded `DomainValidationError` before any
+conversion. In particular, bool can no longer become Decimal `0`/`1` or reach
+canonical payload, key, repository, or adapter logic.
+
+For exact strings, the deterministic preparser:
+
+1. checks the 1024-character raw limit before inspecting content;
+2. explicitly rejects nonfinite tokens;
+3. scans each character once without regex, whitespace normalization, locale,
+   or raw-value interpolation;
+4. permits only optional sign, decimal digits, at most one point, and optional
+   `e`/`E` with optional sign;
+5. requires at least one coefficient digit and at least one exponent digit
+   when an exponent marker exists;
+6. rejects above 1000 coefficient digits or six exponent digits; and
+7. converts the at-most-six-digit exponent token to int and rejects magnitude
+   above 999999 before calling `Decimal(raw)`.
+
+Only after those bounded checks does the exact string enter Decimal. Both exact
+string and exact Decimal paths then converge into the existing authoritative
+finite/tuple/projected-rendering canonicalizer with its 1000-position bound.
+Errors contain only static reason codes and constant limits, never the raw
+value or a user-controlled type name.
+
+Adversarial review found five WDC CSV fields that performed `Decimal(raw)`
+before `Bar` validation. The minimal corrective change routes only those
+fields through `decimal_value`; accepted WDC bytes and valid behavior are
+unchanged. WDC tests prove malformed, whitespace, nonfinite, and million-byte
+coefficient/fraction/exponent fields are rejected before Decimal—either by the
+CSV parser's own field cap or by Gate A. The final adversarial review returned
+`PASS`; this required boundary routing is not a scope violation.
+
+Tests instrument the domain Decimal constructor and prove it is never entered
+for oversized coefficient, fraction, exponent, malformed, signed, whitespace,
+or empty string attacks. Exact `Decimal` and ordinary exact strings remain
+accepted; `2`/`2.0`, `426.59`, `1E±2`, negative values, and signed zero retain
+their existing canonical equivalence. PostgreSQL/DryRun tests prove direct
+`True`, `False`, and million-byte inputs leave zero `order_intents` rows while
+ordinary scale-equivalent dispatch converges to one durable row.
+
+Fresh verification:
+
+```text
+PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu,
+compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+SWINGTRADE_TEST_POSTGRES_URL=postgresql+psycopg://.../swingtrade_test \
+  python3 -m pytest -W error
+218 passed in 1.94s (shell elapsed 2.245s)
+
+Gate A adversarial selection:
+87 passed, 60 deselected in 0.68s (elapsed 0.954s)
+domain/intent/DryRun/WDC focused files:
+147 passed in 1.78s
+```
+
+The Phase 1 contract validator passed manifest/C01–C04, omission, and
+reconciliation regressions. Ruff passed; strict mypy reported no issues in 11
+source files; compile/import passed. PostgreSQL downgrade-to-base and
+upgrade-to-head passed through unchanged Alembic revisions 0001–0003; offline
+SQL rendered all three in 57 lines.
+
+The exact diff is limited to the domain/canonicalizer, the five WDC parsing
+expressions, their tests, and this journal: eight files total. Secret,
+credential, runtime-network, cloud/Supabase, broker, and LIVE/order-path scans
+returned zero matches. Whitespace, strict Git object, ancestry, and clean
+worktree checks passed. The accepted tag object, commit, and tree remain
+`197d22b06cf6a96bad8c4b1a49ad1b928b147ac0`,
+`abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, and
+`cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`; all 45 accepted manifest blob OIDs
+and SHA-256 values matched.
+
+This is Gate A implementation evidence for independent verification, not
+self-certification. Governance, Phase 2, cloud/Supabase, credentials, broker
+connectivity, SIM, order activity, deployment, real capital, and LIVE remain
+unchanged and unauthorized.
+
 ## 2026-09-26 — P1E-F06 bounded Decimal resource remediation pre-edit record
 
 This F06-only pass starts from fetched local/remote/PR head
