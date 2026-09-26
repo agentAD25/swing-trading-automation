@@ -121,12 +121,17 @@ client secret.
 - **Benefits:** directly documented for server-side confidential clients;
   authenticates the client at code exchange and refresh.
 - **Costs and risks:** TradeStation does not document PKCE for this key type;
-  a long-lived client secret adds another high-impact secret; default
-  non-expiring refresh tokens and default `Trade` scope are unacceptable
+  `state` protects the callback against CSRF but does not by itself prevent
+  authorization-code injection; this proposal does not consume and validate a
+  transaction-bound OpenID Connect ID token as an alternate defense. A
+  long-lived client secret adds another high-impact secret; default
+  non-expiring refresh tokens and default `Trade` scope are also unacceptable
   without key-specific changes.
-- **Disposition:** viable only if the Operator accepts the residual lack of
-  PKCE after independent security review. There is no automatic downgrade to
-  this option.
+- **Disposition:** **blocked** under this proposal. It may be reconsidered only
+  if TradeStation confirms a supported transaction-bound code-injection
+  defense and P2-B/r2 defines and independently verifies that defense. Neither
+  Operator acceptance of residual risk nor an automatic downgrade can replace
+  the missing control.
 
 ### Option B — Public client with Authorization Code plus PKCE
 
