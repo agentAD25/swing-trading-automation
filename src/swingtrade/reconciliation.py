@@ -118,6 +118,7 @@ def _valid_completion(event: dict[str, Any]) -> bool:
 
 def _valid_stream_integrity(events: Sequence[dict[str, Any]]) -> bool:
     streams: dict[tuple[str, str], list[int]] = {}
+    stream_runs: dict[tuple[str, str], str] = {}
     coordinates: dict[tuple[str, str, int], str] = {}
     for event in events:
         if not _valid_envelope(event):
@@ -128,6 +129,10 @@ def _valid_stream_integrity(events: Sequence[dict[str, Any]]) -> bool:
         event_id = event["event_id"]
         stream = (aggregate_type, aggregate_id)
         coordinate = (*stream, aggregate_version)
+        previous_run_id = stream_runs.get(stream)
+        if previous_run_id is not None and previous_run_id != event["run_id"]:
+            return False
+        stream_runs[stream] = event["run_id"]
         previous_event_id = coordinates.get(coordinate)
         if previous_event_id is not None and previous_event_id != event_id:
             return False
@@ -172,6 +177,7 @@ def derive_reconciliation_result(
         for event in unique[: completion_index + 1]
         if event.get("run_id") == run_id
     ]
+    relevant_events = unique[: completion_index + 1]
     versions = [event.get("aggregate_version") for event in same_aggregate]
     checked_event = checked[1] if checked is not None else None
     completion_recorded = _canonical_instant(completion.get("recorded_at"))
@@ -209,7 +215,7 @@ def derive_reconciliation_result(
         and checked_recorded is not None
         and completion_recorded >= checked_recorded
         and all(_valid_envelope(event) for event in run_events)
-        and _valid_stream_integrity(run_events)
+        and _valid_stream_integrity(relevant_events)
         and nondecreasing_recorded_times
         and payload.get("result") == "PASS"
         and exact_required_checks

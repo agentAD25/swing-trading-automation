@@ -138,17 +138,26 @@ def _canonical_utc_instant(value: datetime) -> str:
     return value.isoformat(timespec="microseconds").replace("+00:00", "Z")
 
 
-def canonical_dry_run_observation(
-    intent: OrderIntent, effective_at: datetime
+def _canonical_dry_run_observation(
+    intent: OrderIntent,
+    effective_at: datetime,
+    economic: dict[str, str],
 ) -> dict[str, str]:
     return {
         "cumulative_quantity": "0",
         "effective_at": _canonical_utc_instant(effective_at),
         "intent_id": intent.intent_id,
         "order_id": f"dry_{intent.intent_id}",
-        "requested_quantity": canonical_decimal(intent.quantity),
+        "requested_quantity": economic["quantity"],
         "state": "PENDING",
     }
+
+
+def canonical_dry_run_observation(
+    intent: OrderIntent, effective_at: datetime
+) -> dict[str, str]:
+    economic = canonical_economic_intent(intent)
+    return _canonical_dry_run_observation(intent, effective_at, economic)
 
 
 def materialize_dry_run_observation(persisted: PersistedIntent) -> OrderObservation:
@@ -195,8 +204,9 @@ def materialize_dry_run_observation(persisted: PersistedIntent) -> OrderObservat
     return observation
 
 
-def canonical_intent(intent: OrderIntent) -> dict[str, Any]:
-    economic = canonical_economic_intent(intent)
+def _canonical_intent(
+    intent: OrderIntent, economic: dict[str, str]
+) -> dict[str, Any]:
     return {
         "decision_id": economic["decision_id"],
         "idempotency_key": intent.idempotency_key,
@@ -207,6 +217,11 @@ def canonical_intent(intent: OrderIntent) -> dict[str, Any]:
         "run_id": intent.run_id,
         "side": economic["side"],
     }
+
+
+def canonical_intent(intent: OrderIntent) -> dict[str, Any]:
+    economic = canonical_economic_intent(intent)
+    return _canonical_intent(intent, economic)
 
 
 class PostgresIntentRepository:
@@ -220,14 +235,15 @@ class PostgresIntentRepository:
     def create_or_get(
         self, intent: OrderIntent, *, effective_at: datetime
     ) -> PersistedIntent:
-        expected_key = canonical_dispatch_key(intent)
+        economic = canonical_economic_intent(intent)
+        expected_key = idempotency_key("dispatch", intent.intent_id, economic)
         if intent.idempotency_key != expected_key:
             raise NonCanonicalIntentKey(
                 "supplied intent key does not match canonical dispatch input"
             )
-        payload = canonical_intent(intent)
+        payload = _canonical_intent(intent, economic)
         digest = input_digest(payload)
-        observation = canonical_dry_run_observation(intent, effective_at)
+        observation = _canonical_dry_run_observation(intent, effective_at, economic)
         values = {
             "idempotency_key": intent.idempotency_key,
             "intent_id": intent.intent_id,

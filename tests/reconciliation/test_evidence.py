@@ -90,6 +90,9 @@ def test_interleaved_streams_partition_and_start_at_accepted_initial_version() -
         checked,
         stream_event("evt_pos_1", "position", "pos_1", 1),
         stream_event("evt_ord_2", "order", "ord_1", 2),
+        stream_event(
+            "evt_foreign", "position", "pos_foreign", 1, run_id="run_other"
+        ),
         stream_event("evt_pos_2", "position", "pos_1", 2),
         completed,
     ]
@@ -121,6 +124,14 @@ def invalid_stream_case(case: str) -> list[dict[str, object]]:
     if case == "cross_run":
         checked["run_id"] = "run_other"
         return [checked, completed]
+    if case == "cross_run_coordinate":
+        return [
+            checked,
+            stream_event(
+                "evt_cross_run", "order", "ord_1", 1, run_id="run_other"
+            ),
+            completed,
+        ]
     if case == "cross_aggregate":
         completed["aggregate_version"] = 2
         return [
@@ -148,6 +159,7 @@ def invalid_stream_case(case: str) -> list[dict[str, object]]:
         "conflicting_global_event_id",
         "decreasing",
         "cross_run",
+        "cross_run_coordinate",
         "cross_aggregate",
         "one_valid_one_invalid",
     ],
