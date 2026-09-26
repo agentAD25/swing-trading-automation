@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 import os
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
@@ -211,11 +212,42 @@ def test_extreme_rejection_occurs_before_fixed_point_formatting() -> None:
         canonical_decimal(FormatTrapDecimal("1E+1000000"))
 
 
-def test_trailing_zero_coefficient_formats_only_bounded_canonical_tuple() -> None:
+def test_accepted_decimal_subclass_cannot_spoof_tuple_or_format() -> None:
+    class SpoofDecimal(Decimal):
+        def as_tuple(self):
+            return Decimal("1E+1000000").as_tuple()
+
+        def __format__(self, format_spec: str) -> str:
+            return "spoofed"
+
+    assert canonical_decimal(SpoofDecimal("2.00")) == "2"
+
+
+def test_trailing_zero_coefficient_formats_only_bounded_canonical_tuple(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_format = builtins.format
+    formatted_positions: list[int] = []
+
+    def guarded_format(value: object, format_spec: str = "") -> str:
+        if isinstance(value, Decimal) and format_spec == "f":
+            _, digits, exponent = value.as_tuple()
+            assert isinstance(exponent, int)
+            positions = (
+                len(digits) + exponent
+                if exponent >= 0
+                else max(len(digits), 1 - exponent)
+            )
+            formatted_positions.append(positions)
+            assert positions <= MAX_CANONICAL_DECIMAL_DIGIT_POSITIONS
+        return original_format(value, format_spec)
+
+    monkeypatch.setattr(builtins, "format", guarded_format)
     value = "1" + "0" * 999 + "E-1500"
     result = canonical_decimal(value)
     assert result == "0." + "0" * 500 + "1"
     assert len(result.replace(".", "")) == 502
+    assert formatted_positions == [502]
 
 
 def test_equal_scale_keys_and_payloads_match_but_nearby_value_remains_distinct() -> None:
