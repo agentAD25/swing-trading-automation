@@ -1316,3 +1316,84 @@ exists. Expected edits are limited to `src/swingtrade/persistence.py`,
 `tests/broker_sim/test_dry_run_adapter.py`, and this journal. Any contract,
 domain, migration, WDC/state/safety, adapter implementation, broker, cloud,
 Supabase, Phase 2, SIM, or LIVE change is a scope violation.
+
+### P1E-F06 implementation and verification evidence
+
+The implementation candidate before this evidence-only update is commit
+`31ba1cb92f68194080cf50f15c4db0411501f940`, tree
+`a76f03eeeef93b8218405e2d498daca976025488`. It contains three ordinary
+fast-forward commits from the recorded start; no history was rewritten.
+
+The exact resource bound is
+`MAX_CANONICAL_DECIMAL_DIGIT_POSITIONS = 1000`. The authoritative algorithm:
+
+1. applies existing `decimal_value` parsing and float rejection;
+2. converts any Decimal subclass to an exact base `Decimal`, then explicitly
+   rejects NaN, sNaN, and positive/negative Infinity;
+3. returns every signed or scaled zero as `"0"` without expansion;
+4. inspects `as_tuple()` and rejects a raw coefficient longer than 1000 digits
+   before any trailing-zero loop;
+5. strips trailing coefficient zeros while adjusting the exponent, with at
+   most 1000 iterations;
+6. computes projected fixed-point digit positions as `digits + exponent` for a
+   nonnegative exponent, otherwise `max(digits, 1 - exponent)`, and rejects a
+   result above 1000; and
+7. reconstructs an exact base `Decimal` from the bounded canonical tuple and
+   only then calls `format(..., "f")`.
+
+This guarantees the formatted operand itself is bounded; it does not merely
+bound the eventual stripped result. The typed failure is
+`DomainValidationError`. Its message contains only the constant maximum,
+either a bounded coefficient count or `over-limit`, and exponent direction. It
+never formats, interpolates, hashes, logs, or persists the rejected value.
+
+Tests cover boundary-minus-one/exact/plus-one for positive and negative
+exponents, 999/1000/1001-digit coefficients, signs, signed/scaled zero,
+leading/trailing zeros, `1E±100`, `1E±1000`, `1E±100000`,
+`1E±1000000`, `9.99E±N`, negative values, all nonfinite forms, ordinary scale
+equivalence, and nearby unequal values. A Decimal subclass that lies through
+`as_tuple` and `__format__` cannot bypass either rejected or accepted paths.
+An instrumented formatting test proves the formatter receives a 502-position
+canonical tuple rather than the original 1501-position trailing-zero form.
+
+PostgreSQL repository and active DryRun tests prove `2`, `2.0`, and `2.00`
+converge durably. Extreme values raise before insert and leave zero
+`order_intents` rows. All prior concurrency, replay, reconnect, rollback,
+canonical-key, stale-row, F05 stream, P1E03–05, WDC, state, Decimal, and safety
+tests remain in the full suite.
+
+Fresh verification:
+
+```text
+PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu,
+compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+SWINGTRADE_TEST_POSTGRES_URL=postgresql+psycopg://.../swingtrade_test \
+  python3 -m pytest -W error
+177 passed in 1.60s (shell elapsed 1.884s)
+
+F06 boundary/resource/PostgreSQL/DryRun selection:
+48 passed, 42 deselected in 0.38s (elapsed 0.632s)
+full PostgreSQL intent plus DryRun files:
+90 passed in 1.48s
+```
+
+The Phase 1 contract validator passed manifest/C01–C04, omission, and
+reconciliation regressions. Ruff passed; strict mypy reported no issues in 11
+source files; compile/import passed. PostgreSQL downgrade-to-base and
+upgrade-to-head passed through unchanged Alembic revisions 0001–0003; offline
+SQL rendered all three in 57 lines. Final adversarial review returned `PASS`.
+
+The exact diff is limited to the four expected files. Secret/credential,
+runtime network, cloud/Supabase, broker, and LIVE/order-path scans returned
+zero matches. Whitespace, strict Git object, ancestry, and clean-worktree
+checks passed. The accepted tag object, commit, and tree remain
+`197d22b06cf6a96bad8c4b1a49ad1b928b147ac0`,
+`abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, and
+`cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`; every one of the 45 accepted
+manifest blob OIDs and SHA-256 values matched.
+
+This is implementation evidence for independent verification, not
+self-certification. Phase 2, cloud/Supabase, credentials, broker connectivity,
+SIM, order activity, deployment, real capital, and LIVE remain unstarted and
+unauthorized.
