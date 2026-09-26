@@ -6,7 +6,8 @@
 - Evidence baseline: canonical `main`
   `1ecbbe6d487d97195fde393b05c9499357599bdb`
 - Research access date: 2026-09-26
-- Authorized activity: documentation research only
+- Task scope: documentation research only; this does not start Phase 2
+  implementation
 - Execution authority remains: local, deterministic, non-network `DRY_RUN`
   only
 
@@ -33,6 +34,12 @@ Recommendations and targets are explicitly labeled. Undocumented or
 contract-dependent properties are marked **UNKNOWN**.
 
 ## 2. Decision summary
+
+`PHASE_2_PLAN.md` intentionally made no provider recommendation. This scoped
+research task explicitly requests an engineering `RECOMMENDED` /
+`ALTERNATIVE` / `DEFERRED` view for Operator consideration. The ranking below
+therefore updates the evidence presented for consideration; it does not select
+a provider, accept an ADR, authorize procurement, or complete a decision gate.
 
 ### RECOMMENDED — Amazon RDS for PostgreSQL, for Operator consideration
 
@@ -119,13 +126,11 @@ private-connectivity, and portability requirements.
   endpoints, and low application burden are positives ([S1]–[S5]). The
   retrievable first-party material does not document a generally available,
   production-supported synchronous multi-AZ database standby or failover
-  target comparable to RDS or Cloud SQL. A current first-party search result
-  surfaced a **Public Alpha** “Multigres” HA page claiming seconds-level
-  automatic failover and consensus-backed durability, while also saying it is
-  not SLA-covered or intended for production/mission-critical workloads. A
-  direct fetch of that canonical URL returned `404` on the same date ([S7]).
-  This source-availability conflict is unresolved and is not treated as an
-  available capability.
+  target comparable to RDS or Cloud SQL. A search index surfaced a “Multigres”
+  page, but direct retrieval of the canonical first-party URL returned `404`
+  on the same date. Because the underlying page and terms were not
+  reproducible, no claim from the search snippet is treated as evidence
+  ([S7]).
   PrivateLink and platform audit logs require Team or Enterprise; the Team
   plan starts at $599/month before project compute/PITR adjustments ([S4]).
   Restore makes the project inaccessible for size-dependent, unspecified
@@ -190,22 +195,22 @@ No `LIVE` objective is proposed; `LIVE` remains unconfigured and unauthorized.
 
 | Dimension | Supabase | Amazon RDS PostgreSQL | Neon PostgreSQL | Google Cloud SQL PostgreSQL |
 | --- | --- | --- | --- | --- |
-| HA/failover | No retrievable generally available production HA contract found. A search-indexed Multigres Public Alpha result conflicts with a `404` canonical page and says no SLA/mission-critical use ([S7]) | Multi-AZ provisions synchronous standby in another AZ; automatic failover typically 60–120s, but not a contractual RTO ([A1], [A2]) | Multi-AZ WAL/storage redundancy; compute is recreated/rescheduled: seconds for Postgres/VM, 1–2m node, 1–10m AZ; no cross-region replication ([N7], [N8]) | Regional HA synchronously writes persistent disks in two zones; expected failover interruption about 60s, environment-dependent, not a contractual RTO ([G1]) |
+| HA/failover | No retrievable generally available production HA contract found; a search-indexed Multigres page returned `404` and is not credited ([S7]) | Multi-AZ provisions synchronous standby in another AZ; automatic failover typically 60–120s, but not a contractual RTO ([A1], [A2]) | Multi-AZ WAL/storage redundancy; compute is recreated/rescheduled: seconds for Postgres/VM, 1–2m node, 1–10m AZ; no cross-region replication ([N7], [N8]) | Regional HA synchronously writes persistent disks in two zones; expected failover interruption about 60s, environment-dependent, not a contractual RTO ([G1]) |
 | Backups/PITR | Paid plans: daily backups retained 7/14/up to 30 days. PITR paid add-on, Small compute minimum, worst-case two-minute RPO; restore takes project offline for size-dependent time ([S1], [S2]) | Automated backup retention 0–35 days; logs uploaded every five minutes; PITR creates a new instance ([A3], [A4]) | Root-branch instant restore: 6h Free, up to 7d Launch, 30d Scale; in-place overwrite, backup branch, brief connection interruption; child branches cannot PITR ([N1], [N4]) | Standard/enhanced incremental backups; retention from 1 day to 10 years depending on option; PITR creates a new instance; standalone PITR RPO typically 5m or less ([G1]–[G3]) |
 | RPO/RTO status | PITR RPO documented as worst-case 2m; restore RTO **UNKNOWN** | latest-restorable lag derives from 5m log uploads; HA loss target and contractual RTO **UNKNOWN**; typical failover 60–120s | Commit occurs after a WAL quorum acknowledgement; documented recovery ranges are not identified as contractual RTOs; cross-region RPO/RTO **UNKNOWN** ([N7], [N8]) | HA uses synchronous disks; ~60s expected failover; contractual RPO/RTO **UNKNOWN** |
-| Regions | Provider region list; exact region/feature availability must be rechecked | Broad AWS regions; feature, engine, extension, proxy, and class availability varies | AWS/Azure-backed region choices; plan/feature availability must be rechecked | Broad GCP regions; edition/feature/machine availability varies |
-| Direct connections | Direct is recommended for persistent backends, migrations, dump/restore, replication ([S3]) | Standard direct PostgreSQL endpoint | Direct recommended for migrations, dump/restore, logical replication, analytics, session state ([N2]) | Standard direct IP, connector, or Auth Proxy paths |
+| Regions | One primary region per project; general and exact AWS regions documented; general regions do not support read replicas/API management ([S8]) | Region availability varies by engine version, class, extension, IAM, and proxy; exact combination must be rechecked ([A11], [A12]) | Eight AWS regions listed; project region is immutable and Azure creation is deprecated; products vary by region ([N10]) | Region/edition/machine/feature availability varies; exact combination must be rechecked ([G1], [G4]) |
+| Direct connections | Direct is recommended for persistent backends, migrations, dump/restore, replication ([S3]) | Standard SQL clients connect to a private or public PostgreSQL endpoint; private-only is supported ([A13]) | Direct recommended for migrations, dump/restore, logical replication, analytics, session state ([N2]) | Direct private/public IP or connector; Google recommends direct private-IP connectivity with enforced TLS ([G10]) |
 | Pooling | Shared session and transaction modes; dedicated transaction pooler on paid plans. Transaction mode loses session state and session advisory locks ([S3]) | Client-side pool by default; optional paid RDS Proxy has session/pinning limitations ([A6]) | PgBouncer transaction mode, 10,000 client limit; session state and session advisory locks unsupported ([N2]) | No mandatory pooler; connector/Proxy is connectivity/auth, not assumed to be a transaction pool |
 | Long workers | Direct or session endpoint; not transaction pooler | Direct endpoint; reconnect after failover | Direct endpoint; disable scale-to-zero for predictable workers; pre-ping/recycle stale connections and rebuild session state after failover ([N2], [N3], [N7], [N9]) | Direct/connector path; reconnect after failover |
-| Transactions and advisory locks | Ordinary PostgreSQL on direct/session connection; transaction pooler supports only transaction-scoped state | Ordinary PostgreSQL on direct connection | Ordinary PostgreSQL on direct connection; transaction pooler rejects session lock assumptions | Ordinary PostgreSQL on direct connection |
-| SQLAlchemy 2/psycopg/Alembic | Standard PostgreSQL wire protocol; use direct endpoint for migrations | Standard PostgreSQL wire protocol; repository stack is provider-neutral | First-party guides cover SQLAlchemy and Alembic; direct endpoint required for migrations; SQLAlchemy 2.0.33+ stale-connection fix noted ([N3], [N6]) | Standard PostgreSQL wire protocol; no provider dialect required |
+| Transactions and advisory locks | PostgreSQL semantics are expected on direct/session connections; transaction pooler loses session locks ([S3], [R2]) | Standard PostgreSQL transaction/lock semantics are expected through a direct standard-client connection and must be tested ([A12], [A13], [R2]) | Standard PostgreSQL runs in compute; transaction pooler and compute replacement invalidate session locks ([N2], [N8], [N9], [R2]) | PostgreSQL semantics are expected through a direct connection and must be tested; connector behavior must not be assumed to preserve sessions ([G10], [R2]) |
+| SQLAlchemy 2/psycopg/Alembic | Standard PostgreSQL connection; use direct endpoint for migrations; exact stack must be tested ([S3], [R1]) | Standard SQL clients are supported; repository stack remains provider-neutral and requires a compatibility test ([A12], [A13], [R1]) | First-party guides cover SQLAlchemy and Alembic; direct endpoint required for migrations; SQLAlchemy 2.0.33+ stale-connection fix noted ([N3], [N6]) | Direct standard PostgreSQL connectivity requires no provider dialect; repository stack still requires a compatibility test ([G10], [R1]) |
 | PostgreSQL features/extensions | More than 50 preconfigured extensions; software upgrade may be required for a newer extension ([S6]) | Curated extension set varies by engine version; custom parameters and privileges are constrained ([A8]) | Curated extension set; storage/branching implementation is proprietary | Curated extension set varies by engine/version; managed-service restrictions apply |
 | TLS | SSL can be enforced; use `verify-full` and downloaded CA; changing enforcement reboots DB ([S5]) | TLS and server certificate verification supported; AWS manages CA rotation for supported versions ([A5]) | TLS required; `verify-full` supported ([N5]) | TLS through direct certificates or Auth Proxy/connector; exact selected path must require verification |
 | Private network/IP | Shared pooler is public IPv4; direct defaults IPv6. PrivateLink is Team/Enterprise ([S3], [S4]) | Private subnets/security groups; no public accessibility required; RDS Proxy must be in same VPC | IP allow and Private Networking require Scale; private transfer $0.01/GB ([N1], [N5]) | Private IP/Private Service Connect; Auth Proxy can use private IP; VPC/IAM setup required ([G5]) |
-| Secrets | Password/role secrets; external approved secret manager required | Secrets Manager or IAM DB auth possible; design decision remains open | Password/role secrets; Neon recommends a secret manager ([N5]) | Secret Manager or IAM DB auth possible; design decision remains open |
-| Monitoring/audit | Metrics endpoint on Pro+; platform audit logs Team+; log drains are paid ([S4]) | CloudWatch metrics, Enhanced Monitoring, logs, Database Insights; cost varies ([A9]) | Monitoring 1d/3d/14d by plan; logs/metrics export Scale only ([N1]) | System Insights, Cloud Monitoring dashboards/alerts, Logging and optional audit logs ([G7]) |
+| Secrets | Password/role secrets; external approved secret manager required | Password auth or 15-minute IAM tokens; IAM has memory, logging, replication, and endpoint limitations ([A11]) | Password/role secrets; Neon recommends a secret manager ([N5]) | Built-in password or one-hour IAM token; automatic connector refresh is recommended for long workers ([G9]) |
+| Monitoring/audit | Metrics endpoint on Pro+; platform audit logs Team+; log drains are paid ([S4]) | CloudWatch metrics, Enhanced Monitoring, logs, Database Insights; IAM DB authentication attempts are not logged by CloudWatch/CloudTrail ([A9], [A11]) | Monitoring 1d/3d/14d by plan; logs/metrics export Scale only ([N1]) | System Insights, Cloud Monitoring dashboards/alerts, Logging, and optional paid Data Access audit logs ([G7], [G9]) |
 | Maintenance/upgrades | Compute resize and SSL changes cause downtime; software upgrades are provider-controlled workflows | Maintenance windows; major upgrades manual and can take minutes; minor auto-upgrade optional; blue/green available ([A10]) | Managed compute restarts/reschedules; application must reconnect and recreate session state; detailed customer maintenance control **UNKNOWN** ([N7], [N9]) | Maintenance window/deny-period controls vary by edition; application must tolerate brief downtime ([G8]) |
-| Export/restore | `pg_dump`; physical backups not directly downloadable after PITR disable; custom role passwords omitted from daily backup ([S1]) | `pg_dump`/`pg_restore`, logical replication, snapshots; provider snapshot is not portable | `pg_dump`/`pg_restore` on direct connection; history/branch metadata is not portable | `pg_dump`/`pg_restore`, SQL export/import, DMS; managed backups are not portable |
+| Export/restore | `pg_dump`; physical backups not directly downloadable after PITR disable; custom role passwords omitted from daily backup ([S1]) | Standard PostgreSQL clients and client-side copy/import are supported; native snapshots are provider-specific; portable logical dump/restore must be tested ([A12]–[A14]) | `pg_dump`/`pg_restore` on direct connection; history/branch metadata is not portable ([N2]) | SQL dump export/import is documented; managed backups are provider-specific ([G2], [G11]) |
 | Ops burden | Low platform burden; material plan/add-on boundaries | Moderate; most explicit infrastructure controls | Low platform burden, but serverless/session semantics add application burden | Moderate; most explicit infrastructure controls |
 | Lock-in | Low if BaaS APIs are prohibited; higher if Auth/Storage/Realtime adopted | Low-to-moderate; IAM, monitoring, snapshots, proxy are AWS-specific | Moderate; branching/history/scale-to-zero are proprietary | Low-to-moderate; IAM, monitoring, backup vault, proxy are GCP-specific |
 
@@ -247,14 +252,18 @@ and isolation requirements.
 ## 6. Minimum future `SIM` tier
 
 Subject to a future accepted ADR and explicit authorization, the proposed
-minimum is:
+minimum is an engineering sizing hypothesis, not a vendor minimum or validated
+capacity:
 
 - RDS for PostgreSQL Multi-AZ DB instance with one standby;
 - a currently supported PostgreSQL major version matching the migration/test
-  matrix; PostgreSQL 17 is preferred only if the exact region, instance class,
-  extensions, and upgrade policy support it;
-- `db.t4g.small` or larger, never `micro`, with a load-test and connection
-  budget before promotion;
+  matrix, selected only after exact region, class, extension, and upgrade
+  compatibility is verified;
+- provisionally `db.t4g.small` or larger, never `micro`, with a load test and
+  connection budget before promotion. AWS identifies `db.t4g` as a
+  burstable, Unlimited-mode family; this recommendation deliberately reserves
+  more memory than `micro` but is not evidence of workload sufficiency
+  ([A15]);
 - `gp3`, 20 GiB minimum, storage autoscaling with a finite maximum and billing
   alarms;
 - seven-day automated-backup/PITR retention plus protected manual snapshot
@@ -273,13 +282,19 @@ minimum is:
 - a tested `pg_dump`/`pg_restore` export and an isolated PITR restore before
   acceptance.
 
-`db.t4g.small` is a starting floor, not a performance guarantee. Burstable CPU
+`db.t4g.small` is a provisional starting floor, not a performance guarantee or
+accepted tier. Burstable CPU
 credits, memory, connection count, autovacuum, I/O latency, WAL rate, lock
 waits, long transactions, and restore time must be measured. A non-burstable
 class becomes mandatory if sustained CPU, credit depletion, memory pressure,
 or latency variance threatens the accepted objectives.
 
-## 7. Connection-source and environment-isolation contract
+## 7. Proposed connection-source and environment-isolation contract
+
+This section is an `r1` design input because the task explicitly requests
+environment separation. It does not claim `P2-C/r2` completion. Final
+network/secret mechanics depend on the separately owned `P2-B` architecture
+and must be reconciled before any later contract freeze.
 
 ### 7.1 One explicit source per environment
 
@@ -520,6 +535,11 @@ not automatically contractual SLAs.
   psycopg 3, Alembic, PostgreSQL-dialect-only repository guard, `NullPool` for
   migrations, and local PostgreSQL development. Limitation: local behavior
   does not prove managed-service compatibility or recovery.
+- **[R2]** PostgreSQL Global Development Group, “Explicit Locking — Advisory
+  Locks,”
+  <https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS>.
+  Supports: transaction versus session advisory-lock lifetime, cleanup, and
+  limits. Limitation: provider pool/failover behavior still requires testing.
 
 ### Supabase
 
@@ -548,13 +568,14 @@ not automatically contractual SLAs.
 - **[S6]** Supabase, “Postgres Extensions Overview,”
   <https://supabase.com/docs/guides/database/extensions>. Supports:
   preconfigured extension model and extension/software-upgrade coupling.
-- **[S7]** Supabase first-party search result for “Multigres,” canonical URL
-  <https://supabase.com/docs/guides/database/multigres>. Search result
-  accessed 2026-09-26 claimed Public Alpha multi-node HA, seconds-level
-  automatic failover, quorum durability, and no uptime SLA or intended
-  production/mission-critical use. **Conflict/limitation:** direct retrieval
-  of the canonical URL returned `404` on the same date, so availability,
-  terms, and currency are unresolved and no capability is credited.
+- **[S7]** Supabase search index result for “Multigres,” canonical URL
+  <https://supabase.com/docs/guides/database/multigres>. **Limitation:** direct
+  retrieval returned `404` on 2026-09-26. The snippet is not reproducible
+  provider documentation, so this report credits no feature claim from it.
+- **[S8]** Supabase, “Available regions,”
+  <https://supabase.com/docs/guides/platform/regions>. Supports: one primary
+  region per project, general/specific AWS regions, data-residency caveats,
+  and general-region feature limits.
 
 ### Amazon Web Services
 
@@ -604,6 +625,21 @@ not automatically contractual SLAs.
   <https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html>.
   Supports: 15-minute token authentication, TLS, centralized access, memory
   overhead, and PostgreSQL/replication limitations.
+- **[A12]** AWS, “Amazon RDS for PostgreSQL,”
+  <https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html>.
+  Supports: standard SQL clients, PostgreSQL versions, Multi-AZ, VPC, SSL,
+  backups/PITR, and managed-service privilege restrictions.
+- **[A13]** AWS, “Connecting to a DB instance running PostgreSQL,”
+  <https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ConnectToPostgreSQLInstance.html>.
+  Supports: standard clients/endpoints and public versus private VPC
+  accessibility.
+- **[A14]** AWS, “Using the `\copy` command to import data,”
+  <https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Procedural.Importing.Copy.html>.
+  Supports: client-side standard PostgreSQL copy/import.
+- **[A15]** AWS, “DB instance class types,”
+  <https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.DBInstanceClass.Types.html>.
+  Supports: `db.t4g` burstable family and Unlimited-mode cost behavior.
+  Limitation: does not validate `small` for this workload.
 
 ### Neon
 
@@ -645,6 +681,10 @@ not automatically contractual SLAs.
   scale-to-zero behavior, paid-plan disablement, activation latency, and loss
   of advisory locks/temporary tables/prepared statements/notifications when a
   session closes.
+- **[N10]** Neon, “Regions,”
+  <https://neon.com/docs/introduction/regions>. Supports: current AWS region
+  list, immutable project region, Azure region deprecation, and regional
+  product availability.
 
 ### Google Cloud
 
@@ -685,6 +725,14 @@ not automatically contractual SLAs.
   built-in versus IAM database authentication, one-hour access tokens,
   automatic connector refresh for long-running processes, SSL requirement,
   audit behavior, and shared-core performance caveat.
+- **[G10]** Google Cloud, “Choose how to connect to Cloud SQL,”
+  <https://docs.cloud.google.com/sql/docs/postgres/connect-overview>. Supports:
+  direct versus connector paths, private/public IP, TLS responsibilities,
+  private networking choices, and authentication options.
+- **[G11]** Google Cloud, “Export and import using SQL dump files,”
+  <https://docs.cloud.google.com/sql/docs/postgres/import-export/import-export-sql>.
+  Supports: PostgreSQL SQL dump export/import workflow. Limitation: managed
+  backup metadata remains provider-specific.
 
 ## 14. Non-actions and completion boundary
 
