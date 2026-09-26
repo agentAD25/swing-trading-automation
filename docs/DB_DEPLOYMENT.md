@@ -204,12 +204,12 @@ No `LIVE` objective is proposed; `LIVE` remains unconfigured and unauthorized.
 | Long workers | Direct or session endpoint; not transaction pooler | Direct endpoint; reconnect after failover | Direct endpoint; disable scale-to-zero for predictable workers; pre-ping/recycle stale connections and rebuild session state after failover ([N2], [N3], [N7], [N9]) | Direct/connector path; reconnect after failover |
 | Transactions and advisory locks | PostgreSQL semantics are expected on direct/session connections; transaction pooler loses session locks ([S3], [R2]) | Standard PostgreSQL transaction/lock semantics are expected through a direct standard-client connection and must be tested ([A12], [A13], [R2]) | Standard PostgreSQL runs in compute; transaction pooler and compute replacement invalidate session locks ([N2], [N8], [N9], [R2]) | PostgreSQL semantics are expected through a direct connection and must be tested; connector behavior must not be assumed to preserve sessions ([G10], [R2]) |
 | SQLAlchemy 2/psycopg/Alembic | Standard PostgreSQL connection; use direct endpoint for migrations; exact stack must be tested ([S3], [R1]) | Standard SQL clients are supported; repository stack remains provider-neutral and requires a compatibility test ([A12], [A13], [R1]) | First-party guides cover SQLAlchemy and Alembic; direct endpoint required for migrations; SQLAlchemy 2.0.33+ stale-connection fix noted ([N3], [N6]) | Direct standard PostgreSQL connectivity requires no provider dialect; repository stack still requires a compatibility test ([G10], [R1]) |
-| PostgreSQL features/extensions | More than 50 preconfigured extensions; software upgrade may be required for a newer extension ([S6]) | Curated extension set varies by engine version; custom parameters and privileges are constrained ([A8]) | Curated extension set; storage/branching implementation is proprietary | Curated extension set varies by engine/version; managed-service restrictions apply |
+| PostgreSQL features/extensions | More than 50 preconfigured extensions; software upgrade may be required for a newer extension ([S6]) | Curated extension set varies by engine version; custom parameters and privileges are constrained ([A8]) | Plans advertise common extensions, but the exact extension/version matrix for the target region is **UNKNOWN** ([N1]) | Exact extension/version compatibility is **UNKNOWN** and must be checked for the selected engine/edition/region |
 | TLS | SSL can be enforced; use `verify-full` and downloaded CA; changing enforcement reboots DB ([S5]) | TLS and server certificate verification supported; AWS manages CA rotation for supported versions ([A5]) | TLS required; `verify-full` supported ([N5]) | TLS through direct certificates or Auth Proxy/connector; exact selected path must require verification |
 | Private network/IP | Shared pooler is public IPv4; direct defaults IPv6. PrivateLink is Team/Enterprise ([S3], [S4]) | Private subnets/security groups; no public accessibility required; RDS Proxy must be in same VPC | IP allow and Private Networking require Scale; private transfer $0.01/GB ([N1], [N5]) | Private IP/Private Service Connect; Auth Proxy can use private IP; VPC/IAM setup required ([G5]) |
 | Secrets | Password/role secrets; external approved secret manager required | Password auth or 15-minute IAM tokens; IAM has memory, logging, replication, and endpoint limitations ([A11]) | Password/role secrets; Neon recommends a secret manager ([N5]) | Built-in password or one-hour IAM token; automatic connector refresh is recommended for long workers ([G9]) |
 | Monitoring/audit | Metrics endpoint on Pro+; platform audit logs Team+; log drains are paid ([S4]) | CloudWatch metrics, Enhanced Monitoring, logs, Database Insights; IAM DB authentication attempts are not logged by CloudWatch/CloudTrail ([A9], [A11]) | Monitoring 1d/3d/14d by plan; logs/metrics export Scale only ([N1]) | System Insights, Cloud Monitoring dashboards/alerts, Logging, and optional paid Data Access audit logs ([G7], [G9]) |
-| Maintenance/upgrades | Compute resize and SSL changes cause downtime; software upgrades are provider-controlled workflows | Maintenance windows; major upgrades manual and can take minutes; minor auto-upgrade optional; blue/green available ([A10]) | Managed compute restarts/reschedules; application must reconnect and recreate session state; detailed customer maintenance control **UNKNOWN** ([N7], [N9]) | Maintenance window/deny-period controls vary by edition; application must tolerate brief downtime ([G8]) |
+| Maintenance/upgrades | Compute resize and SSL changes cause downtime; extension updates can require software upgrade/restart ([S5], [S6], [S9]) | Maintenance windows; major upgrades manual and can take minutes; minor auto-upgrade optional; blue/green available ([A10]) | Managed compute restarts/reschedules; application must reconnect and recreate session state; detailed customer maintenance control **UNKNOWN** ([N7], [N9]) | Maintenance window/deny-period controls vary by edition; application must tolerate brief downtime ([G8]) |
 | Export/restore | `pg_dump`; physical backups not directly downloadable after PITR disable; custom role passwords omitted from daily backup ([S1]) | Standard PostgreSQL clients and client-side copy/import are supported; native snapshots are provider-specific; portable logical dump/restore must be tested ([A12]–[A14]) | `pg_dump`/`pg_restore` on direct connection; history/branch metadata is not portable ([N2]) | SQL dump export/import is documented; managed backups are provider-specific ([G2], [G11]) |
 | Ops burden | Low platform burden; material plan/add-on boundaries | Moderate; most explicit infrastructure controls | Low platform burden, but serverless/session semantics add application burden | Moderate; most explicit infrastructure controls |
 | Lock-in | Low if BaaS APIs are prohibited; higher if Auth/Storage/Realtime adopted | Low-to-moderate; IAM, monitoring, snapshots, proxy are AWS-specific | Moderate; branching/history/scale-to-zero are proprietary | Low-to-moderate; IAM, monitoring, backup vault, proxy are GCP-specific |
@@ -441,8 +441,12 @@ Minimum signals:
   monitoring/logging, secrets/KMS, and support.
 
 Every critical alert needs an owner, route, runbook, and tested escalation.
-Database logs, audit records, and metrics must not contain credentials,
-connection URLs, account identifiers, or raw broker payloads.
+Database logs, broadly visible telemetry, and reports must not contain
+credentials, connection URLs, brokerage account identifiers, or raw broker
+payloads. Access-controlled infrastructure audit evidence may retain the
+minimum provider resource/principal identifiers required for attribution and
+endpoint/account-boundary validation; those identifiers must be classified,
+access-limited, and pseudonymized before entering broader telemetry.
 
 Major-version upgrades require a rehearsal from backup in an isolated
 environment, application/migration compatibility tests, a portable export,
@@ -576,6 +580,10 @@ not automatically contractual SLAs.
   <https://supabase.com/docs/guides/platform/regions>. Supports: one primary
   region per project, general/specific AWS regions, data-residency caveats,
   and general-region feature limits.
+- **[S9]** Supabase, “Compute and Disk,”
+  <https://supabase.com/docs/guides/platform/compute-and-disk>. Supports:
+  compute classes, connection limits, storage/IO characteristics, and
+  downtime during compute-size changes.
 
 ### Amazon Web Services
 
