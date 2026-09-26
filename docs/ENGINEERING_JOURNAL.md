@@ -1029,3 +1029,48 @@ only the two explicitly authorized status/evidence files among those paths
 changed on the Phase 1E descendant branch. This is implementation evidence,
 not self-certification. Phase 2 and all broker/SIM/LIVE capabilities remain
 unstarted and unauthorized.
+
+## 2026-09-26 — P1E-F01/F02/F03 bounded follow-up pre-edit record
+
+The authorized follow-up starts from clean remote head
+`622a20f965e265707d0197d72f92c7133387d724`, tree
+`b04d7edfe8c579c1bfc8faaf3fb4a0870de0ea91`. The immutable accepted reference
+remains commit `abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, tree
+`cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`, annotated tag
+`phase1-accepted-abc1fb6`, and its exact 45-file inventory.
+
+Pre-edit inspection found:
+
+- `PostgresIntentRepository.create_or_get` trusted the supplied idempotency key
+  and persisted it without recomputing the accepted dispatch key. The accepted
+  canonical dispatch input is the fixture-bound object containing
+  `decision_id`, `intent_id`, `mode`, decimal-string `quantity`, and `side`;
+  the existing primitive is
+  `idempotency_key("dispatch", intent_id, canonical_input)`.
+- `DryRunAdapter` defaulted to `InMemoryIdempotencyStore`; the active dispatch
+  path therefore did not require durable PostgreSQL identity and could split
+  authority between process-local and durable stores.
+- Reconciliation already required a completion event at the report high-water
+  mark, same-run earlier checked event, exact required checks, zero critical or
+  high discrepancies, immediate checked-event causation, contiguous
+  reconciliation aggregate versions, and conflict-safe duplicate event ids.
+  Its timestamp parser nevertheless accepted noncanonical fractional
+  precision, and checked-event envelope, correlation, aggregate, and temporal
+  relationships were not fully validated.
+
+The contracts are coherent for this bounded work. `IDEMPOTENCY.md` requires
+canonical business-input-derived keys and durable uniqueness;
+`RECONCILIATION.md` requires the checked-through relation and canonical event
+envelope; `EVENT_MODEL.md` permits late effective facts generally, while a
+qualifying reconciliation completion can still be required not to precede the
+specific checkpoint it claims to cover. No `CONTRACT_CONFLICT` is present.
+
+Expected changed files are limited to
+`src/swingtrade/persistence.py`, `src/swingtrade/broker.py`,
+`src/swingtrade/reconciliation.py`,
+`tests/integration/test_postgres_intent_identity.py`,
+`tests/broker_sim/test_dry_run_adapter.py`,
+`tests/reconciliation/test_evidence.py`, and this evidence journal. No
+contract, accepted fixture, acceptance manifest, calendar/WDC implementation,
+event-state implementation, status, migration, broker-network, SIM, or LIVE
+file is expected to change.

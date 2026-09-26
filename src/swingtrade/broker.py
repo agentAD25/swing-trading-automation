@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Protocol
 
 from swingtrade.domain import ExecutionMode, OrderIntent, OrderObservation
-from swingtrade.idempotency import InMemoryIdempotencyStore
+from swingtrade.persistence import PostgresIntentRepository
 from swingtrade.safety import DispatchAuthorization, authorize_dispatch
 
 
@@ -17,6 +17,10 @@ class BrokerAdapter(Protocol):
     ) -> OrderObservation: ...
 
 
+class DurableRepositoryRequired(RuntimeError):
+    """Authoritative dispatch requires the PostgreSQL intent repository."""
+
+
 class DryRunAdapter:
     """Local deterministic adapter with no transport or broker client."""
 
@@ -26,12 +30,16 @@ class DryRunAdapter:
         build_id: str,
         environment: str,
         clock: datetime,
-        store: InMemoryIdempotencyStore | None = None,
+        repository: PostgresIntentRepository,
     ) -> None:
+        if not isinstance(repository, PostgresIntentRepository):
+            raise DurableRepositoryRequired(
+                "DRY_RUN dispatch requires a PostgresIntentRepository"
+            )
         self._build_id = build_id
         self._environment = environment
         self._clock = clock
-        self._store = store or InMemoryIdempotencyStore()
+        self._repository = repository
 
     def dispatch(
         self, intent: OrderIntent, authorization: DispatchAuthorization
@@ -45,22 +53,12 @@ class DryRunAdapter:
         )
         if intent.mode is not ExecutionMode.DRY_RUN:
             raise AssertionError("unreachable non-DRY_RUN dispatch")
-        business_input = {
-            "decision_id": intent.decision_id,
-            "intent_id": intent.intent_id,
-            "mode": intent.mode.value,
-            "quantity": str(intent.quantity),
-            "side": intent.side.value,
-        }
-        return self._store.execute(
-            intent.idempotency_key,
-            business_input,
-            lambda: OrderObservation(
-                order_id=f"dry_{intent.intent_id}",
-                intent_id=intent.intent_id,
-                state="PENDING",
-                requested_quantity=intent.quantity,
-                cumulative_quantity=Decimal("0"),
-                effective_at=self._clock,
-            ),
+        self._repository.create_or_get(intent)
+        return OrderObservation(
+            order_id=f"dry_{intent.intent_id}",
+            intent_id=intent.intent_id,
+            state="PENDING",
+            requested_quantity=intent.quantity,
+            cumulative_quantity=Decimal("0"),
+            effective_at=self._clock,
         )

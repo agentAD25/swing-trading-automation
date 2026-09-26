@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from swingtrade.domain import OrderIntent
-from swingtrade.idempotency import canonical_json, input_digest
+from swingtrade.idempotency import canonical_json, idempotency_key, input_digest
 
 
 class Base(DeclarativeBase):
@@ -58,12 +58,40 @@ class IntentIdentityConflict(RuntimeError):
     """A durable intent identity was reused for different canonical content."""
 
 
+class NonCanonicalIntentKey(RuntimeError):
+    """An intent supplied or stored a key not derived from its canonical input."""
+
+
 @dataclass(frozen=True)
 class PersistedIntent:
     idempotency_key: str
     intent_id: str
     input_digest: str
     canonical_intent: dict[str, Any]
+
+
+def dispatch_business_input(intent: OrderIntent) -> dict[str, str]:
+    """Return the accepted canonical economic input for DRY_RUN dispatch."""
+    return {
+        "decision_id": intent.decision_id,
+        "intent_id": intent.intent_id,
+        "mode": intent.mode.value,
+        "quantity": str(intent.quantity),
+        "side": intent.side.value,
+    }
+
+
+def canonical_dispatch_key(intent: OrderIntent) -> str:
+    return idempotency_key("dispatch", intent.intent_id, dispatch_business_input(intent))
+
+
+def _stored_dispatch_key(payload: dict[str, Any]) -> str:
+    required = ("decision_id", "intent_id", "mode", "quantity", "side")
+    if any(not isinstance(payload.get(field), str) for field in required):
+        raise NonCanonicalIntentKey("stored canonical intent lacks dispatch key input")
+    intent_id = payload["intent_id"]
+    business_input = {field: payload[field] for field in required}
+    return idempotency_key("dispatch", intent_id, business_input)
 
 
 def canonical_intent(intent: OrderIntent) -> dict[str, Any]:
@@ -87,6 +115,11 @@ class PostgresIntentRepository:
         self._engine = engine
 
     def create_or_get(self, intent: OrderIntent) -> PersistedIntent:
+        expected_key = canonical_dispatch_key(intent)
+        if intent.idempotency_key != expected_key:
+            raise NonCanonicalIntentKey(
+                "supplied intent key does not match canonical dispatch input"
+            )
         payload = canonical_intent(intent)
         digest = input_digest(payload)
         values = {
@@ -112,6 +145,14 @@ class PostgresIntentRepository:
                 row._mapping["input_digest"],
                 row._mapping["canonical_intent"],
             )
+            stored_key = _stored_dispatch_key(persisted.canonical_intent)
+            if (
+                persisted.idempotency_key != stored_key
+                or persisted.canonical_intent.get("idempotency_key") != stored_key
+            ):
+                raise NonCanonicalIntentKey(
+                    "durable intent row contains a noncanonical dispatch key"
+                )
             if persisted != PersistedIntent(
                 intent.idempotency_key, intent.intent_id, digest, payload
             ):

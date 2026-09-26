@@ -16,9 +16,22 @@ def completion(**payload_overrides: object) -> list[dict[str, object]]:
     payload.update(payload_overrides)
     return [
         {
+            "aggregate_id": "ord_1",
+            "aggregate_type": "order",
+            "aggregate_version": 1,
+            "causation_id": "cmd_1",
+            "correlation_id": "cor_1",
+            "effective_at": "2024-01-01T00:00:00.000000Z",
             "event_id": "evt_1",
             "event_type": "fill.recorded.v1",
+            "idempotency_key": None,
+            "payload": {},
+            "producer": "dry_run",
+            "producer_version": "1",
+            "recorded_at": "2024-01-01T00:00:00.000000Z",
             "run_id": "run_1",
+            "schema_version": 1,
+            "source": {"kind": "local"},
         },
         {
             "aggregate_id": "rec_1",
@@ -100,6 +113,74 @@ def test_partial_and_contradictory_evidence_never_increases_certainty() -> None:
     changed["payload"]["result"] = "FAIL"  # type: ignore[index]
     contradiction.append(changed)
     assert derive_reconciliation_result(contradiction, "evt_2", "run_1") == "UNRECONCILED"
+
+
+@pytest.mark.parametrize(
+    ("event_index", "field", "value"),
+    [
+        (1, "effective_at", "2024-01-01T00:00:00.00001Z"),
+        (1, "recorded_at", "2024-01-01T00:00:00.000002+00:00"),
+        (1, "recorded_at", "2024-01-01T00:00:00Z"),
+        (0, "recorded_at", "2023-12-31T23:59:59.999999Z"),
+        (1, "effective_at", "2023-12-31T23:59:59.999999Z"),
+        (1, "recorded_at", "2023-12-31T23:59:59.999999Z"),
+    ],
+)
+def test_noncanonical_or_backward_temporal_evidence_fails_closed(
+    event_index: int, field: str, value: object
+) -> None:
+    events = completion()
+    events[event_index][field] = value
+    assert derive_reconciliation_result(events, "evt_2", "run_1") == "UNRECONCILED"
+
+
+@pytest.mark.parametrize(
+    ("event_index", "field", "value"),
+    [
+        (1, "correlation_id", "cor_other"),
+        (1, "causation_id", "evt_other"),
+        (1, "run_id", "run_other"),
+        (0, "run_id", "run_other"),
+        (1, "aggregate_type", "report"),
+        (1, "aggregate_version", 2),
+        (0, "aggregate_id", ""),
+        (0, "causation_id", ""),
+    ],
+)
+def test_wrong_correlation_causation_run_or_aggregate_fails_closed(
+    event_index: int, field: str, value: object
+) -> None:
+    events = completion()
+    events[event_index][field] = value
+    assert derive_reconciliation_result(events, "evt_2", "run_1") == "UNRECONCILED"
+
+
+def test_missing_or_after_checkpoint_relation_fails_closed() -> None:
+    missing = completion(checked_through_event_id="evt_missing")
+    assert derive_reconciliation_result(missing, "evt_2", "run_1") == "UNRECONCILED"
+
+    after = completion()
+    checked = after.pop(0)
+    after.append(checked)
+    assert derive_reconciliation_result(after, "evt_2", "run_1") == "UNRECONCILED"
+
+
+@pytest.mark.parametrize(
+    "payload_override",
+    [
+        {"required_checks": None},
+        {"required_checks": sorted(REQUIRED_CHECKS - {"EXECUTION"})},
+        {"open_critical_discrepancies": 1},
+        {"open_high_discrepancies": 1},
+    ],
+)
+def test_incomplete_checks_or_discrepancies_fail_closed(
+    payload_override: dict[str, object],
+) -> None:
+    assert (
+        derive_reconciliation_result(completion(**payload_override), "evt_2", "run_1")
+        == "UNRECONCILED"
+    )
 
 
 def test_repeated_identical_evidence_and_derivation_are_idempotent() -> None:

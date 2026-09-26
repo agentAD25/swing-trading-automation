@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from swingtrade.idempotency import canonical_json
@@ -32,16 +33,18 @@ _PAYLOAD_FIELDS = {
     "required_checks",
     "result",
 }
+_CANONICAL_UTC_MICROSECOND = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$"
+)
 
 
-def _valid_utc_microsecond(value: object) -> bool:
-    if not isinstance(value, str):
-        return False
+def _canonical_instant(value: object) -> datetime | None:
+    if not isinstance(value, str) or not _CANONICAL_UTC_MICROSECOND.fullmatch(value):
+        return None
     try:
-        datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ")
+        return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
     except ValueError:
-        return False
-    return True
+        return None
 
 
 def _deduplicate(events: Sequence[dict[str, Any]]) -> list[dict[str, Any]] | None:
@@ -62,32 +65,50 @@ def _deduplicate(events: Sequence[dict[str, Any]]) -> list[dict[str, Any]] | Non
     return unique
 
 
-def _valid_completion(event: dict[str, Any]) -> bool:
+def _valid_envelope(event: dict[str, Any]) -> bool:
     if not _ENVELOPE_FIELDS <= event.keys():
         return False
     payload = event.get("payload")
-    if not isinstance(payload, dict) or not _PAYLOAD_FIELDS <= payload.keys():
+    if not isinstance(payload, dict):
         return False
     nonempty = (
         event.get("aggregate_id"),
+        event.get("aggregate_type"),
         event.get("causation_id"),
         event.get("correlation_id"),
         event.get("event_id"),
+        event.get("event_type"),
         event.get("producer"),
         event.get("producer_version"),
         event.get("run_id"),
     )
-    return (
+    effective_at = _canonical_instant(event.get("effective_at"))
+    recorded_at = _canonical_instant(event.get("recorded_at"))
+    return bool(
         all(isinstance(value, str) and value for value in nonempty)
-        and event.get("aggregate_type") == "reconciliation"
-        and event.get("event_type") == "reconciliation.check_completed.v1"
         and isinstance(event.get("aggregate_version"), int)
         and event["aggregate_version"] > 0
         and isinstance(event.get("schema_version"), int)
         and event["schema_version"] > 0
         and isinstance(event.get("source"), dict)
-        and _valid_utc_microsecond(event.get("effective_at"))
-        and _valid_utc_microsecond(event.get("recorded_at"))
+        and (
+            event.get("idempotency_key") is None
+            or isinstance(event.get("idempotency_key"), str)
+        )
+        and effective_at is not None
+        and recorded_at is not None
+        and recorded_at >= effective_at
+    )
+
+
+def _valid_completion(event: dict[str, Any]) -> bool:
+    payload = event.get("payload")
+    return (
+        _valid_envelope(event)
+        and isinstance(payload, dict)
+        and _PAYLOAD_FIELDS <= payload.keys()
+        and event.get("aggregate_type") == "reconciliation"
+        and event.get("event_type") == "reconciliation.check_completed.v1"
     )
 
 
@@ -113,17 +134,51 @@ def derive_reconciliation_result(
         and event.get("aggregate_type") == "reconciliation"
     ]
     versions = [event.get("aggregate_version") for event in same_aggregate]
+    checked_event = checked[1] if checked is not None else None
+    completion_effective = _canonical_instant(completion.get("effective_at"))
+    completion_recorded = _canonical_instant(completion.get("recorded_at"))
+    checked_effective = (
+        _canonical_instant(checked_event.get("effective_at"))
+        if checked_event is not None
+        else None
+    )
+    checked_recorded = (
+        _canonical_instant(checked_event.get("recorded_at"))
+        if checked_event is not None
+        else None
+    )
+    required_checks = payload.get("required_checks")
+    exact_required_checks = (
+        isinstance(required_checks, list)
+        and all(isinstance(check, str) for check in required_checks)
+        and set(required_checks) == REQUIRED_CHECKS
+        and len(required_checks) == len(REQUIRED_CHECKS)
+    )
     qualifies = (
         completion.get("run_id") == run_id
         and checked is not None
         and checked[0] < completion_index
-        and checked[1].get("run_id") == run_id
+        and checked_event is not None
+        and _valid_envelope(checked_event)
+        and checked_event.get("run_id") == run_id
+        and checked_event.get("correlation_id") == completion.get("correlation_id")
         and completion.get("causation_id") == payload.get("checked_through_event_id")
+        and completion_effective is not None
+        and completion_recorded is not None
+        and checked_effective is not None
+        and checked_recorded is not None
+        and completion_effective >= checked_effective
+        and completion_recorded >= checked_recorded
         and payload.get("result") == "PASS"
-        and set(payload.get("required_checks", [])) == REQUIRED_CHECKS
-        and len(payload.get("required_checks", [])) == len(REQUIRED_CHECKS)
+        and exact_required_checks
         and payload.get("open_critical_discrepancies") == 0
         and payload.get("open_high_discrepancies") == 0
+        and all(
+            _valid_envelope(event)
+            and event.get("run_id") == run_id
+            and event.get("correlation_id") == completion.get("correlation_id")
+            for event in same_aggregate
+        )
         and versions == list(range(1, completion["aggregate_version"] + 1))
     )
     return "PASS" if qualifies else "UNRECONCILED"

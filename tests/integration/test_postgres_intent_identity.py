@@ -2,17 +2,22 @@ from __future__ import annotations
 
 import os
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import create_engine, func, select, text
+from sqlalchemy import create_engine, func, insert, select, text
 
 from swingtrade.domain import ExecutionMode, OrderIntent, Side
 from swingtrade.persistence import (
     IntentIdentityConflict,
+    NonCanonicalIntentKey,
     OrderIntentRow,
     PostgresIntentRepository,
+    canonical_dispatch_key,
+    canonical_intent,
 )
+from swingtrade.idempotency import input_digest
 
 POSTGRES_URL = os.getenv("SWINGTRADE_TEST_POSTGRES_URL")
 pytestmark = pytest.mark.skipif(
@@ -20,8 +25,8 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def make_intent(*, quantity: str = "2", key: str = "v1:dispatch:int_1:" + "a" * 64) -> OrderIntent:
-    return OrderIntent(
+def make_intent(*, quantity: str = "2", key: str | None = None) -> OrderIntent:
+    candidate = OrderIntent(
         intent_id="int_1",
         run_id="run_1",
         decision_id="dec_1",
@@ -29,7 +34,11 @@ def make_intent(*, quantity: str = "2", key: str = "v1:dispatch:int_1:" + "a" * 
         side=Side.BUY,
         quantity=Decimal(quantity),
         mode=ExecutionMode.DRY_RUN,
-        idempotency_key=key,
+        idempotency_key="",
+    )
+    return replace(
+        candidate,
+        idempotency_key=canonical_dispatch_key(candidate) if key is None else key,
     )
 
 
@@ -59,6 +68,45 @@ def test_same_canonical_intent_converges_and_conflict_rolls_back(engine) -> None
         assert persisted._mapping["input_digest"] == first.input_digest
 
 
+def test_forged_key_fails_before_persistence_and_changed_economic_intent_conflicts(
+    engine,
+) -> None:
+    repository = PostgresIntentRepository(engine)
+    forged = make_intent(key="v1:dispatch:int_1:" + "f" * 64)
+    with pytest.raises(NonCanonicalIntentKey):
+        repository.create_or_get(forged)
+    with engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 0
+
+    repository.create_or_get(make_intent())
+    with pytest.raises(IntentIdentityConflict):
+        repository.create_or_get(make_intent(quantity="3"))
+    with pytest.raises(NonCanonicalIntentKey):
+        repository.create_or_get(
+            make_intent(quantity="3", key=make_intent().idempotency_key)
+        )
+    with engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
+
+
+def test_existing_noncanonical_durable_row_fails_closed(engine) -> None:
+    forged = make_intent(key="v1:dispatch:int_1:" + "f" * 64)
+    payload = canonical_intent(forged)
+    with engine.begin() as connection:
+        connection.execute(
+            insert(OrderIntentRow).values(
+                idempotency_key=forged.idempotency_key,
+                intent_id=forged.intent_id,
+                input_digest=input_digest(payload),
+                canonical_intent=payload,
+            )
+        )
+    with pytest.raises(NonCanonicalIntentKey):
+        PostgresIntentRepository(engine).create_or_get(make_intent())
+    with engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
+
+
 def test_concurrent_creators_produce_one_durable_identity(engine) -> None:
     repository = PostgresIntentRepository(engine)
     with ThreadPoolExecutor(max_workers=12) as executor:
@@ -66,6 +114,21 @@ def test_concurrent_creators_produce_one_durable_identity(engine) -> None:
     assert all(result == results[0] for result in results)
     with engine.connect() as connection:
         assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
+
+
+def test_concurrent_forged_keys_fail_without_durable_rows(engine) -> None:
+    repository = PostgresIntentRepository(engine)
+
+    def create(index: int) -> None:
+        repository.create_or_get(
+            make_intent(key=f"v1:dispatch:int_1:{index:064x}")
+        )
+
+    with ThreadPoolExecutor(max_workers=12) as executor:
+        attempts = [executor.submit(create, index) for index in range(1, 25)]
+    assert all(isinstance(attempt.exception(), NonCanonicalIntentKey) for attempt in attempts)
+    with engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 0
 
 
 def test_concurrent_conflicting_creators_choose_one_identity(engine) -> None:
