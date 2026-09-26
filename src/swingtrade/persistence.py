@@ -10,8 +10,8 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from swingtrade.domain import (
-    DomainValidationError,
     MAX_DECIMAL_COEFFICIENT_DIGITS,
+    DomainValidationError,
     OrderIntent,
     OrderObservation,
     decimal_value,
