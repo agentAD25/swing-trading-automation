@@ -64,8 +64,9 @@ TradeStation to reconcile those sources; they do not select one as correct.
 15. Are the routes returned by `GET /orderexecution/routes` exhaustive for the
     authenticated SIM account and asset class? Can routes change intraday?
 16. What API-supported short-sale/borrow workflow applies in SIM? Does
-    `IsHardToBorrow` indicate only market-data status, or does it carry order
-    eligibility or locate meaning?
+    `IsStockLocateEligible` or `IsHardToBorrow` establish entitlement, order
+    eligibility, locate availability, or only observable account/market-data
+    status?
 17. Which market-hours, holiday, early-close, overnight, and extended-session
     rules does SIM enforce for each intended asset class?
 18. Beyond instant fills, which SIM behaviors intentionally differ from LIVE
@@ -163,9 +164,10 @@ TradeStation to reconcile those sources; they do not select one as correct.
 50. Does any v3 stream support a replay cursor, resume token, sequence number,
     event ID, or `Last-Event-ID` equivalent? If not, please confirm there is no
     replay guarantee.
-51. Does `EndSnapshot` establish a loss-free boundary between the initial
-    snapshot and subsequent updates? Can updates be duplicated, omitted, or
-    reordered around it?
+51. For positions opened with `changes=true`, does the documented full
+    snapshot-then-changes sequence—and its `EndSnapshot` marker—establish a
+    loss-free boundary? Can updates be duplicated, omitted, or reordered
+    around it, and does the same contract apply after reconnect?
 52. After `GoAway`, `ERROR`, network interruption, or token expiry, what
     reconnect delay/backoff is required?
 53. On reconnect, is a fresh complete snapshot always sent before updates?
