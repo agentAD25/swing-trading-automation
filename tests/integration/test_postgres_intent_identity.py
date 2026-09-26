@@ -10,13 +10,14 @@ import pytest
 from sqlalchemy import create_engine, func, insert, select, text
 
 from swingtrade.domain import ExecutionMode, OrderIntent, Side
-from swingtrade.idempotency import input_digest
+from swingtrade.idempotency import idempotency_key, input_digest
 from swingtrade.persistence import (
     DurableObservationError,
     IntentIdentityConflict,
     NonCanonicalIntentKey,
     OrderIntentRow,
     PostgresIntentRepository,
+    canonical_decimal,
     canonical_dispatch_key,
     canonical_dry_run_observation,
     canonical_intent,
@@ -73,7 +74,8 @@ def engine():
 def test_same_canonical_intent_converges_and_conflict_rolls_back(engine) -> None:
     repository = PostgresIntentRepository(engine)
     first = create(repository, make_intent())
-    assert create(repository, make_intent()) == first
+    assert create(repository, make_intent(quantity="2.0")) == first
+    assert create(repository, make_intent(quantity="2.00")) == first
 
     with pytest.raises(IntentIdentityConflict):
         create(repository, make_intent(quantity="3"))
@@ -82,6 +84,82 @@ def test_same_canonical_intent_converges_and_conflict_rolls_back(engine) -> None
         assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
         persisted = connection.execute(select(OrderIntentRow)).one()
         assert persisted._mapping["input_digest"] == first.input_digest
+
+
+@pytest.mark.parametrize(
+    ("variants", "expected"),
+    [
+        (("2", "2.0", "2.00"), "2"),
+        (("0", "0.0", "-0.00", "0E+9"), "0"),
+        (("426.59", "426.590", "42659E-2"), "426.59"),
+        (("-2", "-2.0", "-2.00"), "-2"),
+        (("-426.59", "-426.590", "-42659E-2"), "-426.59"),
+    ],
+)
+def test_canonical_decimal_collapses_only_economic_scale(
+    variants: tuple[str, ...], expected: str
+) -> None:
+    assert {canonical_decimal(value) for value in variants} == {expected}
+
+
+def test_equal_scale_keys_and_payloads_match_but_nearby_value_remains_distinct() -> None:
+    equivalent = [make_intent(quantity=value) for value in ("426.59", "426.590", "42659E-2")]
+    assert len({canonical_dispatch_key(value) for value in equivalent}) == 1
+    assert len({input_digest(canonical_intent(value)) for value in equivalent}) == 1
+    assert canonical_dispatch_key(make_intent(quantity="426.5901")) != canonical_dispatch_key(
+        equivalent[0]
+    )
+
+
+def test_legacy_scale_sensitive_supplied_key_fails_before_persistence(engine) -> None:
+    value = make_intent(quantity="2.00")
+    legacy_input = {
+        **canonical_intent(value),
+        "quantity": "2.00",
+    }
+    legacy_business_input = {
+        field: legacy_input[field]
+        for field in ("decision_id", "intent_id", "mode", "quantity", "side")
+    }
+    forged = replace(
+        value,
+        idempotency_key=idempotency_key("dispatch", value.intent_id, legacy_business_input),
+    )
+    with pytest.raises(NonCanonicalIntentKey):
+        create(PostgresIntentRepository(engine), forged)
+    with engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 0
+
+
+def test_stale_scale_sensitive_row_is_reported_without_alias_or_rewrite(engine) -> None:
+    valid = make_intent(quantity="2")
+    stale_payload = canonical_intent(valid)
+    stale_payload["quantity"] = "2.00"
+    stale_input = {
+        field: stale_payload[field]
+        for field in ("decision_id", "intent_id", "mode", "quantity", "side")
+    }
+    stale_key = idempotency_key("dispatch", valid.intent_id, stale_input)
+    stale_payload["idempotency_key"] = stale_key
+    stale_observation = canonical_dry_run_observation(valid, NOW)
+    stale_observation["requested_quantity"] = "2.00"
+    with engine.begin() as connection:
+        connection.execute(
+            insert(OrderIntentRow).values(
+                idempotency_key=stale_key,
+                intent_id=valid.intent_id,
+                input_digest=input_digest(stale_payload),
+                canonical_intent=stale_payload,
+                canonical_observation=stale_observation,
+            )
+        )
+    with pytest.raises(NonCanonicalIntentKey, match="stale noncanonical decimal"):
+        create(PostgresIntentRepository(engine), valid)
+    with engine.connect() as connection:
+        row = connection.execute(select(OrderIntentRow)).one()._mapping
+        assert row["idempotency_key"] == stale_key
+        assert row["canonical_intent"] == stale_payload
+        assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
 
 
 def test_forged_key_fails_before_persistence_and_changed_economic_intent_conflicts(
@@ -224,6 +302,23 @@ def test_concurrent_creators_produce_one_durable_identity(engine) -> None:
         assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
 
 
+def test_concurrent_equivalent_scales_converge_to_one_durable_identity(engine) -> None:
+    repository = PostgresIntentRepository(engine)
+    quantities = ["2", "2.0", "2.00"] * 8
+    with ThreadPoolExecutor(max_workers=12) as executor:
+        results = list(
+            executor.map(
+                lambda quantity: create(repository, make_intent(quantity=quantity)),
+                quantities,
+            )
+        )
+    assert all(result == results[0] for result in results)
+    with engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
+        row = connection.execute(select(OrderIntentRow)).one()._mapping
+        assert row["canonical_intent"]["quantity"] == "2"
+
+
 def test_concurrent_forged_keys_fail_without_durable_rows(engine) -> None:
     repository = PostgresIntentRepository(engine)
 
@@ -269,7 +364,7 @@ def test_persistence_survives_pool_disposal_and_reconnect(engine) -> None:
     try:
         assert (
             PostgresIntentRepository(reconnected).create_or_get(
-                make_intent(), effective_at=NOW + timedelta(days=1)
+                make_intent(quantity="2.00"), effective_at=NOW + timedelta(days=1)
             )
             == expected
         )

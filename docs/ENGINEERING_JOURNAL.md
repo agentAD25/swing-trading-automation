@@ -1155,3 +1155,47 @@ This is bounded implementation and test evidence for independent verification,
 not self-certification. It does not start Phase 2 or authorize credentials,
 broker access, TradeStation SIM, order activity, deployment, real capital, or
 LIVE.
+
+## 2026-09-26 — P1E-F04/F05 final micro-remediation pre-edit record
+
+This single micro-remediation starts from fetched local/remote/PR head
+`c5851471a26c89283469176fd76103dba253c971`, tree
+`97d44c46b344bc65c41e1325388a255526b6f9bb`, with a clean worktree. The
+immutable accepted reference remains annotated tag object
+`197d22b06cf6a96bad8c4b1a49ad1b928b147ac0`, commit
+`abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, tree
+`cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`, and 45 files. The prior
+F01–F03 verifier evidence records PostgreSQL 16.15, 109 warnings-strict tests,
+22/12/43 targeted F01/F02/F03 tests, contract-validator/Ruff/mypy/Alembic
+passes, zero prohibited scan matches, and readiness only for independent
+verification.
+
+Pre-edit inspection found:
+
+- Dispatch key input, durable canonical intent, and durable observation each
+  serialized `Decimal` with separate `str()` calls. Python preserves Decimal
+  scale in those strings, so economically equal `2`, `2.0`, and `2.00` could
+  produce different payloads, digests, and keys.
+- `PostgresIntentRepository.create_or_get` remains the authoritative direct
+  key-verification boundary. Existing durable rows are checked rather than
+  rewritten, but a row whose quantity and key were consistently generated
+  with the old scale-sensitive representation was not identified as stale.
+- Reconciliation deduplicated global event IDs and required only the
+  completion reconciliation stream to have versions `1..N`. It did not apply
+  ledger-integrity sequencing to every relevant same-run stream or explicitly
+  reject two different event IDs occupying one stream/version coordinate.
+- `EVENT_MODEL.md` defines ordered aggregate streams and globally unique event
+  IDs; `DATA_MODEL.md` requires uniqueness of
+  `(aggregate_type, aggregate_id, aggregate_version)`; the accepted validator
+  and fixture establish the initial aggregate version as exactly `1` and
+  contiguous increments thereafter. Canonical decimal strings, no binary
+  float, and no implicit rounding are already required. These rules are
+  coherent; no `CONTRACT_CONFLICT` or scope violation is present.
+
+Expected edits are limited to `src/swingtrade/persistence.py`,
+`src/swingtrade/reconciliation.py`,
+`tests/integration/test_postgres_intent_identity.py`,
+`tests/reconciliation/test_evidence.py`, and this journal. No contract,
+migration, accepted fixture/manifest, WDC/calendar, state-machine, safety,
+adapter, status, broker-network, SIM, LIVE, or Phase 2 file is expected to
+change.

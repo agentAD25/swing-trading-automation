@@ -8,6 +8,7 @@ from typing import Any
 from swingtrade.idempotency import canonical_json
 
 REQUIRED_CHECKS = {"LEDGER_INTEGRITY", "PROJECTION", "EXECUTION"}
+INITIAL_AGGREGATE_VERSION = 1
 _ENVELOPE_FIELDS = {
     "aggregate_id",
     "aggregate_type",
@@ -115,6 +116,35 @@ def _valid_completion(event: dict[str, Any]) -> bool:
     )
 
 
+def _valid_stream_integrity(events: Sequence[dict[str, Any]]) -> bool:
+    streams: dict[tuple[str, str], list[int]] = {}
+    coordinates: dict[tuple[str, str, int], str] = {}
+    for event in events:
+        if not _valid_envelope(event):
+            return False
+        aggregate_type = event["aggregate_type"]
+        aggregate_id = event["aggregate_id"]
+        aggregate_version = event["aggregate_version"]
+        event_id = event["event_id"]
+        stream = (aggregate_type, aggregate_id)
+        coordinate = (*stream, aggregate_version)
+        previous_event_id = coordinates.get(coordinate)
+        if previous_event_id is not None and previous_event_id != event_id:
+            return False
+        coordinates[coordinate] = event_id
+        streams.setdefault(stream, []).append(aggregate_version)
+    return all(
+        versions
+        == list(
+            range(
+                INITIAL_AGGREGATE_VERSION,
+                INITIAL_AGGREGATE_VERSION + len(versions),
+            )
+        )
+        for versions in streams.values()
+    )
+
+
 def derive_reconciliation_result(
     events: Sequence[dict[str, Any]], source_high_water_mark: str, run_id: str
 ) -> str:
@@ -135,6 +165,7 @@ def derive_reconciliation_result(
         for event in unique[: completion_index + 1]
         if event.get("aggregate_id") == completion["aggregate_id"]
         and event.get("aggregate_type") == "reconciliation"
+        and event.get("run_id") == run_id
     ]
     run_events = [
         event
@@ -178,6 +209,7 @@ def derive_reconciliation_result(
         and checked_recorded is not None
         and completion_recorded >= checked_recorded
         and all(_valid_envelope(event) for event in run_events)
+        and _valid_stream_integrity(run_events)
         and nondecreasing_recorded_times
         and payload.get("result") == "PASS"
         and exact_required_checks

@@ -2,7 +2,11 @@ import copy
 
 import pytest
 
-from swingtrade.reconciliation import REQUIRED_CHECKS, derive_reconciliation_result
+from swingtrade.reconciliation import (
+    INITIAL_AGGREGATE_VERSION,
+    REQUIRED_CHECKS,
+    derive_reconciliation_result,
+)
 
 
 def completion(**payload_overrides: object) -> list[dict[str, object]]:
@@ -54,8 +58,115 @@ def completion(**payload_overrides: object) -> list[dict[str, object]]:
     ]
 
 
+def stream_event(
+    event_id: str,
+    aggregate_type: str,
+    aggregate_id: str,
+    aggregate_version: int,
+    *,
+    run_id: str = "run_1",
+) -> dict[str, object]:
+    event = copy.deepcopy(completion()[0])
+    event.update(
+        {
+            "aggregate_id": aggregate_id,
+            "aggregate_type": aggregate_type,
+            "aggregate_version": aggregate_version,
+            "event_id": event_id,
+            "run_id": run_id,
+        }
+    )
+    return event
+
+
 def test_complete_evidence_can_prove_pass() -> None:
     assert derive_reconciliation_result(completion(), "evt_2", "run_1") == "PASS"
+
+
+def test_interleaved_streams_partition_and_start_at_accepted_initial_version() -> None:
+    assert INITIAL_AGGREGATE_VERSION == 1
+    checked, completed = completion()
+    events = [
+        checked,
+        stream_event("evt_pos_1", "position", "pos_1", 1),
+        stream_event("evt_ord_2", "order", "ord_1", 2),
+        stream_event("evt_pos_2", "position", "pos_1", 2),
+        completed,
+    ]
+    assert derive_reconciliation_result(events, "evt_2", "run_1") == "PASS"
+
+
+def invalid_stream_case(case: str) -> list[dict[str, object]]:
+    checked, completed = completion()
+    if case == "start_below":
+        checked["aggregate_version"] = 0
+        return [checked, completed]
+    if case == "start_above":
+        checked["aggregate_version"] = 2
+        return [checked, completed]
+    if case == "middle_gap":
+        return [checked, stream_event("evt_ord_3", "order", "ord_1", 3), completed]
+    if case == "duplicate_different_event_id":
+        return [checked, stream_event("evt_ord_dup", "order", "ord_1", 1), completed]
+    if case == "conflicting_global_event_id":
+        conflict = stream_event("evt_1", "position", "pos_other", 1)
+        return [checked, conflict, completed]
+    if case == "decreasing":
+        return [
+            checked,
+            stream_event("evt_ord_3", "order", "ord_1", 3),
+            stream_event("evt_ord_2", "order", "ord_1", 2),
+            completed,
+        ]
+    if case == "cross_run":
+        checked["run_id"] = "run_other"
+        return [checked, completed]
+    if case == "cross_aggregate":
+        completed["aggregate_version"] = 2
+        return [
+            checked,
+            stream_event("evt_rec_other", "reconciliation", "rec_other", 1),
+            completed,
+        ]
+    if case == "one_valid_one_invalid":
+        return [
+            checked,
+            stream_event("evt_valid", "position", "pos_valid", 1),
+            stream_event("evt_invalid", "trade", "trade_invalid", 2),
+            completed,
+        ]
+    raise AssertionError(f"unknown case: {case}")
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "start_below",
+        "start_above",
+        "middle_gap",
+        "duplicate_different_event_id",
+        "conflicting_global_event_id",
+        "decreasing",
+        "cross_run",
+        "cross_aggregate",
+        "one_valid_one_invalid",
+    ],
+)
+def test_ledger_integrity_stream_matrix_fails_closed(case: str) -> None:
+    assert (
+        derive_reconciliation_result(invalid_stream_case(case), "evt_2", "run_1")
+        == "UNRECONCILED"
+    )
+
+
+def test_identical_duplicate_event_identity_is_a_valid_no_op() -> None:
+    checked, completed = completion()
+    assert (
+        derive_reconciliation_result(
+            [checked, copy.deepcopy(checked), completed], "evt_2", "run_1"
+        )
+        == "PASS"
+    )
 
 
 def test_report_projection_cannot_manufacture_pass() -> None:

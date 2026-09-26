@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import json
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal, DecimalException
 from typing import Any
@@ -10,8 +9,14 @@ from sqlalchemy import JSON, Engine, Integer, String, UniqueConstraint, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from swingtrade.domain import OrderIntent, OrderObservation, utc_instant
-from swingtrade.idempotency import canonical_json, idempotency_key, input_digest
+from swingtrade.domain import (
+    DomainValidationError,
+    OrderIntent,
+    OrderObservation,
+    decimal_value,
+    utc_instant,
+)
+from swingtrade.idempotency import idempotency_key, input_digest
 
 
 class Base(DeclarativeBase):
@@ -78,19 +83,32 @@ class PersistedIntent:
     canonical_observation: dict[str, Any]
 
 
-def dispatch_business_input(intent: OrderIntent) -> dict[str, str]:
-    """Return the accepted canonical economic input for DRY_RUN dispatch."""
+def canonical_decimal(value: Decimal | str) -> str:
+    """Serialize a finite base-10 value without scale or exponent aliases."""
+    number = decimal_value(value)
+    if number == 0:
+        return "0"
+    fixed = format(number, "f")
+    return fixed.rstrip("0").rstrip(".") if "." in fixed else fixed
+
+
+def canonical_economic_intent(intent: OrderIntent) -> dict[str, str]:
+    """Return the sole canonical economic input for DRY_RUN dispatch."""
     return {
         "decision_id": intent.decision_id,
         "intent_id": intent.intent_id,
         "mode": intent.mode.value,
-        "quantity": str(intent.quantity),
+        "quantity": canonical_decimal(intent.quantity),
         "side": intent.side.value,
     }
 
 
+def dispatch_business_input(intent: OrderIntent) -> dict[str, str]:
+    return canonical_economic_intent(intent)
+
+
 def canonical_dispatch_key(intent: OrderIntent) -> str:
-    return idempotency_key("dispatch", intent.intent_id, dispatch_business_input(intent))
+    return idempotency_key("dispatch", intent.intent_id, canonical_economic_intent(intent))
 
 
 def _stored_dispatch_key(payload: object) -> str:
@@ -101,6 +119,17 @@ def _stored_dispatch_key(payload: object) -> str:
         raise NonCanonicalIntentKey("stored canonical intent lacks dispatch key input")
     intent_id = payload["intent_id"]
     business_input = {field: payload[field] for field in required}
+    try:
+        canonical_quantity = canonical_decimal(business_input["quantity"])
+    except DomainValidationError as error:
+        raise NonCanonicalIntentKey(
+            "stored canonical intent has an invalid decimal quantity"
+        ) from error
+    if business_input["quantity"] != canonical_quantity:
+        raise NonCanonicalIntentKey(
+            "stored canonical intent uses a stale noncanonical decimal"
+        )
+    business_input["quantity"] = canonical_quantity
     return idempotency_key("dispatch", intent_id, business_input)
 
 
@@ -117,7 +146,7 @@ def canonical_dry_run_observation(
         "effective_at": _canonical_utc_instant(effective_at),
         "intent_id": intent.intent_id,
         "order_id": f"dry_{intent.intent_id}",
-        "requested_quantity": str(intent.quantity),
+        "requested_quantity": canonical_decimal(intent.quantity),
         "state": "PENDING",
     }
 
@@ -167,15 +196,17 @@ def materialize_dry_run_observation(persisted: PersistedIntent) -> OrderObservat
 
 
 def canonical_intent(intent: OrderIntent) -> dict[str, Any]:
-    payload = asdict(intent)
-    payload["side"] = intent.side.value
-    payload["quantity"] = str(intent.quantity)
-    payload["mode"] = intent.mode.value
-    # Round-trip through canonical JSON to guarantee JSON-native immutable values.
-    decoded = json.loads(canonical_json(payload))
-    if not isinstance(decoded, dict):
-        raise TypeError("canonical intent must be an object")
-    return decoded
+    economic = canonical_economic_intent(intent)
+    return {
+        "decision_id": economic["decision_id"],
+        "idempotency_key": intent.idempotency_key,
+        "instrument_id": intent.instrument_id,
+        "intent_id": economic["intent_id"],
+        "mode": economic["mode"],
+        "quantity": economic["quantity"],
+        "run_id": intent.run_id,
+        "side": economic["side"],
+    }
 
 
 class PostgresIntentRepository:
