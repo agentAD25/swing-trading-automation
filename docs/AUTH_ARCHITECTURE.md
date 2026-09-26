@@ -79,6 +79,9 @@ documentation on 2026-09-26:
   Disabling and later re-enabling a key can make old non-expiring refresh
   tokens usable again. Rotating the client secret does not invalidate existing
   non-expiring refresh tokens. [E1, E5]
+- TradeStation session logout does not invalidate existing access or refresh
+  tokens. Access tokens retain their 20-minute lifetime and refresh tokens
+  remain subject to their separate lifetime and revocation rules. [E13]
 - The authentication overview lists default API scopes as `MarketData`,
   `ReadAccount`, and `Trade`; the scopes page also describes
   `OptionSpreads` and `Matrix` as defaults. The actual key contract is
@@ -102,6 +105,10 @@ documentation on 2026-09-26:
 - Clients must tolerate unexpected invalidation. Revocation endpoints use
   HTTPS, and a successful revocation means the client must stop using the
   token even if server-side propagation has some delay. [E10]
+- OAuth bearer-token guidance associates `invalid_token` with HTTP 401 and
+  `insufficient_scope` with HTTP 403. Its permission to obtain a token and
+  retry does not establish that replaying a state-changing broker operation is
+  safe. [E14]
 - Central secret management, object-level least privilege, rotation,
   revocation, expiry, access auditing, and encryption at rest are recommended.
   Access tokens, passwords, connection strings, encryption keys, and primary
@@ -349,6 +356,9 @@ Rotation and revocation are separate:
 - disabling the API key alone is not accepted as revocation because
   TradeStation states that re-enabling can revive old non-expiring refresh
   tokens;
+- browser/authentication-session logout is not accepted as revocation because
+  TradeStation states that logout leaves existing access and refresh tokens
+  valid under their separate lifetimes;
 - local deletion alone is not broker revocation, and a broker HTTP success is
   not enough until local leases are invalidated and denial is verified.
 
@@ -454,6 +464,7 @@ profile, and no unknown/missing environment defaults to SIM or DRY_RUN.
 | Access token locally expired or inside safety margin | Do not send; enter approved refresh flow if authorized | Successful fenced refresh or human reauthorization |
 | Resource response `401` | Invalidate current lease; do not infer expiry versus revocation | Read-only operation may retry once only after a fully successful refresh and policy recheck; write/unknown operations never auto-retry |
 | Resource response `403` | Treat as entitlement/scope/policy denial; no refresh loop | Human review of exact key/account/scope; no privilege expansion fallback |
+| Browser/session logout | Do not infer token invalidation; invalidate local leases if logout is part of containment | Use the approved token-family revocation procedure; logout is not a substitute |
 | Refresh `invalid_grant`, revoked/expired token, or replay signal | Invalidate family and all leases; `REAUTH_REQUIRED` | Security review and new human authorization; revoke family if compromise is possible |
 | Refresh timeout/lost response | `AUTH_UNKNOWN / BLOCKED`; never replay old rotating token | New authorization unless broker evidence later proves a safe recovery contract |
 | Secret manager unavailable/stale/split | Invalidate leases; no use of cached token | Restore and independently verify store/generation health, then reauthorize if continuity is uncertain |
@@ -599,6 +610,7 @@ author cannot approve the proposal.
 | U-13 | Legal, privacy, account-entitlement, automation, and retention obligations are unknown | Technical authorization does not establish permitted use | Qualified humans before G1 |
 | U-14 | Access-token revocation behavior and cascade from refresh revocation are not TradeStation-documented | A locally revoked family may retain usable access tokens briefly | Security owner; stop local use immediately and treat remote validity as unknown |
 | U-15 | ID-token issuer metadata, signing-key lifecycle, and claim-validation contract are outside r1 | Trusting decoded claims could create identity confusion | Future dedicated design before any ID-token claim is used |
+| U-16 | TradeStation token-endpoint error schema, status mapping, throttling, timeout idempotency, and retry behavior are undocumented | Generic OAuth errors do not prove safe broker-specific retry or recovery behavior | Broker researcher + Client Experience before G1; bounded observation at G2 |
 
 Every unresolved item remains a blocker at the named gate. No observation,
 default, code path, or agent may silently choose a value.
@@ -677,6 +689,18 @@ future key.
   strings, encryption keys, and sensitive data from logs and sanitizing event
   data. Limitation: organization-specific taxonomy, retention, and tooling
   remain undecided.
+- **E13 — TradeStation, “Logout Users.”**
+  https://api.tradestation.com/docs/fundamentals/authentication/logout/
+  Supports the authentication-session logout endpoint and the explicit
+  statement that logout does not invalidate existing access or refresh
+  tokens. Limitation: session logout is not a token revocation or incident
+  containment mechanism.
+- **E14 — IETF, RFC 6750, “The OAuth 2.0 Authorization Framework: Bearer Token
+  Usage.”** https://www.rfc-editor.org/rfc/rfc6750.html
+  Supports `invalid_token`/401 and `insufficient_scope`/403 semantics, avoiding
+  bearer tokens in URLs, and the protocol-level option to obtain a token and
+  retry after invalidation. Limitation: it does not establish safe replay for
+  a broker operation or TradeStation-specific error behavior.
 
 Repository evidence, read at canonical base
 `1ecbbe6d487d97195fde393b05c9499357599bdb` on 2026-09-26:
