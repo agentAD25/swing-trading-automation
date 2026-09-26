@@ -12,9 +12,9 @@ from sqlalchemy import create_engine, func, insert, select, text
 from swingtrade.domain import DomainValidationError, ExecutionMode, OrderIntent, Side
 from swingtrade.idempotency import idempotency_key, input_digest
 from swingtrade.persistence import (
+    MAX_CANONICAL_DECIMAL_DIGIT_POSITIONS,
     DurableObservationError,
     IntentIdentityConflict,
-    MAX_CANONICAL_DECIMAL_DIGIT_POSITIONS,
     NonCanonicalIntentKey,
     OrderIntentRow,
     PostgresIntentRepository,
@@ -201,11 +201,21 @@ def test_nonfinite_decimal_values_fail_domain_validation(value: str) -> None:
 
 def test_extreme_rejection_occurs_before_fixed_point_formatting() -> None:
     class FormatTrapDecimal(Decimal):
+        def as_tuple(self):
+            return Decimal("1").as_tuple()
+
         def __format__(self, format_spec: str) -> str:
             raise AssertionError("format must not run for rejected values")
 
     with pytest.raises(DomainValidationError, match="resource bound"):
         canonical_decimal(FormatTrapDecimal("1E+1000000"))
+
+
+def test_trailing_zero_coefficient_formats_only_bounded_canonical_tuple() -> None:
+    value = "1" + "0" * 999 + "E-1500"
+    result = canonical_decimal(value)
+    assert result == "0." + "0" * 500 + "1"
+    assert len(result.replace(".", "")) == 502
 
 
 def test_equal_scale_keys_and_payloads_match_but_nearby_value_remains_distinct() -> None:

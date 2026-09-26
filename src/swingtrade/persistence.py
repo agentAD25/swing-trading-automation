@@ -105,10 +105,12 @@ def _decimal_resource_error(
 
 def canonical_decimal(value: Decimal | str) -> str:
     """Serialize a finite base-10 value without scale or exponent aliases."""
-    number = decimal_value(value)
+    number = Decimal(decimal_value(value))
+    if not number.is_finite():
+        raise DomainValidationError("decimal must be finite")
     if number == 0:
         return "0"
-    _, digits, exponent = number.as_tuple()
+    sign, digits, exponent = number.as_tuple()
     if not isinstance(exponent, int):
         raise DomainValidationError("decimal must be finite")
     coefficient_digit_count = len(digits)
@@ -127,8 +129,8 @@ def canonical_decimal(value: Decimal | str) -> str:
     )
     if projected_digit_positions > MAX_CANONICAL_DECIMAL_DIGIT_POSITIONS:
         raise _decimal_resource_error(coefficient_digit_count, exponent)
-    fixed = format(number, "f")
-    return fixed.rstrip("0").rstrip(".") if "." in fixed else fixed
+    bounded_number = Decimal((sign, tuple(canonical_digits), canonical_exponent))
+    return format(bounded_number, "f")
 
 
 def canonical_economic_intent(intent: OrderIntent) -> dict[str, str]:
