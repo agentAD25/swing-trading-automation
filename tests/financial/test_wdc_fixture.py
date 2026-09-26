@@ -1,9 +1,14 @@
+import hashlib
+import json
+import shutil
 from datetime import date
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
 
-from swingtrade.domain import Bar
+import swingtrade.domain as domain
+from swingtrade.domain import Bar, DomainValidationError
 from swingtrade.wdc import FixtureError, evaluate_daily_close_protective, load_wdc_fixture
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "wdc-reference"
@@ -31,6 +36,50 @@ def test_accepted_wdc_fixture_loads_and_preserves_bytes() -> None:
     assert fixture.event_bytes == (FIXTURE / "expected-events.jsonl").read_bytes()
     assert fixture.report_bytes == (FIXTURE / "expected-report.json").read_bytes()
     assert fixture.report["reconciliation_result"] == "UNRECONCILED"
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "9" * 1_000_000,
+        "0." + "9" * 1_000_000,
+        "1e" + "9" * 1_000_000,
+        "1e1000000",
+        " 2",
+        "2 ",
+        "1_0",
+        "NaN",
+        "sNaN",
+        "Infinity",
+    ],
+)
+def test_wdc_decimal_attacks_never_enter_decimal_constructor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, raw: str
+) -> None:
+    root = tmp_path / "wdc-reference"
+    shutil.copytree(FIXTURE, root)
+    bars_path = root / "bars.csv"
+    lines = bars_path.read_text().splitlines()
+    first_row = lines[1].split(",")
+    first_row[4] = raw
+    lines[1] = ",".join(first_row)
+    bars_path.write_text("\n".join(lines) + "\n")
+    manifest_path = root / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["sha256"]["bars.csv"] = hashlib.sha256(bars_path.read_bytes()).hexdigest()
+    manifest_path.write_text(json.dumps(manifest))
+
+    constructor_called = False
+
+    def forbidden_constructor(value: object) -> Decimal:
+        nonlocal constructor_called
+        constructor_called = True
+        raise AssertionError("Decimal constructor must not be called")
+
+    monkeypatch.setattr(domain, "Decimal", forbidden_constructor)
+    with pytest.raises(DomainValidationError):
+        load_wdc_fixture(root)
+    assert not constructor_called
 
 
 def test_daily_close_only_and_rolling_prior_trading_day_high() -> None:

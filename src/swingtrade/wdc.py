@@ -5,11 +5,10 @@ import hashlib
 import json
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from swingtrade.domain import Bar
+from swingtrade.domain import Bar, decimal_value
 from swingtrade.idempotency import canonical_json, idempotency_key
 from swingtrade.reconciliation import derive_reconciliation_result
 
@@ -57,11 +56,11 @@ def load_wdc_fixture(root: Path) -> WdcFixture:
             symbol=row["symbol"],
             interval=row["interval"],
             session_date=date.fromisoformat(row["session_date"]),
-            open=Decimal(row["open"]),
-            high=Decimal(row["high"]),
-            low=Decimal(row["low"]),
-            close=Decimal(row["close"]),
-            volume=Decimal(row["volume"]),
+            open=decimal_value(row["open"]),
+            high=decimal_value(row["high"]),
+            low=decimal_value(row["low"]),
+            close=decimal_value(row["close"]),
+            volume=decimal_value(row["volume"]),
             currency=row["currency"],
             source=row["source"],
             revision=int(row["revision"]),
