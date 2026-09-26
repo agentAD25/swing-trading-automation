@@ -12,6 +12,11 @@ environment (`SIM` versus LIVE), key configuration, effective date, and any
 behavior that is contractual versus observational. A LIVE answer must not be
 treated as authorization to use LIVE.
 
+The factual premises in these questions use the dated first-party source
+register and two `BROKER_EVIDENCE_CONFLICT` records in
+`docs/P2_BROKER_RESEARCH.md`, accessed 2026-09-26. Questions intentionally ask
+TradeStation to reconcile those sources; they do not select one as correct.
+
 ## Questions for TradeStation Client Experience
 
 ### Authentication, refresh, scopes, and key configuration (group 6)
