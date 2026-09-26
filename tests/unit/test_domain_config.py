@@ -83,7 +83,8 @@ def test_oversized_or_malformed_string_never_enters_decimal_constructor(
         decimal_value(raw)
     assert not constructor_called
     assert len(str(captured.value)) < 300
-    assert raw not in str(captured.value)
+    if raw:
+        assert raw not in str(captured.value)
 
 
 def test_bar_preserves_decimal() -> None:

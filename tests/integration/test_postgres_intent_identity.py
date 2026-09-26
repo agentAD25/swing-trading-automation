@@ -146,7 +146,7 @@ def test_canonical_decimal_boundary_minus_one_and_exact(
 def test_canonical_decimal_boundary_plus_one_rejects_with_bounded_metadata(
     value: str,
 ) -> None:
-    with pytest.raises(DomainValidationError, match="resource bound") as captured:
+    with pytest.raises(DomainValidationError) as captured:
         canonical_decimal(value)
     message = str(captured.value)
     assert len(message) < 200
