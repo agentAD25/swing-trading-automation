@@ -9,11 +9,12 @@ from decimal import Decimal
 import pytest
 from sqlalchemy import create_engine, func, insert, select, text
 
-from swingtrade.domain import ExecutionMode, OrderIntent, Side
+from swingtrade.domain import DomainValidationError, ExecutionMode, OrderIntent, Side
 from swingtrade.idempotency import idempotency_key, input_digest
 from swingtrade.persistence import (
     DurableObservationError,
     IntentIdentityConflict,
+    MAX_CANONICAL_DECIMAL_DIGIT_POSITIONS,
     NonCanonicalIntentKey,
     OrderIntentRow,
     PostgresIntentRepository,
@@ -102,6 +103,111 @@ def test_canonical_decimal_collapses_only_economic_scale(
     assert {canonical_decimal(value) for value in variants} == {expected}
 
 
+@pytest.mark.parametrize(
+    ("value", "expected_length"),
+    [
+        ("1E+998", 999),
+        ("1E+999", 1000),
+        ("1E-998", 1000),
+        ("1E-999", 1001),
+        ("9.99E+999", 1000),
+        ("9.99E-997", 1001),
+        ("-" + "9" * 999, 1000),
+        ("9" * 1000, 1000),
+    ],
+)
+def test_canonical_decimal_boundary_minus_one_and_exact(
+    value: str, expected_length: int
+) -> None:
+    result = canonical_decimal(value)
+    assert len(result) == expected_length
+    assert "E" not in result
+    assert len(result.replace("-", "").replace(".", "")) <= (
+        MAX_CANONICAL_DECIMAL_DIGIT_POSITIONS
+    )
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "1E+1000",
+        "1E-1000",
+        "9.99E+1000",
+        "9.99E-998",
+        "9" * 1001,
+        "1" + "0" * 1000 + "E-1000",
+    ],
+)
+def test_canonical_decimal_boundary_plus_one_rejects_with_bounded_metadata(
+    value: str,
+) -> None:
+    with pytest.raises(DomainValidationError, match="resource bound") as captured:
+        canonical_decimal(value)
+    message = str(captured.value)
+    assert len(message) < 200
+    assert value not in message
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("0002.000", "2"),
+        ("-0002.000", "-2"),
+        ("+000426.59000", "426.59"),
+        ("-0", "0"),
+        ("-0.000", "0"),
+        ("0E+1000000", "0"),
+        ("-0E-1000000", "0"),
+    ],
+)
+def test_canonical_decimal_preserves_safe_sign_zero_and_zero_padding(
+    value: str, expected: str
+) -> None:
+    assert canonical_decimal(value) == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "accepted"),
+    [
+        ("1E+100", True),
+        ("1E-100", True),
+        ("1E+1000", False),
+        ("1E-1000", False),
+        ("1E+100000", False),
+        ("1E-100000", False),
+        ("1E+1000000", False),
+        ("1E-1000000", False),
+        ("9.99E+100", True),
+        ("9.99E-100", True),
+        ("9.99E+1000", False),
+        ("9.99E-1000", False),
+        ("-1E+1000000", False),
+        ("-1E-1000000", False),
+    ],
+)
+def test_extreme_exponent_matrix_is_bounded(value: str, accepted: bool) -> None:
+    if accepted:
+        assert "E" not in canonical_decimal(value)
+    else:
+        with pytest.raises(DomainValidationError, match="resource bound"):
+            canonical_decimal(value)
+
+
+@pytest.mark.parametrize("value", ["NaN", "sNaN", "Infinity", "-Infinity"])
+def test_nonfinite_decimal_values_fail_domain_validation(value: str) -> None:
+    with pytest.raises(DomainValidationError, match="finite"):
+        canonical_decimal(value)
+
+
+def test_extreme_rejection_occurs_before_fixed_point_formatting() -> None:
+    class FormatTrapDecimal(Decimal):
+        def __format__(self, format_spec: str) -> str:
+            raise AssertionError("format must not run for rejected values")
+
+    with pytest.raises(DomainValidationError, match="resource bound"):
+        canonical_decimal(FormatTrapDecimal("1E+1000000"))
+
+
 def test_equal_scale_keys_and_payloads_match_but_nearby_value_remains_distinct() -> None:
     equivalent = [make_intent(quantity=value) for value in ("426.59", "426.590", "42659E-2")]
     assert len({canonical_dispatch_key(value) for value in equivalent}) == 1
@@ -109,6 +215,24 @@ def test_equal_scale_keys_and_payloads_match_but_nearby_value_remains_distinct()
     assert canonical_dispatch_key(make_intent(quantity="426.5901")) != canonical_dispatch_key(
         equivalent[0]
     )
+
+
+@pytest.mark.parametrize("quantity", ["1E+1000", "1E-1000", "9" * 1001])
+def test_repository_rejects_extreme_decimal_before_row(engine, quantity: str) -> None:
+    extreme = OrderIntent(
+        intent_id="int_1",
+        run_id="run_1",
+        decision_id="dec_1",
+        instrument_id="ins_1",
+        side=Side.BUY,
+        quantity=Decimal(quantity),
+        mode=ExecutionMode.DRY_RUN,
+        idempotency_key="v1:dispatch:int_1:" + "f" * 64,
+    )
+    with pytest.raises(DomainValidationError, match="resource bound"):
+        create(PostgresIntentRepository(engine), extreme)
+    with engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 0
 
 
 def test_legacy_scale_sensitive_supplied_key_fails_before_persistence(engine) -> None:

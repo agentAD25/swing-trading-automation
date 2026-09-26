@@ -1275,3 +1275,44 @@ This is implementation evidence for independent verification, not
 self-certification. Phase 2, credentials, broker connectivity, SIM, order
 activity, deployment, real capital, and LIVE remain unstarted and
 unauthorized.
+
+## 2026-09-26 — P1E-F06 bounded Decimal resource remediation pre-edit record
+
+This F06-only pass starts from fetched local/remote/PR head
+`ea3ba1ab83605743cef08bfcc42de52eed6964c2`, tree
+`099dcf0926d5b75c4276103e99725b3eaf7d8ce1`, with a clean worktree. The
+immutable accepted reference remains annotated tag object
+`197d22b06cf6a96bad8c4b1a49ad1b928b147ac0`, commit
+`abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, tree
+`cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`, and its exact 45-file inventory.
+Prior F04/F05 verifier evidence records PostgreSQL 16.15, 130 warnings-strict
+tests, 31/55 targeted tests, validator/Ruff/mypy/Alembic/scans/integrity
+passes, and independent-verification readiness without self-certification.
+
+Pre-edit inspection found one authoritative Decimal-to-economic-intent path:
+`canonical_decimal` feeds the single `canonical_economic_intent`
+materialization used by repository key verification, payload/digest, and
+observation. It rejects binary float and nonfinite Decimal values through
+`decimal_value`, but calls `format(number, "f")` without first bounding the
+coefficient/exponent expansion. Values such as `1E+1000000` can therefore
+allocate an enormous fixed-point string before any persistence boundary.
+
+No accepted contract, domain type, migration, or PostgreSQL `NUMERIC` column
+defines a precision or exponent bound; persisted economic values are canonical
+JSON strings. An unlimited expansion is not required by the contracts.
+F06 therefore adopts a narrow computational input limit of **1000 canonical
+fixed-point digit positions**, inspected from `Decimal.as_tuple()` before
+formatting. The limit is intentionally much larger than every accepted fixture
+value and is solely a deterministic memory/CPU safety boundary. It does not
+round, quantize, select tick/lot precision, or assign economic meaning.
+Coefficient length is rejected before any trailing-zero scan, making all
+subsequent canonicalizer work bounded by the same limit. Zero remains a
+constant `"0"` without expansion.
+
+This is consistent with the existing requirements for finite base-10
+canonical strings, no float, and no implicit rounding; no `CONTRACT_CONFLICT`
+exists. Expected edits are limited to `src/swingtrade/persistence.py`,
+`tests/integration/test_postgres_intent_identity.py`,
+`tests/broker_sim/test_dry_run_adapter.py`, and this journal. Any contract,
+domain, migration, WDC/state/safety, adapter implementation, broker, cloud,
+Supabase, Phase 2, SIM, or LIVE change is a scope violation.

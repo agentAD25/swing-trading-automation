@@ -83,11 +83,50 @@ class PersistedIntent:
     canonical_observation: dict[str, Any]
 
 
+MAX_CANONICAL_DECIMAL_DIGIT_POSITIONS = 1000
+
+
+def _decimal_resource_error(
+    coefficient_digit_count: int, exponent: int
+) -> DomainValidationError:
+    coefficient_size = (
+        str(coefficient_digit_count)
+        if coefficient_digit_count <= MAX_CANONICAL_DECIMAL_DIGIT_POSITIONS
+        else "over-limit"
+    )
+    exponent_direction = "negative" if exponent < 0 else "nonnegative"
+    return DomainValidationError(
+        "decimal canonicalization exceeds resource bound "
+        f"(max_digit_positions={MAX_CANONICAL_DECIMAL_DIGIT_POSITIONS}, "
+        f"coefficient_size={coefficient_size}, "
+        f"exponent_direction={exponent_direction})"
+    )
+
+
 def canonical_decimal(value: Decimal | str) -> str:
     """Serialize a finite base-10 value without scale or exponent aliases."""
     number = decimal_value(value)
     if number == 0:
         return "0"
+    _, digits, exponent = number.as_tuple()
+    if not isinstance(exponent, int):
+        raise DomainValidationError("decimal must be finite")
+    coefficient_digit_count = len(digits)
+    if coefficient_digit_count > MAX_CANONICAL_DECIMAL_DIGIT_POSITIONS:
+        raise _decimal_resource_error(coefficient_digit_count, exponent)
+    canonical_digits = list(digits)
+    canonical_exponent = exponent
+    while canonical_digits[-1] == 0:
+        canonical_digits.pop()
+        canonical_exponent += 1
+    canonical_digit_count = len(canonical_digits)
+    projected_digit_positions = (
+        canonical_digit_count + canonical_exponent
+        if canonical_exponent >= 0
+        else max(canonical_digit_count, 1 - canonical_exponent)
+    )
+    if projected_digit_positions > MAX_CANONICAL_DECIMAL_DIGIT_POSITIONS:
+        raise _decimal_resource_error(coefficient_digit_count, exponent)
     fixed = format(number, "f")
     return fixed.rstrip("0").rstrip(".") if "." in fixed else fixed
 

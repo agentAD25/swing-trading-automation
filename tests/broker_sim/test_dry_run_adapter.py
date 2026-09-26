@@ -8,7 +8,12 @@ import pytest
 from sqlalchemy import create_engine, func, select, text
 
 from swingtrade.broker import DryRunAdapter, DurableRepositoryRequired
-from swingtrade.domain import ExecutionMode, OrderIntent, Side
+from swingtrade.domain import (
+    DomainValidationError,
+    ExecutionMode,
+    OrderIntent,
+    Side,
+)
 from swingtrade.persistence import (
     IntentIdentityConflict,
     OrderIntentRow,
@@ -79,6 +84,32 @@ def test_dry_run_dispatch_is_local_durable_and_idempotent(engine) -> None:
     assert not hasattr(subject, "submit")
     with engine.connect() as connection:
         assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
+
+
+def test_dry_run_equivalent_decimal_scales_converge(engine) -> None:
+    subject = adapter(engine)
+    first = subject.dispatch(intent(quantity="2"), grant())
+    assert subject.dispatch(intent(quantity="2.0"), grant()) == first
+    assert subject.dispatch(intent(quantity="2.00"), grant()) == first
+    with engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 1
+
+
+def test_dry_run_extreme_decimal_fails_before_durable_row(engine) -> None:
+    extreme = OrderIntent(
+        "int_1",
+        "run_1",
+        "dec_1",
+        "ins_1",
+        Side.BUY,
+        Decimal("1E+1000000"),
+        ExecutionMode.DRY_RUN,
+        "v1:dispatch:int_1:" + "f" * 64,
+    )
+    with pytest.raises(DomainValidationError, match="resource bound"):
+        adapter(engine).dispatch(extreme, grant())
+    with engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(OrderIntentRow)) == 0
 
 
 def test_missing_durable_repository_fails_closed() -> None:
