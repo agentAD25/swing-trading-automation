@@ -1074,3 +1074,84 @@ Expected changed files are limited to
 contract, accepted fixture, acceptance manifest, calendar/WDC implementation,
 event-state implementation, status, migration, broker-network, SIM, or LIVE
 file is expected to change.
+
+### P1E-F01/F02/F03 implementation and verification evidence
+
+The implementation candidate before this evidence-only journal update is
+commit `b06faad0c54b5d83cc3919992b9bef1afdbf37e5`, tree
+`96b6b281988f5c0fdfea3d20d61df2118cd1a4f6`. It descends from the authorized
+starting head through three ordinary commits; no history was amended, rebased,
+squashed, cherry-picked, or force-pushed.
+
+P1E-F01 centralizes the accepted dispatch business input and derives its key
+with the existing `idempotency_key` primitive at
+`PostgresIntentRepository.create_or_get`. A supplied mismatch raises the typed
+`NonCanonicalIntentKey` before a transaction. Durable rows are independently
+re-derived and malformed or noncanonical rows fail closed. Tests cover every
+key field, forged direct and concurrent calls, changed economic content,
+identical replay, malformed durable JSON, conflict rollback, cardinality, and
+reconnect.
+
+P1E-F02 removes `InMemoryIdempotencyStore` from `DryRunAdapter` and requires an
+explicit `PostgresIntentRepository`. Authorization runs before persistence;
+the repository transaction atomically creates or returns both canonical intent
+identity and the original local observation. Replay after reconnect returns
+the durable original observation even when the new adapter clock differs.
+Missing repositories, malformed observations, authorization denial, identity
+conflict, and retry all fail closed. DRY_RUN remains local and non-network.
+
+Adversarial review showed that durable original-observation replay could not be
+met by the initially expected files alone. Migration
+`0003_durable_dry_run_observation` was therefore the minimum necessary F02
+change: it adds one nullable JSON column so pre-existing rows remain
+migratable; authoritative dispatch requires a canonical value and fails closed
+on a legacy null. No accepted contract or fixture was changed.
+
+P1E-F03 now requires complete canonical envelopes for both checkpoint and
+completion, exact UTC six-digit-microsecond strings, positive non-boolean
+schema/aggregate versions, exact integer discrepancy counts, same-run and
+same-correlation linkage, immediate checked-event causation, an earlier
+checked event, run-level nondecreasing `recorded_at`, per-event
+`recorded_at >= effective_at`, exact checks, zero high/critical discrepancies,
+and contiguous reconciliation aggregate versions. Conflicting duplicates fail
+closed. The contract expressly permits late effective facts, so no invalid
+global monotonic-effective-time rule was added; a valid late-effective matrix
+case proves that boundary.
+
+Fresh verification used:
+
+```text
+PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu,
+compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+SWINGTRADE_TEST_POSTGRES_URL=postgresql+psycopg://.../swingtrade_test \
+  python3 -m pytest -W error
+109 passed in 1.37s (shell elapsed 1.646s)
+
+P1E-F01 targeted: 22 passed in 0.78s (elapsed 1.028s)
+P1E-F02 targeted: 12 passed in 0.57s (elapsed 0.811s)
+P1E-F03 targeted: 43 passed in 0.09s (elapsed 0.279s)
+unchanged WDC/state/domain/fail-closed/idempotency/schema regressions:
+32 passed in 0.38s
+```
+
+The contract validator passed manifest and C01–C04 plus omission and
+reconciliation regressions. Ruff passed; strict mypy reported no issues in 11
+source files; compile/import checks passed. Alembic downgrade-to-base and
+upgrade-to-head passed online on PostgreSQL through revisions 0001, 0002, and
+0003; head is `0003_durable_dry_run_observation`. Offline SQL rendered all
+three revisions in 57 lines.
+
+Runtime network-import, credential/secret-literal, and
+broker-network/LIVE-order-path scans returned zero matches. Strict Git object,
+whitespace, ancestry, and clean-worktree checks passed before this evidence
+append. The immutable tag still resolves to object
+`197d22b06cf6a96bad8c4b1a49ad1b928b147ac0`, accepted commit
+`abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, and tree
+`cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`; all 45 manifest blob OIDs and
+SHA-256 values matched.
+
+This is bounded implementation and test evidence for independent verification,
+not self-certification. It does not start Phase 2 or authorize credentials,
+broker access, TradeStation SIM, order activity, deployment, real capital, or
+LIVE.
