@@ -1607,3 +1607,88 @@ activity, TradeStation `SIM`, order submission, deployment, real capital,
 audit.
 
 Phase 2 has NOT been started.
+
+## 2026-09-29 — P2-0 Group 1 isolated integration (coordinator)
+
+This entry is evidence-only. It does not start Phase 2, pass Gate `H1`,
+accept an ADR, select a managed PostgreSQL provider, provision a resource,
+introduce a credential, or authorize TradeStation `SIM`, order submission,
+real capital, or `LIVE`. `DRY_RUN` remains the sole authorized execution
+mode.
+
+### Scope
+
+Created isolated branch `cursor/p2-0-integration-1f76` from canonical `main`
+`1ecbbe6d487d97195fde393b05c9499357599bdb`. Integrated the independently
+verified docs-only heads with `--no-ff` merges, preserving specialist
+commit lineage, and **did not merge to `main`**:
+
+| PR | Workstream | Head | Merge commit |
+| --- | --- | --- | --- |
+| #8 | `P2-J/r1` | `a91bd24ed921d148448338ae1980647f27bf355a` | `5ac60d5` |
+| #9 | `P2-A/r1` | `f0dca4b30ae2f51f54a56d1c073e02e90347847a` | `c71981e` |
+| #10 | `P2-C/r1` | `a7900c253404eeefacfd6cd51416a3e4d4986b1d` | `fa07532` |
+| #11 | `P2-B/r1` | `595f431473ea136fb4519abda01e004a265ddcb1` | `7a34ad6` |
+
+Coordinator reconciliation: `docs/PHASE_2_RECONCILIATION.md`. Cross-walks
+are auth↔broker, auth↔DB, DB↔monitoring, and broker↔monitoring.
+
+Clear documentation gaps closed without choosing winners:
+
+- dated additive `BROKER_CONTRACT.md` pointer (plan §9 deliverable 1; PR #9 N2);
+- third `BROKER_EVIDENCE_CONFLICT` for `offline_access` plus Client
+  Experience questions 72–73 (PR #9 N3; auth U-17);
+- P2-0 `config/README.md` / `.env.example` `*_REF` naming comments (plan §9
+  deliverable 4); local `SWINGTRADE_DATABASE_URL` unchanged; `LIVE` absent;
+- monitoring §9 rows for U-17 and U-10;
+- N10 evidence in `CURRENT_STATE.md` and this journal **without** a
+  phase-authorization change.
+
+`PHASE_2_PLAN.md` was not edited. Ranking vs plan §7.3 is recorded as an
+overlay from a later explicit P2-0 task request, not as provider selection
+and not as `P2_0_CONTRACT_CONFLICT`.
+
+Material disagreement recorded as `P2_0_CONTRACT_CONFLICT` C1 (U-10): plan
+G1 Cursor Dashboard start-time secrets versus the proposed workload-writable
+CAS store. Agents must not substitute a product or amend plan G1.
+
+Gate `H1` is **not** passed. H1 blockers: Operator review pending;
+independent verification of this integration pending; C1 remains open and
+must be carried, not closed.
+
+### Validation (pre-evidence-commit; repeated after commit)
+
+```text
+git merge-base --is-ancestor 1ecbbe6d487d97195fde393b05c9499357599bdb HEAD
+git merge-base --is-ancestor a91bd24ed921d148448338ae1980647f27bf355a HEAD
+git merge-base --is-ancestor f0dca4b30ae2f51f54a56d1c073e02e90347847a HEAD
+git merge-base --is-ancestor a7900c253404eeefacfd6cd51416a3e4d4986b1d HEAD
+git merge-base --is-ancestor 595f431473ea136fb4519abda01e004a265ddcb1 HEAD
+# all true
+
+git merge-base --is-ancestor HEAD origin/main
+# false (this branch is not on main)
+
+git rev-parse phase1-accepted-abc1fb6^{commit} phase1-accepted-abc1fb6^{tree}
+# abc1fb6a9cc3554e7ad13f438685ba3c3c044dab
+# cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808
+
+git rev-parse phase1-complete^{commit}
+# 249b8eb341b56d596f07b28723b37ddff96eb86c
+
+git diff --name-only 1ecbbe6 -- src migrations tests pyproject.toml \
+  docker-compose.yml alembic.ini docs/PHASE_2_PLAN.md docs/AGENT_AUTHORITY.md
+# empty
+
+git diff --check 1ecbbe6...HEAD
+# clean
+```
+
+Secret-pattern scan of the integration diff found no private-key block,
+GitHub token, AWS access-key, or credential-assignment material. `LIVE`
+occurrences in the new/updated docs are denials or isolation requirements.
+
+Exact reconciliation-commit SHA is the HEAD of
+`cursor/p2-0-integration-1f76` after this evidence commit. This does not
+authorize Phase 2, credentials, broker/account/network activity,
+TradeStation `SIM`, order submission, real capital, or `LIVE`.

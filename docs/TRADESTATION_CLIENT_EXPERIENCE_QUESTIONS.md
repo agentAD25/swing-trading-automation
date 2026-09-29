@@ -13,9 +13,11 @@ behavior that is contractual versus observational. A LIVE answer must not be
 treated as authorization to use LIVE.
 
 The factual premises in these questions use the dated first-party source
-register and two `BROKER_EVIDENCE_CONFLICT` records in
-`docs/P2_BROKER_RESEARCH.md`, accessed 2026-09-26. Questions intentionally ask
-TradeStation to reconcile those sources; they do not select one as correct.
+register and the `BROKER_EVIDENCE_CONFLICT` records in
+`docs/P2_BROKER_RESEARCH.md`, accessed 2026-09-26 (third conflict,
+`offline_access`, recorded at coordinator integration 2026-09-29 from the
+same pages). Questions intentionally ask TradeStation to reconcile those
+sources; they do not select one as correct.
 
 ## Questions for TradeStation Client Experience
 
@@ -44,6 +46,23 @@ TradeStation to reconcile those sources; they do not select one as correct.
    refresh policy, and SIM access would be configured for the proposed key?
 9. When one refresh token is revoked, does “all Refresh Tokens for that API
    key” include every permitted login/user and every active token family?
+
+### `offline_access` wording (group 6; coordinator addendum 2026-09-29)
+
+72. Your Auth Code and Refresh Tokens pages say `offline_access` is required
+    to obtain refresh tokens. The Scopes table labels `offline_access`
+    **required** with no such qualification. For the proposed key, is
+    `offline_access` required on every authorization request, or only when a
+    refresh token is requested? If a request omits it, does authorization or
+    token exchange fail, and with what error?
+73. Can a confidential or PKCE key be issued that successfully returns
+    access tokens for `openid` plus read-only API scopes with **no**
+    refresh token and **no** `offline_access` grant? If not, what is the
+    minimum required scope set for a one-shot read-only token?
+
+These two questions do not select a winner between the pages. They exist so
+Client Experience can close `AUTH_ARCHITECTURE.md` U-17 before any future
+G1. Do not treat a LIVE-keyed answer as LIVE authorization.
 
 ### Accounts, SIM entitlement, assets, market data, and routes (groups 5 and 7)
 
@@ -262,3 +281,7 @@ These cannot be delegated to TradeStation or inferred from documentation.
 12. **Residual unknowns:** decide which unanswered vendor questions block
     contract freeze, G1, G2, G3, and SIM certification. No unanswered item is
     closed by assumption.
+13. **`offline_access` / one-shot G2 (U-17):** after Client Experience
+    answers questions 72–73, decide whether a refresh-less, no-
+    `offline_access` G2 profile is acceptable or whether G2 cannot proceed
+    without a separately gated refresh family. Do not infer the answer.

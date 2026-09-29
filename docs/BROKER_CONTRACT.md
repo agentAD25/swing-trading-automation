@@ -302,3 +302,32 @@ TradeStation and accessed at `2026-09-25T18:05:40Z`.
   https://api.tradestation.com/docs/fundamentals/rate-limiting/rate-limiting-overview/
   Supports default quotas, rolling/concurrent models, headers, and 429
   behavior. Limitation: quotas are key-specific and subject to adjustment.
+
+## Dated addendum — P2-A/r1 (2026-09-29 coordinator integration)
+
+This addendum does **not** rewrite the 2026-09-25 findings above. Those
+remain prior evidence. Current public-document re-verification, the §5
+classification matrix, and Client Experience questions live in:
+
+- `docs/P2_BROKER_RESEARCH.md` (verified PR #9 head
+  `f0dca4b30ae2f51f54a56d1c073e02e90347847a`)
+- `docs/TRADESTATION_CLIENT_EXPERIENCE_QUESTIONS.md`
+
+Pointer facts for later readers:
+
+1. The status paragraph that named `SIM` as the only authorized execution
+   mode is historical Phase 1B text. Current authority is
+   `docs/CURRENT_STATE.md`: local, deterministic, non-network `DRY_RUN`
+   only; TradeStation `SIM` remains unauthorized; `LIVE` remains
+   unauthorized.
+2. All twelve `BROKER_BEHAVIOR_UNRESOLVED` groups remain unresolved.
+   Groups 4, 9, 11, and 12 are narrowed, not closed.
+3. Findings 9 and 10 (30-vs-40-minute rotation; default-scope split) remain
+   unresolved `BROKER_EVIDENCE_CONFLICT` records. A third published conflict
+   — Scopes table `offline_access` labeled **required** with no
+   refresh-only qualification versus Auth Code / Refresh Tokens wording that
+   `offline_access` is required to obtain refresh tokens — is recorded in
+   `P2_BROKER_RESEARCH.md` and as `AUTH_ARCHITECTURE.md` U-17. This
+   addendum does not choose a winner.
+4. This pointer is documentation only. It does not authorize credentials,
+   probes, TradeStation `SIM`, orders, or `LIVE`.

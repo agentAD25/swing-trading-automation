@@ -11,8 +11,8 @@ non-network `DRY_RUN` remains the only authorized execution mode.
 
 All 12 groups in `docs/BROKER_CONTRACT.md` and `docs/PHASE_2_PLAN.md` remain
 unresolved. Current public documentation narrows groups 4, 9, 11, and 12, but
-does not close any group. Group 6 contains two current first-party conflicts,
-recorded below as `BROKER_EVIDENCE_CONFLICT`.
+does not close any group. Group 6 contains three current first-party
+conflicts, recorded below as `BROKER_EVIDENCE_CONFLICT`.
 
 The Phase 1 `BROKER_CONTRACT.md` status paragraph says SIM was the authorized
 mode. That sentence is historical and superseded by `docs/CURRENT_STATE.md`:
@@ -78,6 +78,30 @@ date.
   Actual requested and granted scopes must be key-specific and least-privilege.
   Confidence: high that the published conflict exists; none as to actual key
   configuration.
+
+### `BROKER_EVIDENCE_CONFLICT` — `offline_access` required vs refresh-enabling
+
+- **Old evidence preserved:** `BROKER_CONTRACT.md` finding 7 recorded on
+  2026-09-25 that `offline_access` is required to obtain refresh tokens
+  (S4/S6 wording as then cited).
+- **New evidence (2026-09-26, restated at H1 2026-09-29):** TS5 and TS8
+  still present `offline_access` as the scope that enables refresh tokens.
+  TS6's Other Relevant Scopes table labels `offline_access` **required**
+  with no qualification that it applies only when refresh tokens are
+  requested. `AUTH_ARCHITECTURE.md` records the same split as U-17 and
+  does not choose a winner.
+- **Result:** unresolved. Neither page is preferred. A one-shot
+  no-refresh G2 profile that omits `offline_access` remains a candidate
+  only if Client Experience confirms a refresh-less grant; if the
+  unqualified table is the live key contract, token exchange fails closed.
+  Question 72 in `TRADESTATION_CLIENT_EXPERIENCE_QUESTIONS.md` asks
+  TradeStation to reconcile the wording. Confidence: high that the
+  published conflict exists; none as to the future key.
+
+Coordinator H1 note (2026-09-29): this conflict was present in first-party
+pages at P2-A/r1 and was not previously labeled `BROKER_EVIDENCE_CONFLICT`
+in this file (independent verifier N3). Recording it here does not amend
+P2-A/r1 facts or close group 6.
 
 ## Twelve-group resolution matrix
 
@@ -169,7 +193,7 @@ date.
 | Evidence classification | Facts and open questions, including two factual source conflicts; no inference or assumption. |
 | Prior evidence | `BROKER_CONTRACT.md` findings 5–11 and unresolved item 6 recorded 30-vs-40-minute rotation and default-scope conflicts. |
 | Current official evidence | TS4–TS6 and TS8, accessed 2026-09-26. The two `BROKER_EVIDENCE_CONFLICT` records above remain current. TS5 confirms 20-minute access tokens, default indefinite refresh tokens, and all-key revocation. |
-| Known / unknown | **Known:** default Auth Code flow; `openid` required; `offline_access` required for refresh; key configuration is adjustable by Client Experience. **Unknown/conflicted:** 30 vs 40 minutes; exact defaults; actual requested/granted scopes; key type; permitted logins; SIM entitlement; callback URLs; revocation/rotation configuration. |
+| Known / unknown | **Known:** default Auth Code flow; `openid` required; `offline_access` is documented as required to obtain refresh tokens (TS5/TS8). **Unknown/conflicted:** 30 vs 40 minutes; exact defaults; actual requested/granted scopes; whether `offline_access` is unqualified-required on every authorization request (TS6 table vs TS5/TS8; see `BROKER_EVIDENCE_CONFLICT` above and auth U-17); key type; permitted logins; SIM entitlement; callback URLs; revocation/rotation configuration. |
 | Do docs resolve? | **No.** `OPERATOR_DECISION`/vendor confirmation before `G1`; `READ_ONLY_AUTHENTICATED_PROBE` confirmation at `G2`. |
 | Future G2 read-only evidence | Record token response expiry/scope fields and actual read-only authorization failures/successes; observe only an approved refresh lifecycle. Do not infer policy from one sample. |
 | Future G3 SIM experiment | None; authentication policy must not require an order experiment. |
@@ -277,8 +301,8 @@ date.
 
 - **Fully resolved by public docs:** 0/12.
 - **Narrowed but unresolved:** groups 4, 9, 11, and 12.
-- **Current published conflicts:** group 6 (refresh rotation and default
-  scopes).
+- **Current published conflicts:** group 6 (refresh rotation, default
+  scopes, and `offline_access` required vs refresh-enabling).
 - **Needs future G2 evidence:** groups 3, 4, 6, 7, 10, and 11. Read-only
   evidence may corroborate observations but cannot turn an undocumented
   behavior into a guarantee.
