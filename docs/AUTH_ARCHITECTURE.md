@@ -2,6 +2,8 @@
 
 - Status: **PROPOSED**
 - Date: 2026-09-26
+- Revised: 2026-09-29 (independent-verification F1–F4 / N1–N9 remediation;
+  r1 remains documentation-only)
 - Workstream: `P2-B/r1`
 - Canonical base: `1ecbbe6d487d97195fde393b05c9499357599bdb`
 - Sole acceptance decider: Human Operator
@@ -53,6 +55,31 @@ actual granted scopes, permitted logins, account entitlements, refresh policy,
 SIM-only restriction, and rate-limit identity are key-specific. Those facts
 must not be inferred from defaults.
 
+`P2-A/r1` is specified as an upstream input in
+[`PHASE_2_PLAN.md`](PHASE_2_PLAN.md) §6.3/§7.2, while the same plan's DAG
+runs `P2-A/r1` and `P2-B/r1` in parallel. This document does not treat any
+unmerged broker-research branch as established fact. Unresolved
+authentication, entitlement, and rate-limit items remain those recorded in
+[`BROKER_CONTRACT.md`](BROKER_CONTRACT.md). The coordinator reconciles that
+plan conflict at H1; this author does not.
+
+## Safety impact
+
+This proposal, while `PROPOSED` and unaccepted, would affect a later SIM
+connectivity phase only after the Operator records every named gate. It does
+not change the currently authorized `DRY_RUN` mode, does not introduce
+credentials or network activity, and cannot by itself authorize TradeStation
+`SIM`, order submission, real capital, or `LIVE`.
+
+If later accepted and implemented under those gates, the intended fail-closed
+effects are: no broker request without exact artifact, secret-store, host,
+scope, and generation health; no environment-variable or local-file
+credential copy; no LIVE-reachable adapter; refresh-token families with
+`offline_access` only when broker-confirmed rotation/expiry or
+sender-constraint exists; and residual bearer-token risks accepted only by an
+explicit Operator record, never by this author or a security-owner shortcut.
+Rollback is document supersession; this work creates no runtime state.
+
 ## Evidence findings
 
 ### Verified broker facts
@@ -68,13 +95,24 @@ documentation on 2026-09-26:
   `signin.tradestation.com/oauth/token`; access tokens expire after 20 minutes.
   Standard Authorization Code flow requires a client secret. PKCE uses an
   `S256` code challenge and verifier instead of that client secret. [E2, E3]
-- `openid` is required. `offline_access` is required only when refresh tokens
-  are requested. TradeStation defines `MarketData`, `ReadAccount`, `Trade`,
-  `OptionSpreads`, and `Matrix` scopes. [E2, E4]
+- `openid` is required. Auth-code, PKCE, and refresh-token pages describe
+  `offline_access` as the scope that enables refresh tokens and is therefore
+  requested when a refresh token is wanted [E2, E3, E5]. The Scopes page
+  table, however, labels `offline_access` **required** with no
+  qualification that it applies only when refresh tokens are requested [E4].
+  That conflict is unresolved (U-17). This document does not choose a winner.
+  The one-shot G2 profile that omits `offline_access` remains a candidate
+  only if Client Experience confirms that a refresh-less grant is accepted;
+  if the table's unqualified "required" is the actual key contract, the
+  exchange fails closed and G2 cannot use that profile.
+- TradeStation defines `MarketData`, `ReadAccount`, `Trade`,
+  `OptionSpreads`, and `Matrix` scopes. [E4]
 - Refresh tokens must be stored securely. The default is non-expiring.
   TradeStation documents an optional expiring/rotating policy and a 24-hour
   absolute lifetime, but its pages conflict on whether rotation occurs every
-  30 or 40 minutes. [E1, E5]
+  30 or 40 minutes. [E1, E5] Default non-expiring unconstrained refresh
+  tokens are rejected for any `offline_access` profile under this proposal
+  (see G1 item 3 and U-07).
 - Revoking one refresh token revokes all refresh tokens for that API key.
   Disabling and later re-enabling a key can make old non-expiring refresh
   tokens usable again. Rotating the client secret does not invalidate existing
@@ -82,10 +120,12 @@ documentation on 2026-09-26:
 - TradeStation session logout does not invalidate existing access or refresh
   tokens. Access tokens retain their 20-minute lifetime and refresh tokens
   remain subject to their separate lifetime and revocation rules. [E13]
-- The authentication overview lists default API scopes as `MarketData`,
-  `ReadAccount`, and `Trade`; the scopes page also describes
-  `OptionSpreads` and `Matrix` as defaults. The actual key contract is
-  unresolved. [E1, E4]
+- Default API-scope statements conflict three ways and remain unresolved
+  (U-02): the authentication overview lists `MarketData`, `ReadAccount`, and
+  `Trade` [E1]; the Scopes page prose lists `MarketData`, `ReadAccount`,
+  `Trade`, and `OptionSpreads` (no `Matrix`) [E4]; the Scopes page table
+  marks all five, including `Matrix`, as Default [E4]. The actual key
+  contract is unknown.
 - The documented SIM resource host is `sim-api.tradestation.com`; the
   documented LIVE resource host is `api.tradestation.com`. TradeStation warns
   that applications which permit switching can make mistakes. The OAuth
@@ -150,9 +190,17 @@ Use the first-party documented PKCE configuration with a per-transaction
 - **Costs and risks:** the refresh token becomes the primary bearer secret;
   TradeStation documents PKCE for native and single-page public clients, not
   the proposed multi-worker server topology; sender-constrained refresh tokens
-  are not documented.
+  are not documented [E1, E7]. Under Option B there is no client secret, so
+  a non-expiring refresh token would mean no credential rotates, which fails
+  [`SIM_CERTIFICATION.md`](SIM_CERTIFICATION.md) "least scopes and rotation".
+  Any `offline_access` profile therefore requires broker-confirmed
+  expiring/rotating refresh tokens **or** confirmed sender-constraint; the
+  documented default non-expiring refresh token is rejected and blocks G1.
+  Absence of sender-constraint (U-07) cannot be accepted as residual risk
+  while rotation/expiry is also absent.
 - **Disposition:** candidate only after Client Experience confirms the chosen
-  application topology and key configuration.
+  application topology, key configuration, and refresh
+  rotation/expiry-or-sender-constraint for the exact key.
 
 ### Option C — Confidential client authentication plus PKCE
 
@@ -180,7 +228,7 @@ not an accepted decision.
 | Human authorization station | Initiate an approved authorization-code session and consent to the exact scopes | No token display, export, copy, logging, or account switching |
 | Callback handler | Receive one exact callback, validate transaction binding, and hand the code to the auth coordinator | No broker-resource calls, arbitrary redirect, or debug-body logging |
 | Auth coordinator | Sole process allowed to exchange, refresh, and revoke tokens after the applicable gates | No order call, arbitrary URL, environment fallback, or plaintext persistence |
-| Secret manager | Hold encrypted client secret (if any), refresh token, credential generation, and revocation metadata | No repository/file fallback and no DEV/TEST broker-secret namespace |
+| Secret manager | Hold encrypted client secret (if any), refresh token, credential generation, and revocation metadata | No repository, file, or environment-variable fallback; no DEV/TEST broker-secret namespace; Cursor Dashboard start-time injection is not a conforming store (U-10) |
 | Token broker | Return a bounded in-memory access-token lease to an authorized SIM workload | Never return client secrets or refresh tokens; never serve an unknown/stale generation |
 | SIM broker client | Use a valid lease only for the exact authorized capability and exact SIM host | No auth administration, LIVE host, arbitrary URL, or credential selection |
 | Policy/egress layers | Independently enforce environment, artifact, destination, method, and scope policy | No default route, proxy bypass, or configuration-only grant |
@@ -194,7 +242,9 @@ tables, queues, caches, traces, or logs.
 
 1. **Precondition:** all G1 requirements are affirmatively satisfied for an
    exact artifact, credential profile, callback, human authorization record,
-   and expiry. Otherwise the auth state is `NO_CREDENTIALS / BLOCKED`.
+   and expiry, **and** G2 attestation (below) is complete before the first
+   token exchange or broker request. G1 alone does not authorize a token
+   call. Otherwise the auth state is `NO_CREDENTIALS / BLOCKED`.
 2. **Flow selection:** use only the exact key type accepted at P2-B/r2. PKCE,
    if selected, is mandatory `S256`; a missing challenge, missing verifier, or
    attempted downgrade blocks the transaction. No fallback between Options A,
@@ -203,11 +253,22 @@ tables, queues, caches, traces, or logs.
    random `state`; for PKCE generate a single-use high-entropy verifier and its
    `S256` challenge. Keep both only in encrypted/ephemeral server-side session
    state with a short, approved expiry. Do not put a token, verifier, secret,
-   or sensitive diagnostic in a URL.
+   or sensitive diagnostic in a URL. Include `prompt=login` (or the
+   Client-Experience-confirmed equivalent that forces an interactive
+   TradeStation login) so the authorization cannot silently reuse an existing
+   browser session. E2/E3 document that the flow may reuse a session; the ID
+   token is unused here (step 9), so without this parameter the authorized
+   login is not verified before commit. If TradeStation does not confirm
+   `prompt=login` for the exact key, that gap remains U-05 and blocks G1
+   until Client Experience confirms another login-binding control.
 4. **Redirect:** use one exact, pre-registered HTTPS callback URI for SIM
    administration. Wildcards, open redirects, unregistered ports, and
    environment-shared callbacks are denied. Loopback HTTP is not proposed for
-   a deployed environment.
+   a deployed environment. G1 must also confirm that the authorization
+   server's registered redirect URIs, logout URLs, web origins, and CORS
+   origins have been reduced to **exactly** that approved HTTPS callback;
+   leftover default `http://localhost` callbacks, wildcard origins, or extra
+   logout URLs keep G1 closed [E1].
 5. **Callback:** require exactly one `code` and a constant-time match of the
    single-use `state`; reject missing, duplicate, malformed, expired,
    previously consumed, or mismatched values. Authorization errors become a
@@ -237,15 +298,22 @@ tables, queues, caches, traces, or logs.
 
 Scope is capability-specific; there is no broad default.
 
-| Future profile | Exact requested scopes | Explicitly absent |
-| --- | --- | --- |
-| Bounded G2 read-only probe | `openid ReadAccount`; add `MarketData` only if the approved probe includes market data | `offline_access`, `Trade`, `OptionSpreads`, `Matrix`, `profile`, `email` |
-| Continuous SIM read-only worker | `openid offline_access ReadAccount`; add `MarketData` only for a named requirement | `Trade`, `OptionSpreads`, `Matrix`, `profile`, `email` |
-| Future bounded SIM order harness, not authorized here | A separate key/token family with `openid offline_access ReadAccount Trade`; any `MarketData` or `OptionSpreads` addition requires a separately approved test need | `Matrix`, `profile`, `email`, and every unapproved scope |
+| Future profile | Exact requested scopes | Explicitly absent | Authorizing gate |
+| --- | --- | --- | --- |
+| Bounded G2 read-only probe | `openid ReadAccount`; add `MarketData` only if the approved probe includes market data | `offline_access`, `Trade`, `OptionSpreads`, `Matrix`, `profile`, `email` | G2 only, one-shot, after G1 |
+| Continuous SIM read-only worker | `openid offline_access ReadAccount`; add `MarketData` only for a named requirement | `Trade`, `OptionSpreads`, `Matrix`, `profile`, `email` | **Not** G2 and **not** G3. Requires a separately named, expiring human gate recorded in `CURRENT_STATE.md` after successful one-shot G2 and before any long-lived `offline_access` worker. Until that gate exists this row is research-only and must not be provisioned |
+| Future bounded SIM order harness, not authorized here | A separate key/token family with `openid offline_access ReadAccount Trade`; any `MarketData` or `OptionSpreads` addition requires a separately approved test need | `Matrix`, `profile`, `email`, and every unapproved scope | G3 only, after its own human authorization; out of this r1 grant |
 
 The one-shot G2 profile intentionally requests no refresh token if the bounded
 probe fits within the documented 20-minute access-token lifetime. A different
-duration is not silently justified by adding `offline_access`.
+duration is not silently justified by adding `offline_access`. That omission
+depends on U-17 remaining unresolved: E2/E3/E5 treat `offline_access` as
+refresh-enabling, while the E4 table marks it required without qualification.
+If exchange fails because the key requires `offline_access`, G2 ends
+fail-closed; agents must not add the scope to recover.
+
+Any profile that includes `offline_access` additionally requires the G1
+refresh-token replay control in the next subsection.
 
 The API key itself must also be configured to the least capability; requesting
 a narrow scope does not compensate for an unnecessarily broad key. If the
@@ -282,21 +350,36 @@ requires all of the following, independently of `EXECUTION_MODE`:
 
 ### Refresh handling
 
+Refresh, and any `offline_access` grant, is permitted only for a credential
+family whose exact API key has a broker-confirmed expiring/rotating refresh
+policy **or** confirmed sender-constraint. TradeStation's default
+non-expiring refresh token is rejected. That control is a G1 blocker, not an
+optional enhancement. RFC 9700 §2.2.2 requires public-client refresh tokens
+to be sender-constrained or rotated [E7]; Option B has no client secret, so
+without one of those controls no credential rotates.
+
 1. Refresh begins before expiry using an Operator-approved safety margin. The
    exact margin, clock-skew tolerance, retry budget, and service objective are
-   unresolved; no value is invented here.
+   unresolved; no value is invented here (U-11).
 2. A single auth coordinator holds a short lease with a monotonically
    increasing fencing generation. The secret-manager record contains the
    credential-family ID, current refresh-token version, current owner fence,
-   expected scopes, environment, and lifecycle state.
-3. Only the current fence owner may read the refresh token or call the token
-   endpoint. Other workers wait for a newer access-token lease; they do not
-   refresh independently.
+   expected scopes, environment, and lifecycle state. Lease TTL is an r2
+   parameter bound to U-11 and must be shorter than the refresh safety margin.
+3. Only the current fence owner may read the refresh token or **initiate** a
+   token-endpoint call. Other workers wait for a newer access-token lease;
+   they do not refresh independently. The external TradeStation token
+   endpoint cannot enforce this fence: a paused stale owner can still send.
+   Therefore the owner must re-check fence generation immediately before send
+   (U-11). A send after fence loss is U-08: `AUTH_UNKNOWN / BLOCKED`, no
+   replay.
 4. The response is committed with compare-and-swap against both the refresh
-   version and fence. When rotation returns a new refresh token, the new value
-   is durably committed before an access token is published. The previous
-   secret version is made unreadable and deleted according to the approved
-   revocation/retention policy.
+   version and fence **before** an access token is published. When the
+   confirmed policy is rotation, the new refresh token is the value committed.
+   When the confirmed policy is sender-constraint without rotation, metadata
+   and generation still CAS-commit; a non-expiring unconstrained refresh
+   token is never stored. The previous secret version is made unreadable and
+   deleted according to the approved revocation/retention policy.
 5. A stale owner, failed compare-and-swap, lease uncertainty, split brain, or
    secret-store outage transitions the family to `AUTH_UNKNOWN / BLOCKED`.
    No worker uses a still-cached access token while control state is unknown.
@@ -316,11 +399,21 @@ rotating token. Availability loss is acceptable; ambiguous privilege is not.
 
 ### Secret storage, rotation, and revocation
 
-The future secret store must be explicitly approved at G1. The Phase 2 plan's
-candidate pattern is Cursor Dashboard secrets or an equivalent managed secret
-manager; this document does not provision or select a product.
+The future secret store must be explicitly approved at G1. This document does
+not provision or select a product and does **not** amend
+[`PHASE_2_PLAN.md`](PHASE_2_PLAN.md) Gate G1.
 
-Required properties:
+**Recorded plan-versus-proposal conflict (U-10):** plan G1 says the Operator
+provisions SIM OAuth credentials "via Cursor Dashboard secrets". Cursor
+documents those secrets as workspace/team environment values **injected when
+an agent starts**; already-running agents do not pick up changes [E15]. This
+proposal forbids environment-variable copies/fallback and requires a
+workload-writable, versioned compare-and-swap store for refresh rotation.
+Start-time Dashboard env injection therefore **cannot satisfy** this store
+contract. The conflict stays unresolved for Operator decision before H2/G1.
+Agents must not silently narrow plan G1 or substitute another product.
+
+Required properties of whatever store the Operator later accepts:
 
 - workload-identity access with least privilege and no shared human-readable
   bootstrap secret;
@@ -330,26 +423,32 @@ Required properties:
 - auth coordinator read/write access only to its exact SIM credential family;
   broker workers receive only bounded access-token leases;
 - no repository, environment-file, command-line, image, application database,
-  queue, artifact, clipboard, local disk, swap, core dump, or support-bundle
-  copy;
+  queue, artifact, clipboard, local disk, swap, core dump, environment-variable
+  copy, or support-bundle copy;
 - no plaintext backup; any approved backup has separate encryption,
   restricted restore authority, and tested deletion/retention;
 - secret access, failed access, generation change, rotation, and revocation
-  metadata are auditable without recording secret values.
+  metadata are auditable without recording secret values;
+- the store must be writable by the authorized auth-coordinator identity
+  after start so rotation CAS can commit a new refresh-token generation
+  without restarting the workload onto a stale env copy.
 
 The secret store is a mandatory safety dependency. Unavailable, stale,
 partially available, or unverifiable storage makes readiness false, stops token
 issuance/refresh, invalidates worker leases, and permits no broker request.
 There is no file, environment-variable, cached-token, alternate-manager, or
-operator-copy fallback.
+operator-copy fallback. Cursor Dashboard start-time injection is not such a
+fallback and is not a conforming store under this proposal.
 
 Rotation and revocation are separate:
 
 - client-secret rotation follows an approved cadence and immediately on
   suspected exposure, but TradeStation states that it does not revoke existing
-  non-expiring refresh tokens;
-- refresh-token rotation uses the broker-confirmed expiring/rotating policy
-  and atomic generation handling above;
+  non-expiring refresh tokens; those defaults are already G1-rejected for
+  `offline_access` families;
+- refresh-token rotation, where that is the confirmed replay control, uses the
+  broker-confirmed expiring/rotating policy and atomic generation handling
+  above; it is mandatory for `offline_access`, not conditional;
 - suspected compromise stops consumers first, revokes the entire API-key
   refresh-token family, rotates the client secret if one exists, removes old
   secret versions, and independently verifies denial before recovery;
@@ -363,7 +462,7 @@ Rotation and revocation are separate:
   not enough until local leases are invalidated and denial is verified.
 
 Exact broker revocation request encoding and propagation behavior remain
-unresolved and must be confirmed before automation.
+unresolved and must be confirmed before automation (U-06, U-14).
 
 ### Redaction at rest, in logs, and in exceptions
 
@@ -497,25 +596,39 @@ exact-artifact evidence:
 2. accepted P2-B ADR (at H2 or explicitly at G1) and named security, system,
    operations, and incident owners;
 3. TradeStation Client Experience confirmation for the exact API key:
-   application type, PKCE/client-auth support, exact callback, exact allowed
-   scopes, refresh rotation/expiry, permitted logins, SIM-only restriction,
+   application type, PKCE/client-auth support, exact HTTPS callback **and**
+   reduction of registered redirect URIs, logout URLs, web origins, and CORS
+   origins to that callback only (no leftover localhost or wildcards), exact
+   allowed scopes, `prompt=login` or confirmed alternate login-binding,
+   **broker-confirmed expiring/rotating refresh policy or confirmed
+   sender-constraint** (default non-expiring unconstrained refresh tokens are
+   rejected and keep G1 closed), permitted logins, SIM-only restriction,
    account entitlements, revocation behavior, and rate-limit identity;
 4. a separately owned read-only G2 credential profile with no `Trade`,
-   `OptionSpreads`, `Matrix`, `profile`, or `email` grant;
+   `OptionSpreads`, `Matrix`, `profile`, or `email` grant, and no
+   `offline_access` unless U-17 is resolved in favor of a refresh-required
+   key **and** a separately accepted need plus the replay control in item 3;
 5. an approved managed secret store and workload identities satisfying the
    fail-closed, encryption, audit, generation, rotation, revocation, backup,
-   and deletion requirements above;
+   deletion, and **workload-writable versioned CAS** requirements above.
+   Cursor Dashboard start-time environment injection [E15] does not satisfy
+   this item while U-10 remains open; this item does not rewrite plan G1;
 6. independent evidence that the exact SIM artifact has no LIVE adapter or
    endpoint selection and that application, DNS/proxy, mesh, firewall, and
    egress controls allow only the declared destinations;
 7. synthetic-canary evidence for repository, build artifact, process
    arguments, local storage, logs, traces, exceptions, metrics, alerts,
-   support bundles, and crash handling; and
-8. legal/compliance/entitlement approval for the bounded SIM use.
+   support bundles, and crash handling;
+8. legal/compliance/entitlement approval for the bounded SIM use; and
+9. explicit Operator records in `CURRENT_STATE.md` for any residual-risk
+   acceptance of U-07 and/or U-14. Those records are Operator-only. A
+   security owner, this author, or this document cannot accept them. U-07
+   residual-risk acceptance is **forbidden** if refresh rotation/expiry is
+   also absent; G1 stays closed.
 
 The human Operator provisions or directs provisioning of the future credential
-through the approved manager; no agent performs that action. Missing,
-conflicting, stale, or key-generic evidence keeps G1 closed.
+through the store accepted at this gate; no agent performs that action.
+Missing, conflicting, stale, or key-generic evidence keeps G1 closed.
 
 ### G2 — authenticated read-only probe boundary
 
@@ -533,8 +646,11 @@ independent verifier must attest:
   deny has been tested, and no proxy/redirect/default route can bypass it;
 - secret-manager, fencing, clock, audit, alerting, and egress health are
   affirmative immediately before the action; and
-- one-shot G2 uses no `offline_access` unless a separately accepted need
-  proves refresh is necessary.
+- one-shot G2 uses no `offline_access` unless U-17 is resolved and a
+  separately accepted need proves refresh is necessary, in which case G1
+  item 3's rotation/expiry-or-sender-constraint already applies; and
+- this G2 attestation is conjunctive with G1: the authorization-code
+  lifecycle precondition is not met by G1 alone.
 
 The first authenticated activity is limited to token exchange and the approved
 read-only SIM queries. Responses are quarantined as provenance-tagged
@@ -543,7 +659,8 @@ unexpected scope, host, account class, response shape, authorization error, or
 control degradation ends the probe. An independent post-run check must prove
 zero write/order calls before G2 can be considered complete.
 
-G2 evidence does not resolve future G3 order authorization and cannot
+G2 evidence does not resolve future G3 order authorization, does not
+authorize the continuous SIM read-only worker profile, and cannot
 authorize LIVE.
 
 ## Validation and rollback
@@ -573,51 +690,84 @@ exists from this work.
 No architecture decision is accepted at r1. The proposed candidate for P2-B/r2
 is:
 
-1. Authorization Code flow with transaction-specific `state` and mandatory
-   `S256` PKCE when first-party support for the chosen client topology is
-   confirmed; no flow downgrade;
+1. Authorization Code flow with transaction-specific `state`, `prompt=login`
+   (or confirmed equivalent), and mandatory `S256` PKCE when first-party
+   support for the chosen client topology is confirmed; no flow downgrade;
 2. capability-specific keys and exact scopes, with a one-shot, no-refresh,
-   no-`Trade` G2 profile;
-3. a centralized auth coordinator, managed encrypted secret store,
-   generation/fencing-based single refresh owner, and no local fallback;
-4. positive auth/SIM destination allowlists plus explicit multi-layer LIVE
+   no-`Trade` G2 profile; continuous `offline_access` workers await a
+   separately named gate after G2;
+3. any `offline_access` family requires broker-confirmed refresh
+   rotation/expiry **or** sender-constraint; default non-expiring
+   unconstrained refresh tokens block G1;
+4. a centralized auth coordinator, managed encrypted **workload-writable
+   versioned** secret store, generation/fencing-based single refresh owner
+   with pre-send fence recheck, and no local or environment-variable fallback;
+5. positive auth/SIM destination allowlists plus explicit multi-layer LIVE
    denial, separate from mode checks;
-5. separate DEV/TEST/SIM identities, artifacts, data, networks, and secrets,
+6. separate DEV/TEST/SIM identities, artifacts, data, networks, and secrets,
    with no broker credentials or egress in DEV/TEST and no LIVE environment;
-   and
-6. stop/revoke/reauthorize on uncertainty rather than retry, broaden scope, or
-   cross an environment boundary.
+7. stop/revoke/reauthorize on uncertainty rather than retry, broaden scope, or
+   cross an environment boundary; and
+8. U-07 and U-14 residual risk, if still unresolved, are accepted only by an
+   explicit Operator record at G1; U-07 cannot be accepted without rotation.
 
 The Operator may accept, reject, or require changes at a later gate. This
 author cannot approve the proposal.
+
+## Decision
+
+Leave blank while status is `PROPOSED`. No option is selected.
+
+## Consequences
+
+Expected if a later gate accepts a descendant of this proposal:
+
+- Positive: fail-closed token lifecycle, SIM/LIVE host isolation, no
+  repository secrets, and G1 blocked until rotation/sender-constraint, store
+  CAS, and Operator residual-risk records exist.
+- Negative: availability loss on ambiguous refresh; one-shot G2 may fail if
+  E4's unqualified `offline_access` "required" is the live key contract
+  (U-17); Cursor Dashboard secrets named by plan G1 cannot be the runtime
+  store without a later plan revision (U-10).
+- Operational: Client Experience confirmations, an Operator store decision
+  that does not silently amend plan G1, independent verification at H2/G1/G2,
+  and coordinator H1 journal/`CURRENT_STATE` recording (N10: this r1 file
+  does not edit those documents).
+
+No consequence of this r1 artifact is a credential, network path, or phase
+authorization.
 
 ## Unresolved risks and decisions
 
 | ID | Unknown or risk | Why it matters | Required owner/gate |
 | --- | --- | --- | --- |
 | U-01 | TradeStation says rotating refresh tokens rotate at both 30 and 40 minutes | Cannot safely set refresh timing or expected generation behavior | Client Experience + Operator before G1; observe at G2 only if authorized |
-| U-02 | TradeStation pages conflict on default key scopes | A future key may carry unneeded order or options privilege | Client Experience before G1; exact returned scopes checked at G2 |
+| U-02 | TradeStation default-scope statements conflict three ways: E1 lists `MarketData`/`ReadAccount`/`Trade`; E4 prose adds `OptionSpreads` but not `Matrix`; E4 table marks all five including `Matrix` as Default | A future key may carry unneeded order, options, or depth privilege | Client Experience before G1; exact returned scopes checked at G2 |
 | U-03 | Confidential-client PKCE support is undocumented | Option C cannot be assumed; downgrade would weaken interception defense | Security owner + Client Experience at P2-B/r2/G1 |
 | U-04 | SIM-only credential/key/account restriction is undocumented; OAuth audience is not SIM-specific | A stolen token might be LIVE-capable outside local egress controls | Client Experience + independent security review; unresolved blocks G1 |
-| U-05 | Key-specific callbacks, permitted logins, account types, and entitlements are unknown | Wrong login or real-account adjacency can cross the boundary | Operator/Client Experience before G1 |
+| U-05 | Key-specific callbacks, permitted logins, account types, entitlements, leftover localhost/wildcard registrations, and whether `prompt=login` is honored are unknown | Wrong login, silent SSO reuse, or extra registered callbacks can cross the boundary | Operator/Client Experience before G1 |
 | U-06 | Refresh revocation request examples and parameter naming are internally inconsistent; propagation is unspecified | Incident response could falsely claim revocation | Broker researcher + Client Experience before G1 |
-| U-07 | Sender-constrained access/refresh tokens and token introspection are not documented | Bearer-token theft and remote validity cannot be independently constrained/checked | Security owner; absence remains a residual risk |
-| U-08 | Refresh rotation replay/family semantics and lost-response recovery are not fully documented | Concurrent or ambiguous refresh can revoke or orphan a family | Broker researcher; fail-closed reauthorization unless resolved |
+| U-07 | Sender-constrained access/refresh tokens and token introspection are not documented | Bearer-token theft and remote validity cannot be independently constrained/checked. Residual post-theft use is **not** accepted by this author or a security owner. | **G1.** Operator may record residual-risk acceptance in `CURRENT_STATE.md` only if G1 item 3's expiring/rotating refresh policy is also confirmed. If rotation/expiry is absent, U-07 cannot be accepted and G1 stays closed |
+| U-08 | Refresh rotation replay/family semantics and lost-response recovery are not fully documented | Concurrent or ambiguous refresh can revoke or orphan a family | Broker researcher; fail-closed reauthorization unless resolved; G1 |
 | U-09 | Rate-limit identity across keys, users, processes, and accounts is unknown | Multi-worker ownership and backoff cannot be finalized | Operator topology decision before G1; bounded observation at G2 |
-| U-10 | Exact secret-manager, workload platform, lease primitive, KMS, retention, and recovery objectives are unselected | Proposed controls cannot yet be independently tested | Human security/operations decision before H2/G1 |
-| U-11 | OAuth clock skew, refresh margin, retry budget, lease duration, and recovery objectives are unset | Invented timing can cause expiry races or unsafe retries | Human security/operations decision at P2-B/r2 |
+| U-10 | Exact secret-manager, workload platform, lease primitive, KMS, retention, and recovery objectives are unselected. In addition, plan G1 names Cursor Dashboard secrets, which Cursor documents as start-time environment-variable injection that running agents do not refresh [E15], while this proposal requires a workload-writable versioned CAS store and forbids env copies. | Proposed controls cannot yet be independently tested; the plan-named mechanism cannot satisfy this contract. This row does not amend plan G1. | **Human Operator before H2/G1.** Decide explicitly; agents must not choose a substitute store |
+| U-11 | OAuth clock skew, refresh margin, retry budget, lease duration, **pre-send fence recheck**, and recovery objectives are unset | Invented timing can cause expiry races, stale-owner sends, or unsafe retries | Human security/operations decision at P2-B/r2; bind lease TTL and pre-send fence recheck here |
 | U-12 | DNS, proxy, egress-gateway, certificate, and broker alias inventory is incomplete | Hostname checks alone do not prove network isolation | Network/security owners before G1 |
 | U-13 | Legal, privacy, account-entitlement, automation, and retention obligations are unknown | Technical authorization does not establish permitted use | Qualified humans before G1 |
-| U-14 | Access-token revocation behavior and cascade from refresh revocation are not TradeStation-documented | A locally revoked family may retain usable access tokens briefly | Security owner; stop local use immediately and treat remote validity as unknown |
+| U-14 | Access-token revocation behavior and cascade from refresh revocation are not TradeStation-documented | A locally revoked family may retain usable access tokens for up to the 20-minute access-token lifetime. Local stop is mandatory regardless. Remote residual validity is **not** accepted by this author or a security owner. | **G1.** Operator-only residual-risk record in `CURRENT_STATE.md`, or G1 stays closed. Local leases are invalidated immediately in either case |
 | U-15 | ID-token issuer metadata, signing-key lifecycle, and claim-validation contract are outside r1 | Trusting decoded claims could create identity confusion | Future dedicated design before any ID-token claim is used |
-| U-16 | TradeStation token-endpoint error schema, status mapping, throttling, timeout idempotency, and retry behavior are undocumented | Generic OAuth errors do not prove safe broker-specific retry or recovery behavior | Broker researcher + Client Experience before G1; bounded observation at G2 |
+| U-16 | TradeStation token-endpoint error schema, status mapping, throttling, timeout idempotency, and retry behavior are undocumented. E5's refresh-response example returns `scope: "openid offline_access"` with no API scopes; under the exact-scope rule that response would be quarantined (availability loss, not a safety loss). | Generic OAuth errors do not prove safe broker-specific retry; a refresh that drops API scopes would deny every subsequent request | Broker researcher + Client Experience before G1; bounded observation at G2 |
+| U-17 | E2/E3/E5 present `offline_access` as the scope that enables refresh tokens; the E4 Scopes table labels `offline_access` **required** with no such qualification | The one-shot no-refresh G2 profile depends on omitting it. Failure direction is closed (exchange fails), but the conflict must not be silently resolved | Client Experience before G1; confirm at G2 whether a refresh-less grant is accepted |
 
 Every unresolved item remains a blocker at the named gate. No observation,
-default, code path, or agent may silently choose a value.
+default, code path, security owner, or agent may silently choose a value or
+accept residual risk. Residual-risk acceptance for U-07 and U-14 is an
+Operator-only `CURRENT_STATE.md` record at G1.
 
 ## Evidence
 
-All external sources were accessed 2026-09-26. TradeStation pages are mutable
+TradeStation, RFC, and OWASP sources below were accessed 2026-09-26; E4 was
+re-read and E15 first accessed on 2026-09-29. TradeStation pages are mutable
 and describe Auth0 API keys generally; none proves the configuration of a
 future key.
 
@@ -642,17 +792,22 @@ future key.
 - **E4 — TradeStation, “Scopes.”**
   https://api.tradestation.com/docs/fundamentals/authentication/scopes/
   Supports meanings of `MarketData`, `ReadAccount`, `Trade`,
-  `OptionSpreads`, `Matrix`, required `openid`, refresh-enabling
-  `offline_access`, and optional profile/email scopes. Limitation: default
-  scope statements conflict with E1 and do not prove subset behavior for a
+  `OptionSpreads`, `Matrix`, required `openid`, the Other Relevant Scopes
+  table, and optional profile/email scopes. Limitation: that table labels
+  `offline_access` **required** without the refresh-only qualification used
+  by E2/E3/E5 (U-17); this citation does not resolve that conflict;
+  default-scope prose lists four API defaults while the table marks five
+  including `Matrix` (U-02); neither statement proves subset behavior for a
   future key.
 - **E5 — TradeStation, “Refresh Tokens.”**
   https://api.tradestation.com/docs/fundamentals/authentication/refresh-tokens/
   Supports secure storage warning, 20-minute access-token lifetime, default
   non-expiring refresh tokens, optional rotation/expiry, 24-hour absolute
   rotating-token lifetime, refresh parameters, and API-key-wide refresh-token
-  revocation. Limitation: says 30 minutes where E1 says 40; revocation examples
-  are internally inconsistent on request shape.
+  revocation.   Limitation: says 30 minutes where E1 says 40; revocation examples
+  are internally inconsistent on request shape; the documented refresh
+  response example returns `scope: "openid offline_access"` with no API
+  scopes (U-16).
 - **E6 — TradeStation, “SIM vs. LIVE.”**
   https://api.tradestation.com/docs/fundamentals/sim-vs-live/
   Supports exact SIM and LIVE v3 hosts, fake SIM accounts/money, simulated
@@ -701,6 +856,16 @@ future key.
   bearer tokens in URLs, and the protocol-level option to obtain a token and
   retry after invalidation. Limitation: it does not establish safe replay for
   a broker operation or TradeStation-specific error behavior.
+- **E15 — Cursor, “Cloud Agents” (Secrets troubleshooting).**
+  https://cursor.com/docs/cloud-agent
+  Accessed 2026-09-29. Supports: Dashboard/cloud-agent secrets are
+  workspace/team-scoped environment values added at
+  `cursor.com/dashboard/cloud-agents`; “Secrets are injected when an agent
+  starts. Agents already running won't pick up new secrets”. Limitation:
+  documents agent-start injection, not a workload-writable versioned secret
+  store; this is the plan-named G1 mechanism in conflict with this
+  proposal's CAS/no-env-copy contract (U-10). This citation does not select
+  a product.
 
 Repository evidence, read at canonical base
 `1ecbbe6d487d97195fde393b05c9499357599bdb` on 2026-09-26:
