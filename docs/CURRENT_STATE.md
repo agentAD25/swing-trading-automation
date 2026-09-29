@@ -17,11 +17,17 @@
 - Phase 1E: Complete — Gate A independent verification passed with no
   remaining material findings; see `docs/PHASE_1_CLOSURE.md`
 - Phase 2: Unstarted and unauthorized. Isolated `P2-0` Group 1
-  documentation exists on branch `cursor/p2-0-integration-1f76` for
-  human review only; that branch is not `main`, does not pass Gate `H1`,
-  and grants no Phase 2, credential, broker, TradeStation `SIM`, order,
-  deployment, real-capital, or `LIVE` authority. See
-  `docs/PHASE_2_RECONCILIATION.md`.
+  documentation exists on branch `cursor/p2-0-integration-1f76` and is
+  **not** merged to `main`. Independent Gate `H1` verification
+  **PASS (C1 carried)** for exact commit
+  `33110c7c0aa2f385d179a1f66d068daca2c47537`, tree
+  `5f45983b19bed47988133c5b832e125d0602133c` (draft PR #12). That
+  attestation is docs-only contract-draft review. It does not start
+  Phase 2 and grants no credential, broker, TradeStation `SIM`, order,
+  deployment, real-capital, or `LIVE` authority.
+  `P2_0_CONTRACT_CONFLICT` C1 (U-10) remains **open and carried**.
+  Group 2 remains **unauthorized** pending a new explicit authorization
+  and human Operator review. See `docs/PHASE_2_RECONCILIATION.md`.
 - Design baseline: Phase 1A governance commit `ae1aa85`
 - Contract acceptance: `PHASE1_ACCEPTED` evidence metadata for candidate
   `abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, tree
@@ -51,7 +57,7 @@
 | Phase 1E | Complete: offline foundation implemented and remediated through findings F01–F06 at SHA `eb4b3b550874b4729abf7902cda2df8bf01e70ba`, tree `858442c0b2dcf0537072e75e95bb0dd2b001bf49`; Gate A independent verification passed with 218 tests (PostgreSQL 16.15); draft PR #6 remains open |
 | Phase 1 closure (Gate B) | Complete: evidence-only closure audit recorded in `docs/PHASE_1_CLOSURE.md`; `PHASE1A_COMPLETE` through `PHASE1E_COMPLETE` and `PHASE1_COMPLETE` |
 | Phase 2 | Not started and not authorized |
-| P2-0 Group 1 docs (isolated) | Evidence-only integration of independently verified PR #8 `a91bd24`, #9 `f0dca4b`, #10 `a7900c2`, #11 `595f431` on `cursor/p2-0-integration-1f76`; all remain `PROPOSED`; Gate `H1` not passed; one recorded `P2_0_CONTRACT_CONFLICT` (U-10: plan G1 Cursor Dashboard secrets vs proposed CAS store). Not merged to `main`. |
+| P2-0 Group 1 docs (isolated) | Independently verified Gate `H1` **PASS (C1 carried)** at exact commit `33110c7c0aa2f385d179a1f66d068daca2c47537`, tree `5f45983b19bed47988133c5b832e125d0602133c`; PR #8 `a91bd24`, #9 `f0dca4b`, #10 `a7900c2`, #11 `595f431` lineage preserved on `cursor/p2-0-integration-1f76`; all remain `PROPOSED`; `P2_0_CONTRACT_CONFLICT` C1 (U-10: plan G1 Cursor Dashboard secrets vs proposed CAS store) **open and carried**; Group 2 unauthorized pending Operator review and a new explicit authorization. Not merged to `main`. |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
 `phase1-accepted-abc1fb6` fixes the accepted commit without making the
@@ -145,9 +151,11 @@ direction.
 5. Technology, persistence, deployment, operating thresholds, recovery
    objectives, and risk limits are unknown.
 6. Phase 2 entry criteria and authority are not granted. Isolated P2-0
-   documentation does not grant them. Open `P2_0_CONTRACT_CONFLICT` C1
-   (U-10) must be decided by the Operator before H2/G1; agents must not
-   substitute a secret store or amend `PHASE_2_PLAN.md` Gate G1.
+   documentation and Gate `H1` PASS at `33110c7` do not grant them.
+   Group 2 remains unauthorized pending a new explicit authorization and
+   human Operator review. Open `P2_0_CONTRACT_CONFLICT` C1 (U-10) remains
+   carried and must be decided by the Operator before H2/G1; agents must
+   not substitute a secret store or amend `PHASE_2_PLAN.md` Gate G1.
 7. External governance enforcement and authenticated Operator identity are not
    established. `DRY_RUN` remains structurally non-network; future broker
    connectivity and zero-order-attempt controls are not authorized.
@@ -173,6 +181,11 @@ P2-0 Group 1 specialist documents were integrated on 2026-09-29 onto
 isolated branch `cursor/p2-0-integration-1f76` from canonical `main`
 `1ecbbe6d487d97195fde393b05c9499357599bdb`, preserving specialist commit
 lineage. Coordinator reconciliation is `docs/PHASE_2_RECONCILIATION.md`.
-That recording is evidence of document existence and of conflict C1
-(U-10). It is not Gate `H1` passage and grants none of the prohibited
-capabilities.
+Independent Gate `H1` verification **PASS (C1 carried)** is recorded for
+exact artifact `33110c7c0aa2f385d179a1f66d068daca2c47537` /
+`5f45983b19bed47988133c5b832e125d0602133c` by
+https://cursor.com/agents/bc-fcf29b75-0e00-5b6e-8104-8336009e011a.
+This descendant evidence commit is not that attested tree. C1 remains
+open. Group 2 remains unauthorized. No Phase 2, credential, broker,
+TradeStation `SIM`, order, deployment, real-capital, or `LIVE` authority
+follows.

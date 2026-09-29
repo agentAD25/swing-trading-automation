@@ -1692,3 +1692,64 @@ Exact reconciliation-commit SHA is the HEAD of
 `cursor/p2-0-integration-1f76` after this evidence commit. This does not
 authorize Phase 2, credentials, broker/account/network activity,
 TradeStation `SIM`, order submission, real capital, or `LIVE`.
+
+## 2026-09-29 — Gate H1 independent PASS (C1 carried)
+
+This entry is evidence-only. It records an independent verifier attestation
+of the already-published P2-0 integration artifact. It does not start
+Phase 2, authorize Group 2, accept an ADR, select a provider, provision a
+resource, introduce a credential, or authorize TradeStation `SIM`, order
+submission, real capital, or `LIVE`. `DRY_RUN` remains the sole authorized
+execution mode.
+
+### Attested artifact
+
+Independent Gate `H1` verification **PASS (C1 carried)** for exact:
+
+- branch `cursor/p2-0-integration-1f76`
+- draft PR #12
+- commit `33110c7c0aa2f385d179a1f66d068daca2c47537`
+- tree `5f45983b19bed47988133c5b832e125d0602133c`
+- versus canonical `main` `1ecbbe6d487d97195fde393b05c9499357599bdb`
+
+Verifier: https://cursor.com/agents/bc-fcf29b75-0e00-5b6e-8104-8336009e011a
+(`bc-fcf29b75-0e00-5b6e-8104-8336009e011a`). The verifier did not edit,
+merge, tag, or push. Report:
+`internal/p2-0-h1-pr12-33110c7-verification.md` in the agent store.
+
+The 2026-09-29 coordinator integration entry above that said Gate `H1` is
+not passed is **pre-attestation**. This descendant commit supersedes that
+status for `33110c7` only. `docs/PHASE_2_RECONCILIATION.md` Gate `H1`
+section remains the prior coordinator self-denial and is not rewritten
+here.
+
+### Bounded meaning
+
+H1 is `PHASE_2_PLAN.md` §8 Contract Draft Review (coordinator +
+independent verification). It is **not** Operator acceptance, **not**
+Human Decision Gate 1 / `H2`, **not** G1/G2/G3, and **not** Phase 2
+implementation authority.
+
+`P2_0_CONTRACT_CONFLICT` **C1 (U-10) remains open and carried.** Plan G1
+Cursor Dashboard start-time secrets versus the proposed workload-writable
+CAS store is unresolved. Agents must not substitute a product or amend
+`PHASE_2_PLAN.md`. C1 blocks later H2/G1, not this H1 record.
+
+Group 2 (`P2-B/r2`, `P2-D`–`P2-G` design, `P2-C/r2`) remains
+**unauthorized** pending a new explicit authorization and human Operator
+review (`PHASE_2_PLAN.md` §9).
+
+This branch remains isolated. It is **not** merged to `main`.
+
+### Validation of this evidence commit
+
+Diff versus `33110c7` is limited to `docs/CURRENT_STATE.md` and this
+journal. `src/`, `migrations/`, `tests/`, `pyproject.toml`,
+`docs/PHASE_2_PLAN.md`, and `docs/AGENT_AUTHORITY.md` are untouched.
+Whitespace and secret-pattern scans of that two-file diff are recorded
+after commit.
+
+This descendant evidence commit is not the attested H1 tree. The attested
+identity remains `33110c7` / `5f45983`. No Phase 2, credential,
+broker/account/network, TradeStation `SIM`, order, real-capital, or `LIVE`
+authority follows.
