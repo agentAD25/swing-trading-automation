@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import threading
 from collections.abc import Mapping
@@ -358,7 +359,28 @@ def _conninfo_supplies_dial_override(raw: str) -> bool:
         return True
     if not isinstance(parsed, Mapping):
         return True
-    return "hostaddr" in parsed or "port" in parsed
+    return "hostaddr" in parsed or "port" in parsed or "service" in parsed
+
+
+def _keyword_present(params: Mapping[str, object], key: str) -> bool:
+    if key not in params:
+        return False
+    value = params.get(key)
+    return value is not None and value != ""
+
+
+def _refuse_libpq_dial_environment(params: Mapping[str, object]) -> None:
+    """Refuse fallbacks that can replace an unset host, hostaddr, or port.
+
+    libpq applies a service file first, then PGHOST, PGHOSTADDR, and PGPORT,
+    for any dial keyword the connection parameters left empty.
+    """
+    service_present = _keyword_present(params, "service") or "PGSERVICE" in os.environ
+    for key, env_name in (("host", "PGHOST"), ("hostaddr", "PGHOSTADDR"), ("port", "PGPORT")):
+        if _keyword_present(params, key):
+            continue
+        if service_present or env_name in os.environ:
+            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
 
 
 def _effective_connect_params(engine: Engine) -> Mapping[str, object]:
@@ -386,8 +408,8 @@ def _assert_local_postgresql(engine: Engine) -> None:
     _refuse_connect_hooks(engine)
     authority_host = _normalize_host(engine.url.host)
     authority_port = _normalize_port(engine.url.port)
-    # A missing host would let libpq fill PGHOST and PGPORT at connect time.
-    if authority_host not in _LOCAL_HOSTS:
+    # Host and port must be explicit so libpq cannot fill PGHOST or PGPORT later.
+    if authority_host not in _LOCAL_HOSTS or authority_port is None:
         raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
     if _marked_remote(authority_host):
         raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
@@ -410,6 +432,7 @@ def _assert_local_postgresql(engine: Engine) -> None:
         hostaddr = _normalize_host(params.get("hostaddr"))
         if hostaddr != authority_host or hostaddr not in {"127.0.0.1", "::1"}:
             raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    _refuse_libpq_dial_environment(params)
     _refuse_connect_hooks(engine)
 
 

@@ -182,7 +182,7 @@ def test_conninfo_hostaddr_or_port_is_rejected(
 ) -> None:
     calls = _deny_sockets(monkeypatch)
     engine = create_engine(
-        "postgresql+psycopg://swingtrade:swingtrade@127.0.0.1/swingtrade",
+        "postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade",
         connect_args={"conninfo": conninfo},
     )
     binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
@@ -224,6 +224,94 @@ def test_missing_url_host_does_not_follow_pghost(monkeypatch: pytest.MonkeyPatch
     assert "127.0.0.1" not in rendered
     assert "PGHOST" not in rendered
     assert "PGPORT" not in rendered
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        create_fixture_schema(engine)
+    assert calls == []
+
+
+def test_omitted_port_cannot_be_replaced_by_pgport(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = _deny_sockets(monkeypatch)
+    monkeypatch.setenv("PGPORT", "1")
+    engine = create_engine("postgresql+psycopg://127.0.0.1/swingtrade")
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED") as captured:
+        PostgresTokenStore(engine, binding)
+    rendered = str(captured.value)
+    assert "PGPORT" not in rendered
+    assert "1" not in rendered
+    assert captured.value.__cause__ is None
+    assert captured.value.__context__ is None
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        create_fixture_schema(engine)
+    assert calls == []
+
+
+def test_omitted_port_is_rejected_without_pgport(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = _deny_sockets(monkeypatch)
+    monkeypatch.delenv("PGPORT", raising=False)
+    engine = create_engine("postgresql+psycopg://localhost/swingtrade")
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        PostgresTokenStore(engine, binding)
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        create_fixture_schema(engine)
+    assert calls == []
+
+
+@pytest.mark.parametrize(
+    ("env_name", "env_value", "allowed"),
+    [
+        ("PGHOST", "example.invalid", True),
+        ("PGPORT", "1", True),
+        ("PGHOSTADDR", "93.184.216.34", False),
+    ],
+)
+def test_libpq_env_cannot_replace_an_explicit_dial_target(
+    monkeypatch: pytest.MonkeyPatch, env_name: str, env_value: str, allowed: bool
+) -> None:
+    calls = _deny_sockets(monkeypatch)
+    for name in ("PGHOST", "PGHOSTADDR", "PGPORT", "PGSERVICE"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv(env_name, env_value)
+    engine = create_engine("postgresql+psycopg://127.0.0.1:5432/swingtrade")
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    if allowed:
+        PostgresTokenStore(engine, binding)
+    else:
+        with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED") as captured:
+            PostgresTokenStore(engine, binding)
+        rendered = str(captured.value)
+        assert env_value not in rendered
+        assert env_name not in rendered
+        with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+            create_fixture_schema(engine)
+    assert calls == []
+
+
+def test_pghostaddr_set_after_approval_does_not_connect(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = _deny_sockets(monkeypatch)
+    monkeypatch.delenv("PGHOSTADDR", raising=False)
+    monkeypatch.delenv("PGSERVICE", raising=False)
+    engine = create_engine("postgresql+psycopg://127.0.0.1:5432/swingtrade")
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    store = PostgresTokenStore(engine, binding)
+    monkeypatch.setenv("PGHOSTADDR", "93.184.216.34")
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED") as captured:
+        store.read_redacted("family_1")
+    assert "93.184.216.34" not in str(captured.value)
+    assert "PGHOSTADDR" not in str(captured.value)
+    assert calls == []
+
+
+def test_pgservice_cannot_supply_hostaddr(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = _deny_sockets(monkeypatch)
+    monkeypatch.setenv("PGSERVICE", "remote")
+    engine = create_engine("postgresql+psycopg://127.0.0.1:5432/swingtrade")
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED") as captured:
+        PostgresTokenStore(engine, binding)
+    assert "PGSERVICE" not in str(captured.value)
+    assert "remote" not in str(captured.value)
     with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
         create_fixture_schema(engine)
     assert calls == []
