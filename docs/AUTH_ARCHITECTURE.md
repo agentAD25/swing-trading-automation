@@ -3,7 +3,8 @@
 - Status: **PROPOSED**
 - Date: 2026-09-26
 - Revised: 2026-09-29 (independent-verification F1–F4 / N1–N9 remediation;
-  r1 remains documentation-only)
+  r1 remains documentation-only); 2026-09-30 (proposed C1/U-10 resolution
+  in [`TOKEN_STORE.md`](TOKEN_STORE.md); status remains **PROPOSED**)
 - Workstream: `P2-B/r1`
 - Canonical base: `1ecbbe6d487d97195fde393b05c9499357599bdb`
 - Sole acceptance decider: Human Operator
@@ -228,7 +229,8 @@ not an accepted decision.
 | Human authorization station | Initiate an approved authorization-code session and consent to the exact scopes | No token display, export, copy, logging, or account switching |
 | Callback handler | Receive one exact callback, validate transaction binding, and hand the code to the auth coordinator | No broker-resource calls, arbitrary redirect, or debug-body logging |
 | Auth coordinator | Sole process allowed to exchange, refresh, and revoke tokens after the applicable gates | No order call, arbitrary URL, environment fallback, or plaintext persistence |
-| Secret manager | Hold encrypted client secret (if any), refresh token, credential generation, and revocation metadata | No repository, file, or environment-variable fallback; no DEV/TEST broker-secret namespace; Cursor Dashboard start-time injection is not a conforming store (U-10) |
+| Bootstrap secret holder | Hold static bootstrap secrets only: a client secret if the accepted flow has one, plus non-token references | Not the runtime refresh store; no repository, file, or environment-variable copy of broker tokens; no DEV/TEST broker-secret namespace; production must not depend on Cursor Dashboard start-time injection |
+| TokenStore | Hold runtime mutable token state for one credential family, as specified in [`TOKEN_STORE.md`](TOKEN_STORE.md) | No access-token bearer values, client secrets, or ledger rows; no AWS or Supabase API; no Cursor production dependency |
 | Token broker | Return a bounded in-memory access-token lease to an authorized SIM workload | Never return client secrets or refresh tokens; never serve an unknown/stale generation |
 | SIM broker client | Use a valid lease only for the exact authorized capability and exact SIM host | No auth administration, LIVE host, arbitrary URL, or credential selection |
 | Policy/egress layers | Independently enforce environment, artifact, destination, method, and scope policy | No default route, proxy bypass, or configuration-only grant |
@@ -362,10 +364,12 @@ without one of those controls no credential rotates.
    exact margin, clock-skew tolerance, retry budget, and service objective are
    unresolved; no value is invented here (U-11).
 2. A single auth coordinator holds a short lease with a monotonically
-   increasing fencing generation. The secret-manager record contains the
+   increasing fencing generation. The TokenStore record contains the
    credential-family ID, current refresh-token version, current owner fence,
    expected scopes, environment, and lifecycle state. Lease TTL is an r2
    parameter bound to U-11 and must be shorter than the refresh safety margin.
+   The compare-and-swap, fencing, and stale-writer rules are the proposed
+   contract in [`TOKEN_STORE.md`](TOKEN_STORE.md).
 3. Only the current fence owner may read the refresh token or **initiate** a
    token-endpoint call. Other workers wait for a newer access-token lease;
    they do not refresh independently. The external TradeStation token
@@ -399,46 +403,54 @@ rotating token. Availability loss is acceptable; ambiguous privilege is not.
 
 ### Secret storage, rotation, and revocation
 
-The future secret store must be explicitly approved at G1. This document does
-not provision or select a product and does **not** amend
-[`PHASE_2_PLAN.md`](PHASE_2_PLAN.md) Gate G1.
+Bootstrap static secrets and runtime mutable token state are separate.
+The proposed runtime contract is [`TOKEN_STORE.md`](TOKEN_STORE.md). This
+document does not provision a product, select AWS or Supabase APIs, or
+accept an ADR.
 
-**Recorded plan-versus-proposal conflict (U-10):** plan G1 says the Operator
-provisions SIM OAuth credentials "via Cursor Dashboard secrets". Cursor
-documents those secrets as workspace/team environment values **injected when
-an agent starts**; already-running agents do not pick up changes [E15]. This
-proposal forbids environment-variable copies/fallback and requires a
-workload-writable, versioned compare-and-swap store for refresh rotation.
-Start-time Dashboard env injection therefore **cannot satisfy** this store
-contract. The conflict stays unresolved for Operator decision before H2/G1.
-Agents must not silently narrow plan G1 or substitute another product.
+**Proposed resolution of the H1-carried conflict (U-10):** plan G1 had
+named Cursor Dashboard secrets. Cursor documents those secrets as values
+**injected when an agent starts**; already-running agents do not pick up
+changes [E15]. That mechanism cannot be the workload-writable versioned
+store. The 2026-09-30 proposal therefore rejects Cursor as a production
+dependency, keeps static bootstrap secrets out of the token row, and
+specifies a provider-neutral PostgreSQL TokenStore for runtime token
+state. Bounded wording in [`PHASE_2_PLAN.md`](PHASE_2_PLAN.md) §6.3 and
+Gate G1 records that same proposal. It is not Operator acceptance. H2
+still has to accept or reject it. `CURRENT_STATE.md` is not edited here
+and still carries the pre-resolution conflict until a later evidence
+update.
 
-Required properties of whatever store the Operator later accepts:
+Required properties:
 
-- workload-identity access with least privilege and no shared human-readable
-  bootstrap secret;
-- separate SIM namespace, encryption at rest with managed keys separate from
-  secret data, TLS in transit, object-level access policy, versioned
-  compare-and-swap, auditing, expiry, revocation, and deletion;
-- auth coordinator read/write access only to its exact SIM credential family;
-  broker workers receive only bounded access-token leases;
-- no repository, environment-file, command-line, image, application database,
-  queue, artifact, clipboard, local disk, swap, core dump, environment-variable
-  copy, or support-bundle copy;
+- workload-identity access with least privilege; bootstrap static secrets
+  are not the refresh-token record and are not a shared human-readable
+  token copy;
+- separate SIM namespace, encryption at rest with keys separate from token
+  data, TLS in transit, versioned compare-and-swap, fencing, authorized
+  revocation, stale-writer rejection, auditing, and deletion, as
+  `TOKEN_STORE.md` specifies;
+- auth coordinator read/write access only to its exact SIM credential
+  family; broker workers receive only bounded in-memory access-token
+  leases;
+- no repository, environment-file, command-line, image, ledger table,
+  queue, artifact, clipboard, local disk, swap, core dump,
+  environment-variable copy, or support-bundle copy of token material;
+  the TokenStore relation is the only proposed database exception, and it
+  holds refresh ciphertext plus redacted metadata, not access tokens;
 - no plaintext backup; any approved backup has separate encryption,
   restricted restore authority, and tested deletion/retention;
 - secret access, failed access, generation change, rotation, and revocation
   metadata are auditable without recording secret values;
-- the store must be writable by the authorized auth-coordinator identity
-  after start so rotation CAS can commit a new refresh-token generation
-  without restarting the workload onto a stale env copy.
+- the TokenStore must be writable by the authorized auth-coordinator
+  identity after start so rotation CAS can commit a new refresh-token
+  generation without restarting the workload onto a stale environment copy.
 
-The secret store is a mandatory safety dependency. Unavailable, stale,
-partially available, or unverifiable storage makes readiness false, stops token
-issuance/refresh, invalidates worker leases, and permits no broker request.
-There is no file, environment-variable, cached-token, alternate-manager, or
-operator-copy fallback. Cursor Dashboard start-time injection is not such a
-fallback and is not a conforming store under this proposal.
+The TokenStore is a mandatory safety dependency for any future refresh.
+Unavailable, stale, partially available, or unverifiable storage makes
+readiness false, stops token issuance/refresh, invalidates worker leases,
+and permits no broker request. There is no file, environment-variable,
+cached-token, alternate-manager, operator-copy, or Cursor fallback.
 
 Rotation and revocation are separate:
 
@@ -608,11 +620,14 @@ exact-artifact evidence:
    `OptionSpreads`, `Matrix`, `profile`, or `email` grant, and no
    `offline_access` unless U-17 is resolved in favor of a refresh-required
    key **and** a separately accepted need plus the replay control in item 3;
-5. an approved managed secret store and workload identities satisfying the
-   fail-closed, encryption, audit, generation, rotation, revocation, backup,
-   deletion, and **workload-writable versioned CAS** requirements above.
-   Cursor Dashboard start-time environment injection [E15] does not satisfy
-   this item while U-10 remains open; this item does not rewrite plan G1;
+5. Operator acceptance of the proposed TokenStore contract in
+   [`TOKEN_STORE.md`](TOKEN_STORE.md), including workload identities and
+   its fail-closed, encryption, audit, versioned CAS, fencing, rotation,
+   authorized revocation, stale-writer rejection, redaction, backup, and
+   deletion rules, plus a separate non-Cursor path for bootstrap static
+   secrets. Cursor Dashboard start-time injection [E15] does not satisfy
+   this item. This row proposes the plan wording; it does not itself
+   accept the ADR or open G1;
 6. independent evidence that the exact SIM artifact has no LIVE adapter or
    endpoint selection and that application, DNS/proxy, mesh, firewall, and
    egress controls allow only the declared destinations;
@@ -678,6 +693,13 @@ Validation for this r1 artifact is documentation-only:
 - review every named failure for a no-request fail-closed result; and
 - obtain independent security/auth review before H1.
 
+The checklist bullet that the r1 diff creates only `AUTH_ARCHITECTURE.md`
+is historical evidence for that review. The 2026-09-30 C1 proposal also
+adds [`TOKEN_STORE.md`](TOKEN_STORE.md) and bounded pointers in the plan,
+reconciliation, configuration naming, and monitoring taxonomy. It does
+not change the r1 checklist's meaning for the earlier diff, and it does
+not edit `CURRENT_STATE.md` or `ENGINEERING_JOURNAL.md`.
+
 Passing these checks establishes document conformance only. It does not verify
 runtime controls or open H2, G1, or G2.
 
@@ -699,9 +721,11 @@ is:
 3. any `offline_access` family requires broker-confirmed refresh
    rotation/expiry **or** sender-constraint; default non-expiring
    unconstrained refresh tokens block G1;
-4. a centralized auth coordinator, managed encrypted **workload-writable
-   versioned** secret store, generation/fencing-based single refresh owner
-   with pre-send fence recheck, and no local or environment-variable fallback;
+4. a centralized auth coordinator; bootstrap static secrets held outside
+   the token row and outside Cursor; runtime mutable token state in the
+   proposed PostgreSQL TokenStore ([`TOKEN_STORE.md`](TOKEN_STORE.md)),
+   with versioned CAS, fencing, pre-send fence recheck, and no local or
+   environment-variable fallback;
 5. positive auth/SIM destination allowlists plus explicit multi-layer LIVE
    denial, separate from mode checks;
 6. separate DEV/TEST/SIM identities, artifacts, data, networks, and secrets,
@@ -727,12 +751,13 @@ Expected if a later gate accepts a descendant of this proposal:
   CAS, and Operator residual-risk records exist.
 - Negative: availability loss on ambiguous refresh; one-shot G2 may fail if
   E4's unqualified `offline_access` "required" is the live key contract
-  (U-17); Cursor Dashboard secrets named by plan G1 cannot be the runtime
-  store without a later plan revision (U-10).
-- Operational: Client Experience confirmations, an Operator store decision
-  that does not silently amend plan G1, independent verification at H2/G1/G2,
-  and coordinator H1 journal/`CURRENT_STATE` recording (N10: this r1 file
-  does not edit those documents).
+  (U-17); Cursor Dashboard injection is not the production runtime store.
+  The proposed replacement is [`TOKEN_STORE.md`](TOKEN_STORE.md) and is not
+  accepted (U-10).
+- Operational: Client Experience confirmations, Operator acceptance or
+  rejection of the proposed TokenStore at H2, independent verification at
+  H2/G1/G2, and a later evidence update to `CURRENT_STATE.md` /
+  `ENGINEERING_JOURNAL.md` (this proposal does not edit those documents).
 
 No consequence of this r1 artifact is a credential, network path, or phase
 authorization.
@@ -750,7 +775,7 @@ authorization.
 | U-07 | Sender-constrained access/refresh tokens and token introspection are not documented | Bearer-token theft and remote validity cannot be independently constrained/checked. Residual post-theft use is **not** accepted by this author or a security owner. | **G1.** Operator may record residual-risk acceptance in `CURRENT_STATE.md` only if G1 item 3's expiring/rotating refresh policy is also confirmed. If rotation/expiry is absent, U-07 cannot be accepted and G1 stays closed |
 | U-08 | Refresh rotation replay/family semantics and lost-response recovery are not fully documented | Concurrent or ambiguous refresh can revoke or orphan a family | Broker researcher; fail-closed reauthorization unless resolved; G1 |
 | U-09 | Rate-limit identity across keys, users, processes, and accounts is unknown | Multi-worker ownership and backoff cannot be finalized | Operator topology decision before G1; bounded observation at G2 |
-| U-10 | Exact secret-manager, workload platform, lease primitive, KMS, retention, and recovery objectives are unselected. In addition, plan G1 names Cursor Dashboard secrets, which Cursor documents as start-time environment-variable injection that running agents do not refresh [E15], while this proposal requires a workload-writable versioned CAS store and forbids env copies. | Proposed controls cannot yet be independently tested; the plan-named mechanism cannot satisfy this contract. This row does not amend plan G1. | **Human Operator before H2/G1.** Decide explicitly; agents must not choose a substitute store |
+| U-10 | The Cursor-versus-CAS conflict is **proposed-resolved** by [`TOKEN_STORE.md`](TOKEN_STORE.md): production must not depend on Cursor; bootstrap static secrets are separate from a provider-neutral PostgreSQL TokenStore with versioned CAS, fencing, rotation, authorized revocation, stale-writer rejection, and redaction. Still unselected: bootstrap injector product, workload platform, KMS/key custody, retention, and recovery objectives. | The contract can be reviewed. It is not accepted, not implemented, and not a provider selection. Residuals keep G1 closed. | **Human Operator at H2** to accept or reject the proposal. Agents must not accept it or bind it to AWS or Supabase APIs |
 | U-11 | OAuth clock skew, refresh margin, retry budget, lease duration, **pre-send fence recheck**, and recovery objectives are unset | Invented timing can cause expiry races, stale-owner sends, or unsafe retries | Human security/operations decision at P2-B/r2; bind lease TTL and pre-send fence recheck here |
 | U-12 | DNS, proxy, egress-gateway, certificate, and broker alias inventory is incomplete | Hostname checks alone do not prove network isolation | Network/security owners before G1 |
 | U-13 | Legal, privacy, account-entitlement, automation, and retention obligations are unknown | Technical authorization does not establish permitted use | Qualified humans before G1 |
@@ -863,9 +888,10 @@ future key.
   `cursor.com/dashboard/cloud-agents`; “Secrets are injected when an agent
   starts. Agents already running won't pick up new secrets”. Limitation:
   documents agent-start injection, not a workload-writable versioned secret
-  store; this is the plan-named G1 mechanism in conflict with this
-  proposal's CAS/no-env-copy contract (U-10). This citation does not select
-  a product.
+  store. The 2026-09-30 proposal rejects that mechanism as a production
+  dependency and specifies runtime token state in
+  [`TOKEN_STORE.md`](TOKEN_STORE.md). This citation does not select a
+  bootstrap product or a database host.
 
 Repository evidence, read at canonical base
 `1ecbbe6d487d97195fde393b05c9499357599bdb` on 2026-09-26:

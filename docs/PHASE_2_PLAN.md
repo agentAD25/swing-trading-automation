@@ -302,9 +302,11 @@ before execution:
 
 - **Authority:** design the OAuth/token/secret-management architecture
   (`P2-B`); define the network-isolation policy (SIM-host allowlist,
-  LIVE-host denylist); specify the approved secret-manager pattern (Cursor
-  Dashboard secrets or equivalent, never repository files); draft the
-  `AUTH_ARCHITECTURE.md` ADR.
+  LIVE-host denylist); specify the proposed secret split in
+  `docs/TOKEN_STORE.md` (production must not depend on Cursor; bootstrap
+  static secrets stay separate from runtime mutable token state in a
+  provider-neutral PostgreSQL TokenStore; never repository files); draft
+  the `AUTH_ARCHITECTURE.md` ADR.
 - **Forbidden:** requesting, generating, or handling any real credential
   before Gate `G1`; weakening `SIM_LIVE_BOUNDARY.md`; approving its own
   ADR; allowing a LIVE fallback path to exist even as dead code.
@@ -739,10 +741,13 @@ HUMAN DECISION GATE 2 -- Managed PostgreSQL selection ADR      (parallel,
         |
         v
 Gate G1 -- CREDENTIAL BOUNDARY (human action + independent security
-           attestation: Operator provisions SIM OAuth credentials via
-           Cursor Dashboard secrets, formally accepts P2-B's ADR if not
-           already accepted at H2, authorizes a new "TradeStation SIM
-           connectivity phase" explicitly in docs/CURRENT_STATE.md)
+           attestation: Operator formally accepts P2-B's ADR if not
+           already accepted at H2; provisions bootstrap static secrets
+           outside Cursor; runtime mutable token state uses only the
+           proposed PostgreSQL TokenStore in docs/TOKEN_STORE.md.
+           Production must not depend on Cursor Dashboard injection.
+           Authorizes a new "TradeStation SIM connectivity phase"
+           explicitly in docs/CURRENT_STATE.md)
         |
         v
 Group 4 (sequential within, first real network/broker activity ever)
@@ -795,6 +800,14 @@ human, non-agent action); the two labeled "HUMAN DECISION GATE" points are
 ADR-acceptance/selection decisions reserved to the Operator alone. No agent
 role may cross `G1`, `G2`, or `G3` on its own initiative under any
 instruction, per `AGENT_AUTHORITY.md`'s non-overridable authority rule.
+
+**C1 proposed amendment (2026-09-30, not accepted):** §6.3 and Gate G1 no
+longer name Cursor Dashboard secrets as the production credential
+mechanism. The proposed replacement is the bootstrap-versus-TokenStore
+split in `docs/TOKEN_STORE.md`. No other gate, Human Decision Gate 2, or
+prohibition in this plan is changed. This note does not accept an ADR,
+select a database provider, open G1, or authorize Phase 2, credentials,
+TradeStation `SIM`, or `LIVE`.
 
 ## 9. Smallest first executable slice — `P2-0`
 

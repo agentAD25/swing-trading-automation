@@ -176,9 +176,12 @@ Material disagreement that this coordinator must not silently resolve:
 - **Why material:** the plan-named mechanism cannot satisfy the proposed
   store contract. Substituting a product or silently narrowing plan G1 would
   be an unauthorized architecture decision.
-- **Disposition:** unresolved. **Do not amend `PHASE_2_PLAN.md`.** Operator
-  decision is required before H2/G1. Agents must not choose a substitute
-  store.
+- **Disposition at H1 (2026-09-29):** unresolved. Agents were not to amend
+  `PHASE_2_PLAN.md` or choose a substitute store. That historical
+  disposition is unchanged as the H1 record.
+- **Later proposal (2026-09-30):** see “C1 proposed resolution” below.
+  It does not rewrite the conflict facts in this section and does not
+  claim Operator acceptance.
 
 No second `P2_0_CONTRACT_CONFLICT` is opened. Residual wording tension
 below is fail-closed stricter, not a competing contract.
@@ -234,7 +237,9 @@ The integrated set does not support any assumption that:
 
 - ranking Amazon RDS is provider selection, procurement, or Human Decision
   Gate 2;
-- Cursor Dashboard secrets satisfy the proposed CAS store (C1);
+- Cursor Dashboard secrets satisfy the proposed CAS store (C1); the
+  2026-09-30 TokenStore proposal removes that mechanism and still requires
+  Operator acceptance before it is a decision;
 - omitting `offline_access` is accepted by TradeStation for the future key
   (U-17);
 - default non-expiring refresh tokens are an acceptable `offline_access`
@@ -262,3 +267,57 @@ Commands and outcomes for this integration commit are recorded in
 four heads, diff scope versus `1ecbbe6`, whitespace, secret/credential
 pattern scan, and confirmation that `src/`, `migrations/`, `tests/`, and
 `pyproject.toml` are untouched.
+
+## C1 proposed resolution (2026-09-30)
+
+Decision recorded here: `C1_U10_PROPOSED_RESOLUTION`. This is not
+`P2_G2_CONTRACT_DECISION_REQUIRED`.
+
+The H1 sections above remain the carried conflict. A later explicit slice
+authorization directed a documentation resolution that does not select a
+cloud product and does not accept an ADR:
+
+- Production must not depend on Cursor Dashboard start-time injection.
+- Bootstrap static secrets stay outside the token row. The
+  `SIM_CERTIFICATION.md` approved-secret-manager requirement is left on
+  that class and is not rewritten.
+- Runtime mutable token state is the proposed provider-neutral PostgreSQL
+  TokenStore in `docs/TOKEN_STORE.md`: versioned atomic compare-and-swap,
+  fencing, rotation, authorized revocation, stale-writer rejection, and
+  redaction. No AWS or Supabase API is part of the contract.
+- `PHASE_2_PLAN.md` §6.3 and Gate G1 drop Cursor Dashboard secrets as the
+  production mechanism and point at that proposal. Human Decision Gate 2,
+  the other gates, and the database-research documents are not amended.
+- `AUTH_ARCHITECTURE.md` U-10 now points at the proposal and lists the
+  residuals below. Status stays `PROPOSED`.
+
+This commit does not edit `CURRENT_STATE.md` or `ENGINEERING_JOURNAL.md`.
+Those files still describe C1 as open and carried. That sentence stays
+accurate as the pre-resolution evidence record until a later authorized
+evidence update. This proposal does not close C1 in current state and does
+not authorize Group 2 implementation, Phase 2, credentials, TradeStation
+`SIM`, or `LIVE`.
+
+Checked against accepted planning text and judged inside the slice
+direction, not a further contract change: Phase 1 ledger schema still has
+no credentials; SIM certification's secret-manager sentence is not
+reassigned to the TokenStore; provider selection and Human Decision Gate 2
+timing are not moved; `LIVE` denial is unchanged. The rule that SIM must
+not fall back to local PostgreSQL is recorded as a deployment constraint
+on a future SIM TokenStore host, not as a provider selection and not as
+an edit to the plan's ledger statement that local PostgreSQL can carry
+evidence through `P2-I`.
+
+### Residual Operator decisions
+
+1. Accept or reject `docs/TOKEN_STORE.md` at H2.
+2. Choose the non-Cursor bootstrap injector for static secrets.
+3. Choose workload identity, key custody, retention, and recovery
+   objectives. Lease TTL remains U-11.
+4. Choose the SIM database host at the existing Human Decision Gate 2.
+   Local docker-compose is not that host. Sharing an instance with the SIM
+   ledger is undecided.
+5. Record the decision in `CURRENT_STATE.md` in a later evidence commit.
+
+Implementation of the store is **not unblocked**. No schema, code, or
+credential path follows from this section.

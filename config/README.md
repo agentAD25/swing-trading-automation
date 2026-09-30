@@ -29,7 +29,8 @@ by the P2-B architecture and an Operator gate. It is not a connection
 string. Generic `DATABASE_URL`, cross-environment fallback, inheritance,
 and a configured `LIVE` source are rejected by the proposed contract.
 
-The secret-store product is not selected here. `AUTH_ARCHITECTURE.md` U-10
-records a plan-versus-proposal conflict on Cursor Dashboard start-time
-secrets versus a workload-writable CAS store; this naming file does not
-resolve it.
+These `*_REF` names are bootstrap references, not runtime token state.
+The proposed runtime contract is `docs/TOKEN_STORE.md`: production must
+not depend on Cursor, and mutable OAuth token state is a provider-neutral
+PostgreSQL TokenStore. The database-URL reference product is not selected
+here. This file does not accept that contract or choose a database host.
