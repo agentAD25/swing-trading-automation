@@ -1909,3 +1909,52 @@ This evidence commit's parent is `e0ec755`. Its diff is limited to
 `docs/P2_C_ZERO_INCREMENTAL_COST.md`, and `docs/DB_DEPLOYMENT.md` are
 untouched. Whitespace check of that two-file diff is clean. No
 application code is added. Phase 1 tags are not moved.
+
+## 2026-09-30 — C1/U-10 contract acceptance (status evidence)
+
+Independent review returned **`C1_U10_CONTRACT_PASS`** for exact commit
+`a4213f8356a9e32ca4647865ee98e13660e3d656`, tree
+`c07487c88f24f9432de89df7f574130274d50b4b`, parent
+`904a362ac716aa8a7d3c9e830444a19108feed67`. That review left C1
+**PROPOSED** and did not edit the repository. The human Operator now
+accepts ADR-0002. C1/U-10 is **RESOLVED**.
+
+Earlier journal and current-state sentences that leave C1 proposed, open,
+carried, or unclosed are **pre-closure**. They stay as dated records.
+This entry supersedes them for C1 status only.
+
+Contract acceptance is not operational credential certification, key
+management, Supabase selection, or `LIVE` authorization. It does not
+authorize credentials, OAuth, TradeStation `SIM`, order submission, or
+G1. `DRY_RUN` remains the sole authorized execution mode. Supabase
+remains **NOT_ACCEPTED**. ADR-0001 remains Proposed. This branch is not
+merged.
+
+### Non-blocking residuals
+
+These do not reopen C1. No source or test change is made for them.
+
+- Same-attempt tracking is process-local. `_closed_attempts` on
+  `PostgresTokenStore` does not survive a new instance. Durable rejection
+  of a stale writer remains the compare-and-swap predicate.
+- Fence monotonicity is not forced. The mutation fence is a positive
+  integer. The update does not require it to be the expected fence plus
+  one.
+- `read_redacted` is not environment-scoped. It selects by `family_id`
+  only. Compare-and-swap writes still require the environment match.
+- Stale "not implemented" wording remains in historical proposal text and
+  is not current status: `docs/AUTH_ARCHITECTURE.md` U-10 ("not
+  implemented"); `docs/TOKEN_STORE.md` ("Implementation stays blocked"
+  until Operator acceptance); `docs/PHASE_2_RECONCILIATION.md` ("not
+  unblocked"); `docs/PHASE_2_PLAN.md` ("C1 proposed amendment ... not
+  accepted"). Those files are not rewritten in this commit.
+
+Bootstrap injector, key custody, retention, U-11 lease duration, and the
+SIM database host remain later Operator decisions.
+
+### Scope of this commit
+
+Status evidence is `docs/CURRENT_STATE.md`, this journal,
+`docs/adr/0002-provider-neutral-token-store.md` (status Accepted), and
+`docs/C1_U10_CONTRACT_STATUS.md` (status **RESOLVED**). `src/` and
+`tests/` are untouched. No merge.

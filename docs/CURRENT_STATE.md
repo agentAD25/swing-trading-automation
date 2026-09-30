@@ -2,7 +2,7 @@
 
 - Last updated: 2026-09-30
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
-  foundation authorized and not started
+  foundation implemented on this branch and not merged; C1/U-10 resolved
 - Phase status: `PHASE1_COMPLETE` for governance, design, reconciliation,
   acceptance, and the offline `DRY_RUN` foundation; `PHASE1_ACCEPTED` remains
   the bounded meaning of the exact broker-neutral offline deterministic
@@ -34,10 +34,14 @@
   blob `781764f5bbc472378346f6216e07ca6961146e9d` and was fast-forwarded
   unchanged (`git merge --ff-only`). Verification returned **PASS** and
   **OFFLINE_IMPLEMENTATION_UNBLOCKED**. It is not
-  `P2_G2_CONTRACT_DECISION_REQUIRED`. C1/U-10 has a verified
-  **PROPOSED** resolution, `C1_U10_PROPOSED_RESOLUTION`. Status remains
-  **PROPOSED**. That resolution does not accept an ADR and does not
-  close C1.
+  `P2_G2_CONTRACT_DECISION_REQUIRED`. That verification recorded
+  `C1_U10_PROPOSED_RESOLUTION` while status was **PROPOSED**. Independent
+  review `C1_U10_CONTRACT_PASS` of
+  `a4213f8356a9e32ca4647865ee98e13660e3d656`, tree
+  `c07487c88f24f9432de89df7f574130274d50b4b`, left C1 **PROPOSED**. The
+  human Operator accepts ADR-0002. C1/U-10 is **RESOLVED**. Contract
+  acceptance is not operational credential certification, key management,
+  Supabase selection, or `LIVE` authorization.
   The human Operator authorizes the **offline Group 2 foundation only**.
   The non-Cursor bootstrap injector, key custody, retention, and the SIM
   database host remain later decisions.
@@ -86,9 +90,10 @@
 | Phase 1 closure (Gate B) | Complete: evidence-only closure audit recorded in `docs/PHASE_1_CLOSURE.md`; `PHASE1A_COMPLETE` through `PHASE1E_COMPLETE` and `PHASE1_COMPLETE` |
 | Phase 2 | Not generally authorized. The Operator authorizes the offline Group 2 foundation only. Credentials, broker calls, Supabase connections, provisioning, SIM orders, and `LIVE` remain unauthorized. |
 | P2-0 Group 1 docs | On canonical `main` by fast-forward of PR #12 evidence HEAD `9631de3bd8a6a2e24c6833ca534c5e626fdb7b75`, tree `41588e7af631db0213b80d5a02472dd0e4d206ba`; independently verified Gate `H1` **PASS (C1 carried)** at exact commit `33110c7c0aa2f385d179a1f66d068daca2c47537`, tree `5f45983b19bed47988133c5b832e125d0602133c`; PR #8 `a91bd24`, #9 `f0dca4b`, #10 `a7900c2`, #11 `595f431` lineage preserved; all remain `PROPOSED`. The Group 2 denial previously recorded on this row is superseded by the offline Group 2 foundation authorization below. |
-| PR #14 TokenStore | Fast-forward onto `main` of exact commit `e549ab9e59604abecce0c882c60f845f00f8be09`, tree `dee2ef72378bcffa8499bd1d560c8c324a97569e`. Independent verification **PASS** and **OFFLINE_IMPLEMENTATION_UNBLOCKED**. Not `P2_G2_CONTRACT_DECISION_REQUIRED`. `C1_U10_PROPOSED_RESOLUTION` remains **PROPOSED**. |
+| PR #14 TokenStore | Fast-forward onto `main` of exact commit `e549ab9e59604abecce0c882c60f845f00f8be09`, tree `dee2ef72378bcffa8499bd1d560c8c324a97569e`. Independent verification **PASS** and **OFFLINE_IMPLEMENTATION_UNBLOCKED**. Not `P2_G2_CONTRACT_DECISION_REQUIRED`. The **PROPOSED** sentence on this row is the pre-closure record. |
 | PR #13 zero-cost evidence | History-preserving merge of exact commit `78f485b33bdd3f859d540458ba170b2353c04c61`, tree `28b3ced5663c00f4b8d32828ed2b160344d09805`, as `e0ec755e39c897492fbc8d970bb165d8335d361c`, tree `5e687dc37376b1b9c092a2a56a40348e5d36532f`. Versus the PR #14 tip this adds only `docs/P2_C_ZERO_INCREMENTAL_COST.md`. `docs/DB_DEPLOYMENT.md` is unchanged. `INITIAL_DATABASE_INCREMENTAL_SERVICE_COST = 0 USD`. Supersedes only the initial-deployment effect of the historical RDS recommendation. Supabase is **NOT_ACCEPTED**. |
-| Offline Group 2 foundation | Operator authorizes the offline Group 2 foundation only. Later decisions: non-Cursor bootstrap injector, key custody, retention, and SIM database host. No application code in this evidence commit. |
+| Offline Group 2 foundation | Operator authorizes the offline Group 2 foundation only. Later decisions: non-Cursor bootstrap injector, key custody, retention, and SIM database host. The authorization commit itself added no application code. The implementation is on this branch at `904a362ac716aa8a7d3c9e830444a19108feed67` and is not merged. |
+| C1/U-10 closure | Operator accepts ADR-0002 after independent review `C1_U10_CONTRACT_PASS` on `a4213f8356a9e32ca4647865ee98e13660e3d656`, tree `c07487c88f24f9432de89df7f574130274d50b4b`. C1/U-10 is **RESOLVED**. Non-blocking residuals do not reopen C1. Not operational credential certification, key management, Supabase selection, or `LIVE` authorization. |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
 `phase1-accepted-abc1fb6` fixes the accepted commit without making the
@@ -173,8 +178,9 @@ direction.
 1. The acceptance instruction identifies the human Operator by role; no
    additional personal or service identifier is recorded in repository
    evidence.
-2. Individual ADR statuses remain unchanged; bounded Phase 1 acceptance does
-   not expand any ADR or authorize implementation.
+2. Bounded Phase 1 acceptance does not expand ADR-0001 or authorize
+   implementation. ADR-0001 remains Proposed. ADR-0002 is Accepted for
+   C1/U-10 only and does not expand `PHASE1_ACCEPTED`.
 3. Twelve production-critical broker behavior groups remain unresolved;
    strategy/data and risk/operations facts remain unresearched.
 4. Legal, regulatory, entitlement, security, and data-licensing obligations
@@ -184,9 +190,10 @@ direction.
 6. Phase 2 is not generally authorized. P2-0 documentation on `main`
    and Gate `H1` PASS at `33110c7` do not grant a general Phase 2
    entry. The Operator authorizes the offline Group 2 foundation only.
-   C1 (U-10) has a verified **PROPOSED** resolution
-   (`C1_U10_PROPOSED_RESOLUTION` at `e549ab9`); it is not an accepted
-   ADR and is not closed. H2 acceptance remains open. The non-Cursor
+   C1 (U-10) is **RESOLVED** by Operator acceptance of ADR-0002 after
+   `C1_U10_CONTRACT_PASS` on `a4213f8`. That acceptance is not operational
+   credential certification, key management, Supabase selection, or `LIVE`
+   authorization, and it does not open G1. The non-Cursor
    bootstrap injector, key custody, retention, and the SIM database
    host remain later decisions. The 0 USD constraint supersedes only
    the initial-deployment effect of the historical RDS recommendation.
@@ -249,3 +256,17 @@ and the SIM host remain later decisions.
 the initial-deployment effect of the historical RDS recommendation.
 Supabase is **NOT_ACCEPTED**. Credentials, broker calls, Supabase
 connections, provisioning, SIM orders, and `LIVE` remain unauthorized.
+
+On 2026-09-30 the human Operator accepts ADR-0002. Independent review
+`C1_U10_CONTRACT_PASS` of
+`a4213f8356a9e32ca4647865ee98e13660e3d656`, tree
+`c07487c88f24f9432de89df7f574130274d50b4b`, left C1 **PROPOSED**. This
+status commit resolves C1/U-10. Earlier sentences that leave C1 proposed,
+open, or unclosed are **pre-closure**. Contract acceptance is not
+operational credential certification, key management, Supabase selection,
+or `LIVE` authorization. Non-blocking residuals, recorded in
+`docs/ENGINEERING_JOURNAL.md` and `docs/C1_U10_CONTRACT_STATUS.md`, are
+process-local same-attempt tracking, fence monotonicity not forced,
+`read_redacted` not environment-scoped, and stale "not implemented"
+wording in the historical proposal documents. Those residuals do not
+reopen C1. No source or test file changes. This branch is not merged.

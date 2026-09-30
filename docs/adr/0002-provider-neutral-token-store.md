@@ -1,6 +1,6 @@
 # ADR-0002: Provider-neutral TokenStore
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-30
 - Sole Phase 1 decider: Human Operator
 - Scope: C1/U-10 runtime mutable token state
@@ -14,15 +14,17 @@ model contains no credentials. `P2-0` carried conflict C1 (U-10): plan Gate
 G1 had named Cursor Dashboard start-time secrets, while the authentication
 proposal required a workload-writable compare-and-swap store.
 `docs/TOKEN_STORE.md` at `e549ab9e59604abecce0c882c60f845f00f8be09` records
-`C1_U10_PROPOSED_RESOLUTION` and remains **PROPOSED**.
+`C1_U10_PROPOSED_RESOLUTION`. That file's own header remains the historical
+**PROPOSED** proposal text.
 
 The offline Group 2 foundation at
 `904a362ac716aa8a7d3c9e830444a19108feed67`, tree
 `4a6af24ebc82786a5d8c0e6d35f9744be14d9e14`, implements a local PostgreSQL
-compare-and-swap path for synthetic fixture bytes. This ADR records the
-architecture that path implements. It does not accept that architecture.
-`docs/CURRENT_STATE.md` is unchanged, so its statement that H2 acceptance
-remains open stays the current-state record.
+compare-and-swap path for synthetic fixture bytes. The proposal was
+recorded at `a4213f8356a9e32ca4647865ee98e13660e3d656`, tree
+`c07487c88f24f9432de89df7f574130274d50b4b`. Independent review returned
+`C1_U10_CONTRACT_PASS` on that commit and left C1 **PROPOSED**. The human
+Operator now accepts this ADR. C1/U-10 is resolved.
 
 Verified facts, inspected 2026-09-30:
 
@@ -48,8 +50,8 @@ Verified facts, inspected 2026-09-30:
   Host markers for TradeStation, Supabase, AWS, and Neon are refused.
   The module does not import Cursor or a cloud secret SDK.
 
-Assumption: the human Operator has not accepted this ADR. This author
-cannot accept it.
+The human Operator is the decider for this acceptance. This commit records
+that decision. It does not make the author the decider.
 
 ## Safety impact
 
@@ -59,8 +61,7 @@ submission, operational key management, provisioning, broker or account
 activity, or `LIVE`. A denied capability stays unauthorized. This ADR
 cannot override `docs/CURRENT_STATE.md` or the conjunctive promotion gates.
 
-The intended fail-closed effects, if a later Operator decision accepts a
-descendant of this proposal, are: production must not depend on Cursor;
+The accepted fail-closed effects are: production must not depend on Cursor;
 bootstrap secrets stay outside the token row; runtime token state uses a
 durable compare-and-swap store; an unavailable store blocks refresh and
 broker requests; there is no fallback to Cursor, a file, an environment
@@ -102,7 +103,11 @@ a Human Decision Gate 2 move. Rejected here.
 
 ## Decision
 
-Proposed: Option B. Not Accepted.
+Accepted: Option B. The human Operator accepts this ADR after independent
+review `C1_U10_CONTRACT_PASS` of
+`a4213f8356a9e32ca4647865ee98e13660e3d656`, tree
+`c07487c88f24f9432de89df7f574130274d50b4b`. That review left C1
+**PROPOSED**. This acceptance resolves C1/U-10.
 
 Cursor is an engineering tool only. It is not the production secret store,
 runtime TokenStore, runtime dependency, or broker credential authority.
@@ -111,25 +116,24 @@ Mutable token state requires a provider-neutral durable compare-and-swap
 TokenStore. The PostgreSQL implementation at
 `904a362ac716aa8a7d3c9e830444a19108feed67` is one implementation of that
 contract. It is not a permanent provider selection and not a Supabase,
-AWS, RDS, or Cloud SQL dependency. Recording this proposal does not
-authorize credentials, OAuth, TradeStation `SIM`, `LIVE`, or operational
-key management.
+AWS, RDS, or Cloud SQL dependency.
 
-`docs/TOKEN_STORE.md` stays **PROPOSED**. This ADR does not change that
-status to Accepted. Only the human Operator can accept it, and that
-acceptance is not recorded in this commit.
+Contract acceptance is not operational credential certification, key
+management, Supabase selection, or `LIVE` authorization. It does not
+authorize credentials, OAuth, TradeStation `SIM`, or order submission.
 
 ## Consequences
 
-Positive, if later accepted: the Cursor-versus-CAS conflict has a single
-recorded architecture; the offline PostgreSQL path is identified as one
-implementation rather than a cloud selection.
+Positive: the Cursor-versus-CAS conflict has one accepted architecture;
+the offline PostgreSQL path is one implementation rather than a cloud
+selection.
 
 Negative: availability is lost when the store is unavailable or the
-compare-and-swap outcome is ambiguous. H2, the bootstrap injector, key
+compare-and-swap outcome is ambiguous. The bootstrap injector, key
 custody, retention, lease duration (U-11), and the SIM database host stay
-open. `docs/CURRENT_STATE.md` still describes C1 as a proposed resolution
-until a later evidence commit.
+open. Those residuals do not reopen C1. G1 stays closed. Historical
+proposal files still say the contract is not accepted or not implemented;
+that wording is stale as current status and is not rewritten here.
 
 Operational: no schema migration, credential, network path, or runtime
 change is created by this ADR. The offline table remains a local fixture
@@ -137,9 +141,10 @@ relation for DEV and TEST. SIM must not use that local instance.
 
 ## Validation and rollback
 
-Acceptance evidence for a future Operator decision would be an explicit
-record in `docs/CURRENT_STATE.md` plus this ADR moved to Accepted by the
-Operator. This commit is not that evidence.
+Acceptance evidence is this ADR at status Accepted, independent review
+`C1_U10_CONTRACT_PASS` on
+`a4213f8356a9e32ca4647865ee98e13660e3d656`, and the status record in
+`docs/CURRENT_STATE.md` made in the same commit as this acceptance.
 
 Failure signals: a production dependency on Cursor; bootstrap secret
 material copied into the token row; a vendor SDK or host selection for
@@ -151,16 +156,36 @@ or secret state is created here.
 
 ## Unresolved questions
 
-Owned by the human Operator, not chosen here:
+C1/U-10 is resolved. These Operator residuals stay open and do not reopen
+C1:
 
-1. Accept or reject this proposal at H2.
-2. Bootstrap injector for static secrets.
-3. Workload identity and the auth-coordinator role mapping.
-4. Encryption-key custody and rotation.
-5. Retention, backup, and deletion of non-secret tombstones.
-6. Lease TTL, clock skew, and refresh margin (U-11).
-7. SIM database host at Human Decision Gate 2, including whether it is
+1. Bootstrap injector for static secrets.
+2. Workload identity and the auth-coordinator role mapping.
+3. Encryption-key custody and rotation.
+4. Retention, backup, and deletion of non-secret tombstones.
+5. Lease TTL, clock skew, and refresh margin (U-11).
+6. SIM database host at Human Decision Gate 2, including whether it is
    shared with the SIM ledger.
+
+Non-blocking implementation residuals from
+`C1_U10_CONTRACT_PASS`, recorded without reopening C1 and without a
+source or test change:
+
+1. Same-attempt tracking is process-local. `_closed_attempts` does not
+   survive a new `PostgresTokenStore` instance. Durable stale-writer
+   rejection remains the compare-and-swap predicate.
+2. Fence monotonicity is not forced. `CasMutation.fence` must be a
+   positive integer. The statement does not require the next fence to be
+   the expected fence plus one.
+3. `read_redacted` selects by `family_id` only. It does not also filter
+   on the binding environment. Writes still require the environment match.
+4. Stale "not implemented" wording remains in the historical proposal
+   text: `docs/AUTH_ARCHITECTURE.md` U-10 says the contract is not
+   implemented; `docs/TOKEN_STORE.md` says implementation stays blocked
+   until Operator acceptance; `docs/PHASE_2_RECONCILIATION.md` says the
+   store is not unblocked; `docs/PHASE_2_PLAN.md` labels the C1 amendment
+   not accepted. Those sentences are pre-acceptance records. They are not
+   current status.
 
 ## Evidence
 
@@ -169,8 +194,8 @@ Owned by the human Operator, not chosen here:
   Supports `C1_U10_PROPOSED_RESOLUTION`: Cursor is not the production
   store; bootstrap secrets are separate; runtime state is a
   provider-neutral PostgreSQL compare-and-swap contract; no cloud API is
-  selected. Limitation: status remains PROPOSED and is not Operator
-  acceptance.
+  selected. Limitation: that file's header is the historical proposal
+  and was not rewritten by this acceptance.
 - Repository: `docs/AUTH_ARCHITECTURE.md` U-10 and E15, inspected
   2026-09-30. E15 cites Cursor, “Cloud Agents”,
   https://cursor.com/docs/cloud-agent, accessed 2026-09-29, for
@@ -178,8 +203,9 @@ Owned by the human Operator, not chosen here:
   that page; it relies on the citation already in that document.
 - Repository: `docs/AGENT_AUTHORITY.md` and `docs/CURRENT_STATE.md`,
   inspected 2026-09-30. Supports DRY_RUN-only authority, sole Operator
-  acceptance, and that C1 remains a proposed resolution with H2 open.
-  Limitation: current state was not edited by this commit.
+  acceptance. At proposal time, current state still left C1 proposed.
+  This acceptance commit updates that status evidence. Limitation: the
+  deny state for credentials, `SIM`, and `LIVE` is unchanged.
 - Repository: `docs/DATA_MODEL.md` sensitive-data section and
   `docs/SIM_CERTIFICATION.md` secret-manager entry criterion, inspected
   2026-09-30. Supports no Phase 1 credentials, and an approved secret
@@ -188,8 +214,15 @@ Owned by the human Operator, not chosen here:
 - Repository: `docs/PHASE_2_PLAN.md` persistence row and
   `docs/PHASE_2_RECONCILIATION.md` C1 section, inspected 2026-09-30.
   Supports provider-neutral PostgreSQL and the proposed, unaccepted C1
-  resolution. Limitation: historical H1 text still records the carried
-  conflict; this ADR does not rewrite it.
+  resolution. Limitation: historical H1 text and the "not accepted"
+  amendment label remain; this ADR does not rewrite those files.
+- Independent review `C1_U10_CONTRACT_PASS`, 2026-09-30, of commit
+  `a4213f8356a9e32ca4647865ee98e13660e3d656`, tree
+  `c07487c88f24f9432de89df7f574130274d50b4b`. Supports coherence of the
+  proposed architecture with Phase 1, `P2-0`, and the offline
+  implementation, and records the non-blocking residuals above.
+  Limitation: the review left C1 **PROPOSED** and did not re-run pytest.
+  The Operator acceptance is this later commit, not that review.
 - Repository implementation: `src/swingtrade/offline/token_store.py`,
   `src/swingtrade/offline/database.py`,
   `src/swingtrade/offline/environment.py`, and
