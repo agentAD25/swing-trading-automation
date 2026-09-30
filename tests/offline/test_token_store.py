@@ -7,9 +7,9 @@ from collections.abc import Iterator, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 
+import psycopg
 import pytest
 from sqlalchemy import create_engine, event, select, text
-from sqlalchemy.exc import OperationalError
 
 from swingtrade.contracts.monitoring import MonitoringConditionCode, NullMonitoringEmitter
 from swingtrade.contracts.secret_refs import DeploymentEnvironment
@@ -129,7 +129,6 @@ def test_broker_material_and_live_expectation_are_rejected() -> None:
         ("postgresql+psycopg://127.0.0.1/swingtrade_test?hostaddr=93.184.216.34", {}),
         ("postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade_test?port=1", {}),
         ("postgresql+psycopg://127.0.0.1/swingtrade_test", {"host": "example.invalid"}),
-        ("postgresql+psycopg://127.0.0.1:5432/swingtrade_test", {"port": 1}),
         ("postgresql+psycopg://127.0.0.1/swingtrade_test", {"hostaddr": "93.184.216.34"}),
     ],
 )
@@ -168,6 +167,45 @@ def _deny_sockets(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     return calls
 
 
+def _spy_dials(
+    monkeypatch: pytest.MonkeyPatch,
+) -> tuple[list[dict[str, object]], list[int]]:
+    dials: list[dict[str, object]] = []
+    socket_ports: list[int] = []
+
+    def spy_connect(*args: object, **kwargs: object) -> object:
+        dials.append(dict(kwargs))
+        if kwargs.get("port") == 1:
+            raise AssertionError("dialed port 1")
+        raise psycopg.OperationalError("stopped")
+
+    def create_connection(address: object, *args: object, **kwargs: object) -> object:
+        if isinstance(address, tuple) and len(address) >= 2 and type(address[1]) is int:
+            socket_ports.append(address[1])
+        raise AssertionError("socket opened")
+
+    def denied_socket(*args: object, **kwargs: object) -> object:
+        raise AssertionError("socket opened")
+
+    monkeypatch.setattr("swingtrade.offline.token_store.psycopg.connect", spy_connect)
+    monkeypatch.setattr(socket, "create_connection", create_connection)
+    monkeypatch.setattr(socket, "socket", denied_socket)
+    return dials, socket_ports
+
+
+def _assert_frozen_local_dials(
+    dials: list[dict[str, object]], socket_ports: list[int], *, count: int
+) -> None:
+    assert len(dials) == count
+    assert socket_ports == []
+    for dial in dials:
+        assert dial.get("host") == "127.0.0.1"
+        assert dial.get("port") == 5432
+        assert dial.get("hostaddr") == "127.0.0.1"
+        assert "conninfo" not in dial
+        assert 1 not in dial.values()
+
+
 @pytest.mark.parametrize(
     "conninfo",
     [
@@ -179,26 +217,28 @@ def _deny_sockets(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         "HostAddr=127.0.0.1",
     ],
 )
-def test_conninfo_hostaddr_or_port_is_rejected(
+def test_conninfo_hostaddr_or_port_does_not_change_the_dial(
     monkeypatch: pytest.MonkeyPatch, conninfo: str
 ) -> None:
-    calls = _deny_sockets(monkeypatch)
+    dials, socket_ports = _spy_dials(monkeypatch)
     engine = create_engine(
         "postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade",
         connect_args={"conninfo": conninfo},
     )
     binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
-    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED") as captured:
-        PostgresTokenStore(engine, binding)
+    store = PostgresTokenStore(engine, binding)
+    assert dials == []
+    with pytest.raises(TokenStoreError, match="AUTH_UNKNOWN") as captured:
+        store.read_redacted("family_1")
     rendered = str(captured.value)
     assert "hostaddr" not in rendered
     assert "127.0.0.1" not in rendered
     assert "swingtrade" not in rendered
     assert captured.value.__cause__ is None
     assert captured.value.__context__ is None
-    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+    with pytest.raises(psycopg.OperationalError, match="stopped"):
         create_fixture_schema(engine)
-    assert calls == []
+    _assert_frozen_local_dials(dials, socket_ports, count=2)
 
 
 def test_conninfo_without_dial_keys_keeps_the_url_authority(
@@ -214,28 +254,33 @@ def test_conninfo_without_dial_keys_keeps_the_url_authority(
     assert calls == []
 
 
-class _DivergentPort(Mapping[str, object]):
-    """``.get`` and ``in`` report port 5432. Item access reports port 1."""
+class _AlternatingPort(Mapping[str, object]):
+    """Early item reads report port 5432. A later splat read reports port 1."""
 
-    _visible = {"host": "127.0.0.1", "port": 5432, "dbname": "swingtrade"}
-    _stored = {"host": "127.0.0.1", "port": 1, "dbname": "swingtrade"}
+    def __init__(self) -> None:
+        self.port_reads = 0
 
     def __getitem__(self, key: str) -> object:
-        return self._stored[key]
+        if key == "port":
+            self.port_reads += 1
+            if self.port_reads <= 2:
+                return 5432
+            return 1
+        values = {
+            "host": "127.0.0.1",
+            "dbname": "swingtrade",
+            "user": "swingtrade",
+            "password": "swingtrade",
+        }
+        if key not in values:
+            raise KeyError(key)
+        return values[key]
 
     def __iter__(self) -> Iterator[str]:
-        return iter(self._stored)
+        return iter(("host", "port", "dbname", "user", "password"))
 
     def __len__(self) -> int:
-        return len(self._stored)
-
-    def get(self, key: str, default: object = None) -> object:
-        if key in self._visible:
-            return self._visible[key]
-        return default
-
-    def __contains__(self, key: object) -> bool:
-        return key in self._visible
+        return 5
 
 
 def _creator_with_cparams(engine: object, params: Mapping[str, object]) -> object:
@@ -255,46 +300,97 @@ def _creator_with_cparams(engine: object, params: Mapping[str, object]) -> objec
     )
 
 
-def test_getitem_port_is_not_hidden_by_mapping_get(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls = _deny_sockets(monkeypatch)
-    url = "postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade"
-    forged = _creator_with_cparams(create_engine(url), _DivergentPort())
-    engine = create_engine(url, creator=forged)
-    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
-    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED") as captured:
-        PostgresTokenStore(engine, binding)
-    rendered = str(captured.value)
-    assert "127.0.0.1" not in rendered
-    assert "5432" not in rendered
+def _exercise_guarded_dials(store: PostgresTokenStore, engine: object) -> None:
+    with pytest.raises(TokenStoreError, match="AUTH_UNKNOWN") as captured:
+        store.read_redacted("family_1")
     assert captured.value.__cause__ is None
     assert captured.value.__context__ is None
-    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
-        create_fixture_schema(engine)
-    assert calls == []
+    with pytest.raises(psycopg.OperationalError, match="stopped"):
+        create_fixture_schema(engine)  # type: ignore[arg-type]
 
 
-def test_mutated_cparams_cell_does_not_dial(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls = _deny_sockets(monkeypatch)
+def test_alternating_cparams_port_is_not_dialed(monkeypatch: pytest.MonkeyPatch) -> None:
+    dials, socket_ports = _spy_dials(monkeypatch)
+    url = "postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade"
+    params = _AlternatingPort()
+    forged = _creator_with_cparams(create_engine(url), params)
+    engine = create_engine(url, creator=forged)
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    store = PostgresTokenStore(engine, binding)
+    _exercise_guarded_dials(store, engine)
+    assert params.port_reads == 0
+    _assert_frozen_local_dials(dials, socket_ports, count=2)
+
+    fresh = _spy_dials(monkeypatch)
+    approved = create_engine(url)
+    approved_store = PostgresTokenStore(approved, binding)
+    swapped = _AlternatingPort()
+    replaced = False
+    creator = approved.pool._creator
+    pairs = zip(creator.__code__.co_freevars, creator.__closure__, strict=True)
+    for name, cell in pairs:
+        if name == "cparams":
+            cell.cell_contents = swapped
+            replaced = True
+    assert replaced
+    _exercise_guarded_dials(approved_store, approved)
+    assert swapped.port_reads == 0
+    _assert_frozen_local_dials(fresh[0], fresh[1], count=2)
+
+
+class _PortOneDialect:
+    def __init__(self) -> None:
+        self.calls = 0
+        self._has_events = False
+
+    def connect(self, *args: object, **kwargs: object) -> object:
+        self.calls += 1
+        socket.create_connection(("127.0.0.1", 1))
+        raise AssertionError("dialect dialed")
+
+
+def test_replaced_dialect_cell_does_not_dial(monkeypatch: pytest.MonkeyPatch) -> None:
+    dials, socket_ports = _spy_dials(monkeypatch)
     url = "postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade"
     engine = create_engine(url)
     binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
     store = PostgresTokenStore(engine, binding)
+    dialect = _PortOneDialect()
     creator = engine.pool._creator
     replaced = False
+    cparams_port: object = None
     pairs = zip(creator.__code__.co_freevars, creator.__closure__, strict=True)
     for name, cell in pairs:
-        if name == "cparams":
-            cell.cell_contents = _DivergentPort()
+        if name == "dialect":
+            cell.cell_contents = dialect
             replaced = True
+        elif name == "cparams":
+            cparams_port = cell.cell_contents["port"]
     assert replaced
-    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED") as captured:
-        store.read_redacted("family_1")
-    rendered = str(captured.value)
-    assert "127.0.0.1" not in rendered
-    assert "5432" not in rendered
-    assert captured.value.__cause__ is None
-    assert captured.value.__context__ is None
-    assert calls == []
+    assert cparams_port == 5432
+    _exercise_guarded_dials(store, engine)
+    assert dialect.calls == 0
+    _assert_frozen_local_dials(dials, socket_ports, count=2)
+
+
+def test_connect_args_port_does_not_replace_the_url_port(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    dials, socket_ports = _spy_dials(monkeypatch)
+    engine = create_engine(
+        "postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade",
+        connect_args={"host": "example.invalid", "port": 1, "hostaddr": "93.184.216.34"},
+    )
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    store = PostgresTokenStore(engine, binding)
+    assert dials == []
+    _exercise_guarded_dials(store, engine)
+    _assert_frozen_local_dials(dials, socket_ports, count=2)
+    rendered = ""
+    for dial in dials:
+        rendered += str(dial.get("host"))
+    assert "example.invalid" not in rendered
+    assert "93.184.216.34" not in rendered
 
 
 def test_missing_url_host_does_not_follow_pghost(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -538,6 +634,27 @@ def test_remote_and_sim_stores_do_not_connect(monkeypatch: pytest.MonkeyPatch) -
         PostgresTokenStore(local, sim)
 
 
+def _record_updates(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    seen: list[str] = []
+    original = psycopg.Cursor.execute
+
+    def spy(
+        cursor: psycopg.Cursor,
+        query: object,
+        params: object = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool | None = None,
+    ) -> object:
+        text_query = query if isinstance(query, str) else ""
+        if text_query.lstrip().lower().startswith("update"):
+            seen.append(text_query)
+        return original(cursor, query, params, prepare=prepare, binary=binary)
+
+    monkeypatch.setattr(psycopg.Cursor, "execute", spy)
+    return seen
+
+
 @pytest.fixture
 def store():
     assert POSTGRES_URL is not None
@@ -622,23 +739,12 @@ def test_predicate_mismatch_updates_zero_rows(
 
 
 @pytestmark_postgres
-def test_stale_writer_is_not_retried_in_the_same_attempt(store: PostgresTokenStore) -> None:
+def test_stale_writer_is_not_retried_in_the_same_attempt(
+    store: PostgresTokenStore, monkeypatch: pytest.MonkeyPatch
+) -> None:
     store.commit_initial(_record(), attempt_id="seed")
     store.compare_and_swap(_expectation(), _mutation(), attempt_id="winner")
-    updates: list[str] = []
-
-    def collect(
-        connection: object,
-        cursor: object,
-        statement: str,
-        parameters: object,
-        context: object,
-        executemany: bool,
-    ) -> None:
-        if statement.lstrip().lower().startswith("update"):
-            updates.append(statement)
-
-    event.listen(store._engine, "before_cursor_execute", collect)  # noqa: SLF001
+    updates = _record_updates(monkeypatch)
     with pytest.raises(StaleWriterRejected, match="STALE_WRITER") as captured:
         store.compare_and_swap(_expectation(), _mutation(b"fixture:gamma"), attempt_id="stale")
     assert "fixture" not in str(captured.value)
@@ -657,28 +763,27 @@ def test_stale_writer_is_not_retried_in_the_same_attempt(store: PostgresTokenSto
 
 @pytestmark_postgres
 def test_ambiguous_database_error_does_not_replay_or_chain_material(
-    store: PostgresTokenStore,
+    store: PostgresTokenStore, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     store.commit_initial(_record(), attempt_id="seed")
     emitter = NullMonitoringEmitter()
     store._emitter = emitter  # noqa: SLF001
+    original = psycopg.Cursor.execute
 
     def fail(
-        connection: object,
-        cursor: object,
-        statement: str,
-        parameters: object,
-        context: object,
-        executemany: bool,
-    ) -> None:
-        if statement.lstrip().lower().startswith("update"):
-            raise OperationalError(
-                "update",
-                {"body": ORIGINAL},
-                Exception("fixture:should-not-leak"),
-            )
+        cursor: psycopg.Cursor,
+        query: object,
+        params: object = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool | None = None,
+    ) -> object:
+        text_query = query if isinstance(query, str) else ""
+        if text_query.lstrip().lower().startswith("update"):
+            raise psycopg.OperationalError("fixture:should-not-leak")
+        return original(cursor, query, params, prepare=prepare, binary=binary)
 
-    event.listen(store._engine, "before_cursor_execute", fail)  # noqa: SLF001
+    monkeypatch.setattr(psycopg.Cursor, "execute", fail)
     with pytest.raises(TokenStoreError, match="AUTH_UNKNOWN") as captured:
         store.compare_and_swap(_expectation(), _mutation(), attempt_id="ambiguous")
     assert captured.value.__cause__ is None
@@ -695,23 +800,10 @@ def test_ambiguous_database_error_does_not_replay_or_chain_material(
 )
 @pytestmark_postgres
 def test_terminal_state_cas_does_not_replace_ciphertext(
-    store: PostgresTokenStore, state: TokenState
+    store: PostgresTokenStore, state: TokenState, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     store.commit_initial(_record(state=state), attempt_id=f"seed_{state.value}")
-    updates: list[str] = []
-
-    def collect(
-        connection: object,
-        cursor: object,
-        statement: str,
-        parameters: object,
-        context: object,
-        executemany: bool,
-    ) -> None:
-        if statement.lstrip().lower().startswith("update"):
-            updates.append(statement)
-
-    event.listen(store._engine, "before_cursor_execute", collect)  # noqa: SLF001
+    updates = _record_updates(monkeypatch)
     with pytest.raises(StaleWriterRejected, match="TERMINAL_STATE_REJECTED") as captured:
         store.compare_and_swap(
             _expectation(state=state),

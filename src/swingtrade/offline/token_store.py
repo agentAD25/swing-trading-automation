@@ -9,8 +9,10 @@ import types
 from collections.abc import Mapping
 from datetime import datetime
 from enum import StrEnum
+from typing import cast
 
-from psycopg.conninfo import conninfo_to_dict
+import psycopg
+from psycopg.rows import dict_row
 from sqlalchemy import (
     JSON,
     CheckConstraint,
@@ -26,9 +28,12 @@ from sqlalchemy import (
     select,
     update,
 )
+from sqlalchemy.dialects.postgresql.psycopg import PGDialect_psycopg
 from sqlalchemy.engine.create import create_engine as _sqlalchemy_create_engine
+from sqlalchemy.engine.interfaces import DBAPIModule
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.sql import Executable
+from sqlalchemy.schema import CreateTable
+from sqlalchemy.sql.elements import ClauseElement
 
 from swingtrade.contracts.monitoring import MonitoringEmitter, db_unavailable
 from swingtrade.contracts.secret_refs import DeploymentEnvironment
@@ -369,134 +374,165 @@ def _refuse_connect_hooks(engine: Engine) -> None:
         raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
 
 
-def _conninfo_supplies_dial_override(raw: str) -> bool:
-    parsed: object
-    try:
-        parsed = conninfo_to_dict(raw)
-    except Exception:
-        return True
-    if not isinstance(parsed, Mapping):
-        return True
-    return "hostaddr" in parsed or "port" in parsed or "service" in parsed
+_URL_DIAL_QUERY_KEYS = frozenset({"host", "hostaddr", "port", "conninfo", "service"})
 
 
-_MISSING = object()
+def _postgresql_dialect() -> PGDialect_psycopg:
+    dialect = PGDialect_psycopg(paramstyle="pyformat")  # type: ignore[no-untyped-call]
+    dialect.dbapi = cast(DBAPIModule, psycopg)
+    return dialect
 
 
-def _keyword_present(params: Mapping[str, object], key: str) -> bool:
-    if key not in params:
-        return False
-    value = params[key]
-    return value is not None and value != ""
+_DIALECT = _postgresql_dialect()
 
 
-def _refuse_libpq_dial_environment(params: Mapping[str, object]) -> None:
-    """Refuse fallbacks that can replace an unset host, hostaddr, or port.
+class _FrozenDial:
+    """Plain host and port copied from the SQLAlchemy URL. Not a connector cell."""
 
-    libpq applies a service file first, then PGHOST, PGHOSTADDR, and PGPORT,
-    for any dial keyword the connection parameters left empty.
-    """
-    service_present = _keyword_present(params, "service") or "PGSERVICE" in os.environ
-    for key, env_name in (("host", "PGHOST"), ("hostaddr", "PGHOSTADDR"), ("port", "PGPORT")):
-        if _keyword_present(params, key):
-            continue
-        if service_present or env_name in os.environ:
-            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    __slots__ = ("database", "host", "password", "port", "username")
+
+    def __init__(self, host: str, port: int, database: str, username: str, password: str) -> None:
+        self.host = host
+        self.port = port
+        self.database = database
+        self.username = username
+        self.password = password
 
 
-def _closure_value(creator: object, name: str) -> object:
-    """Return one free variable the connector bytecode will actually read."""
-    code = getattr(creator, "__code__", None)
-    closure = getattr(creator, "__closure__", None)
-    freevars = getattr(code, "co_freevars", None)
-    if not isinstance(freevars, tuple) or closure is None or len(freevars) != len(closure):
+def _refuse_libpq_environment() -> None:
+    if "PGHOSTADDR" in os.environ or "PGSERVICE" in os.environ:
         raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    found = False
-    value: object = None
-    for free_name, cell in zip(freevars, closure, strict=True):
-        if free_name != name:
-            continue
-        if found:
-            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-        found = True
-        value = cell.cell_contents
-    if not found:
-        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    return value
 
 
-def _passed_keywords(params: object) -> dict[str, object]:
-    """Materialize ``**params`` the way the connector unpacks it.
-
-    Keyword unpacking uses ``keys`` and item access. ``Mapping.get`` is not consulted.
-    """
-    if not isinstance(params, Mapping):
-        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    try:
-        keys = list(params.keys())
-    except Exception:
-        keys = None
-    if not isinstance(keys, list):
-        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    passed: dict[str, object] = {}
-    for key in keys:
-        if type(key) is not str:
-            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-        try:
-            value = params[key]
-        except Exception:
-            value = _MISSING
-        if value is _MISSING:
-            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-        passed[key] = value
-    return passed
-
-
-def _refuse_connector_dial_mismatch(engine: Engine) -> None:
-    """Approve host and port from the URL, then compare the connector's real arguments."""
-    authority_host = _normalize_host(engine.url.host)
-    authority_port = _normalize_port(engine.url.port)
-    if authority_host not in _LOCAL_HOSTS or authority_port is None:
-        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    if _marked_remote(authority_host):
-        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    creator = _pool_creator(engine)
-    positional = _closure_value(creator, "cargs_tup")
-    if not isinstance(positional, (list, tuple)) or len(positional) != 0:
-        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    passed = _passed_keywords(_closure_value(creator, "cparams"))
-    if "host" not in passed or "port" not in passed:
-        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    effective_host = _normalize_host(passed["host"])
-    effective_port = _normalize_port(passed["port"])
-    if effective_host != authority_host or effective_port != authority_port:
-        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    if effective_host not in _LOCAL_HOSTS or _marked_remote(effective_host):
-        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    if "conninfo" in passed:
-        conninfo = passed["conninfo"]
-        if type(conninfo) is not str or _conninfo_supplies_dial_override(conninfo):
-            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    if "hostaddr" in passed and passed["hostaddr"] not in (None, ""):
-        hostaddr = _normalize_host(passed["hostaddr"])
-        if hostaddr != authority_host or hostaddr not in {"127.0.0.1", "::1"}:
-            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    _refuse_libpq_dial_environment(passed)
-
-
-def _assert_local_postgresql(engine: Engine) -> None:
+def _freeze_dial(engine: Engine) -> _FrozenDial:
+    """Copy the URL authority into str and int values. Ignore connector parameters."""
     if engine.dialect.name != "postgresql":
         raise TokenStoreError("POSTGRESQL_REQUIRED")
-    _refuse_connect_hooks(engine)
-    _refuse_connector_dial_mismatch(engine)
-    _refuse_connect_hooks(engine)
+    _refuse_libpq_environment()
+    if _URL_DIAL_QUERY_KEYS.intersection(str(key) for key in engine.url.query):
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    host = _normalize_host(engine.url.host)
+    port = _normalize_port(engine.url.port)
+    if host not in _LOCAL_HOSTS or port is None or _marked_remote(host):
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    database = engine.url.database
+    username = engine.url.username
+    password = engine.url.password
+    if type(database) is not str or database == "":
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    if username is None:
+        username = ""
+    if type(username) is not str:
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    if password is None:
+        password = ""
+    if type(password) is not str:
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    return _FrozenDial(str(host), int(port), str(database), str(username), str(password))
+
+
+def _dial(target: _FrozenDial) -> psycopg.Connection:
+    """Open libpq with the frozen host and port. Do not use an engine creator."""
+    host = target.host
+    port = target.port
+    database = target.database
+    username = target.username
+    password = target.password
+    if (
+        type(host) is not str
+        or type(port) is not int
+        or type(database) is not str
+        or type(username) is not str
+        or type(password) is not str
+    ):
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    if host not in _LOCAL_HOSTS or _marked_remote(host):
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    _refuse_libpq_environment()
+    if username == "":
+        if host in {"127.0.0.1", "::1"}:
+            return psycopg.connect(host=host, port=port, hostaddr=host, dbname=database)
+        return psycopg.connect(host=host, port=port, dbname=database)
+    if host in {"127.0.0.1", "::1"}:
+        return psycopg.connect(
+            host=host,
+            port=port,
+            hostaddr=host,
+            dbname=database,
+            user=username,
+            password=password,
+        )
+    return psycopg.connect(
+        host=host,
+        port=port,
+        dbname=database,
+        user=username,
+        password=password,
+    )
+
+
+def _bound_params(compiled: object) -> dict[str, object]:
+    construct = getattr(compiled, "construct_params", None)
+    processors = getattr(compiled, "_bind_processors", None)
+    if not callable(construct) or not isinstance(processors, Mapping):
+        raise TokenStoreError("AUTH_UNKNOWN")
+    raw = construct()
+    if not isinstance(raw, Mapping):
+        raise TokenStoreError("AUTH_UNKNOWN")
+    params = {str(key): value for key, value in raw.items()}
+    for key, processor in processors.items():
+        if not callable(processor) or key not in params or params[key] is None:
+            continue
+        params[str(key)] = processor(params[key])
+    return params
+
+
+def _run(connection: psycopg.Connection, statement: ClauseElement) -> list[dict[str, object]]:
+    compiled = statement.compile(
+        dialect=_DIALECT, compile_kwargs={"render_postcompile": True}
+    )
+    sql = getattr(compiled, "string", None)
+    if type(sql) is not str:
+        raise TokenStoreError("AUTH_UNKNOWN")
+    params = _bound_params(compiled)
+    with connection.cursor(row_factory=dict_row) as cursor:
+        cursor.execute(sql, params)
+        if cursor.description is None:
+            return []
+        fetched = cursor.fetchall()
+    rows: list[dict[str, object]] = []
+    for row in fetched:
+        items = getattr(row, "items", None)
+        if not callable(items):
+            raise TokenStoreError("AUTH_UNKNOWN")
+        rows.append({str(key): value for key, value in items()})
+    return rows
+
+
+def _ensure_token_table(connection: psycopg.Connection) -> None:
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT to_regclass('offline_token_families')")
+        found = cursor.fetchone()
+    if found is not None and found[0] is not None:
+        return
+    ddl = str(CreateTable(token_families).compile(dialect=_DIALECT))
+    with connection.cursor() as cursor:
+        cursor.execute(ddl)
 
 
 def create_fixture_schema(engine: Engine) -> None:
-    """Create the local fixture table. Remote hosts are refused before connect."""
-    _assert_local_postgresql(engine)
-    _refuse_connector_dial_mismatch(engine)
-    metadata.create_all(engine)
+    """Create the local fixture table. The dial uses the URL host and port only."""
+    target = _freeze_dial(engine)
+    _refuse_connect_hooks(engine)
+    connection = _dial(target)
+    try:
+        _ensure_token_table(connection)
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
 
 
 def _require_str(value: object) -> str:
@@ -552,13 +588,18 @@ class PostgresTokenStore:
         emitter: MonitoringEmitter | None = None,
     ) -> None:
         require_local_database_connection(binding)
-        _assert_local_postgresql(engine)
+        approved_dial = _freeze_dial(engine)
         approved = _pool_creator(engine)
         _refuse_connect_hooks(engine)
         if approved is not _pool_creator(engine) or not _is_default_creator(approved):
             raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
         self._engine = engine
         self._approved_creator = approved
+        self._host = approved_dial.host
+        self._port = approved_dial.port
+        self._database = approved_dial.database
+        self._username = approved_dial.username
+        self._password = approved_dial.password
         self._binding = binding
         self._emitter = emitter
         self._closed_attempts: set[tuple[str, str]] = set()
@@ -629,14 +670,33 @@ class PostgresTokenStore:
     def read_redacted(self, family_id: str) -> RedactedTokenRecord | None:
         family = _opaque_id(family_id)
         statement = select(*_REDACTED_COLUMNS).where(token_families.c.family_id == family)
-        self._before_connect()
-        with self._engine.connect() as connection:
-            rows = connection.execute(statement).mappings().all()
+        failure: TokenStoreError | None = None
+        rows: list[dict[str, object]] = []
+        connection: psycopg.Connection | None = None
+        try:
+            connection = self._open()
+            rows = _run(connection, statement)
+            connection.rollback()
+        except (psycopg.Error, SQLAlchemyError):
+            failure = TokenStoreError("AUTH_UNKNOWN")
+        finally:
+            if connection is not None:
+                try:
+                    connection.rollback()
+                except (psycopg.Error, SQLAlchemyError):
+                    pass
+                try:
+                    connection.close()
+                except (psycopg.Error, SQLAlchemyError):
+                    pass
+        if failure is not None:
+            self._emit_unavailable()
+            raise failure
         if len(rows) == 0:
             return None
         if len(rows) != 1:
             raise TokenStoreError("AUTH_UNKNOWN")
-        return _redacted(_mapping(rows[0]))
+        return _redacted(rows[0])
 
     def _close_attempt(self, family_id: str, attempt_id: str) -> None:
         attempt = _opaque_id(attempt_id)
@@ -648,29 +708,67 @@ class PostgresTokenStore:
 
     def _before_connect(self) -> None:
         creator = _pool_creator(self._engine)
-        if creator is not self._approved_creator or _has_do_connect_listener(self._engine):
+        if (
+            creator is not self._approved_creator
+            or not _is_default_creator(creator)
+            or _has_do_connect_listener(self._engine)
+        ):
             raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-        _assert_local_postgresql(self._engine)
-        if _pool_creator(self._engine) is not self._approved_creator:
+        _refuse_libpq_environment()
+
+    def _dial_approved(self) -> psycopg.Connection:
+        """Dial the plain host and port copied at approval."""
+        host = self._host
+        port = self._port
+        database = self._database
+        username = self._username
+        password = self._password
+        if (
+            type(host) is not str
+            or type(port) is not int
+            or type(database) is not str
+            or type(username) is not str
+            or type(password) is not str
+        ):
             raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-        _refuse_connector_dial_mismatch(self._engine)
+        return _dial(_FrozenDial(host, port, database, username, password))
+
+    def _open(self) -> psycopg.Connection:
+        self._before_connect()
+        return self._dial_approved()
 
     def _execute_once(
-        self, family_id: str, attempt_id: str, statement: Executable
+        self, family_id: str, attempt_id: str, statement: ClauseElement
     ) -> RedactedTokenRecord:
         self._before_connect()
         self._close_attempt(family_id, attempt_id)
+        connection: psycopg.Connection | None = None
+        committed = False
         failure: TokenStoreError | None = None
         try:
-            with self._engine.begin() as connection:
-                rows = connection.execute(statement).mappings().all()
-                if len(rows) == 0:
-                    raise StaleWriterRejected("STALE_WRITER")
-                if len(rows) != 1:
-                    raise TokenStoreError("AUTH_UNKNOWN")
-                return _redacted(_mapping(rows[0]))
-        except SQLAlchemyError:
+            connection = self._dial_approved()
+            rows = _run(connection, statement)
+            if len(rows) == 0:
+                raise StaleWriterRejected("STALE_WRITER")
+            if len(rows) != 1:
+                raise TokenStoreError("AUTH_UNKNOWN")
+            record = _redacted(rows[0])
+            connection.commit()
+            committed = True
+            return record
+        except (psycopg.Error, SQLAlchemyError):
             failure = TokenStoreError("AUTH_UNKNOWN")
+        finally:
+            if connection is not None and not committed:
+                try:
+                    connection.rollback()
+                except (psycopg.Error, SQLAlchemyError):
+                    pass
+            if connection is not None:
+                try:
+                    connection.close()
+                except (psycopg.Error, SQLAlchemyError):
+                    pass
         if failure is not None:
             self._emit_unavailable()
             raise failure
@@ -684,15 +782,3 @@ class PostgresTokenStore:
                     environment=self._binding.environment.value,
                 )
             )
-
-
-def _mapping(row: object) -> Mapping[str, object]:
-    items = getattr(row, "items", None)
-    if not callable(items):
-        raise TokenStoreError("AUTH_UNKNOWN")
-    mapped: dict[str, object] = {}
-    for key, value in items():
-        if not isinstance(key, str):
-            raise TokenStoreError("AUTH_UNKNOWN")
-        mapped[str(key)] = value
-    return mapped
