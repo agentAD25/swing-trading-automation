@@ -333,16 +333,61 @@ def test_custom_creator_is_rejected_before_it_runs(monkeypatch: pytest.MonkeyPat
     with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
         create_fixture_schema(engine)
 
-    def spoofed() -> object:
-        ran.append("spoofed")
-        raise AssertionError("creator ran")
+    def connect() -> None:
+        ran.append("forged")
+        raise RuntimeError("store path invoked spoof")
 
-    spoofed.__module__ = "sqlalchemy.engine.create"
-    spoofed.__qualname__ = "create_engine.<locals>.connect"
-    spoofed_engine = create_engine(url, creator=spoofed)
+    connect.__code__ = connect.__code__.replace(co_filename="/opt/sqlalchemy/engine/create.py")
+    connect.__module__ = "sqlalchemy.engine.create"
+    connect.__qualname__ = "create_engine.<locals>.connect"
+    forged_engine = create_engine(url, creator=connect)
     with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
-        PostgresTokenStore(spoofed_engine, binding)
+        PostgresTokenStore(forged_engine, binding)
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        create_fixture_schema(forged_engine)
+
+    def _stolen() -> object:
+        cargs_tup = cparams = dialect = None
+
+        def stolen_connect() -> object:
+            if False:
+                return (cargs_tup, cparams, dialect)
+            raise RuntimeError("stolen connector invoked")
+
+        return stolen_connect
+
+    stolen = _stolen()
+    real_creator = create_engine(url).pool._creator
+    stolen.__code__ = real_creator.__code__  # type: ignore[attr-defined]
+    stolen_engine = create_engine(url, creator=stolen)
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        PostgresTokenStore(stolen_engine, binding)
     assert ran == []
+    assert calls == []
+
+
+def test_mutated_connector_code_is_rejected_before_invocation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = _deny_sockets(monkeypatch)
+
+    def _mutant() -> object:
+        left = middle = right = None
+
+        def connect() -> object:
+            if False:
+                return (left, middle, right)
+            raise RuntimeError("mutated connector invoked")
+
+        return connect
+
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    url = "postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade"
+    engine = create_engine(url)
+    store = PostgresTokenStore(engine, binding)
+    engine.pool._creator.__code__ = _mutant().__code__  # type: ignore[attr-defined]  # noqa: SLF001
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        store.read_redacted("family_1")
     assert calls == []
 
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import threading
+import types
 from collections.abc import Mapping
 from datetime import datetime
 from enum import StrEnum
@@ -25,6 +26,7 @@ from sqlalchemy import (
     select,
     update,
 )
+from sqlalchemy.engine.create import create_engine as _sqlalchemy_create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import Executable
 
@@ -39,8 +41,6 @@ _LABEL = re.compile(r"^[A-Z0-9_]{1,32}$")
 _REASON = re.compile(r"^[A-Z0-9_]{0,64}$")
 _LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
 _BLOCKED_HOST_MARKERS = ("tradestation", "supabase", "amazonaws", "neon.tech")
-_DEFAULT_CREATOR_MODULE = "sqlalchemy.engine.create"
-_DEFAULT_CREATOR_QUALNAME = "create_engine.<locals>.connect"
 _MATERIAL_CONSTRAINT = (
     "octet_length(refresh_ciphertext) = 0 OR "
     "substring(refresh_ciphertext from 1 for 8) = '\\x666978747572653a'::bytea"
@@ -316,20 +316,38 @@ def _marked_remote(host: str | None) -> bool:
     return host is not None and any(marker in host for marker in _BLOCKED_HOST_MARKERS)
 
 
+def _default_connector_identity() -> tuple[object, object]:
+    """Identity of SQLAlchemy's compiled pool connector, not its name strings."""
+    bare: object = _sqlalchemy_create_engine
+    wrapped = getattr(bare, "__wrapped__", None)
+    if wrapped is not None:
+        bare = wrapped
+    code_obj = getattr(bare, "__code__", None)
+    consts = getattr(code_obj, "co_consts", ())
+    matches = [
+        item
+        for item in consts
+        if isinstance(item, types.CodeType) and item.co_name == "connect"
+    ]
+    globals_map = getattr(bare, "__globals__", None)
+    if len(matches) != 1 or type(globals_map) is not dict:
+        return None, None
+    return matches[0], globals_map
+
+
+_DEFAULT_CONNECT_CODE, _DEFAULT_CONNECT_GLOBALS = _default_connector_identity()
+
+
 def _pool_creator(engine: Engine) -> object:
     return getattr(engine.pool, "_creator", None)
 
 
 def _is_default_creator(creator: object) -> bool:
-    code = getattr(creator, "__code__", None)
-    filename = getattr(code, "co_filename", None)
-    if type(filename) is not str:
+    if _DEFAULT_CONNECT_CODE is None or _DEFAULT_CONNECT_GLOBALS is None:
         return False
     return (
-        getattr(creator, "__module__", None) == _DEFAULT_CREATOR_MODULE
-        and getattr(creator, "__qualname__", None) == _DEFAULT_CREATOR_QUALNAME
-        and filename.replace("\\", "/").endswith("/sqlalchemy/engine/create.py")
-        and getattr(code, "co_name", None) == "connect"
+        getattr(creator, "__code__", None) is _DEFAULT_CONNECT_CODE
+        and getattr(creator, "__globals__", None) is _DEFAULT_CONNECT_GLOBALS
     )
 
 

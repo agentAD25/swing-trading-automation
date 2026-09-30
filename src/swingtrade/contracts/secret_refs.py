@@ -15,6 +15,9 @@ class SecretRefBindingError(ValueError):
     """Secret reference configuration violates the offline environment contract."""
 
 
+_LIVE_DATABASE_REF_NAME = "SWINGTRADE_LIVE_DATABASE_URL_REF"
+
+
 @dataclass(frozen=True)
 class SecretRefSchema:
     """Configuration schema references only; values are never stored in code."""
@@ -22,7 +25,7 @@ class SecretRefSchema:
     dev_database_url_ref: str = "SWINGTRADE_DEV_DATABASE_URL_REF"
     test_database_url_ref: str = "SWINGTRADE_TEST_DATABASE_URL_REF"
     sim_database_url_ref: str = "SWINGTRADE_SIM_DATABASE_URL_REF"
-    live_database_url_ref: str = "SWINGTRADE_LIVE_DATABASE_URL_REF"
+    live_database_url_ref: str = _LIVE_DATABASE_REF_NAME
 
 
 _DEFAULT_SCHEMA = SecretRefSchema()
@@ -53,15 +56,19 @@ def configured_database_ref_name(
     environment: DeploymentEnvironment, schema: SecretRefSchema = _DEFAULT_SCHEMA
 ) -> str:
     resolved = as_deployment_environment(environment)
-    if resolved is DeploymentEnvironment.DEV:
-        return schema.dev_database_url_ref
-    if resolved is DeploymentEnvironment.TEST:
-        return schema.test_database_url_ref
-    if resolved is DeploymentEnvironment.SIM:
-        return schema.sim_database_url_ref
     if resolved is DeploymentEnvironment.LIVE:
-        return schema.live_database_url_ref
-    raise SecretRefBindingError("unknown environment")
+        raise SecretRefBindingError("LIVE database references are prohibited")
+    if resolved is DeploymentEnvironment.DEV:
+        name = schema.dev_database_url_ref
+    elif resolved is DeploymentEnvironment.TEST:
+        name = schema.test_database_url_ref
+    elif resolved is DeploymentEnvironment.SIM:
+        name = schema.sim_database_url_ref
+    else:
+        raise SecretRefBindingError("unknown environment")
+    if name == _LIVE_DATABASE_REF_NAME or name == schema.live_database_url_ref:
+        raise SecretRefBindingError("LIVE database references are prohibited")
+    return name
 
 
 def validate_database_ref_binding(

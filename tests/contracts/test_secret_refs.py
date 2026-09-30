@@ -5,6 +5,7 @@ import pytest
 from swingtrade.contracts.secret_refs import (
     DeploymentEnvironment,
     SecretRefBindingError,
+    SecretRefSchema,
     configured_database_ref_name,
     validate_database_ref_binding,
 )
@@ -85,6 +86,32 @@ def test_exact_dev_string_names_the_dev_reference() -> None:
         )
         == "SWINGTRADE_DEV_DATABASE_URL_REF"
     )
+
+
+@pytest.mark.parametrize(
+    ("field", "environment"),
+    [
+        ("dev_database_url_ref", DeploymentEnvironment.DEV),
+        ("test_database_url_ref", DeploymentEnvironment.TEST),
+        ("sim_database_url_ref", DeploymentEnvironment.SIM),
+    ],
+)
+def test_schema_slot_cannot_alias_the_live_reference(
+    field: str, environment: DeploymentEnvironment
+) -> None:
+    schema = SecretRefSchema(**{field: "SWINGTRADE_LIVE_DATABASE_URL_REF"})
+    with pytest.raises(SecretRefBindingError, match="LIVE") as captured:
+        validate_database_ref_binding(
+            environment,
+            {"SWINGTRADE_LIVE_DATABASE_URL_REF": "live-ref"},
+            schema=schema,
+        )
+    rendered = str(captured.value)
+    assert "SWINGTRADE_LIVE_DATABASE_URL_REF" not in rendered
+    assert "live-ref" not in rendered
+    with pytest.raises(SecretRefBindingError, match="LIVE") as named:
+        configured_database_ref_name(environment, schema)
+    assert "SWINGTRADE_LIVE_DATABASE_URL_REF" not in str(named.value)
 
 
 def test_valid_dev_binding_returns_expected_name() -> None:

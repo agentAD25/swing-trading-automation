@@ -9,6 +9,7 @@ from swingtrade.contracts.monitoring import MonitoringConditionCode, NullMonitor
 from swingtrade.contracts.secret_refs import (
     DeploymentEnvironment,
     SecretRefBindingError,
+    SecretRefSchema,
     validate_database_ref_binding,
 )
 from swingtrade.offline import database as database_module
@@ -128,6 +129,20 @@ def test_string_environments_do_not_select_the_live_reference(value: str) -> Non
         bind_database_reference(value, live_only)
     assert "live-ref" not in str(captured.value)
     assert str(captured.value) != "SWINGTRADE_LIVE_DATABASE_URL_REF"
+
+
+def test_dev_schema_alias_cannot_select_the_live_reference() -> None:
+    schema = SecretRefSchema(dev_database_url_ref="SWINGTRADE_LIVE_DATABASE_URL_REF")
+    with pytest.raises(SecretRefBindingError, match="LIVE") as captured:
+        bind_database_reference(
+            DeploymentEnvironment.DEV,
+            {"SWINGTRADE_LIVE_DATABASE_URL_REF": "live-ref"},
+            schema=schema,
+        )
+    rendered = str(captured.value)
+    assert "SWINGTRADE_LIVE_DATABASE_URL_REF" not in rendered
+    assert "live-ref" not in rendered
+    assert "connect_allowed" not in rendered
 
 
 def test_exact_string_dev_uses_the_dev_reference() -> None:
