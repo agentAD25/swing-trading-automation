@@ -1,7 +1,8 @@
 # Current State
 
 - Last updated: 2026-09-30
-- Current phase: Phase 1 closed (Gate B closure audit); Phase 2 not started
+- Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
+  foundation authorized and not started
 - Phase status: `PHASE1_COMPLETE` for governance, design, reconciliation,
   acceptance, and the offline `DRY_RUN` foundation; `PHASE1_ACCEPTED` remains
   the bounded meaning of the exact broker-neutral offline deterministic
@@ -16,7 +17,7 @@
   `858442c0b2dcf0537072e75e95bb0dd2b001bf49`, in draft PR #6
 - Phase 1E: Complete — Gate A independent verification passed with no
   remaining material findings; see `docs/PHASE_1_CLOSURE.md`
-- Phase 2: Unstarted and unauthorized. `P2-0` Group 1 documentation is on
+- Phase 2: Not generally authorized. `P2-0` Group 1 documentation is on
   canonical `main` by fast-forward of exact evidence HEAD
   `9631de3bd8a6a2e24c6833ca534c5e626fdb7b75`, tree
   `41588e7af631db0213b80d5a02472dd0e4d206ba` (PR #12; no squash, rebase,
@@ -27,9 +28,34 @@
   docs-only contract-draft review. Fast-forward onto `main` does not start
   Phase 2 implementation and grants no credential, broker, TradeStation
   `SIM`, order, deployment, real-capital, or `LIVE` authority.
-  `P2_0_CONTRACT_CONFLICT` C1 (U-10) remains **open and carried**.
-  Group 2 remains **unauthorized** pending a new explicit authorization
-  and human Operator review. See `docs/PHASE_2_RECONCILIATION.md`.
+  Draft PR #14 head `e549ab9e59604abecce0c882c60f845f00f8be09`, tree
+  `dee2ef72378bcffa8499bd1d560c8c324a97569e`, matches the independently
+  verified TokenStore commit. `docs/TOKEN_STORE.md` at that commit is
+  blob `781764f5bbc472378346f6216e07ca6961146e9d` and was fast-forwarded
+  unchanged (`git merge --ff-only`). Verification returned **PASS** and
+  **OFFLINE_IMPLEMENTATION_UNBLOCKED**. It is not
+  `P2_G2_CONTRACT_DECISION_REQUIRED`. C1/U-10 has a verified
+  **PROPOSED** resolution, `C1_U10_PROPOSED_RESOLUTION`. Status remains
+  **PROPOSED**. That resolution does not accept an ADR and does not
+  close C1.
+  The human Operator authorizes the **offline Group 2 foundation only**.
+  The non-Cursor bootstrap injector, key custody, retention, and the SIM
+  database host remain later decisions.
+  Verified zero-cost database evidence is on `main` by a
+  history-preserving merge of exact PR #13 head
+  `78f485b33bdd3f859d540458ba170b2353c04c61`, tree
+  `28b3ced5663c00f4b8d32828ed2b160344d09805`, recorded as integration
+  commit `e0ec755e39c897492fbc8d970bb165d8335d361c`, tree
+  `5e687dc37376b1b9c092a2a56a40348e5d36532f`.
+  `INITIAL_DATABASE_INCREMENTAL_SERVICE_COST = 0 USD`. The constraint
+  supersedes only the initial-deployment effect of the historical RDS
+  recommendation. Supabase is **NOT_ACCEPTED**. Historical
+  `docs/DB_DEPLOYMENT.md` is unchanged, and this evidence commit does
+  not rewrite `docs/P2_C_ZERO_INCREMENTAL_COST.md`.
+  Credentials, broker calls, Supabase connections, provisioning, SIM
+  orders, and `LIVE` remain unauthorized. `DRY_RUN` remains the sole
+  authorized execution mode. See `docs/PHASE_2_RECONCILIATION.md` and
+  `docs/TOKEN_STORE.md`.
 - Design baseline: Phase 1A governance commit `ae1aa85`
 - Contract acceptance: `PHASE1_ACCEPTED` evidence metadata for candidate
   `abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, tree
@@ -58,8 +84,11 @@
 | Phase 1D | Closed: replacement candidate commit `abc1fb6a9cc3554e7ad13f438685ba3c3c044dab`, exact tree `cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808`, independently verified and accepted only within the bounded Phase 1 meaning; immutable tag `phase1-accepted-abc1fb6` |
 | Phase 1E | Complete: offline foundation implemented and remediated through findings F01–F06 at SHA `eb4b3b550874b4729abf7902cda2df8bf01e70ba`, tree `858442c0b2dcf0537072e75e95bb0dd2b001bf49`; Gate A independent verification passed with 218 tests (PostgreSQL 16.15); draft PR #6 remains open |
 | Phase 1 closure (Gate B) | Complete: evidence-only closure audit recorded in `docs/PHASE_1_CLOSURE.md`; `PHASE1A_COMPLETE` through `PHASE1E_COMPLETE` and `PHASE1_COMPLETE` |
-| Phase 2 | Not started and not authorized |
-| P2-0 Group 1 docs | On canonical `main` by fast-forward of PR #12 evidence HEAD `9631de3bd8a6a2e24c6833ca534c5e626fdb7b75`, tree `41588e7af631db0213b80d5a02472dd0e4d206ba`; independently verified Gate `H1` **PASS (C1 carried)** at exact commit `33110c7c0aa2f385d179a1f66d068daca2c47537`, tree `5f45983b19bed47988133c5b832e125d0602133c`; PR #8 `a91bd24`, #9 `f0dca4b`, #10 `a7900c2`, #11 `595f431` lineage preserved; all remain `PROPOSED`; `P2_0_CONTRACT_CONFLICT` C1 (U-10: plan G1 Cursor Dashboard secrets vs proposed CAS store) **open and carried**; Group 2 unauthorized pending Operator review and a new explicit authorization. Phase 2 implementation unstarted. |
+| Phase 2 | Not generally authorized. The Operator authorizes the offline Group 2 foundation only. Credentials, broker calls, Supabase connections, provisioning, SIM orders, and `LIVE` remain unauthorized. |
+| P2-0 Group 1 docs | On canonical `main` by fast-forward of PR #12 evidence HEAD `9631de3bd8a6a2e24c6833ca534c5e626fdb7b75`, tree `41588e7af631db0213b80d5a02472dd0e4d206ba`; independently verified Gate `H1` **PASS (C1 carried)** at exact commit `33110c7c0aa2f385d179a1f66d068daca2c47537`, tree `5f45983b19bed47988133c5b832e125d0602133c`; PR #8 `a91bd24`, #9 `f0dca4b`, #10 `a7900c2`, #11 `595f431` lineage preserved; all remain `PROPOSED`. The Group 2 denial previously recorded on this row is superseded by the offline Group 2 foundation authorization below. |
+| PR #14 TokenStore | Fast-forward onto `main` of exact commit `e549ab9e59604abecce0c882c60f845f00f8be09`, tree `dee2ef72378bcffa8499bd1d560c8c324a97569e`. Independent verification **PASS** and **OFFLINE_IMPLEMENTATION_UNBLOCKED**. Not `P2_G2_CONTRACT_DECISION_REQUIRED`. `C1_U10_PROPOSED_RESOLUTION` remains **PROPOSED**. |
+| PR #13 zero-cost evidence | History-preserving merge of exact commit `78f485b33bdd3f859d540458ba170b2353c04c61`, tree `28b3ced5663c00f4b8d32828ed2b160344d09805`, as `e0ec755e39c897492fbc8d970bb165d8335d361c`, tree `5e687dc37376b1b9c092a2a56a40348e5d36532f`. Versus the PR #14 tip this adds only `docs/P2_C_ZERO_INCREMENTAL_COST.md`. `docs/DB_DEPLOYMENT.md` is unchanged. `INITIAL_DATABASE_INCREMENTAL_SERVICE_COST = 0 USD`. Supersedes only the initial-deployment effect of the historical RDS recommendation. Supabase is **NOT_ACCEPTED**. |
+| Offline Group 2 foundation | Operator authorizes the offline Group 2 foundation only. Later decisions: non-Cursor bootstrap injector, key custody, retention, and SIM database host. No application code in this evidence commit. |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
 `phase1-accepted-abc1fb6` fixes the accepted commit without making the
@@ -152,13 +181,18 @@ direction.
    are unknown.
 5. Technology, persistence, deployment, operating thresholds, recovery
    objectives, and risk limits are unknown.
-6. Phase 2 entry criteria and implementation authority are not granted.
-   P2-0 documentation on `main` and Gate `H1` PASS at `33110c7` do not
-   grant them. Group 2 remains unauthorized pending a new explicit
-   authorization and human Operator review. Open `P2_0_CONTRACT_CONFLICT`
-   C1 (U-10) remains carried and must be decided by the Operator before
-   H2/G1; agents must not substitute a secret store or amend
-   `PHASE_2_PLAN.md` Gate G1.
+6. Phase 2 is not generally authorized. P2-0 documentation on `main`
+   and Gate `H1` PASS at `33110c7` do not grant a general Phase 2
+   entry. The Operator authorizes the offline Group 2 foundation only.
+   C1 (U-10) has a verified **PROPOSED** resolution
+   (`C1_U10_PROPOSED_RESOLUTION` at `e549ab9`); it is not an accepted
+   ADR and is not closed. H2 acceptance remains open. The non-Cursor
+   bootstrap injector, key custody, retention, and the SIM database
+   host remain later decisions. The 0 USD constraint supersedes only
+   the initial-deployment effect of the historical RDS recommendation.
+   Supabase is not accepted. Credentials, broker calls, Supabase
+   connections, provisioning, SIM orders, and `LIVE` remain
+   unauthorized.
 7. External governance enforcement and authenticated Operator identity are not
    established. `DRY_RUN` remains structurally non-network; future broker
    connectivity and zero-order-attempt controls are not authorized.
@@ -194,3 +228,24 @@ evidence commit is neither the attested H1 tree nor that fast-forward
 tip. C1 remains open. Group 2 remains unauthorized. Phase 2
 implementation remains unstarted. No credential, broker, TradeStation
 `SIM`, order, deployment, real-capital, or `LIVE` authority follows.
+
+On 2026-09-30, after that evidence commit was already `origin/main`,
+canonical `main` fast-forwarded PR #14 commit
+`e549ab9e59604abecce0c882c60f845f00f8be09`, tree
+`dee2ef72378bcffa8499bd1d560c8c324a97569e`, then history-preserved PR
+#13 commit `78f485b33bdd3f859d540458ba170b2353c04c61`, tree
+`28b3ced5663c00f4b8d32828ed2b160344d09805`, as merge
+`e0ec755e39c897492fbc8d970bb165d8335d361c`, tree
+`5e687dc37376b1b9c092a2a56a40348e5d36532f`. No squash, rebase, or
+force-push. The prior sentences that C1 remains merely open and that
+Group 2 remains unauthorized are **pre-authorization**. Independent
+verification of `e549ab9` returned **PASS** and
+**OFFLINE_IMPLEMENTATION_UNBLOCKED**, not
+`P2_G2_CONTRACT_DECISION_REQUIRED`. C1/U-10 has a verified
+**PROPOSED** resolution. The human Operator authorizes the offline
+Group 2 foundation only. Bootstrap injector, key custody, retention,
+and the SIM host remain later decisions.
+`INITIAL_DATABASE_INCREMENTAL_SERVICE_COST = 0 USD` supersedes only
+the initial-deployment effect of the historical RDS recommendation.
+Supabase is **NOT_ACCEPTED**. Credentials, broker calls, Supabase
+connections, provisioning, SIM orders, and `LIVE` remain unauthorized.

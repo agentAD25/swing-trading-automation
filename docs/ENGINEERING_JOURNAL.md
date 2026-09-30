@@ -1788,3 +1788,124 @@ location statement only.
 
 This commit edits only `docs/CURRENT_STATE.md` and this journal. It is
 not the attested H1 tree and is not the fast-forward tip `9631de3`.
+
+## 2026-09-30 — Offline Group 2 foundation authorization (evidence-only)
+
+This entry records a history-preserving landing of two verified drafts
+and the Operator's bounded authorization. It does not add application
+code, accept an ADR, accept Supabase, close C1, provision a database,
+or authorize credentials, broker calls, Supabase connections, SIM
+orders, or `LIVE`. `DRY_RUN` remains the sole authorized execution mode.
+Phase 1 tags are unchanged.
+
+Earlier journal sentences that leave C1 merely open and Group 2
+unauthorized are **pre-authorization**. This entry supersedes those
+status sentences only.
+
+### PR #14 identity
+
+Draft PR #14 head is exact commit
+`e549ab9e59604abecce0c882c60f845f00f8be09`, tree
+`dee2ef72378bcffa8499bd1d560c8c324a97569e`, parent
+`a03c7372fe08b6b42618e72958892154ffebb511`. `docs/TOKEN_STORE.md` blob
+`781764f5bbc472378346f6216e07ca6961146e9d` is the verified blob. It did
+not differ, so integration continued. Independent verification returned
+**PASS** and **OFFLINE_IMPLEMENTATION_UNBLOCKED**. It is not
+`P2_G2_CONTRACT_DECISION_REQUIRED`.
+
+`origin/main` was already the known evidence commit `a03c737`. Local
+`main` fast-forwarded to that commit, then fast-forwarded the PR #14
+commit:
+
+```text
+git merge --ff-only origin/main
+git merge --ff-only e549ab9e59604abecce0c882c60f845f00f8be09
+```
+
+No squash, rebase, or force-push. The only commit added beyond
+`a03c737` by that fast-forward is `e549ab9`.
+
+### PR #13 database evidence
+
+Exact verified head
+`78f485b33bdd3f859d540458ba170b2353c04c61`, tree
+`28b3ced5663c00f4b8d32828ed2b160344d09805`, parents
+`9e4fd731e34da7a60e8bb5e6a3e2726e55832e12` and `a03c737`. Versus
+`a03c737` the tree adds only `docs/P2_C_ZERO_INCREMENTAL_COST.md`
+(blob `54e7ba1578f46fd1348e040fa1857c6174772424`).
+`docs/DB_DEPLOYMENT.md` blob
+`838c7bd080b8648add3964c1429be4df540b5e8f` is unchanged. Supabase
+remains **NOT_ACCEPTED**.
+
+After the PR #14 fast-forward, that exact commit was merged with
+history preserved:
+
+```text
+git merge --no-ff 78f485b33bdd3f859d540458ba170b2353c04c61
+```
+
+Integration commit `e0ec755e39c897492fbc8d970bb165d8335d361c`, parents
+`e549ab9` and `78f485b`, tree
+`5e687dc37376b1b9c092a2a56a40348e5d36532f`. Versus `e549ab9` the merge
+adds only `docs/P2_C_ZERO_INCREMENTAL_COST.md`. The research file is
+not rewritten by this evidence commit.
+
+`INITIAL_DATABASE_INCREMENTAL_SERVICE_COST = 0 USD`. The constraint
+supersedes only the initial-deployment effect of the historical RDS
+recommendation in `docs/DB_DEPLOYMENT.md`. No provider is selected.
+
+### Operator authorization
+
+The human Operator authorizes the **offline Group 2 foundation only**.
+
+C1/U-10 has a verified **PROPOSED** resolution,
+`C1_U10_PROPOSED_RESOLUTION`, in `docs/TOKEN_STORE.md`. Status remains
+**PROPOSED**. This does not accept an ADR and does not close C1. H2
+acceptance remains open.
+
+These remain later decisions:
+
+- non-Cursor bootstrap injector for static secrets
+- workload-identity platform and key custody
+- retention, backup, RPO/RTO, and non-secret tombstone deletion
+- SIM database host
+
+Still unauthorized: credentials, broker calls, Supabase connections,
+provisioning, SIM orders, and `LIVE`. TradeStation `SIM` order routing
+stays unauthorized. No paid or cloud database provisioning is
+authorized.
+
+### Validation before this evidence commit
+
+```text
+git merge-base --is-ancestor a03c7372fe08b6b42618e72958892154ffebb511 e0ec755e39c897492fbc8d970bb165d8335d361c
+git merge-base --is-ancestor e549ab9e59604abecce0c882c60f845f00f8be09 e0ec755e39c897492fbc8d970bb165d8335d361c
+git merge-base --is-ancestor 78f485b33bdd3f859d540458ba170b2353c04c61 e0ec755e39c897492fbc8d970bb165d8335d361c
+# all true
+
+git rev-parse e549ab9^{tree}
+# dee2ef72378bcffa8499bd1d560c8c324a97569e
+
+git rev-parse 78f485b^{tree}
+# 28b3ced5663c00f4b8d32828ed2b160344d09805
+
+git rev-parse e0ec755^{tree}
+# 5e687dc37376b1b9c092a2a56a40348e5d36532f
+
+git diff --name-status e549ab9 e0ec755
+# A docs/P2_C_ZERO_INCREMENTAL_COST.md
+
+git rev-parse phase1-accepted-abc1fb6^{commit} phase1-accepted-abc1fb6^{tree}
+# abc1fb6a9cc3554e7ad13f438685ba3c3c044dab
+# cb5fc1f9bd476d7154e07439f2bf2fcccb7fa808
+
+git rev-parse phase1-complete^{commit}
+# 249b8eb341b56d596f07b28723b37ddff96eb86c
+```
+
+This evidence commit's parent is `e0ec755`. Its diff is limited to
+`docs/CURRENT_STATE.md` and this journal. `src/`, `migrations/`,
+`tests/`, `pyproject.toml`, `docs/TOKEN_STORE.md`,
+`docs/P2_C_ZERO_INCREMENTAL_COST.md`, and `docs/DB_DEPLOYMENT.md` are
+untouched. Whitespace check of that two-file diff is clean. No
+application code is added. Phase 1 tags are not moved.
