@@ -1,5 +1,10 @@
-"""Offline OAuth and SIM read templates. No socket, browser, or second token store."""
+"""Offline OAuth, SIM account checks, and stream-frame classification. No socket."""
 
+from swingtrade.group3_auth.accounts import (
+    AccountObservation,
+    AccountQuarantine,
+    SimAccountAllowlist,
+)
 from swingtrade.group3_auth.callback import CallbackClassification, classify_callback
 from swingtrade.group3_auth.flow import FlowMode
 from swingtrade.group3_auth.forms import (
@@ -21,12 +26,15 @@ from swingtrade.group3_auth.request import (
     s256_challenge,
 )
 from swingtrade.group3_auth.state import IssuedState, StateIssuer
+from swingtrade.group3_auth.stream_frames import StreamFrame, StreamFrameClassifier
 
 __all__ = [
     "AUTHORIZE_ENDPOINT",
     "DOCUMENTED_AUDIENCE",
     "FORM_CONTENT_TYPE",
     "TOKEN_ENDPOINT",
+    "AccountObservation",
+    "AccountQuarantine",
     "AuthDecision",
     "AuthModelError",
     "AuthorizationAssembly",
@@ -37,7 +45,10 @@ __all__ = [
     "OutcomeCode",
     "RawRead",
     "ReadTemplate",
+    "SimAccountAllowlist",
     "StateIssuer",
+    "StreamFrame",
+    "StreamFrameClassifier",
     "TokenFixture",
     "assemble_authorization_request",
     "authorization_code_form",
