@@ -1,0 +1,81 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from enum import StrEnum
+
+
+class DeploymentEnvironment(StrEnum):
+    DEV = "DEV"
+    TEST = "TEST"
+    SIM = "SIM"
+    LIVE = "LIVE"
+
+
+class SecretRefBindingError(ValueError):
+    """Secret reference configuration violates the offline environment contract."""
+
+
+@dataclass(frozen=True)
+class SecretRefSchema:
+    """Configuration schema references only; values are never stored in code."""
+
+    dev_database_url_ref: str = "SWINGTRADE_DEV_DATABASE_URL_REF"
+    test_database_url_ref: str = "SWINGTRADE_TEST_DATABASE_URL_REF"
+    sim_database_url_ref: str = "SWINGTRADE_SIM_DATABASE_URL_REF"
+    live_database_url_ref: str = "SWINGTRADE_LIVE_DATABASE_URL_REF"
+
+
+_DEFAULT_SCHEMA = SecretRefSchema()
+
+_ENVIRONMENT_REF_FIELD: dict[DeploymentEnvironment, str] = {
+    DeploymentEnvironment.DEV: _DEFAULT_SCHEMA.dev_database_url_ref,
+    DeploymentEnvironment.TEST: _DEFAULT_SCHEMA.test_database_url_ref,
+    DeploymentEnvironment.SIM: _DEFAULT_SCHEMA.sim_database_url_ref,
+    DeploymentEnvironment.LIVE: _DEFAULT_SCHEMA.live_database_url_ref,
+}
+
+_ALL_DATABASE_REF_NAMES = frozenset(_ENVIRONMENT_REF_FIELD.values())
+
+
+def configured_database_ref_name(
+    environment: DeploymentEnvironment, schema: SecretRefSchema = _DEFAULT_SCHEMA
+) -> str:
+    if environment is DeploymentEnvironment.DEV:
+        return schema.dev_database_url_ref
+    if environment is DeploymentEnvironment.TEST:
+        return schema.test_database_url_ref
+    if environment is DeploymentEnvironment.SIM:
+        return schema.sim_database_url_ref
+    return schema.live_database_url_ref
+
+
+def validate_database_ref_binding(
+    environment: DeploymentEnvironment,
+    configured_refs: dict[str, str | None],
+    *,
+    schema: SecretRefSchema = _DEFAULT_SCHEMA,
+) -> str:
+    """Return the sole configured reference name for ``environment`` or fail closed."""
+    if environment is DeploymentEnvironment.LIVE:
+        raise SecretRefBindingError("LIVE database references are prohibited")
+
+    expected = configured_database_ref_name(environment, schema)
+    present = {
+        name: value
+        for name, value in configured_refs.items()
+        if name in _ALL_DATABASE_REF_NAMES and value is not None
+    }
+    if "SWINGTRADE_DATABASE_URL" in configured_refs and configured_refs["SWINGTRADE_DATABASE_URL"]:
+        raise SecretRefBindingError("generic DATABASE_URL source is prohibited")
+    if environment in {DeploymentEnvironment.DEV, DeploymentEnvironment.TEST}:
+        if schema.sim_database_url_ref in present:
+            raise SecretRefBindingError("DEV/TEST cannot select SIM database reference")
+    if environment is DeploymentEnvironment.SIM:
+        for forbidden in (schema.dev_database_url_ref, schema.test_database_url_ref):
+            if forbidden in present:
+                raise SecretRefBindingError("SIM cannot fall back to DEV/TEST database reference")
+    if expected not in present:
+        raise SecretRefBindingError(f"missing required reference for {environment.value}")
+    if len(present) != 1:
+        raise SecretRefBindingError("exactly one database reference must be configured")
+    return expected
