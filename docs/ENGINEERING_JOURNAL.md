@@ -1753,3 +1753,38 @@ This descendant evidence commit is not the attested H1 tree. The attested
 identity remains `33110c7` / `5f45983`. No Phase 2, credential,
 broker/account/network, TradeStation `SIM`, order, real-capital, or `LIVE`
 authority follows.
+
+## 2026-09-30 — P2-0 fast-forward onto `main` (evidence-only)
+
+This entry is evidence-only. It corrects the stale pre-fast-forward
+statement that PR #12 / `cursor/p2-0-integration-1f76` was unmerged. It
+does not start Phase 2 implementation, authorize Group 2, accept an ADR,
+select a provider, provision a resource, introduce a credential, or
+authorize TradeStation `SIM`, order submission, real capital, or `LIVE`.
+`DRY_RUN` remains the sole authorized execution mode.
+
+### Recorded promotion
+
+Canonical `main` was fast-forwarded from
+`1ecbbe6d487d97195fde393b05c9499357599bdb` to exact evidence HEAD
+`9631de3bd8a6a2e24c6833ca534c5e626fdb7b75`, tree
+`41588e7af631db0213b80d5a02472dd0e4d206ba`. Mechanism:
+`git merge --ff-only 9631de3` then `git push origin main`. No squash,
+rebase, force-push, or convenience merge commit. PR #12 is MERGED with
+that same tip. H1 artifact `33110c7` / `5f45983` remains the parent of
+`9631de3` and an ancestor of `main`.
+
+The 2026-09-29 H1 evidence entry that said the branch was not merged to
+`main` is **pre-fast-forward**. This descendant commit supersedes that
+location statement only.
+
+### Still denied
+
+- `P2_0_CONTRACT_CONFLICT` **C1 (U-10) remains open and carried**
+- Group 2 remains **unauthorized**
+- Phase 2 implementation remains **unstarted and unauthorized**
+- credentials, broker/account/network activity, TradeStation `SIM`, order
+  submission, real capital, and `LIVE` remain unauthorized
+
+This commit edits only `docs/CURRENT_STATE.md` and this journal. It is
+not the attested H1 tree and is not the fast-forward tip `9631de3`.
