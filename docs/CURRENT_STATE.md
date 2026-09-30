@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-09-29
+- Last updated: 2026-09-30
 - Current phase: Phase 1 closed (Gate B closure audit); Phase 2 not started
 - Phase status: `PHASE1_COMPLETE` for governance, design, reconciliation,
   acceptance, and the offline `DRY_RUN` foundation; `PHASE1_ACCEPTED` remains
@@ -16,15 +16,17 @@
   `858442c0b2dcf0537072e75e95bb0dd2b001bf49`, in draft PR #6
 - Phase 1E: Complete — Gate A independent verification passed with no
   remaining material findings; see `docs/PHASE_1_CLOSURE.md`
-- Phase 2: Unstarted and unauthorized. Isolated `P2-0` Group 1
-  documentation exists on branch `cursor/p2-0-integration-1f76` and is
-  **not** merged to `main`. Independent Gate `H1` verification
-  **PASS (C1 carried)** for exact commit
+- Phase 2: Unstarted and unauthorized. `P2-0` Group 1 documentation is on
+  canonical `main` by fast-forward of exact evidence HEAD
+  `9631de3bd8a6a2e24c6833ca534c5e626fdb7b75`, tree
+  `41588e7af631db0213b80d5a02472dd0e4d206ba` (PR #12; no squash, rebase,
+  force-push, or merge commit). Independent Gate `H1` verification
+  **PASS (C1 carried)** remains for exact commit
   `33110c7c0aa2f385d179a1f66d068daca2c47537`, tree
-  `5f45983b19bed47988133c5b832e125d0602133c` (draft PR #12). That
-  attestation is docs-only contract-draft review. It does not start
-  Phase 2 and grants no credential, broker, TradeStation `SIM`, order,
-  deployment, real-capital, or `LIVE` authority.
+  `5f45983b19bed47988133c5b832e125d0602133c`. That attestation is
+  docs-only contract-draft review. Fast-forward onto `main` does not start
+  Phase 2 implementation and grants no credential, broker, TradeStation
+  `SIM`, order, deployment, real-capital, or `LIVE` authority.
   `P2_0_CONTRACT_CONFLICT` C1 (U-10) remains **open and carried**.
   Group 2 remains **unauthorized** pending a new explicit authorization
   and human Operator review. See `docs/PHASE_2_RECONCILIATION.md`.
@@ -57,7 +59,7 @@
 | Phase 1E | Complete: offline foundation implemented and remediated through findings F01–F06 at SHA `eb4b3b550874b4729abf7902cda2df8bf01e70ba`, tree `858442c0b2dcf0537072e75e95bb0dd2b001bf49`; Gate A independent verification passed with 218 tests (PostgreSQL 16.15); draft PR #6 remains open |
 | Phase 1 closure (Gate B) | Complete: evidence-only closure audit recorded in `docs/PHASE_1_CLOSURE.md`; `PHASE1A_COMPLETE` through `PHASE1E_COMPLETE` and `PHASE1_COMPLETE` |
 | Phase 2 | Not started and not authorized |
-| P2-0 Group 1 docs (isolated) | Independently verified Gate `H1` **PASS (C1 carried)** at exact commit `33110c7c0aa2f385d179a1f66d068daca2c47537`, tree `5f45983b19bed47988133c5b832e125d0602133c`; PR #8 `a91bd24`, #9 `f0dca4b`, #10 `a7900c2`, #11 `595f431` lineage preserved on `cursor/p2-0-integration-1f76`; all remain `PROPOSED`; `P2_0_CONTRACT_CONFLICT` C1 (U-10: plan G1 Cursor Dashboard secrets vs proposed CAS store) **open and carried**; Group 2 unauthorized pending Operator review and a new explicit authorization. Not merged to `main`. |
+| P2-0 Group 1 docs | On canonical `main` by fast-forward of PR #12 evidence HEAD `9631de3bd8a6a2e24c6833ca534c5e626fdb7b75`, tree `41588e7af631db0213b80d5a02472dd0e4d206ba`; independently verified Gate `H1` **PASS (C1 carried)** at exact commit `33110c7c0aa2f385d179a1f66d068daca2c47537`, tree `5f45983b19bed47988133c5b832e125d0602133c`; PR #8 `a91bd24`, #9 `f0dca4b`, #10 `a7900c2`, #11 `595f431` lineage preserved; all remain `PROPOSED`; `P2_0_CONTRACT_CONFLICT` C1 (U-10: plan G1 Cursor Dashboard secrets vs proposed CAS store) **open and carried**; Group 2 unauthorized pending Operator review and a new explicit authorization. Phase 2 implementation unstarted. |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
 `phase1-accepted-abc1fb6` fixes the accepted commit without making the
@@ -150,12 +152,13 @@ direction.
    are unknown.
 5. Technology, persistence, deployment, operating thresholds, recovery
    objectives, and risk limits are unknown.
-6. Phase 2 entry criteria and authority are not granted. Isolated P2-0
-   documentation and Gate `H1` PASS at `33110c7` do not grant them.
-   Group 2 remains unauthorized pending a new explicit authorization and
-   human Operator review. Open `P2_0_CONTRACT_CONFLICT` C1 (U-10) remains
-   carried and must be decided by the Operator before H2/G1; agents must
-   not substitute a secret store or amend `PHASE_2_PLAN.md` Gate G1.
+6. Phase 2 entry criteria and implementation authority are not granted.
+   P2-0 documentation on `main` and Gate `H1` PASS at `33110c7` do not
+   grant them. Group 2 remains unauthorized pending a new explicit
+   authorization and human Operator review. Open `P2_0_CONTRACT_CONFLICT`
+   C1 (U-10) remains carried and must be decided by the Operator before
+   H2/G1; agents must not substitute a secret store or amend
+   `PHASE_2_PLAN.md` Gate G1.
 7. External governance enforcement and authenticated Operator identity are not
    established. `DRY_RUN` remains structurally non-network; future broker
    connectivity and zero-order-attempt controls are not authorized.
@@ -178,14 +181,16 @@ closure audit in `docs/PHASE_1_CLOSURE.md` records `PHASE1A_COMPLETE` through
 authority follows.
 
 P2-0 Group 1 specialist documents were integrated on 2026-09-29 onto
-isolated branch `cursor/p2-0-integration-1f76` from canonical `main`
+isolated branch `cursor/p2-0-integration-1f76` from then-canonical `main`
 `1ecbbe6d487d97195fde393b05c9499357599bdb`, preserving specialist commit
 lineage. Coordinator reconciliation is `docs/PHASE_2_RECONCILIATION.md`.
 Independent Gate `H1` verification **PASS (C1 carried)** is recorded for
 exact artifact `33110c7c0aa2f385d179a1f66d068daca2c47537` /
-`5f45983b19bed47988133c5b832e125d0602133c` by
-https://cursor.com/agents/bc-fcf29b75-0e00-5b6e-8104-8336009e011a.
-This descendant evidence commit is not that attested tree. C1 remains
-open. Group 2 remains unauthorized. No Phase 2, credential, broker,
-TradeStation `SIM`, order, deployment, real-capital, or `LIVE` authority
-follows.
+`5f45983b19bed47988133c5b832e125d0602133c`. On 2026-09-30 canonical `main`
+was fast-forwarded to evidence HEAD
+`9631de3bd8a6a2e24c6833ca534c5e626fdb7b75`, tree
+`41588e7af631db0213b80d5a02472dd0e4d206ba` (PR #12). This descendant
+evidence commit is neither the attested H1 tree nor that fast-forward
+tip. C1 remains open. Group 2 remains unauthorized. Phase 2
+implementation remains unstarted. No credential, broker, TradeStation
+`SIM`, order, deployment, real-capital, or `LIVE` authority follows.
