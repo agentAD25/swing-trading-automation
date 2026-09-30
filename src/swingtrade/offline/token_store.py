@@ -380,10 +380,13 @@ def _conninfo_supplies_dial_override(raw: str) -> bool:
     return "hostaddr" in parsed or "port" in parsed or "service" in parsed
 
 
+_MISSING = object()
+
+
 def _keyword_present(params: Mapping[str, object], key: str) -> bool:
     if key not in params:
         return False
-    value = params.get(key)
+    value = params[key]
     return value is not None and value != ""
 
 
@@ -401,63 +404,98 @@ def _refuse_libpq_dial_environment(params: Mapping[str, object]) -> None:
             raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
 
 
-def _effective_connect_params(engine: Engine) -> Mapping[str, object]:
-    """Return the parameters the pool will pass to the driver, including overrides."""
-    creator = _pool_creator(engine)
+def _closure_value(creator: object, name: str) -> object:
+    """Return one free variable the connector bytecode will actually read."""
+    code = getattr(creator, "__code__", None)
     closure = getattr(creator, "__closure__", None)
-    candidates: list[Mapping[str, object]] = []
-    if closure is not None:
-        for cell in closure:
-            contents = cell.cell_contents
-            if isinstance(contents, Mapping):
-                candidates.append(contents)
-    for contents in candidates:
-        if any(key in contents for key in ("host", "hostaddr", "port", "dbname", "conninfo")):
-            return contents
-    if candidates:
-        return candidates[0]
-    _unused, cparams = engine.dialect.create_connect_args(engine.url)
-    return cparams
+    freevars = getattr(code, "co_freevars", None)
+    if not isinstance(freevars, tuple) or closure is None or len(freevars) != len(closure):
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    found = False
+    value: object = None
+    for free_name, cell in zip(freevars, closure, strict=True):
+        if free_name != name:
+            continue
+        if found:
+            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+        found = True
+        value = cell.cell_contents
+    if not found:
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    return value
+
+
+def _passed_keywords(params: object) -> dict[str, object]:
+    """Materialize ``**params`` the way the connector unpacks it.
+
+    Keyword unpacking uses ``keys`` and item access. ``Mapping.get`` is not consulted.
+    """
+    if not isinstance(params, Mapping):
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    try:
+        keys = list(params.keys())
+    except Exception:
+        keys = None
+    if not isinstance(keys, list):
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    passed: dict[str, object] = {}
+    for key in keys:
+        if type(key) is not str:
+            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+        try:
+            value = params[key]
+        except Exception:
+            value = _MISSING
+        if value is _MISSING:
+            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+        passed[key] = value
+    return passed
+
+
+def _refuse_connector_dial_mismatch(engine: Engine) -> None:
+    """Approve host and port from the URL, then compare the connector's real arguments."""
+    authority_host = _normalize_host(engine.url.host)
+    authority_port = _normalize_port(engine.url.port)
+    if authority_host not in _LOCAL_HOSTS or authority_port is None:
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    if _marked_remote(authority_host):
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    creator = _pool_creator(engine)
+    positional = _closure_value(creator, "cargs_tup")
+    if not isinstance(positional, (list, tuple)) or len(positional) != 0:
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    passed = _passed_keywords(_closure_value(creator, "cparams"))
+    if "host" not in passed or "port" not in passed:
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    effective_host = _normalize_host(passed["host"])
+    effective_port = _normalize_port(passed["port"])
+    if effective_host != authority_host or effective_port != authority_port:
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    if effective_host not in _LOCAL_HOSTS or _marked_remote(effective_host):
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    if "conninfo" in passed:
+        conninfo = passed["conninfo"]
+        if type(conninfo) is not str or _conninfo_supplies_dial_override(conninfo):
+            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    if "hostaddr" in passed and passed["hostaddr"] not in (None, ""):
+        hostaddr = _normalize_host(passed["hostaddr"])
+        if hostaddr != authority_host or hostaddr not in {"127.0.0.1", "::1"}:
+            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    _refuse_libpq_dial_environment(passed)
 
 
 def _assert_local_postgresql(engine: Engine) -> None:
     if engine.dialect.name != "postgresql":
         raise TokenStoreError("POSTGRESQL_REQUIRED")
     _refuse_connect_hooks(engine)
-    authority_host = _normalize_host(engine.url.host)
-    authority_port = _normalize_port(engine.url.port)
-    # Host and port must be explicit so libpq cannot fill PGHOST or PGPORT later.
-    if authority_host not in _LOCAL_HOSTS or authority_port is None:
-        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    if _marked_remote(authority_host):
-        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    params = _effective_connect_params(engine)
-    if "conninfo" in params:
-        conninfo = params.get("conninfo")
-        if type(conninfo) is not str:
-            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-        if _conninfo_supplies_dial_override(conninfo):
-            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    effective_host = _normalize_host(params.get("host")) if "host" in params else None
-    effective_port = _normalize_port(params.get("port")) if "port" in params else None
-    if effective_host != authority_host or effective_port != authority_port:
-        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    if effective_host not in _LOCAL_HOSTS and effective_host is not None:
-        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    if _marked_remote(effective_host):
-        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    if "hostaddr" in params and params.get("hostaddr") not in (None, ""):
-        hostaddr = _normalize_host(params.get("hostaddr"))
-        if hostaddr != authority_host or hostaddr not in {"127.0.0.1", "::1"}:
-            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
-    _refuse_libpq_dial_environment(params)
+    _refuse_connector_dial_mismatch(engine)
     _refuse_connect_hooks(engine)
 
 
 def create_fixture_schema(engine: Engine) -> None:
     """Create the local fixture table. Remote hosts are refused before connect."""
     _assert_local_postgresql(engine)
-    _refuse_connect_hooks(engine)
+    _refuse_connector_dial_mismatch(engine)
     metadata.create_all(engine)
 
 
@@ -615,6 +653,7 @@ class PostgresTokenStore:
         _assert_local_postgresql(self._engine)
         if _pool_creator(self._engine) is not self._approved_creator:
             raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+        _refuse_connector_dial_mismatch(self._engine)
 
     def _execute_once(
         self, family_id: str, attempt_id: str, statement: Executable

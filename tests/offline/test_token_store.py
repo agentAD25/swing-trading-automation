@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 import socket
+import types
+from collections.abc import Iterator, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 
@@ -209,6 +211,89 @@ def test_conninfo_without_dial_keys_keeps_the_url_authority(
     )
     binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
     PostgresTokenStore(engine, binding)
+    assert calls == []
+
+
+class _DivergentPort(Mapping[str, object]):
+    """``.get`` and ``in`` report port 5432. Item access reports port 1."""
+
+    _visible = {"host": "127.0.0.1", "port": 5432, "dbname": "swingtrade"}
+    _stored = {"host": "127.0.0.1", "port": 1, "dbname": "swingtrade"}
+
+    def __getitem__(self, key: str) -> object:
+        return self._stored[key]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._stored)
+
+    def __len__(self) -> int:
+        return len(self._stored)
+
+    def get(self, key: str, default: object = None) -> object:
+        if key in self._visible:
+            return self._visible[key]
+        return default
+
+    def __contains__(self, key: object) -> bool:
+        return key in self._visible
+
+
+def _creator_with_cparams(engine: object, params: Mapping[str, object]) -> object:
+    creator = engine.pool._creator  # type: ignore[attr-defined]
+    cells: list[types.CellType] = []
+    pairs = zip(creator.__code__.co_freevars, creator.__closure__, strict=True)
+    for name, cell in pairs:
+        if name == "cparams":
+            cells.append(types.CellType(params))
+        else:
+            cells.append(cell)
+    return types.FunctionType(
+        creator.__code__,
+        creator.__globals__,
+        "connect",
+        closure=tuple(cells),
+    )
+
+
+def test_getitem_port_is_not_hidden_by_mapping_get(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = _deny_sockets(monkeypatch)
+    url = "postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade"
+    forged = _creator_with_cparams(create_engine(url), _DivergentPort())
+    engine = create_engine(url, creator=forged)
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED") as captured:
+        PostgresTokenStore(engine, binding)
+    rendered = str(captured.value)
+    assert "127.0.0.1" not in rendered
+    assert "5432" not in rendered
+    assert captured.value.__cause__ is None
+    assert captured.value.__context__ is None
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        create_fixture_schema(engine)
+    assert calls == []
+
+
+def test_mutated_cparams_cell_does_not_dial(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = _deny_sockets(monkeypatch)
+    url = "postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade"
+    engine = create_engine(url)
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    store = PostgresTokenStore(engine, binding)
+    creator = engine.pool._creator
+    replaced = False
+    pairs = zip(creator.__code__.co_freevars, creator.__closure__, strict=True)
+    for name, cell in pairs:
+        if name == "cparams":
+            cell.cell_contents = _DivergentPort()
+            replaced = True
+    assert replaced
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED") as captured:
+        store.read_redacted("family_1")
+    rendered = str(captured.value)
+    assert "127.0.0.1" not in rendered
+    assert "5432" not in rendered
+    assert captured.value.__cause__ is None
+    assert captured.value.__context__ is None
     assert calls == []
 
 
