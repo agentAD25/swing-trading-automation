@@ -95,6 +95,19 @@ def _is_prohibited_live_host(raw: str) -> bool:
     return _LIVE_HOSTNAME in _hostnames(raw)
 
 
+def live_authority_prohibited(raw: object) -> bool:
+    """Return whether Group 2 already classifies this input as the LIVE host.
+
+    The input is not rewritten into the SIM allowlist or any other accepted host.
+    """
+    if type(raw) is not str or raw == "":
+        return False
+    try:
+        return _is_prohibited_live_host(raw)
+    except ValueError:
+        return False
+
+
 def classify_api_host(
     raw: object,
     *,

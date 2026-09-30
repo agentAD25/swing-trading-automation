@@ -21,6 +21,7 @@ from swingtrade.group3_auth import (
 ISSUED = datetime(2026, 9, 30, 12, 0, tzinfo=UTC)
 EXPIRES = datetime(2026, 9, 30, 12, 10, tzinfo=UTC)
 NOW = datetime(2026, 9, 30, 12, 1, tzinfo=UTC)
+REDIRECT = "https://app.example/cb"
 VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
 CHALLENGE = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
 
@@ -184,11 +185,11 @@ def test_callback_matches_state_and_does_not_keep_the_code() -> None:
     assert assembly.url is not None
     state = dict(parse_qsl(urlsplit(assembly.url).query))["state"]
     raw = f"https://app.example/cb?code=variable-length-code&state={state}"
-    classified = classify_callback(issuer, raw, now=NOW)
+    classified = classify_callback(issuer, raw, now=NOW, allowed_callbacks=(REDIRECT,))
     assert classified.decision.reason == "AUTHORIZATION_CODE"
     assert classified.code_present is True
     assert "variable-length-code" not in repr(classified)
-    replay = classify_callback(issuer, raw, now=NOW)
+    replay = classify_callback(issuer, raw, now=NOW, allowed_callbacks=(REDIRECT,))
     assert replay.decision.reason == "STATE_REPLAY"
     assert replay.decision.safe_to_retry is False
 
@@ -210,6 +211,7 @@ def test_callback_access_denied_and_unknown_error() -> None:
         issuer,
         f"https://app.example/cb?error=access_denied&error_description=no&state={state}",
         now=NOW,
+        allowed_callbacks=(REDIRECT,),
     )
     assert denied.decision.reason == "ACCESS_DENIED"
     assert denied.code_present is False
@@ -230,6 +232,7 @@ def test_callback_access_denied_and_unknown_error() -> None:
         issuer,
         f"https://app.example/cb?error=server_error&state={other}",
         now=NOW,
+        allowed_callbacks=(REDIRECT,),
     )
     assert unknown.decision.code is OutcomeCode.UNKNOWN
     assert unknown.decision.safe_to_retry is False
@@ -237,13 +240,19 @@ def test_callback_access_denied_and_unknown_error() -> None:
         StateIssuer(token_factory=_factory("c" * 43)),
         "https://app.example/cb?code=abc&state=not-the-issued-state-value",
         now=NOW,
+        allowed_callbacks=(REDIRECT,),
     )
     assert mismatch.decision.reason == "STATE_MISMATCH"
 
 
 def test_missing_state_fails_closed() -> None:
     issuer = StateIssuer(token_factory=_factory("s" * 43))
-    classified = classify_callback(issuer, "code=abc", now=NOW)
+    classified = classify_callback(
+        issuer,
+        "https://app.example/cb?code=abc",
+        now=NOW,
+        allowed_callbacks=(REDIRECT,),
+    )
     assert classified.decision.reason == "MISSING_STATE"
     assert classified.decision.safe_to_retry is False
     assert classified.code_present is False
@@ -256,9 +265,11 @@ def test_live_callback_host_is_rejected_without_connecting() -> None:
         issuer,
         "https://api.tradestation.com/v3?code=abc&state=s",
         now=NOW,
+        allowed_callbacks=(REDIRECT,),
         emitter=emitter,
     )
     assert classified.decision.reason == "LIVE_HOST_PROHIBITED"
+    assert classified.code_present is False
     assert emitter.conditions[-1].code is MonitoringConditionCode.FORBIDDEN_HOST
     assert "abc" not in str(classified.decision)
 

@@ -73,7 +73,14 @@ class StateIssuer:
         self._pending[digest] = _Pending(expires)
         return IssuedState(token)
 
+    def validate(self, presented: object, *, now: datetime) -> AuthDecision:
+        """Check state without consuming it."""
+        return self._evaluate(presented, now=now, consume=False)
+
     def consume(self, presented: object, *, now: datetime) -> AuthDecision:
+        return self._evaluate(presented, now=now, consume=True)
+
+    def _evaluate(self, presented: object, *, now: datetime, consume: bool) -> AuthDecision:
         if type(presented) is not str or presented == "":
             return decision(OutcomeCode.REJECTED, "MISSING_STATE")
         try:
@@ -86,9 +93,11 @@ class StateIssuer:
         if pending.consumed:
             return decision(OutcomeCode.REJECTED, "STATE_REPLAY")
         if instant >= pending.expires_at:
-            pending.consumed = True
+            if consume:
+                pending.consumed = True
             return decision(OutcomeCode.REJECTED, "STATE_EXPIRED")
-        pending.consumed = True
+        if consume:
+            pending.consumed = True
         return decision(OutcomeCode.CLASSIFIED, "STATE_MATCHED")
 
     def _match(self, digest: bytes) -> _Pending | None:
