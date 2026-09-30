@@ -8,6 +8,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from enum import StrEnum
 
+from psycopg.conninfo import conninfo_to_dict
 from sqlalchemy import (
     JSON,
     CheckConstraint,
@@ -37,6 +38,8 @@ _LABEL = re.compile(r"^[A-Z0-9_]{1,32}$")
 _REASON = re.compile(r"^[A-Z0-9_]{0,64}$")
 _LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
 _BLOCKED_HOST_MARKERS = ("tradestation", "supabase", "amazonaws", "neon.tech")
+_DEFAULT_CREATOR_MODULE = "sqlalchemy.engine.create"
+_DEFAULT_CREATOR_QUALNAME = "create_engine.<locals>.connect"
 _MATERIAL_CONSTRAINT = (
     "octet_length(refresh_ciphertext) = 0 OR "
     "substring(refresh_ciphertext from 1 for 8) = '\\x666978747572653a'::bytea"
@@ -312,9 +315,55 @@ def _marked_remote(host: str | None) -> bool:
     return host is not None and any(marker in host for marker in _BLOCKED_HOST_MARKERS)
 
 
+def _pool_creator(engine: Engine) -> object:
+    return getattr(engine.pool, "_creator", None)
+
+
+def _is_default_creator(creator: object) -> bool:
+    code = getattr(creator, "__code__", None)
+    filename = getattr(code, "co_filename", None)
+    if type(filename) is not str:
+        return False
+    return (
+        getattr(creator, "__module__", None) == _DEFAULT_CREATOR_MODULE
+        and getattr(creator, "__qualname__", None) == _DEFAULT_CREATOR_QUALNAME
+        and filename.replace("\\", "/").endswith("/sqlalchemy/engine/create.py")
+        and getattr(code, "co_name", None) == "connect"
+    )
+
+
+def _has_do_connect_listener(engine: Engine) -> bool:
+    dialect = getattr(engine, "dialect", None)
+    dispatch = getattr(dialect, "dispatch", None)
+    hook = getattr(dispatch, "do_connect", None)
+    if hook is None:
+        return True
+    listeners = getattr(hook, "listeners", None)
+    parent = getattr(hook, "parent_listeners", None)
+    if listeners is None or parent is None:
+        return True
+    return bool(listeners) or bool(parent)
+
+
+def _refuse_connect_hooks(engine: Engine) -> None:
+    if not _is_default_creator(_pool_creator(engine)) or _has_do_connect_listener(engine):
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+
+
+def _conninfo_supplies_dial_override(raw: str) -> bool:
+    parsed: object
+    try:
+        parsed = conninfo_to_dict(raw)
+    except Exception:
+        return True
+    if not isinstance(parsed, Mapping):
+        return True
+    return "hostaddr" in parsed or "port" in parsed
+
+
 def _effective_connect_params(engine: Engine) -> Mapping[str, object]:
     """Return the parameters the pool will pass to the driver, including overrides."""
-    creator = getattr(engine.pool, "_creator", None)
+    creator = _pool_creator(engine)
     closure = getattr(creator, "__closure__", None)
     candidates: list[Mapping[str, object]] = []
     if closure is not None:
@@ -323,7 +372,7 @@ def _effective_connect_params(engine: Engine) -> Mapping[str, object]:
             if isinstance(contents, Mapping):
                 candidates.append(contents)
     for contents in candidates:
-        if any(key in contents for key in ("host", "hostaddr", "port", "dbname")):
+        if any(key in contents for key in ("host", "hostaddr", "port", "dbname", "conninfo")):
             return contents
     if candidates:
         return candidates[0]
@@ -334,13 +383,21 @@ def _effective_connect_params(engine: Engine) -> Mapping[str, object]:
 def _assert_local_postgresql(engine: Engine) -> None:
     if engine.dialect.name != "postgresql":
         raise TokenStoreError("POSTGRESQL_REQUIRED")
+    _refuse_connect_hooks(engine)
     authority_host = _normalize_host(engine.url.host)
     authority_port = _normalize_port(engine.url.port)
-    if authority_host not in _LOCAL_HOSTS and authority_host is not None:
+    # A missing host would let libpq fill PGHOST and PGPORT at connect time.
+    if authority_host not in _LOCAL_HOSTS:
         raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
     if _marked_remote(authority_host):
         raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
     params = _effective_connect_params(engine)
+    if "conninfo" in params:
+        conninfo = params.get("conninfo")
+        if type(conninfo) is not str:
+            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+        if _conninfo_supplies_dial_override(conninfo):
+            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
     effective_host = _normalize_host(params.get("host")) if "host" in params else None
     effective_port = _normalize_port(params.get("port")) if "port" in params else None
     if effective_host != authority_host or effective_port != authority_port:
@@ -353,11 +410,13 @@ def _assert_local_postgresql(engine: Engine) -> None:
         hostaddr = _normalize_host(params.get("hostaddr"))
         if hostaddr != authority_host or hostaddr not in {"127.0.0.1", "::1"}:
             raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    _refuse_connect_hooks(engine)
 
 
 def create_fixture_schema(engine: Engine) -> None:
     """Create the local fixture table. Remote hosts are refused before connect."""
     _assert_local_postgresql(engine)
+    _refuse_connect_hooks(engine)
     metadata.create_all(engine)
 
 
@@ -415,7 +474,12 @@ class PostgresTokenStore:
     ) -> None:
         require_local_database_connection(binding)
         _assert_local_postgresql(engine)
+        approved = _pool_creator(engine)
+        _refuse_connect_hooks(engine)
+        if approved is not _pool_creator(engine) or not _is_default_creator(approved):
+            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
         self._engine = engine
+        self._approved_creator = approved
         self._binding = binding
         self._emitter = emitter
         self._closed_attempts: set[tuple[str, str]] = set()
@@ -486,6 +550,7 @@ class PostgresTokenStore:
     def read_redacted(self, family_id: str) -> RedactedTokenRecord | None:
         family = _opaque_id(family_id)
         statement = select(*_REDACTED_COLUMNS).where(token_families.c.family_id == family)
+        self._before_connect()
         with self._engine.connect() as connection:
             rows = connection.execute(statement).mappings().all()
         if len(rows) == 0:
@@ -502,9 +567,18 @@ class PostgresTokenStore:
                 raise StaleWriterRejected("SAME_ATTEMPT_RETRY_DENIED")
             self._closed_attempts.add(key)
 
+    def _before_connect(self) -> None:
+        creator = _pool_creator(self._engine)
+        if creator is not self._approved_creator or _has_do_connect_listener(self._engine):
+            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+        _assert_local_postgresql(self._engine)
+        if _pool_creator(self._engine) is not self._approved_creator:
+            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+
     def _execute_once(
         self, family_id: str, attempt_id: str, statement: Executable
     ) -> RedactedTokenRecord:
+        self._before_connect()
         self._close_attempt(family_id, attempt_id)
         failure: TokenStoreError | None = None
         try:

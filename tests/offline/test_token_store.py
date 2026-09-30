@@ -153,6 +153,155 @@ def test_local_authority_rejects_dial_target_overrides(
         create_fixture_schema(engine)
 
 
+def _deny_sockets(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    calls: list[str] = []
+
+    def denied(*args: object, **kwargs: object) -> object:
+        calls.append("socket")
+        raise AssertionError("socket opened")
+
+    monkeypatch.setattr(socket, "socket", denied)
+    monkeypatch.setattr(socket, "create_connection", denied)
+    monkeypatch.setattr(socket, "getaddrinfo", denied)
+    return calls
+
+
+@pytest.mark.parametrize(
+    "conninfo",
+    [
+        "hostaddr=127.0.0.1 port=1",
+        "hostaddr='127.0.0.1' port='1'",
+        "hostaddr = 127.0.0.1 port = 1",
+        "port=1",
+        "hostaddr=127.0.0.1",
+        "HostAddr=127.0.0.1",
+    ],
+)
+def test_conninfo_hostaddr_or_port_is_rejected(
+    monkeypatch: pytest.MonkeyPatch, conninfo: str
+) -> None:
+    calls = _deny_sockets(monkeypatch)
+    engine = create_engine(
+        "postgresql+psycopg://swingtrade:swingtrade@127.0.0.1/swingtrade",
+        connect_args={"conninfo": conninfo},
+    )
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED") as captured:
+        PostgresTokenStore(engine, binding)
+    rendered = str(captured.value)
+    assert "hostaddr" not in rendered
+    assert "127.0.0.1" not in rendered
+    assert "swingtrade" not in rendered
+    assert captured.value.__cause__ is None
+    assert captured.value.__context__ is None
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        create_fixture_schema(engine)
+    assert calls == []
+
+
+def test_conninfo_without_dial_keys_keeps_the_url_authority(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = _deny_sockets(monkeypatch)
+    engine = create_engine(
+        "postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade",
+        connect_args={"conninfo": "dbname=swingtrade"},
+    )
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    PostgresTokenStore(engine, binding)
+    assert calls == []
+
+
+def test_missing_url_host_does_not_follow_pghost(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = _deny_sockets(monkeypatch)
+    monkeypatch.setenv("PGHOST", "127.0.0.1")
+    monkeypatch.setenv("PGPORT", "1")
+    engine = create_engine("postgresql+psycopg:///swingtrade")
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED") as captured:
+        PostgresTokenStore(engine, binding)
+    rendered = str(captured.value)
+    assert "127.0.0.1" not in rendered
+    assert "PGHOST" not in rendered
+    assert "PGPORT" not in rendered
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        create_fixture_schema(engine)
+    assert calls == []
+
+
+def test_custom_creator_is_rejected_before_it_runs(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = _deny_sockets(monkeypatch)
+    ran: list[str] = []
+
+    def exploding_creator() -> object:
+        ran.append("creator")
+        raise AssertionError("creator ran")
+
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    url = "postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade"
+    engine = create_engine(url, creator=exploding_creator)
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        PostgresTokenStore(engine, binding)
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        create_fixture_schema(engine)
+
+    def spoofed() -> object:
+        ran.append("spoofed")
+        raise AssertionError("creator ran")
+
+    spoofed.__module__ = "sqlalchemy.engine.create"
+    spoofed.__qualname__ = "create_engine.<locals>.connect"
+    spoofed_engine = create_engine(url, creator=spoofed)
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        PostgresTokenStore(spoofed_engine, binding)
+    assert ran == []
+    assert calls == []
+
+
+def test_replacement_creator_and_do_connect_do_not_run(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = _deny_sockets(monkeypatch)
+    ran: list[str] = []
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    url = "postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade"
+
+    def replacement() -> object:
+        ran.append("creator")
+        raise AssertionError("creator ran")
+
+    replacement.__module__ = "sqlalchemy.engine.create"
+    replacement.__qualname__ = "create_engine.<locals>.connect"
+    engine = create_engine(url)
+    store = PostgresTokenStore(engine, binding)
+    engine.pool._creator = replacement  # noqa: SLF001
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        store.read_redacted("family_1")
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        store.commit_initial(_record(), attempt_id="after-replace")
+
+    def listener(
+        dialect: object, conn_rec: object, cargs: object, cparams: dict[str, object]
+    ) -> None:
+        ran.append("listener")
+        cparams["host"] = "example.invalid"
+        raise AssertionError("listener ran")
+
+    listened = create_engine(url)
+    listened_store = PostgresTokenStore(listened, binding)
+    event.listen(listened, "do_connect", listener)
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED") as captured:
+        listened_store.read_redacted("family_1")
+    rendered = str(captured.value)
+    assert "example.invalid" not in rendered
+    assert captured.value.__cause__ is None
+    assert captured.value.__context__ is None
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        listened_store.commit_initial(_record(), attempt_id="after-listen")
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        create_fixture_schema(listened)
+    assert ran == []
+    assert calls == []
+
+
 def test_remote_and_sim_stores_do_not_connect(monkeypatch: pytest.MonkeyPatch) -> None:
     def denied(*args: object, **kwargs: object) -> object:
         raise AssertionError("socket opened")
