@@ -65,6 +65,28 @@ def test_generic_database_url_rejected() -> None:
         )
 
 
+@pytest.mark.parametrize("value", ["DEV", "TEST", "SIM", "LIVE", "live", "nope"])
+def test_string_environment_does_not_fall_through_to_live_reference(value: str) -> None:
+    with pytest.raises(SecretRefBindingError) as captured:
+        validate_database_ref_binding(
+            value,  # type: ignore[arg-type]
+            {"SWINGTRADE_LIVE_DATABASE_URL_REF": "live-ref"},
+        )
+    assert "live-ref" not in str(captured.value)
+    assert "SWINGTRADE_LIVE_DATABASE_URL_REF" not in str(captured.value)
+
+
+def test_exact_dev_string_names_the_dev_reference() -> None:
+    assert configured_database_ref_name("DEV") == "SWINGTRADE_DEV_DATABASE_URL_REF"  # type: ignore[arg-type]
+    assert (
+        validate_database_ref_binding(
+            "DEV",  # type: ignore[arg-type]
+            {"SWINGTRADE_DEV_DATABASE_URL_REF": "dev-ref"},
+        )
+        == "SWINGTRADE_DEV_DATABASE_URL_REF"
+    )
+
+
 def test_valid_dev_binding_returns_expected_name() -> None:
     name = validate_database_ref_binding(
         DeploymentEnvironment.DEV,

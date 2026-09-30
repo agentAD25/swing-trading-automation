@@ -87,6 +87,16 @@ class TokenState(StrEnum):
     AUTH_UNKNOWN = "AUTH_UNKNOWN"
 
 
+_MUTABLE_TOKEN_STATES = (TokenState.ACTIVE.value, TokenState.REFRESHING.value)
+_TERMINAL_TOKEN_STATES = frozenset(
+    {
+        TokenState.REVOKED,
+        TokenState.REAUTH_REQUIRED,
+        TokenState.AUTH_UNKNOWN,
+    }
+)
+
+
 class TokenStoreError(RuntimeError):
     """TokenStore refused a write without publishing token material."""
 
@@ -280,16 +290,69 @@ def _reason(value: object) -> str:
     return value
 
 
+def _normalize_host(host: object) -> str | None:
+    if host is None or host == "":
+        return None
+    if type(host) is not str or "," in host:
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    return host.rstrip(".").lower()
+
+
+def _normalize_port(port: object) -> int | None:
+    if port is None or port == "":
+        return None
+    if type(port) is int:
+        return port
+    if type(port) is str and port.isdigit():
+        return int(port)
+    raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+
+
+def _marked_remote(host: str | None) -> bool:
+    return host is not None and any(marker in host for marker in _BLOCKED_HOST_MARKERS)
+
+
+def _effective_connect_params(engine: Engine) -> Mapping[str, object]:
+    """Return the parameters the pool will pass to the driver, including overrides."""
+    creator = getattr(engine.pool, "_creator", None)
+    closure = getattr(creator, "__closure__", None)
+    candidates: list[Mapping[str, object]] = []
+    if closure is not None:
+        for cell in closure:
+            contents = cell.cell_contents
+            if isinstance(contents, Mapping):
+                candidates.append(contents)
+    for contents in candidates:
+        if any(key in contents for key in ("host", "hostaddr", "port", "dbname")):
+            return contents
+    if candidates:
+        return candidates[0]
+    _unused, cparams = engine.dialect.create_connect_args(engine.url)
+    return cparams
+
+
 def _assert_local_postgresql(engine: Engine) -> None:
     if engine.dialect.name != "postgresql":
         raise TokenStoreError("POSTGRESQL_REQUIRED")
-    host = engine.url.host
-    if host is None:
-        return
-    normalized = host.rstrip(".").lower()
-    blocked = any(marker in normalized for marker in _BLOCKED_HOST_MARKERS)
-    if normalized not in _LOCAL_HOSTS or blocked:
+    authority_host = _normalize_host(engine.url.host)
+    authority_port = _normalize_port(engine.url.port)
+    if authority_host not in _LOCAL_HOSTS and authority_host is not None:
         raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    if _marked_remote(authority_host):
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    params = _effective_connect_params(engine)
+    effective_host = _normalize_host(params.get("host")) if "host" in params else None
+    effective_port = _normalize_port(params.get("port")) if "port" in params else None
+    if effective_host != authority_host or effective_port != authority_port:
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    if effective_host not in _LOCAL_HOSTS and effective_host is not None:
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    if _marked_remote(effective_host):
+        raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
+    if "hostaddr" in params and params.get("hostaddr") not in (None, ""):
+        hostaddr = _normalize_host(params.get("hostaddr"))
+        if hostaddr != authority_host or hostaddr not in {"127.0.0.1", "::1"}:
+            raise TokenStoreError("REMOTE_DATABASE_PROHIBITED")
 
 
 def create_fixture_schema(engine: Engine) -> None:
@@ -390,6 +453,9 @@ class PostgresTokenStore:
         """Apply one predicate update. A zero-row result cannot be retried in-attempt."""
         if not isinstance(expected, CasExpectation) or not isinstance(mutation, CasMutation):
             raise TokenStoreError("INVALID_CAS")
+        if expected.state in _TERMINAL_TOKEN_STATES:
+            self._close_attempt(expected.family_id, attempt_id)
+            raise StaleWriterRejected("TERMINAL_STATE_REJECTED")
         statement = (
             update(token_families)
             .where(
@@ -397,6 +463,7 @@ class PostgresTokenStore:
                 token_families.c.version == expected.version,
                 token_families.c.fence == expected.fence,
                 token_families.c.state == expected.state.value,
+                token_families.c.state.in_(_MUTABLE_TOKEN_STATES),
                 token_families.c.environment == expected.environment.value,
                 token_families.c.environment == self._binding.environment.value,
                 token_families.c.owner_id == expected.owner_id,
@@ -427,15 +494,18 @@ class PostgresTokenStore:
             raise TokenStoreError("AUTH_UNKNOWN")
         return _redacted(_mapping(rows[0]))
 
-    def _execute_once(
-        self, family_id: str, attempt_id: str, statement: Executable
-    ) -> RedactedTokenRecord:
+    def _close_attempt(self, family_id: str, attempt_id: str) -> None:
         attempt = _opaque_id(attempt_id)
         key = (family_id, attempt)
         with self._lock:
             if key in self._closed_attempts:
                 raise StaleWriterRejected("SAME_ATTEMPT_RETRY_DENIED")
             self._closed_attempts.add(key)
+
+    def _execute_once(
+        self, family_id: str, attempt_id: str, statement: Executable
+    ) -> RedactedTokenRecord:
+        self._close_attempt(family_id, attempt_id)
         failure: TokenStoreError | None = None
         try:
             with self._engine.begin() as connection:

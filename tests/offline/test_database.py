@@ -121,6 +121,23 @@ def test_sim_reference_can_be_named_but_cannot_connect() -> None:
         require_local_database_connection(binding)
 
 
+@pytest.mark.parametrize("value", ["DEV", "TEST", "SIM", "LIVE", "live", "nope"])
+def test_string_environments_do_not_select_the_live_reference(value: str) -> None:
+    live_only = {"SWINGTRADE_LIVE_DATABASE_URL_REF": "live-ref"}
+    with pytest.raises(SecretRefBindingError) as captured:
+        bind_database_reference(value, live_only)
+    assert "live-ref" not in str(captured.value)
+    assert str(captured.value) != "SWINGTRADE_LIVE_DATABASE_URL_REF"
+
+
+def test_exact_string_dev_uses_the_dev_reference() -> None:
+    binding = bind_database_reference("DEV", DEV_REFS)
+    assert binding.environment is DeploymentEnvironment.DEV
+    assert binding.reference_name == "SWINGTRADE_DEV_DATABASE_URL_REF"
+    assert binding.connect_allowed is True
+    require_local_database_connection(binding)
+
+
 def test_exactly_one_reference_rule_is_unchanged() -> None:
     with pytest.raises(SecretRefBindingError, match="exactly one"):
         bind_database_reference(

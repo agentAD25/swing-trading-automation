@@ -37,16 +37,31 @@ _ENVIRONMENT_REF_FIELD: dict[DeploymentEnvironment, str] = {
 _ALL_DATABASE_REF_NAMES = frozenset(_ENVIRONMENT_REF_FIELD.values())
 
 
+def as_deployment_environment(environment: object) -> DeploymentEnvironment:
+    """Return the enum member for an exact name. Unknown values do not become LIVE."""
+    if type(environment) is DeploymentEnvironment:
+        return environment
+    if type(environment) is str:
+        try:
+            return DeploymentEnvironment(environment)
+        except ValueError:
+            raise SecretRefBindingError("unknown environment") from None
+    raise SecretRefBindingError("unknown environment")
+
+
 def configured_database_ref_name(
     environment: DeploymentEnvironment, schema: SecretRefSchema = _DEFAULT_SCHEMA
 ) -> str:
-    if environment is DeploymentEnvironment.DEV:
+    resolved = as_deployment_environment(environment)
+    if resolved is DeploymentEnvironment.DEV:
         return schema.dev_database_url_ref
-    if environment is DeploymentEnvironment.TEST:
+    if resolved is DeploymentEnvironment.TEST:
         return schema.test_database_url_ref
-    if environment is DeploymentEnvironment.SIM:
+    if resolved is DeploymentEnvironment.SIM:
         return schema.sim_database_url_ref
-    return schema.live_database_url_ref
+    if resolved is DeploymentEnvironment.LIVE:
+        return schema.live_database_url_ref
+    raise SecretRefBindingError("unknown environment")
 
 
 def validate_database_ref_binding(
@@ -56,10 +71,11 @@ def validate_database_ref_binding(
     schema: SecretRefSchema = _DEFAULT_SCHEMA,
 ) -> str:
     """Return the sole configured reference name for ``environment`` or fail closed."""
-    if environment is DeploymentEnvironment.LIVE:
+    resolved = as_deployment_environment(environment)
+    if resolved is DeploymentEnvironment.LIVE:
         raise SecretRefBindingError("LIVE database references are prohibited")
 
-    expected = configured_database_ref_name(environment, schema)
+    expected = configured_database_ref_name(resolved, schema)
     present = {
         name: value
         for name, value in configured_refs.items()
@@ -67,15 +83,15 @@ def validate_database_ref_binding(
     }
     if "SWINGTRADE_DATABASE_URL" in configured_refs and configured_refs["SWINGTRADE_DATABASE_URL"]:
         raise SecretRefBindingError("generic DATABASE_URL source is prohibited")
-    if environment in {DeploymentEnvironment.DEV, DeploymentEnvironment.TEST}:
+    if resolved is DeploymentEnvironment.DEV or resolved is DeploymentEnvironment.TEST:
         if schema.sim_database_url_ref in present:
             raise SecretRefBindingError("DEV/TEST cannot select SIM database reference")
-    if environment is DeploymentEnvironment.SIM:
+    if resolved is DeploymentEnvironment.SIM:
         for forbidden in (schema.dev_database_url_ref, schema.test_database_url_ref):
             if forbidden in present:
                 raise SecretRefBindingError("SIM cannot fall back to DEV/TEST database reference")
     if expected not in present:
-        raise SecretRefBindingError(f"missing required reference for {environment.value}")
+        raise SecretRefBindingError(f"missing required reference for {resolved.value}")
     if len(present) != 1:
         raise SecretRefBindingError("exactly one database reference must be configured")
     return expected

@@ -37,11 +37,13 @@ pytestmark_postgres = pytest.mark.skipif(
 )
 
 
-def _record(material: bytes = ORIGINAL) -> InitialTokenRecord:
+def _record(
+    material: bytes = ORIGINAL, state: TokenState = TokenState.ACTIVE
+) -> InitialTokenRecord:
     return InitialTokenRecord(
         family_id="family_1",
         owner_id="owner_a",
-        state=TokenState.ACTIVE,
+        state=state,
         material=SyntheticCiphertext(material),
         scope_set=("READ",),
         revocation_reason_code="",
@@ -113,6 +115,42 @@ def test_broker_material_and_live_expectation_are_rejected() -> None:
         _expectation(version=1.0)
     with pytest.raises(TokenStoreError, match="INVALID_VERSION"):
         _expectation(version=True)
+
+
+@pytest.mark.parametrize(
+    ("url", "connect_args"),
+    [
+        ("postgresql+psycopg://?host=example.invalid", {}),
+        ("postgresql+psycopg://127.0.0.1/swingtrade_test?host=example.invalid", {}),
+        ("postgresql+psycopg://localhost/swingtrade_test?host=db.example.supabase.co", {}),
+        ("postgresql+psycopg://127.0.0.1/swingtrade_test?host=api.tradestation.com", {}),
+        ("postgresql+psycopg://127.0.0.1/swingtrade_test?hostaddr=93.184.216.34", {}),
+        ("postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade_test?port=1", {}),
+        ("postgresql+psycopg://127.0.0.1/swingtrade_test", {"host": "example.invalid"}),
+        ("postgresql+psycopg://127.0.0.1:5432/swingtrade_test", {"port": 1}),
+        ("postgresql+psycopg://127.0.0.1/swingtrade_test", {"hostaddr": "93.184.216.34"}),
+    ],
+)
+def test_local_authority_rejects_dial_target_overrides(
+    monkeypatch: pytest.MonkeyPatch, url: str, connect_args: dict[str, object]
+) -> None:
+    def denied(*args: object, **kwargs: object) -> object:
+        raise AssertionError("socket opened")
+
+    monkeypatch.setattr(socket, "socket", denied)
+    monkeypatch.setattr(socket, "create_connection", denied)
+    engine = create_engine(url, connect_args=connect_args)
+    binding = bind_database_reference(DeploymentEnvironment.DEV, DEV_REFS)
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED") as captured:
+        PostgresTokenStore(engine, binding)
+    rendered = str(captured.value)
+    assert "example.invalid" not in rendered
+    assert "supabase" not in rendered
+    assert "tradestation" not in rendered
+    assert "93.184.216.34" not in rendered
+    assert "swingtrade" not in rendered
+    with pytest.raises(TokenStoreError, match="REMOTE_DATABASE_PROHIBITED"):
+        create_fixture_schema(engine)
 
 
 def test_remote_and_sim_stores_do_not_connect(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -194,7 +232,14 @@ def test_predicate_mismatch_updates_zero_rows(
     store: PostgresTokenStore, field: str, value: object
 ) -> None:
     store.commit_initial(_record(), attempt_id=f"seed_{field}")
-    with pytest.raises(StaleWriterRejected, match="STALE_WRITER") as captured:
+    reason = "STALE_WRITER"
+    if field == "state" and value in {
+        TokenState.REVOKED,
+        TokenState.REAUTH_REQUIRED,
+        TokenState.AUTH_UNKNOWN,
+    }:
+        reason = "TERMINAL_STATE_REJECTED"
+    with pytest.raises(StaleWriterRejected, match=reason) as captured:
         store.compare_and_swap(
             _expectation(**{field: value}),
             _mutation(b"fixture:gamma"),
@@ -275,6 +320,51 @@ def test_ambiguous_database_error_does_not_replay_or_chain_material(
     with pytest.raises(StaleWriterRejected, match="SAME_ATTEMPT_RETRY_DENIED"):
         store.compare_and_swap(_expectation(), _mutation(), attempt_id="ambiguous")
     assert _ciphertext(store) == ORIGINAL
+
+
+@pytest.mark.parametrize(
+    "state",
+    [TokenState.REVOKED, TokenState.REAUTH_REQUIRED, TokenState.AUTH_UNKNOWN],
+)
+@pytestmark_postgres
+def test_terminal_state_cas_does_not_replace_ciphertext(
+    store: PostgresTokenStore, state: TokenState
+) -> None:
+    store.commit_initial(_record(state=state), attempt_id=f"seed_{state.value}")
+    updates: list[str] = []
+
+    def collect(
+        connection: object,
+        cursor: object,
+        statement: str,
+        parameters: object,
+        context: object,
+        executemany: bool,
+    ) -> None:
+        if statement.lstrip().lower().startswith("update"):
+            updates.append(statement)
+
+    event.listen(store._engine, "before_cursor_execute", collect)  # noqa: SLF001
+    with pytest.raises(StaleWriterRejected, match="TERMINAL_STATE_REJECTED") as captured:
+        store.compare_and_swap(
+            _expectation(state=state),
+            _mutation(b"fixture:revived", state=TokenState.ACTIVE),
+            attempt_id=f"revive_{state.value}",
+        )
+    assert "fixture" not in str(captured.value)
+    assert "revived" not in str(captured.value)
+    with pytest.raises(StaleWriterRejected, match="SAME_ATTEMPT_RETRY_DENIED"):
+        store.compare_and_swap(
+            _expectation(state=state),
+            _mutation(b"fixture:revived", state=TokenState.ACTIVE),
+            attempt_id=f"revive_{state.value}",
+        )
+    assert updates == []
+    assert _ciphertext(store) == ORIGINAL
+    redacted = store.read_redacted("family_1")
+    assert redacted is not None
+    assert redacted.version == 1
+    assert redacted.state == state.value
 
 
 @pytestmark_postgres
