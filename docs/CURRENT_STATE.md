@@ -1,8 +1,10 @@
 # Current State
 
-- Last updated: 2026-09-30
+- Last updated: 2026-10-01
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
-  foundation implemented on this branch and not merged; C1/U-10 resolved
+  and Group 3 code are on canonical `main` at `12e852c` (older "not
+  merged" wording is pre-merge); C1/U-10 resolved; pre-credential probe
+  contract is not accepted (`P2_PRE_CREDENTIAL_CONTRACT_DECISION_REQUIRED`)
 - Phase status: `PHASE1_COMPLETE` for governance, design, reconciliation,
   acceptance, and the offline `DRY_RUN` foundation; `PHASE1_ACCEPTED` remains
   the bounded meaning of the exact broker-neutral offline deterministic
@@ -94,6 +96,7 @@
 | PR #13 zero-cost evidence | History-preserving merge of exact commit `78f485b33bdd3f859d540458ba170b2353c04c61`, tree `28b3ced5663c00f4b8d32828ed2b160344d09805`, as `e0ec755e39c897492fbc8d970bb165d8335d361c`, tree `5e687dc37376b1b9c092a2a56a40348e5d36532f`. Versus the PR #14 tip this adds only `docs/P2_C_ZERO_INCREMENTAL_COST.md`. `docs/DB_DEPLOYMENT.md` is unchanged. `INITIAL_DATABASE_INCREMENTAL_SERVICE_COST = 0 USD`. Supersedes only the initial-deployment effect of the historical RDS recommendation. Supabase is **NOT_ACCEPTED**. |
 | Offline Group 2 foundation | Operator authorizes the offline Group 2 foundation only. Later decisions: non-Cursor bootstrap injector, key custody, retention, and SIM database host. The authorization commit itself added no application code. The implementation is on this branch at `904a362ac716aa8a7d3c9e830444a19108feed67` and is not merged. |
 | C1/U-10 closure | Operator accepts ADR-0002 after independent review `C1_U10_CONTRACT_PASS` on `a4213f8356a9e32ca4647865ee98e13660e3d656`, tree `c07487c88f24f9432de89df7f574130274d50b4b`. C1/U-10 is **RESOLVED**. Non-blocking residuals do not reopen C1. Not operational credential certification, key management, Supabase selection, or `LIVE` authorization. |
+| Pre-credential gate | Documentation only, dated 2026-10-01, from `origin/main` `12e852c6d523a8fbfe2082a33887e36045ee04ae`, tree `99db680fb2a82d594aa4f6b1bbc0de7e47a217b8`. PR #18 is merged by ancestry at that commit. Recommendation token `P2_PRE_CREDENTIAL_CONTRACT_DECISION_REQUIRED`. ADR-0003 is **Proposed** and its Decision is blank. Probe stages C1 setup, C2 accounts-only, and C3 balances/positions/orders are closed. Not a credential, SIM, or `LIVE` grant. |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
 `phase1-accepted-abc1fb6` fixes the accepted commit without making the
@@ -203,6 +206,14 @@ direction.
 7. External governance enforcement and authenticated Operator identity are not
    established. `DRY_RUN` remains structurally non-network; future broker
    connectivity and zero-order-attempt controls are not authorized.
+8. The preferred attended, read-only, no-refresh, no-persistent-token probe
+   conflicts with recorded official pages (U-17 `offline_access`, U-02
+   default scopes including `Trade` and `MarketData`). Gate result:
+   `P2_PRE_CREDENTIAL_CONTRACT_DECISION_REQUIRED`. Flow, one callback
+   value, LIVE-incapability of a key, bootstrap custody, and encryption
+   custody are not selected. Probe stages C1, C2, and C3 are closed.
+   ADR-0003 is Proposed. This does not authorize credentials, broker
+   calls, TradeStation `SIM`, orders, or `LIVE`.
 
 ## Evidence
 
@@ -270,3 +281,25 @@ process-local same-attempt tracking, fence monotonicity not forced,
 `read_redacted` not environment-scoped, and stale "not implemented"
 wording in the historical proposal documents. Those residuals do not
 reopen C1. No source or test file changes. This branch is not merged.
+
+On 2026-10-01, `origin/main` is
+`12e852c6d523a8fbfe2082a33887e36045ee04ae`, tree
+`99db680fb2a82d594aa4f6b1bbc0de7e47a217b8`. PR #18 is merged by ancestry
+at that commit (fast-forward; the pull request head and `main` are the
+same commit). Sentences above that say the offline Group 2
+implementation "is not merged" or that "this branch is not merged" are
+**pre-merge** relative to that fast-forward. Group 3 offline modules are
+on that commit. The recorded regression, not re-run for this entry, is
+435 tests, Phase 1 configured 218, Group 2 offline plus contracts 161,
+and Group 3 56.
+
+That ancestry does not authorize credentials, broker calls, TradeStation
+`SIM`, Supabase, orders, or `LIVE`. `DRY_RUN` remains the sole authorized
+execution mode. The pre-credential review result is
+`P2_PRE_CREDENTIAL_CONTRACT_DECISION_REQUIRED`, recorded in
+`docs/P2_PRE_CREDENTIAL_DECISION.md` and proposed ADR-0003. ADR-0003 is
+not Accepted. A process-control violation is recorded in
+`docs/ENGINEERING_JOURNAL.md`: an earlier readiness review issued
+`GET https://api.tradestation.com/v3/openapi.json`, received HTTP 401,
+did not retry, and did not use the response as evidence. This entry does
+not contact that host.

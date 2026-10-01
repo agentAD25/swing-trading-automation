@@ -285,3 +285,92 @@ These cannot be delegated to TradeStation or inferred from documentation.
     answers questions 72–73, decide whether a refresh-less, no-
     `offline_access` G2 profile is acceptable or whether G2 cannot proceed
     without a separately gated refresh family. Do not infer the answer.
+
+## Pre-credential addendum (2026-10-01)
+
+Documentation only. No vendor contact occurred. The preferred attended,
+bounded, read-only, no-refresh, no-persistent-token probe conflicts with
+recorded official pages. The gate result is
+`P2_PRE_CREDENTIAL_CONTRACT_DECISION_REQUIRED`. See
+`docs/P2_PRE_CREDENTIAL_DECISION.md` and proposed ADR-0003. Do not send
+the message below until the human Operator accepts the text.
+
+Questions 1, 5, 6, 7, 8, 72, and 73 remain open and are not rewritten.
+Questions 74–77 are additional. They still do not select a winner.
+
+74. Can the key be issued so an authorization request for only `openid`
+    and `ReadAccount` succeeds, with `Trade`, `MarketData`,
+    `OptionSpreads`, `Matrix`, `profile`, `email`, and `offline_access`
+    absent from the key and from the returned scope? Question 6 asked
+    about `MarketData` plus `ReadAccount`. This question also omits
+    `MarketData`.
+75. Can this exact key be configured so it cannot call
+    `https://api.tradestation.com`? If no such configuration exists,
+    please say that explicitly. Instructing the client to change the base
+    URL is not that confirmation.
+76. For an attended local probe that will not request a refresh token,
+    which application type do you support: confidential Authorization Code
+    with a client secret, public PKCE, both, or neither? We will not use
+    a fallback between them.
+77. Can registered redirect URIs, logout URLs, web origins, and CORS
+    origins be reduced to exactly one `https://` callback that the
+    Operator will name later, with default localhost callbacks and
+    wildcard origins removed, before first use?
+
+### Unsent Operator message
+
+Not sent. No account number, password, secret, token, or personal data
+belongs in this text or in a reply to an automated channel.
+
+```text
+Subject: Written key configuration for a future read-only probe
+
+Hello,
+
+We have not created an API key. Please answer in writing for API v3.
+Label each answer as SIM, LIVE, or both. A LIVE answer is not a request
+to enable LIVE and is not authorization to use LIVE.
+
+1. Which application type can you issue for an attended local probe that
+   will not request a refresh token: confidential Authorization Code
+   (client secret at token exchange), public PKCE, both, or neither?
+   We will not use a fallback between types. We are not asking you to
+   enable trading.
+
+2. Can you register exactly one HTTPS callback that we will name in a
+   later message, and remove every default localhost callback, extra
+   logout URL, and wildcard or extra web or CORS origin before the key
+   is used?
+
+3. Your Authentication Overview, Scopes prose, and Scopes table disagree
+   on default scopes. What is the exact default set today? Can this key
+   be issued so a request for only openid and ReadAccount succeeds, with
+   Trade, MarketData, OptionSpreads, Matrix, profile, email, and
+   offline_access absent from both the key and the returned scope?
+
+4. Your Auth Code, PKCE, and Refresh Tokens pages say offline_access is
+   required to obtain refresh tokens. The Scopes table labels
+   offline_access required with no such qualification. If the
+   authorization request omits offline_access, does authorization or
+   token exchange fail, and with what error? Can you issue a key that
+   returns an access token and no refresh token for that request? If
+   not, what is the minimum scope set? We will not add offline_access
+   to make a call succeed.
+
+5. If rotating refresh tokens were configured later, is the interval 30
+   minutes or 40 minutes, and does the 24-hour absolute lifetime apply?
+   The first probe does not request refresh tokens. This question is so
+   a later decision is not guessed.
+
+6. Can this exact key be made incapable of calling
+   https://api.tradestation.com? If it cannot, please say so. Changing
+   the client's base URL to the SIM host is not sufficient for our
+   control.
+
+7. Does the returned scope field list every granted permission, including
+   permissions the request did not name?
+
+Please do not include a client id, client secret, authorization code,
+access token, refresh token, password, or account number in the reply.
+Send the written answers to the human Operator.
+```

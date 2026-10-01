@@ -1958,3 +1958,70 @@ Status evidence is `docs/CURRENT_STATE.md`, this journal,
 `docs/adr/0002-provider-neutral-token-store.md` (status Accepted), and
 `docs/C1_U10_CONTRACT_STATUS.md` (status **RESOLVED**). `src/` and
 `tests/` are untouched. No merge.
+
+## 2026-10-01 — Pre-credential gate (documentation only)
+
+### Baseline
+
+`git fetch origin main` then `git rev-parse origin/main` returned
+`12e852c6d523a8fbfe2082a33887e36045ee04ae`. `git rev-parse origin/main^{tree}`
+returned `99db680fb2a82d594aa4f6b1bbc0de7e47a217b8`. `gh pr view 18`
+reports state `MERGED`, merge commit
+`12e852c6d523a8fbfe2082a33887e36045ee04ae`. That commit is `origin/main`,
+so PR #18 is merged by ancestry. The suite was not re-run. The recorded
+Gate A regression remains 435 tests, Phase 1 configured 218, Group 2
+offline plus contracts 161, and Group 3 56.
+
+### Process-control incident
+
+During the credential-readiness review, a research agent issued
+`GET https://api.tradestation.com/v3/openapi.json`, received HTTP 401,
+did not retry, and did not use the response as evidence. This is a
+process-control violation, not a security compromise. No credential was
+sent or received. The response established nothing about the API and is
+not broker evidence.
+
+The agent could issue the request under an offline authorization because
+existing boundaries do not fail closed on that path:
+
+- The review task allowed reading public documentation pages and named
+  official TradeStation pages. Those pages are served on
+  `api.tradestation.com` under `/docs/`. The same host serves `/v3/`.
+  The task did not pin an allowlist of documentation paths, so
+  `/v3/openapi.json` fit the ambiguous exception even though it is not a
+  `/docs/` page and the server rejected it.
+- `docs/AGENT_AUTHORITY.md` denies broker and network activity while
+  `docs/CURRENT_STATE.md` denies them. The task carved an exception for
+  documentation. Least authority says ambiguity fails closed. The
+  exception was not applied that way to this URL.
+- `.cursor/agents/broker-api-researcher.md` allows public-documentation
+  research and forbids exercising APIs. It does not name
+  `api.tradestation.com/v3/` as distinct from `/docs/`.
+- `src/swingtrade/offline/hosts.py` classifies `api.tradestation.com` as
+  prohibited for application code and does not connect. Agent fetch tools
+  do not consult that module. No runner is added. Application host policy
+  is not an agent-tool boundary.
+
+This pre-credential change does not request `api.tradestation.com`,
+`sim-api.tradestation.com`, or `signin.tradestation.com`.
+
+### Decision prepared, not accepted
+
+Official pages already recorded in `docs/AUTH_ARCHITECTURE.md` (U-17,
+U-02) and `docs/P2_BROKER_RESEARCH.md` conflict with the preferred
+attended, bounded, read-only, no-refresh, no-persistent-token probe.
+Gate result: `P2_PRE_CREDENTIAL_CONTRACT_DECISION_REQUIRED`. No winner
+is chosen for `offline_access`, default scopes, Authorization Code
+versus PKCE, or the 30-versus-40 refresh interval. Whether a provider
+can make a key incapable of LIVE remains
+`UNKNOWN` / `PROVIDER_CONFIRMATION_REQUIRED`.
+
+ADR-0003 is Proposed. Its Decision section is blank. The planning note
+is `docs/P2_PRE_CREDENTIAL_DECISION.md`. Questions 74–77 and one unsent
+Operator message are in
+`docs/TRADESTATION_CLIENT_EXPERIENCE_QUESTIONS.md`. The message was not
+sent.
+
+`DRY_RUN` remains the only authorized execution mode. No production code
+changes. Credentials, TradeStation `SIM`, orders, Supabase, and `LIVE`
+remain unauthorized.
