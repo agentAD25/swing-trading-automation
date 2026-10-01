@@ -1958,3 +1958,60 @@ Status evidence is `docs/CURRENT_STATE.md`, this journal,
 `docs/adr/0002-provider-neutral-token-store.md` (status Accepted), and
 `docs/C1_U10_CONTRACT_STATUS.md` (status **RESOLVED**). `src/` and
 `tests/` are untouched. No merge.
+
+## 2026-09-30 — Group 3 public broker evidence (documentation only)
+
+`git fetch origin main` observed
+`7c9b994dc41491b6f54f62199833597aada7fbf8`, tree
+`3b568afaf7b9d4b78a60dd0c61a97325206ee4fb`, for `HEAD`, `main`, and
+`origin/main`. That is the expected identity. Branch
+`cursor/p2-g3-broker-evidence-969d` starts there.
+
+`docs/P2_G3_BROKER_EVIDENCE.md` records a 2026-09-30 retrieval of the
+published authentication, scope, refresh, rate-limit, entitlement,
+streaming, SIM, and specification pages. No TradeStation API host, token
+endpoint, account, credential, or Client Experience contact was used.
+`docs/P2_BROKER_RESEARCH.md` is unchanged.
+
+All 12 behavior groups remain unresolved. Current specification text gives
+order-status enums that disagree between REST `Status` and stream
+`Status1`, an idle-heartbeat sentence of 5 seconds, and historical-order
+`since` limited to 730 days with a SIM history note. The repository's
+earlier 90-day `since` record is left in place. The difference is
+unresolved. Published conflicts on refresh interval, default scopes,
+`offline_access`, and the revocation body remain unresolved.
+
+`P2_G3_CONTRACT_DECISION_REQUIRED` is not returned. Unblocked offline
+areas are authorization-request assembly, callback classification,
+token-exchange form templates, refresh form parameter names without a
+rotation timer, SIM-base read-only request templates with
+`connect_allowed` false, and a local stream-frame reader. Scope
+selection, path-to-scope allowlist, rotation interval, revocation body,
+status-catalog choice, entitlements, and every network call stay
+unresolved.
+
+ADR-0002, TokenStore compare-and-swap, Group 2 host policy, `src/`, and
+`tests/` are unchanged. `DRY_RUN` remains the only authorized execution
+mode. No TradeStation `SIM`, order, or `LIVE` authority follows.
+
+### Validation before this evidence commit
+
+```text
+git fetch origin main
+git rev-parse HEAD main origin/main
+# 7c9b994dc41491b6f54f62199833597aada7fbf8
+
+git rev-parse 'HEAD^{tree}'
+# 3b568afaf7b9d4b78a60dd0c61a97325206ee4fb
+
+git diff --check
+# clean
+
+git diff --name-only -- src tests migrations pyproject.toml \
+  docker-compose.yml alembic.ini docs/adr docs/TOKEN_STORE.md \
+  docs/P2_BROKER_RESEARCH.md docs/AUTH_ARCHITECTURE.md
+# empty
+```
+
+The documentation diff is `docs/P2_G3_BROKER_EVIDENCE.md`,
+`docs/CURRENT_STATE.md`, and this journal.

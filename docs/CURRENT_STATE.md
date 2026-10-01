@@ -133,6 +133,10 @@ the later explicit human Operator decision recorded here does.
 - Public TradeStation documentation establishes scoped API facts recorded in
   `BROKER_CONTRACT.md`; twelve production-critical behavior groups remain
   unresolved
+- A 2026-09-30 public-documentation re-read is recorded in
+  `docs/P2_G3_BROKER_EVIDENCE.md`. It does not close any of the twelve
+  groups, does not choose among published conflicts, and does not authorize
+  credentials, OAuth execution, TradeStation `SIM`, orders, or `LIVE`
 - Phase 1A governance failure scenarios and the Phase 1B design and broker
   outputs are reconciled in `PHASE_1C_RECONCILIATION.md`
 - Four verified contract/fixture contradictions are corrected and audited in
@@ -270,3 +274,18 @@ process-local same-attempt tracking, fence monotonicity not forced,
 `read_redacted` not environment-scoped, and stale "not implemented"
 wording in the historical proposal documents. Those residuals do not
 reopen C1. No source or test file changes. This branch is not merged.
+
+On 2026-09-30, `origin/main` matched
+`7c9b994dc41491b6f54f62199833597aada7fbf8`, tree
+`3b568afaf7b9d4b78a60dd0c61a97325206ee4fb`. A documentation-only re-read
+of current first-party TradeStation pages is
+`docs/P2_G3_BROKER_EVIDENCE.md`. All 12 behavior groups remain unresolved.
+The current specification text for historical-order `since` says 730 days
+and describes a SIM history limit; the prior repository record of 90 days
+is unchanged in `docs/BROKER_CONTRACT.md` and `docs/P2_BROKER_RESEARCH.md`.
+That difference is unresolved. `P2_G3_CONTRACT_DECISION_REQUIRED` is not
+returned. Offline authorization, callback, token-form, and read-only
+request-template shapes can be implemented without choosing the unresolved
+values. Scope selection, refresh interval, revocation body, status-catalog
+choice, and any network call stay unresolved. No credential, broker call,
+TradeStation `SIM`, order, or `LIVE` authority follows.
