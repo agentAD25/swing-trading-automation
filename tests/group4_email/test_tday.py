@@ -29,7 +29,7 @@ from swingtrade.group4_email import (
 
 def test_signal_mailbox_is_a_name_and_retention_is_unresolved() -> None:
     assert SIGNAL_MAILBOX == "SIGNAL_MAILBOX"
-    assert EMAIL_RETENTION_POLICY == "UNRESOLVED"
+    assert EMAIL_RETENTION_POLICY == "HASH_PROVIDER_REF_FIELD_EVIDENCE"
     assert TRADE_AMENDMENT_PARSER == "DEFERRED_FIXTURE_REQUIRED"
     assert EXIT_ALERT_PARSER == "DEFERRED_FIXTURE_REQUIRED"
     assert QUANTITY_ROUNDING_POLICY == "UNRESOLVED"

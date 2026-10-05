@@ -2018,3 +2018,99 @@ the implementation diff found 0 matches. Network, email, and broker
 primitive scan of `src/swingtrade/group4_email` found 0 matches.
 
 These local checks are not an independent gate and not Operator acceptance.
+
+## 2026-10-05 — Group 4A bounded remediation of the seven blockers
+
+Independent review of PR #20 at
+`229a38b4b6f7ab628d1c656974686e7888075302`, tree
+`80870e9ec5f2ee2a4c9b29513da6c1ebae8a1fd2`, returned
+`P2_G4A_EMAIL_TRADE_INSTRUCTION_BLOCKED`. The Operator authorized
+remediation of those seven findings only. This entry records that work.
+It does not merge PR #20 and does not authorize Gmail, TradeStation,
+Supabase, credentials, orders, `SIM`, or `LIVE`.
+
+### Operator decisions
+
+ADR-0003 records the two contract decisions. `NewTradeInstruction` stays a
+required-field new-trade payload. `CanonicalInstructionEnvelope` can also
+carry `TradeAmendmentInstruction`, `ExitAlertInstruction`, or
+`TradeCancelInstruction`. Those three types are not parsed. A recognized
+amendment or exit alert quarantines as `PARSER_DEFERRED`. A recognized
+cancel quarantines as `CANCEL_FORMAT_UNSPECIFIED`. Each has zero accepted
+payloads.
+
+Unlabeled prose is unchanged and is not a new grammar:
+
+- "Please amend TDAY stop to 6.00 tonight." is `INFORMATIONAL`.
+- "Exit the TDAY position at the open." is `INFORMATIONAL`.
+- "Cancel the TDAY order." is `INFORMATIONAL`.
+
+All three have zero accepted payloads.
+
+`EMAIL_RETENTION_POLICY` is `HASH_PROVIDER_REF_FIELD_EVIDENCE`. Accepted
+provenance can retain provider type `FIXTURE`, the synthetic message
+reference, the raw SHA-256, parser version `g4a.1`, schema version
+`g4a.instruction.1`, a validated source timestamp when the `Date` header
+is timezone-aware, field-level evidence, reason codes, and the
+deterministic instruction id. The provider reference is not the
+instruction id. The raw message and the normalized body are not stored.
+The source timestamp is not an economic session date.
+
+### Parser repairs
+
+Economic dates bind from authoritative sentences in the labeled section.
+Chart, disclaimer, copyright, footer, publication, receipt, and historical
+sentences are not date sources. An explicit numeric date (`11/02/2026`)
+or timestamp (`2026-11-02T00:30:00-04:00`) in an authoritative sentence
+quarantines as `UNSUPPORTED_DATE_FORMAT` instead of being dropped. No year
+is inferred and the system clock is not consulted.
+
+Plain and HTML equality uses a projection of the typed economic fields,
+including sides, limit prices, session dates, date rules, and the time-exit
+side. A disagreement quarantines as `HTML_PLAIN_CONFLICT`.
+
+HTML text omits `script`, `style`, `noscript`, a `hidden` attribute,
+`display:none`, and `visibility:hidden`, including nested regions. An
+unrecognized `display` or `visibility` value quarantines as
+`AMBIGUOUS_VISIBILITY`. No remote stylesheet or image is fetched.
+
+`MessageIdentityRegistry.parse` registers a source id before extraction
+and commits under one lock. Two different bodies that overlap on an unseen
+id both quarantine as `CONFLICTING_DUPLICATE`, and neither is stored as
+accepted. A later replay of either body stays quarantined. Identical
+overlapping bodies reuse one outcome. Distinct source ids are not
+collapsed. A sequential second body for an already admitted id still
+quarantines without replacing the first outcome.
+
+A time exit must close the position. Long closes with `SELL`. Short closes
+with `BUY`. The parser does not rewrite a stated side. The wrong closing
+side quarantines as `CONFLICTING_ECONOMIC_INSTRUCTION`.
+
+A blank line before the next `Symbol:` ends the previous field, so one
+trade's time-exit section does not absorb the next trade's preamble.
+`-----Original Message-----` and a line of eight or more underscores end
+current authority. Quoted history after that marker is not a second trade.
+The 240-character evidence cap and the 65536-byte input cap stay in place.
+
+### Still unresolved
+
+Quantity rounding, timezone, and the market calendar are unresolved.
+Amendment, exit-alert, and cancel grammars remain deferred. The Gmail
+adapter is not part of this change.
+
+### Local checks
+
+Configured pytest collected the same Phase 1 paths as before: 119 passed,
+99 skipped. PostgreSQL was not available, so integration skips were not
+executed against PostgreSQL 16. `tests/validate_phase1_contracts.py` PASS.
+Group 2 (`tests/offline` and `tests/contracts`): 149 passed, 12 skipped
+because `SWINGTRADE_TEST_POSTGRES_URL` is unset. Group 3: 56 passed.
+Group 4A: 53 passed. `ruff check src tests` passed. `mypy src` reported
+no issues in 37 source files. `alembic heads` is
+`0003_durable_dry_run_observation`. `git diff --check` against
+`origin/main` was clean. A credential-assignment scan of
+`src/swingtrade/group4_email` found no matches. A network, mailbox, and
+broker primitive scan of that package found no matches.
+
+These local checks are not an independent gate and not Operator acceptance
+of Phase 1. ADR-0003 records the Operator's Group 4A contract decision.

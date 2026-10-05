@@ -94,7 +94,7 @@
 | PR #13 zero-cost evidence | History-preserving merge of exact commit `78f485b33bdd3f859d540458ba170b2353c04c61`, tree `28b3ced5663c00f4b8d32828ed2b160344d09805`, as `e0ec755e39c897492fbc8d970bb165d8335d361c`, tree `5e687dc37376b1b9c092a2a56a40348e5d36532f`. Versus the PR #14 tip this adds only `docs/P2_C_ZERO_INCREMENTAL_COST.md`. `docs/DB_DEPLOYMENT.md` is unchanged. `INITIAL_DATABASE_INCREMENTAL_SERVICE_COST = 0 USD`. Supersedes only the initial-deployment effect of the historical RDS recommendation. Supabase is **NOT_ACCEPTED**. |
 | Offline Group 2 foundation | Operator authorizes the offline Group 2 foundation only. Later decisions: non-Cursor bootstrap injector, key custody, retention, and SIM database host. The authorization commit itself added no application code. The implementation is on this branch at `904a362ac716aa8a7d3c9e830444a19108feed67` and is not merged. |
 | C1/U-10 closure | Operator accepts ADR-0002 after independent review `C1_U10_CONTRACT_PASS` on `a4213f8356a9e32ca4647865ee98e13660e3d656`, tree `c07487c88f24f9432de89df7f574130274d50b4b`. C1/U-10 is **RESOLVED**. Non-blocking residuals do not reopen C1. Not operational credential certification, key management, Supabase selection, or `LIVE` authorization. |
-| Offline Group 4A email contract | Implemented on this branch at `ddaf07eb03b9bd18379672ae8ad3652773358cd0`, tree `0afaee9497e496aef7698ec631653b18c98f2c0e`, and not merged. In-memory parser from fixture email bytes to a canonical `TradeInstruction` or reject/quarantine. No raw-email store. `TRADE_AMENDMENT_PARSER` and `EXIT_ALERT_PARSER` are `DEFERRED_FIXTURE_REQUIRED`. Quantity rounding, email retention, market calendar, and timezone remain unresolved. Draft PR #20. No Gmail, broker, credential, Supabase, order, SIM, or `LIVE` authority. |
+| Offline Group 4A email contract | Remediation of blocked candidate `229a38b4b6f7ab628d1c656974686e7888075302` is on this branch and is not merged. The Operator accepted ADR-0003: a `CanonicalInstructionEnvelope` carries a required-field `NewTradeInstruction` or a reserved amendment, exit-alert, or cancel payload. Only new-trade parsing is implemented. `EMAIL_RETENTION_POLICY` is `HASH_PROVIDER_REF_FIELD_EVIDENCE`. Quantity rounding, market calendar, and timezone remain unresolved. Draft PR #20. No Gmail, broker, credential, Supabase, order, SIM, or `LIVE` authority. |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
 `phase1-accepted-abc1fb6` fixes the accepted commit without making the
@@ -204,12 +204,14 @@ direction.
 7. External governance enforcement and authenticated Operator identity are not
    established. `DRY_RUN` remains structurally non-network; future broker
    connectivity and zero-order-attempt controls are not authorized.
-8. Offline Group 4A on this branch does not select email retention, quantity
-   rounding, a market calendar, or a timezone. Amendment and exit-alert
-   grammars remain `DEFERRED_FIXTURE_REQUIRED`. Relative weekday and
-   month-day-without-year dates are unresolved. The parser is not merged.
-   It grants no Gmail, broker, credential, Supabase, order, SIM, or `LIVE`
-   authority.
+8. Offline Group 4A on this branch selects email retention as
+   `HASH_PROVIDER_REF_FIELD_EVIDENCE` (ADR-0003). It does not select
+   quantity rounding, a market calendar, or a timezone. Amendment,
+   exit-alert, and cancel grammars remain `DEFERRED_FIXTURE_REQUIRED`.
+   Relative weekday and month-day-without-year dates are unresolved.
+   Numeric and timestamp dates in an economic sentence quarantine as
+   unsupported. The parser is not merged. It grants no Gmail, broker,
+   credential, Supabase, order, SIM, or `LIVE` authority.
 
 ## Evidence
 

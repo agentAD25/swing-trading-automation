@@ -341,6 +341,7 @@ def test_grammar_is_not_one_symbol_or_one_strategy() -> None:
         entry="Sell stop $20.00, day order. Fills on Monday 2026-11-02.",
         target="buy limit $18.00, good till cancelled.",
         stop="buy stop $21.50, good till cancelled. The stop is a real order.",
+        time_exit="buy at the open Mon Nov 9, 2026.",
     )
     outcome = parse_email(plain_message(text, "<ibm@example.invalid>"))
     assert outcome.disposition is Disposition.ACCEPT
@@ -350,6 +351,8 @@ def test_grammar_is_not_one_symbol_or_one_strategy() -> None:
     assert instruction.direction is Direction.SHORT
     assert instruction.entry.side is Side.SELL
     assert instruction.entry.order_type is OrderType.STOP
+    assert instruction.time_exit is not None
+    assert instruction.time_exit.side is Side.BUY
 
 
 def test_market_and_stop_limit_orders() -> None:

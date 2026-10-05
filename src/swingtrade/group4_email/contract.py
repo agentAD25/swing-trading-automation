@@ -15,8 +15,13 @@ FIXTURE_SIGNAL_MAILBOX = "signals@example.invalid"
 
 TRADE_AMENDMENT_PARSER = "DEFERRED_FIXTURE_REQUIRED"
 EXIT_ALERT_PARSER = "DEFERRED_FIXTURE_REQUIRED"
+TRADE_CANCEL_PARSER = "DEFERRED_FIXTURE_REQUIRED"
 QUANTITY_ROUNDING_POLICY = "UNRESOLVED"
-EMAIL_RETENTION_POLICY = "UNRESOLVED"
+# Operator decision: hash + provider retrieval reference + field-level evidence.
+# The raw newsletter and a normalized body are not canonical ledger evidence.
+EMAIL_RETENTION_POLICY = "HASH_PROVIDER_REF_FIELD_EVIDENCE"
+PARSER_VERSION = "g4a.1"
+SCHEMA_VERSION = "g4a.instruction.1"
 TIMEZONE_ASSUMPTION = "UNSTATED"
 CALENDAR_ASSUMPTION = "UNRESOLVED"
 MAX_EMAIL_BYTES = 65536
@@ -27,6 +32,7 @@ RESOLUTION_UNRESOLVED = "UNRESOLVED_PARTIAL_DATE"
 RESOLUTION_CONFLICT = "DATE_CONFLICT"
 RESOLUTION_ABSENT = "NO_DATE_EXPRESSION"
 RESOLUTION_MALFORMED = "MALFORMED_DATE"
+RESOLUTION_UNSUPPORTED = "UNSUPPORTED_DATE_FORMAT"
 
 
 class MessageType(StrEnum):
@@ -36,6 +42,12 @@ class MessageType(StrEnum):
     TRADE_CANCEL = "TRADE_CANCEL"
     INFORMATIONAL = "INFORMATIONAL"
     UNKNOWN = "UNKNOWN"
+
+
+class ProviderType(StrEnum):
+    """Offline fixture locator. This parser has no mailbox provider."""
+
+    FIXTURE = "FIXTURE"
 
 
 class Disposition(StrEnum):
@@ -98,7 +110,9 @@ class ReasonCode(StrEnum):
     CONFLICTING_DUPLICATE = "CONFLICTING_DUPLICATE"
     DATE_CONFLICT = "DATE_CONFLICT"
     UNRESOLVED_REQUIRED_DATE = "UNRESOLVED_REQUIRED_DATE"
+    UNSUPPORTED_DATE_FORMAT = "UNSUPPORTED_DATE_FORMAT"
     MALFORMED_DATE = "MALFORMED_DATE"
+    AMBIGUOUS_VISIBILITY = "AMBIGUOUS_VISIBILITY"
     MALFORMED_CURRENCY = "MALFORMED_CURRENCY"
     UNICODE_LOOKALIKE = "UNICODE_LOOKALIKE"
     INVALID_SYMBOL = "INVALID_SYMBOL"
@@ -163,9 +177,9 @@ class TimeExit:
 
 
 @dataclass(frozen=True)
-class TradeInstruction:
-    instruction_id: str
-    message_type: MessageType
+class NewTradeInstruction:
+    """Complete new-trade bracket. Other message types do not reuse this shape."""
+
     symbol: str
     company_name: str | None
     strategy_label: str | None
@@ -181,14 +195,74 @@ class TradeInstruction:
 
 
 @dataclass(frozen=True)
+class TradeAmendmentInstruction:
+    """Reserved amendment payload. Group 4A accepts none of these."""
+
+    evidence: tuple[FieldEvidence, ...] = ()
+
+
+@dataclass(frozen=True)
+class ExitAlertInstruction:
+    """Reserved exit-alert payload. Group 4A accepts none of these."""
+
+    evidence: tuple[FieldEvidence, ...] = ()
+
+
+@dataclass(frozen=True)
+class TradeCancelInstruction:
+    """Reserved cancel payload. Group 4A accepts none of these."""
+
+    evidence: tuple[FieldEvidence, ...] = ()
+
+
+InstructionPayload = (
+    NewTradeInstruction
+    | TradeAmendmentInstruction
+    | ExitAlertInstruction
+    | TradeCancelInstruction
+)
+
+
+@dataclass(frozen=True)
+class CanonicalInstructionEnvelope:
+    """Source-neutral container. Payload type selects the economic shape.
+
+    ``instruction_id`` is the deterministic economic identity. It is not the
+    provider message reference.
+    """
+
+    instruction_id: str
+    message_type: MessageType
+    payload: InstructionPayload
+    evidence: tuple[FieldEvidence, ...]
+
+    def __getattr__(self, name: str) -> object:
+        return getattr(self.payload, name)
+
+
+@dataclass(frozen=True)
+class ParseProvenance:
+    """Retention record: hash, provider locator, and versions. Not a body store."""
+
+    retention_policy: str
+    provider_type: str
+    provider_message_ref: str | None
+    raw_sha256: str
+    parser_version: str
+    schema_version: str
+    source_timestamp: str | None
+
+
+@dataclass(frozen=True)
 class ParseOutcome:
     disposition: Disposition
     message_type: MessageType
     reasons: tuple[str, ...]
-    instructions: tuple[TradeInstruction, ...]
+    instructions: tuple[CanonicalInstructionEnvelope, ...]
     evidence: tuple[FieldEvidence, ...]
     content_digest: str
     message_id: str | None
+    provenance: ParseProvenance
     ignored_remote_references: int = 0
     ignored_attachment_count: int = 0
     network_permitted: bool = False
@@ -198,3 +272,8 @@ class ParseOutcome:
             raise RuntimeError("network is not permitted")
         if self.disposition is not Disposition.ACCEPT and self.instructions:
             raise RuntimeError("only an accepted message may carry instructions")
+        if self.provenance.retention_policy != EMAIL_RETENTION_POLICY:
+            raise RuntimeError("retention policy is fixed")
+        for instruction in self.instructions:
+            if instruction.instruction_id == self.provenance.provider_message_ref:
+                raise RuntimeError("provider reference is not instruction identity")

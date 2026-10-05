@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, fields, is_dataclass
 from datetime import date
 from decimal import Decimal
+from enum import Enum
 
 from swingtrade.domain import DomainValidationError, Side, decimal_value
 from swingtrade.group4_email.contract import (
@@ -17,11 +18,14 @@ from swingtrade.group4_email.contract import (
     RESOLUTION_EXPLICIT,
     RESOLUTION_MALFORMED,
     RESOLUTION_UNRESOLVED,
+    RESOLUTION_UNSUPPORTED,
     TIMEZONE_ASSUMPTION,
+    CanonicalInstructionEnvelope,
     Direction,
     Disposition,
     FieldEvidence,
     MessageType,
+    NewTradeInstruction,
     OrderType,
     PriceOrder,
     ReasonCode,
@@ -30,7 +34,6 @@ from swingtrade.group4_email.contract import (
     Sizing,
     TimeExit,
     TimeInForce,
-    TradeInstruction,
     TriggerBasis,
 )
 
@@ -77,7 +80,25 @@ _FIRST_EXIT = re.compile(r"(?i)\bwhichever\s+exit\s+comes\s+first\b")
 _SIBLING = re.compile(
     r"(?i)\b(?:cancel\s+the\s+other|cancel\s+both\s+outstanding\s+exits)\b"
 )
-_SELL_OPEN = re.compile(r"(?i)\bsell\s+at\s+the\s+open\b")
+_OPEN_EXIT = re.compile(r"(?i)\b(buy|sell)\s+at\s+the\s+open\b")
+_NON_AUTHORITATIVE_SENTENCE = re.compile(
+    r"(?i)\b(?:charts?|disclaimer|copyright|footer|published|publication|"
+    r"received|receipt|historical|unsubscribe)\b"
+)
+_UNSUPPORTED_DATE = re.compile(
+    r"\d{4}-\d{2}-\d{2}[Tt](?:\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?"
+    r"|"
+    r"\b\d{1,2}/\d{1,2}/\d{2,4}\b"
+)
+_SENTENCE_BREAK = re.compile(r"\n+|(?<=[.!?])\s+")
+_PROJECTION_EXCLUDED = frozenset(
+    {
+        "evidence",
+        "session_source_date",
+        "source_date",
+        "company_name",
+    }
+)
 _ORDER_VERB = re.compile(r"(?i)\b(?:buy|sell)\b")
 _SYMBOL = re.compile(r"^[A-Z][A-Z0-9.]{0,9}$")
 _WEEKDAY = (
@@ -154,7 +175,7 @@ class Extraction:
     disposition: Disposition
     message_type: MessageType
     reasons: tuple[str, ...]
-    instructions: tuple[TradeInstruction, ...]
+    instructions: tuple[NewTradeInstruction, ...]
     evidence: tuple[FieldEvidence, ...]
 
 
@@ -217,7 +238,7 @@ def extract_text(text: str) -> Extraction:
         return _done(Disposition.ACCEPT, MessageType.INFORMATIONAL, (), (), ())
 
     issues = _Issues([], [])
-    built: list[TradeInstruction] = []
+    built: list[NewTradeInstruction] = []
     for sections in candidates:
         instruction = _candidate(sections, issues)
         if instruction is not None:
@@ -252,7 +273,7 @@ def _done(
     disposition: Disposition,
     message_type: MessageType,
     reasons: tuple[str, ...],
-    instructions: tuple[TradeInstruction, ...],
+    instructions: tuple[NewTradeInstruction, ...],
     evidence: tuple[FieldEvidence, ...],
 ) -> Extraction:
     if disposition is not Disposition.ACCEPT:
@@ -264,16 +285,34 @@ def _deferred(message_type: MessageType, reason: ReasonCode) -> Extraction:
     return _done(Disposition.QUARANTINE, message_type, (reason.value,), (), ())
 
 
+def _label_name(match: re.Match[str]) -> str:
+    label = " ".join(match.group(1).lower().split())
+    if label == "protective stop":
+        return "stop"
+    return label
+
+
+def _trim_before_next_trade(raw: str) -> str:
+    """Keep this field from swallowing the preamble of the next Symbol block."""
+
+    head, separator, _tail = raw.partition("\n\n")
+    if separator:
+        return head
+    return raw
+
+
 def _candidates(text: str) -> list[dict[str, str]]:
     matches = list(_LABEL.finditer(text))
     candidates: list[dict[str, str]] = []
     current: dict[str, str] | None = None
     for index, match in enumerate(matches):
-        label = " ".join(match.group(1).lower().split())
-        if label == "protective stop":
-            label = "stop"
-        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-        value = text[match.end() : end].strip()
+        label = _label_name(match)
+        next_match = matches[index + 1] if index + 1 < len(matches) else None
+        end = next_match.start() if next_match is not None else len(text)
+        raw = text[match.end() : end]
+        if next_match is not None and _label_name(next_match) == "symbol":
+            raw = _trim_before_next_trade(raw)
+        value = raw.strip()
         if label == "symbol":
             current = {"symbol": value}
             candidates.append(current)
@@ -288,7 +327,7 @@ def _candidates(text: str) -> list[dict[str, str]]:
     return candidates
 
 
-def _candidate(sections: dict[str, str], issues: _Issues) -> TradeInstruction | None:
+def _candidate(sections: dict[str, str], issues: _Issues) -> NewTradeInstruction | None:
     start_count = len(issues.reasons)
     for label in ("symbol", "company", "strategy", "entry", "sizing", "target", "stop"):
         if sections.get("duplicate:" + label) == "true":
@@ -309,7 +348,11 @@ def _candidate(sections: dict[str, str], issues: _Issues) -> TradeInstruction | 
     target = _price_order("target", sections.get("target"), issues, require=True)
     stop = _price_order("protective_stop", sections.get("stop"), issues, require=True)
     sizing = _sizing(sections.get("sizing"), issues)
-    time_exit = _time_exit(sections.get("time exit"), issues)
+    time_exit = _time_exit(
+        sections.get("time exit"),
+        issues,
+        None if entry is None else entry.side,
+    )
     whole = "\n".join(sections.get(name, "") for name in ("entry", "target", "stop", "time exit"))
     first_match = _FIRST_EXIT.search(whole)
     sibling_match = _SIBLING.search(whole)
@@ -338,9 +381,7 @@ def _candidate(sections: dict[str, str], issues: _Issues) -> TradeInstruction | 
         FieldEvidence("first_exit_wins", first_match.group(0) if first_match else ""),
         FieldEvidence("sibling_cancel", sibling_match.group(0) if sibling_match else ""),
     )
-    return TradeInstruction(
-        instruction_id="",
-        message_type=MessageType.NEW_TRADE,
+    return NewTradeInstruction(
         symbol=symbol,
         company_name=_clean_label(sections.get("company")),
         strategy_label=_clean_label(sections.get("strategy")),
@@ -438,13 +479,13 @@ def _price_order(
         return None
     tif = _tif(field, section, issues)
     trigger = _trigger(field, section, issues)
-    resolved = _resolve_date(section)
+    resolved = _section_date(section)
     _apply_date(field, resolved, issues)
     if (
         not price_ok
         or tif is None
         or trigger is None
-        or resolved.status in {"conflict", "unresolved", "malformed"}
+        or resolved.status in {"conflict", "unresolved", "malformed", "unsupported"}
     ):
         return None
     evidence: tuple[FieldEvidence, ...] = (
@@ -497,9 +538,13 @@ def _stop_limit_order(
         return None
     tif = _tif(field, section, issues)
     trigger = _trigger(field, section, issues)
-    resolved = _resolve_date(section)
+    resolved = _section_date(section)
     _apply_date(field, resolved, issues)
-    if tif is None or trigger is None or resolved.status in {"conflict", "unresolved", "malformed"}:
+    if (
+        tif is None
+        or trigger is None
+        or resolved.status in {"conflict", "unresolved", "malformed", "unsupported"}
+    ):
         return None
     side = Side.BUY if pair.group(1).lower() == "buy" else Side.SELL
     return PriceOrder(
@@ -639,6 +684,12 @@ def _apply_date(field: str, resolved: DateResolution, issues: _Issues) -> None:
         issues.add(ReasonCode.DATE_CONFLICT.value, f"{field}.session_date", resolved.source_date)
     elif resolved.status == "malformed":
         issues.add(ReasonCode.MALFORMED_DATE.value, f"{field}.session_date", resolved.source_date)
+    elif resolved.status == "unsupported":
+        issues.add(
+            ReasonCode.UNSUPPORTED_DATE_FORMAT.value,
+            f"{field}.session_date",
+            resolved.source_date,
+        )
 
 
 def _sizing(section: str | None, issues: _Issues) -> Sizing | None:
@@ -705,22 +756,35 @@ def _sizing(section: str | None, issues: _Issues) -> Sizing | None:
     )
 
 
-def _time_exit(section: str | None, issues: _Issues) -> TimeExit | None:
+def _time_exit(
+    section: str | None,
+    issues: _Issues,
+    entry_side: Side | None,
+) -> TimeExit | None:
     if section is None:
         return None
     if len(section) > MAX_EVIDENCE_CHARS:
         issues.add(ReasonCode.OVERSIZED_FIELD.value, "time_exit", "")
         return None
-    opened = _SELL_OPEN.search(section)
+    opened = _OPEN_EXIT.search(section)
     if opened is None:
         issues.add(ReasonCode.UNSPECIFIED_TIME_EXIT.value, "time_exit", section)
         return None
-    resolved = _resolve_date(section)
+    stated = Side.BUY if opened.group(1).lower() == "buy" else Side.SELL
+    closing = _closing_side(entry_side)
+    if closing is not None and stated is not closing:
+        issues.add(
+            ReasonCode.CONFLICTING_ECONOMIC_INSTRUCTION.value,
+            "time_exit.side",
+            opened.group(0),
+        )
+        return None
+    resolved = _section_date(section)
     _apply_date("time_exit", resolved, issues)
-    if resolved.status in {"conflict", "unresolved", "malformed"}:
+    if resolved.status in {"conflict", "unresolved", "malformed", "unsupported"}:
         return None
     return TimeExit(
-        side=Side.SELL,
+        side=stated,
         session_event=SessionEvent.REGULAR_SESSION_OPEN,
         source_date=resolved.source_date,
         resolved_date=resolved.resolved,
@@ -728,11 +792,40 @@ def _time_exit(section: str | None, issues: _Issues) -> TimeExit | None:
         timezone_assumption=TIMEZONE_ASSUMPTION,
         calendar_assumption=CALENDAR_ASSUMPTION,
         evidence=(
-            FieldEvidence("time_exit.side", "sell"),
+            FieldEvidence("time_exit.side", opened.group(1)),
             FieldEvidence("time_exit.session_event", opened.group(0)),
             FieldEvidence("time_exit.source_date", resolved.source_date),
         ),
     )
+
+
+def _closing_side(entry_side: Side | None) -> Side | None:
+    if entry_side is Side.BUY:
+        return Side.SELL
+    if entry_side is Side.SELL:
+        return Side.BUY
+    return None
+
+
+def _section_date(section: str) -> DateResolution:
+    """Bind a date only from authoritative economic sentences in the section."""
+
+    kept: list[str] = []
+    for sentence in _SENTENCE_BREAK.split(section):
+        stripped = sentence.strip()
+        if stripped == "" or _NON_AUTHORITATIVE_SENTENCE.search(stripped):
+            continue
+        kept.append(stripped)
+    scope = " ".join(kept)
+    unsupported = _UNSUPPORTED_DATE.search(scope)
+    if unsupported is not None:
+        return DateResolution(
+            "unsupported",
+            unsupported.group(0),
+            None,
+            RESOLUTION_UNSUPPORTED,
+        )
+    return _resolve_date(scope)
 
 
 def _resolve_date(section: str) -> DateResolution:
@@ -800,44 +893,43 @@ def _mask(section: str, spans: list[tuple[int, int]]) -> str:
     return "".join(characters)
 
 
-def _economic_key(instruction: TradeInstruction) -> tuple[object, ...]:
-    time_exit = instruction.time_exit
-    return (
-        instruction.symbol,
-        instruction.strategy_label,
-        instruction.direction,
-        instruction.entry.side,
-        instruction.entry.order_type,
-        instruction.entry.price,
-        instruction.entry.limit_price,
-        instruction.entry.time_in_force,
-        instruction.entry.trigger_basis,
-        instruction.entry.session_date,
-        instruction.sizing.percent_equity,
-        instruction.sizing.example_account_equity,
-        instruction.sizing.example_allocation,
-        instruction.sizing.example_quantity,
-        instruction.sizing.quantity_rounding_policy,
-        instruction.target.order_type,
-        instruction.target.price,
-        instruction.target.time_in_force,
-        instruction.protective_stop.order_type,
-        instruction.protective_stop.price,
-        instruction.protective_stop.time_in_force,
-        instruction.protective_stop.trigger_basis,
-        None if time_exit is None else time_exit.session_event,
-        None if time_exit is None else time_exit.resolved_date,
-        instruction.first_exit_wins,
-        instruction.sibling_cancel,
-    )
+def _economic_key(instruction: NewTradeInstruction) -> tuple[object, ...]:
+    """Project every economic dataclass field. Omissions require an explicit exclusion."""
+
+    projected = _project_value(instruction)
+    if not isinstance(projected, tuple):
+        raise RuntimeError("economic projection must be a tuple")
+    return projected
+
+
+def _project_value(value: object) -> object:
+    if isinstance(value, Decimal):
+        return format(value.normalize(), "f")
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, tuple):
+        return tuple(_project_value(item) for item in value)
+    if is_dataclass(value) and not isinstance(value, type):
+        return tuple(
+            (field.name, _project_value(getattr(value, field.name)))
+            for field in fields(value)
+            if field.name not in _PROJECTION_EXCLUDED
+        )
+    return value
 
 
 def assign_instruction_ids(
     extraction: Extraction,
     digest: str,
-) -> Extraction:
-    instructions = tuple(
-        replace(item, instruction_id=f"v1:email_instruction:{digest}:{index}")
+) -> tuple[CanonicalInstructionEnvelope, ...]:
+    """Economic identity is the raw-byte digest plus index, never the provider id."""
+
+    return tuple(
+        CanonicalInstructionEnvelope(
+            instruction_id=f"v1:email_instruction:{digest}:{index}",
+            message_type=MessageType.NEW_TRADE,
+            payload=item,
+            evidence=item.evidence,
+        )
         for index, item in enumerate(extraction.instructions)
     )
-    return replace(extraction, instructions=instructions)
