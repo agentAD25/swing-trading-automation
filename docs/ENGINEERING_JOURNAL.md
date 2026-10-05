@@ -2119,3 +2119,59 @@ The remediation commit is `05dfff9f69d27b869dcb1c392d8d103b7f21d6b4`, tree
 `b25892d7cd6ad43769e44cd67cd53c3dd7cb8602`, parent
 `229a38b4b6f7ab628d1c656974686e7888075302`. This sentence is a descendant
 evidence note. It does not change the parser.
+
+## 2026-10-05 — Group 4A F2 exit-policy negation repair
+
+Cloud certification of draft PR #20 at
+`f23f03bf99648c7e3d0384741b4bc584087e6124`, tree
+`86b5e73b405af8d79e0f96df6161fa87a8ad0abd`, left F2 blocked. Positive
+substring matching accepted negated first-exit and sibling-cancel wording
+as the positive policy. This entry records the bounded repair. It does not
+merge PR #20 and does not authorize Gmail, TradeStation, Supabase,
+credentials, orders, `SIM`, or `LIVE`. `DRY_RUN` remains the sole authorized
+execution mode.
+
+### Boundary
+
+The parser change is `src/swingtrade/group4_email/extract.py`. Regression
+coverage is `tests/group4_email/test_exit_policy_negation.py`. Plain/HTML
+equality still compares the typed economic projection. F1 and F3–F7 are
+unchanged. No persistence, migration, token-store, or Alembic file changes.
+Alembic head remains `0003_durable_dry_run_observation`. PostgreSQL was not
+used.
+
+### Semantics
+
+`FIRST_EXIT_WINS` and `SIBLING_CANCEL_REQUIRED` are read as affirmed,
+negated-or-conflicting, or absent. A positive phrase is affirmed only when
+its sentence has no negation cue, no cue sits in the 120-character prefix,
+and no cue follows the phrase in the order text. A negated form that does
+not use the positive word order is a conflict. Affirmed and negated
+readings in one authoritative text quarantine as
+`CONFLICTING_ECONOMIC_INSTRUCTION` with zero accepted instructions. Absence
+stays `MISSING_EXIT_POLICY`. Two representations that agree on a negation
+do not accept a new trade. A positive phrase against a negated or absent
+counterpart quarantines as `HTML_PLAIN_CONFLICT`. Canonical "Whichever exit
+comes first closes the trade." stays `first_exit_wins=True`. "Once the
+target or the stop fills, cancel the other one." and "cancel both
+outstanding exits" stay `SIBLING_CANCEL_REQUIRED` when not negated.
+
+### Local checks
+
+`SWINGTRADE_TEST_POSTGRES_URL` was unset. Configured Phase 1 pytest: 119
+passed, 99 skipped. `tests/validate_phase1_contracts.py` PASS. Group 2
+(`tests/offline` and `tests/contracts`): 149 passed, 12 skipped. Group 3:
+56 passed, 0 skipped. Group 4A: 81 passed, 0 skipped. Entire `tests/`: 405
+passed, 111 skipped. Every skip reason is
+`SWINGTRADE_TEST_POSTGRES_URL is required`. Those skips were not executed
+and are not reported as passed. `ruff check .` passed. `mypy src` reported
+no issues in 37 source files. `alembic heads` is
+`0003_durable_dry_run_observation`. `git diff --check` was clean. A
+network, mailbox, broker, and database primitive scan of
+`src/swingtrade/group4_email` found no matches.
+
+These local checks are not an independent gate and not Operator acceptance
+of Phase 1. The parent of this repair is
+`f23f03bf99648c7e3d0384741b4bc584087e6124`, tree
+`86b5e73b405af8d79e0f96df6161fa87a8ad0abd`. This entry does not embed its
+own commit hash.

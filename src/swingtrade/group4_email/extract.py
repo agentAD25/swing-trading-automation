@@ -80,6 +80,25 @@ _FIRST_EXIT = re.compile(r"(?i)\bwhichever\s+exit\s+comes\s+first\b")
 _SIBLING = re.compile(
     r"(?i)\b(?:cancel\s+the\s+other|cancel\s+both\s+outstanding\s+exits)\b"
 )
+# A cue in the same sentence, or this close to the phrase, blocks affirmation.
+_POLICY_CUE_RADIUS = 120
+_NEGATION_CUE = (
+    r"(?:n['\u2019]t\b|\b(?:not|never|no|cannot|cant|dont|doesnt|wont|"
+    r"isnt|arent|shouldnt|wouldnt|mustnt)\b)"
+)
+_NEGATION = re.compile(rf"(?i){_NEGATION_CUE}")
+_CANCEL_STEM = r"\bcancel(?:l?ed|l?ing|lation)?\b"
+_FIRST_EXIT_NEGATED = re.compile(
+    rf"(?i)(?:{_NEGATION_CUE}.{{0,80}}?\bwhichever\s+exit\b"
+    rf"|\bwhichever\s+exit\b.{{0,80}}?{_NEGATION_CUE})"
+)
+_SIBLING_NEGATED = re.compile(
+    rf"(?i)(?:{_NEGATION_CUE}.{{0,80}}?{_CANCEL_STEM}.{{0,40}}?\bthe\s+other\b"
+    rf"|{_NEGATION_CUE}.{{0,80}}?\bcancel\s+both\s+outstanding\s+exits\b"
+    rf"|\bthe\s+other\b.{{0,80}}?{_NEGATION_CUE}.{{0,40}}?{_CANCEL_STEM}"
+    rf"|{_CANCEL_STEM}.{{0,40}}?\bthe\s+other\b.{{0,60}}?{_NEGATION_CUE}"
+    rf"|\bcancel\s+both\s+outstanding\s+exits\b.{{0,60}}?{_NEGATION_CUE})"
+)
 _OPEN_EXIT = re.compile(r"(?i)\b(buy|sell)\s+at\s+the\s+open\b")
 _NON_AUTHORITATIVE_SENTENCE = re.compile(
     r"(?i)\b(?:charts?|disclaimer|copyright|footer|published|publication|"
@@ -301,6 +320,76 @@ def _trim_before_next_trade(raw: str) -> str:
     return raw
 
 
+class _PolicyReading(Enum):
+    """Reading of one accepted exit policy inside authoritative order text."""
+
+    AFFIRMED = "AFFIRMED"
+    NEGATED_OR_CONFLICTING = "NEGATED_OR_CONFLICTING"
+    ABSENT = "ABSENT"
+
+
+def _policy_sentences(text: str) -> list[str]:
+    return [part.strip() for part in _SENTENCE_BREAK.split(text) if part.strip()]
+
+
+def _negation_near(text: str, start: int, end: int) -> bool:
+    """A cue before the phrase must sit in the radius. A later cue fails closed."""
+
+    before = text[max(0, start - _POLICY_CUE_RADIUS) : start]
+    after = text[end:]
+    return _NEGATION.search(before) is not None or _NEGATION.search(after) is not None
+
+
+def _read_policy(
+    text: str,
+    positive: re.Pattern[str],
+    negated: re.Pattern[str],
+) -> _PolicyReading:
+    """Affirm a phrase only when no negation cue is tied to that phrase.
+
+    A cue in the same sentence, or within the bounded radius, blocks that
+    occurrence. Positive and negated readings in one text fail closed together.
+    """
+
+    affirmed = False
+    contradicted = False
+    for sentence in _policy_sentences(text):
+        has_positive = positive.search(sentence) is not None
+        has_negation = _NEGATION.search(sentence) is not None
+        has_negated_form = negated.search(sentence) is not None
+        if has_positive and not has_negation:
+            affirmed = True
+        elif has_positive or has_negated_form:
+            contradicted = True
+    for match in positive.finditer(text):
+        if _negation_near(text, match.start(), match.end()):
+            contradicted = True
+    if contradicted:
+        return _PolicyReading.NEGATED_OR_CONFLICTING
+    if affirmed:
+        return _PolicyReading.AFFIRMED
+    return _PolicyReading.ABSENT
+
+
+def _sentence_at(text: str, index: int) -> str:
+    previous = 0
+    for match in _SENTENCE_BREAK.finditer(text):
+        if match.start() >= index:
+            return text[previous : match.start()]
+        previous = match.end()
+    return text[previous:]
+
+
+def _affirmed_phrase(text: str, positive: re.Pattern[str]) -> str:
+    for match in positive.finditer(text):
+        if _NEGATION.search(_sentence_at(text, match.start())) is not None:
+            continue
+        if _negation_near(text, match.start(), match.end()):
+            continue
+        return match.group(0)
+    return ""
+
+
 def _candidates(text: str) -> list[dict[str, str]]:
     matches = list(_LABEL.finditer(text))
     candidates: list[dict[str, str]] = []
@@ -354,19 +443,29 @@ def _candidate(sections: dict[str, str], issues: _Issues) -> NewTradeInstruction
         None if entry is None else entry.side,
     )
     whole = "\n".join(sections.get(name, "") for name in ("entry", "target", "stop", "time exit"))
-    first_match = _FIRST_EXIT.search(whole)
-    sibling_match = _SIBLING.search(whole)
+    first_reading = _read_policy(whole, _FIRST_EXIT, _FIRST_EXIT_NEGATED)
+    sibling_reading = _read_policy(whole, _SIBLING, _SIBLING_NEGATED)
     if entry is not None and target is not None and stop is not None:
-        if first_match is None or sibling_match is None:
+        if first_reading is _PolicyReading.ABSENT or sibling_reading is _PolicyReading.ABSENT:
             issues.add(
                 ReasonCode.MISSING_EXIT_POLICY.value,
+                "exit_policy",
+                whole[:MAX_EVIDENCE_CHARS],
+            )
+        if (
+            first_reading is _PolicyReading.NEGATED_OR_CONFLICTING
+            or sibling_reading is _PolicyReading.NEGATED_OR_CONFLICTING
+        ):
+            issues.add(
+                ReasonCode.CONFLICTING_ECONOMIC_INSTRUCTION.value,
                 "exit_policy",
                 whole[:MAX_EVIDENCE_CHARS],
             )
     if len(issues.reasons) != start_count:
         return None
     assert entry is not None and target is not None and stop is not None and sizing is not None
-    assert first_match is not None and sibling_match is not None
+    assert first_reading is _PolicyReading.AFFIRMED
+    assert sibling_reading is _PolicyReading.AFFIRMED
     direction = Direction.LONG if entry.side is Side.BUY else Direction.SHORT
     evidence = (
         FieldEvidence("symbol", symbol),
@@ -378,8 +477,8 @@ def _candidate(sections: dict[str, str], issues: _Issues) -> NewTradeInstruction
         *target.evidence,
         *stop.evidence,
         *(time_exit.evidence if time_exit is not None else ()),
-        FieldEvidence("first_exit_wins", first_match.group(0) if first_match else ""),
-        FieldEvidence("sibling_cancel", sibling_match.group(0) if sibling_match else ""),
+        FieldEvidence("first_exit_wins", _affirmed_phrase(whole, _FIRST_EXIT)),
+        FieldEvidence("sibling_cancel", _affirmed_phrase(whole, _SIBLING)),
     )
     return NewTradeInstruction(
         symbol=symbol,
