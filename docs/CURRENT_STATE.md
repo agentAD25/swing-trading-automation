@@ -2,7 +2,9 @@
 
 - Last updated: 2026-10-05
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
-  foundation implemented on this branch and not merged; C1/U-10 resolved
+  foundation implemented on this branch and not merged; C1/U-10 resolved;
+  offline Group 4A email contract is on canonical `main` by exact
+  fast-forward of `ce045c14b119d882505a947a7826005ff6d99103`
 - Phase status: `PHASE1_COMPLETE` for governance, design, reconciliation,
   acceptance, and the offline `DRY_RUN` foundation; `PHASE1_ACCEPTED` remains
   the bounded meaning of the exact broker-neutral offline deterministic
@@ -94,7 +96,7 @@
 | PR #13 zero-cost evidence | History-preserving merge of exact commit `78f485b33bdd3f859d540458ba170b2353c04c61`, tree `28b3ced5663c00f4b8d32828ed2b160344d09805`, as `e0ec755e39c897492fbc8d970bb165d8335d361c`, tree `5e687dc37376b1b9c092a2a56a40348e5d36532f`. Versus the PR #14 tip this adds only `docs/P2_C_ZERO_INCREMENTAL_COST.md`. `docs/DB_DEPLOYMENT.md` is unchanged. `INITIAL_DATABASE_INCREMENTAL_SERVICE_COST = 0 USD`. Supersedes only the initial-deployment effect of the historical RDS recommendation. Supabase is **NOT_ACCEPTED**. |
 | Offline Group 2 foundation | Operator authorizes the offline Group 2 foundation only. Later decisions: non-Cursor bootstrap injector, key custody, retention, and SIM database host. The authorization commit itself added no application code. The implementation is on this branch at `904a362ac716aa8a7d3c9e830444a19108feed67` and is not merged. |
 | C1/U-10 closure | Operator accepts ADR-0002 after independent review `C1_U10_CONTRACT_PASS` on `a4213f8356a9e32ca4647865ee98e13660e3d656`, tree `c07487c88f24f9432de89df7f574130274d50b4b`. C1/U-10 is **RESOLVED**. Non-blocking residuals do not reopen C1. Not operational credential certification, key management, Supabase selection, or `LIVE` authorization. |
-| Offline Group 4A email contract | Remediation commit `05dfff9f69d27b869dcb1c392d8d103b7f21d6b4`, tree `b25892d7cd6ad43769e44cd67cd53c3dd7cb8602`, parent `229a38b4b6f7ab628d1c656974686e7888075302`, is on this branch and is not merged. The Operator accepted ADR-0003: a `CanonicalInstructionEnvelope` carries a required-field `NewTradeInstruction` or a reserved amendment, exit-alert, or cancel payload. Only new-trade parsing is implemented. `EMAIL_RETENTION_POLICY` is `HASH_PROVIDER_REF_FIELD_EVIDENCE`. A further bounded repair, parent `f23f03bf99648c7e3d0384741b4bc584087e6124`, reads first-exit-wins and sibling-cancel as affirmed, negated-or-conflicting, or absent. Explicit negation or same-source conflict quarantines as `CONFLICTING_ECONOMIC_INSTRUCTION` and does not become the positive policy. Quantity rounding, market calendar, and timezone remain unresolved. Draft PR #20. No Gmail, broker, credential, Supabase, order, SIM, or `LIVE` authority. |
+| Offline Group 4A email contract | On canonical `main` by exact fast-forward of certified commit `ce045c14b119d882505a947a7826005ff6d99103`, tree `67a0b57526ea219972fa0574b191562f0f52b598`. No squash, rebase, force-push, or merge commit. The pre-fast-forward sentence that this work was unmerged is superseded for location only. Remediation commit `05dfff9f69d27b869dcb1c392d8d103b7f21d6b4`, tree `b25892d7cd6ad43769e44cd67cd53c3dd7cb8602`, parent `229a38b4b6f7ab628d1c656974686e7888075302`, remains an ancestor. The Operator accepted ADR-0003: a `CanonicalInstructionEnvelope` carries a required-field `NewTradeInstruction` or a reserved amendment, exit-alert, or cancel payload. Only new-trade parsing is implemented. `EMAIL_RETENTION_POLICY` is `HASH_PROVIDER_REF_FIELD_EVIDENCE`. Exit-policy negation or same-source conflict quarantines as `CONFLICTING_ECONOMIC_INSTRUCTION` and does not become the positive policy. Quantity rounding, market calendar, and timezone remain unresolved. PR #20. No Gmail, broker, credential, Supabase, order, SIM, or `LIVE` authority. |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
 `phase1-accepted-abc1fb6` fixes the accepted commit without making the
@@ -211,8 +213,10 @@ direction.
    Relative weekday and month-day-without-year dates are unresolved.
    Numeric and timestamp dates in an economic sentence quarantine as
    unsupported. Negated or conflicting first-exit and sibling-cancel
-   wording does not become the positive policy. The parser is not merged.
-   It grants no Gmail, broker,
+   wording does not become the positive policy. The certified parser is
+   on canonical `main` by exact fast-forward of
+   `ce045c14b119d882505a947a7826005ff6d99103`. The sentence that the
+   parser is not merged is pre-fast-forward. It grants no Gmail, broker,
    credential, Supabase, order, SIM, or `LIVE` authority.
 
 ## Evidence

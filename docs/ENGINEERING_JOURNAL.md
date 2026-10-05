@@ -2175,3 +2175,38 @@ of Phase 1. The parent of this repair is
 `f23f03bf99648c7e3d0384741b4bc584087e6124`, tree
 `86b5e73b405af8d79e0f96df6161fa87a8ad0abd`. This entry does not embed its
 own commit hash.
+
+## 2026-10-05 — Group 4A exact fast-forward onto `main` (evidence-only)
+
+This entry is evidence-only. It corrects the stale pre-fast-forward
+statement that the Group 4A parser was unmerged. It does not change
+parser behavior, start Gmail, connect Supabase or TradeStation, begin
+Group 4B, accept quantity rounding, a timezone, or a market calendar,
+or authorize credentials, orders, `SIM`, or `LIVE`. `DRY_RUN` remains
+the sole authorized execution mode.
+
+### Recorded promotion
+
+Canonical `main` was fast-forwarded from
+`12e852c6d523a8fbfe2082a33887e36045ee04ae`, tree
+`99db680fb2a82d594aa4f6b1bbc0de7e47a217b8`, to certified commit
+`ce045c14b119d882505a947a7826005ff6d99103`, tree
+`67a0b57526ea219972fa0574b191562f0f52b598`. Mechanism:
+`git merge --ff-only ce045c14b119d882505a947a7826005ff6d99103` then
+`git push origin main`. No squash, rebase, force-push, or convenience
+merge commit. That certified commit is an ancestor of `main`.
+Independent verification returned `P2_G4A_EMAIL_TRADE_INSTRUCTION_PASS`
+with F1–F7 closed. Findings that said the branch was not merged are
+**pre-fast-forward**. This descendant commit supersedes that location
+statement only.
+
+### Still unresolved
+
+Quantity rounding stays `UNRESOLVED`. Timezone stays `UNSTATED`. The
+market calendar stays `UNRESOLVED`. Amendment, exit-alert, and cancel
+grammars stay deferred. The 12 Group 2 token-store PostgreSQL tests
+remain `NO_ACCEPTED_EVIDENCE_FOUND` and are not closed by this
+integration. Supabase is not selected.
+
+This commit edits only `docs/CURRENT_STATE.md` and this journal. It is
+not the certified implementation tree `67a0b57526ea219972fa0574b191562f0f52b598`.
