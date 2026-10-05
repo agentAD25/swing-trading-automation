@@ -2114,3 +2114,8 @@ broker primitive scan of that package found no matches.
 
 These local checks are not an independent gate and not Operator acceptance
 of Phase 1. ADR-0003 records the Operator's Group 4A contract decision.
+
+The remediation commit is `05dfff9f69d27b869dcb1c392d8d103b7f21d6b4`, tree
+`b25892d7cd6ad43769e44cd67cd53c3dd7cb8602`, parent
+`229a38b4b6f7ab628d1c656974686e7888075302`. This sentence is a descendant
+evidence note. It does not change the parser.
