@@ -1958,3 +1958,63 @@ Status evidence is `docs/CURRENT_STATE.md`, this journal,
 `docs/adr/0002-provider-neutral-token-store.md` (status Accepted), and
 `docs/C1_U10_CONTRACT_STATUS.md` (status **RESOLVED**). `src/` and
 `tests/` are untouched. No merge.
+
+## 2026-10-05 — Offline Group 4A email instruction parser
+
+This entry records an offline, fixture-only parser. It does not authorize
+Phase 2 generally, Gmail, IMAP, SMTP, TradeStation, Supabase, credentials,
+orders, TradeStation `SIM`, or `LIVE`. `DRY_RUN` remains the sole authorized
+execution mode. The branch is not merged.
+
+### Identity
+
+Fetched `origin/main` before branching. It matched the expected commit
+`12e852c6d523a8fbfe2082a33887e36045ee04ae`, tree
+`99db680fb2a82d594aa4f6b1bbc0de7e47a217b8`. The branch
+`cursor/p2-g4a-email-contract-f7f7` is a descendant of that commit, not of
+PR #19. Implementation commit
+`ddaf07eb03b9bd18379672ae8ad3652773358cd0`, tree
+`0afaee9497e496aef7698ec631653b18c98f2c0e`. Draft PR #20. This journal
+commit is a descendant evidence note. No amend, squash, rebase, or
+force-push.
+
+### Contract recorded here
+
+The parser stops at a canonical `TradeInstruction` or reject/quarantine.
+There is no broker action, OCO, or trade-lifecycle engine. No Alembic
+revision. Head remains `0003_durable_dry_run_observation`.
+
+The supplied undated TDAY excerpt classifies as `NEW_TRADE` and quarantines
+with `UNRESOLVED_REQUIRED_DATE` because "Monday" and "Mon Nov 9" are not
+explicit civil dates. A fixture that states `Monday 2026-11-02` and
+`Mon Nov 9, 2026` in the economic sentences accepts: `LONG`, buy stop
+`7.23` `DAY`, `PERCENT_EQUITY` `0.05`, sell limit `9.01` `GTC`, sell stop
+`6.54` `GTC` with `BROKER_PRICE_ORDER`, sell at `REGULAR_SESSION_OPEN`,
+first-exit-wins, and `SIBLING_CANCEL_REQUIRED`. The example `10000` / `500`
+/ `69` is recorded. `QUANTITY_ROUNDING_POLICY` stays `UNRESOLVED`.
+
+`TRADE_AMENDMENT_PARSER` and `EXIT_ALERT_PARSER` are
+`DEFERRED_FIXTURE_REQUIRED`. Email retention is not selected
+(`P2_G4A_EMAIL_RETENTION_DECISION_REQUIRED`): stored body, sanitized body,
+or content hash plus provider retrieval reference. The parser persists
+none of those. Relative date resolution is not implemented
+(`P2_G4A_DATE_SEMANTICS_BLOCKED` for weekday-only and month-day-without-year).
+Timezone assumption is `UNSTATED`. Calendar assumption is `UNRESOLVED`.
+The system clock is not used.
+
+### Local checks
+
+Pre-change configured pytest collection was 218 tests. After the parser,
+the same configured suite collected 218 tests: 119 passed, 99 skipped.
+PostgreSQL was not available in this environment (`psql` and `docker`
+absent), so those skips were not executed against PostgreSQL 16.
+`tests/validate_phase1_contracts.py` PASS. Group 2 (`tests/offline` and
+`tests/contracts`): 149 passed, 12 skipped because
+`SWINGTRADE_TEST_POSTGRES_URL` is unset. Group 3: 56 passed. Group 4A:
+36 passed. `ruff check .` all checks passed. `mypy src` no issues in 37
+source files. `alembic heads` is `0003_durable_dry_run_observation`.
+`git diff --check` against `origin/main` was clean. Secret-pattern scan of
+the implementation diff found 0 matches. Network, email, and broker
+primitive scan of `src/swingtrade/group4_email` found 0 matches.
+
+These local checks are not an independent gate and not Operator acceptance.
