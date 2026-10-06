@@ -2210,3 +2210,69 @@ integration. Supabase is not selected.
 
 This commit edits only `docs/CURRENT_STATE.md` and this journal. It is
 not the certified implementation tree `67a0b57526ea219972fa0574b191562f0f52b598`.
+
+## 2026-10-06 — TradeStation Client Experience evidence reconciliation
+
+The Operator supplied written Client Experience answers. This entry records
+those answers in the research contracts. It does not authenticate to
+TradeStation, create a key, request a token, call SIM or LIVE, place an
+order, connect Gmail or Supabase, modify Gmail draft PR #21, or begin
+Group 4B. `DRY_RUN` remains the sole authorized execution mode.
+
+### Repository identity at start
+
+Canonical `main` was `41218abb2eda5f06001703fb83c2cb9e43e5ec2e`, tree
+`39f0ab05c49b533270964b303601539feeff570f`. Group 4A is integrated and
+certified on that commit. Gmail Gate A remains the separate branch
+`cursor/p2-g4-gmail-readonly-gate-a-99c1` at
+`a2cef6f3527b2aab7319a2628874fcdcaf03acac` (draft PR #21) and is not
+modified.
+
+Draft PR #19 head `bc6ab7ea92310ffa133b75b498f7f245af11f166` is based on
+`12e852c6d523a8fbfe2082a33887e36045ee04ae` and is not an ancestor of
+`main`. Its Proposed ADR used number 0003, which canonical `main` already
+uses for the accepted Group 4A ADR. Updating PR #19 would mix that history
+with current `CURRENT_STATE.md` and this journal. This work therefore
+starts a replacement branch, `cursor/p2-ts-provider-evidence-99c1`, from
+current `main`. PR #19 is left open and is not merged.
+
+### What the provider confirmed
+
+Regular Web uses Authorization Code and requires `client_secret`. Native
+or Single Page can use Authorization Code with PKCE and a Code Verifier,
+and can omit `client_secret`. The provider did not choose a type. A
+SIM-only API key is not available; the same key is used for both
+environments and the base URL differs. A generated key's scopes could be
+configured; the mechanism was not described. `offline_access` may be
+omitted, with a maximum session of 20 minutes. Default personal-use
+refresh tokens are non-rotating, non-expiring, and long-lived. Access
+tokens obtained from them last at most 20 minutes. Additional callback
+URLs may be requested by email. API access is limited to accounts under
+the authenticated login, and no additional entitlement is required to view
+that login's own accounts or data subscriptions. Rate limits are enforced
+per login.
+
+### What stays open
+
+The Native loopback callback form, whether the port may vary, and whether
+default or wildcard localhost callbacks can be removed. Returned-scope
+behavior. Exact subset-scope mechanics. The 30-versus-40-minute interval
+for a rotating configuration. Refresh concurrency, revocation, and
+non-default keys. Confidential Authorization Code plus PKCE. The
+Operator's expected SIM account inventory. None of the twelve broker
+behavior groups is closed. Groups 6, 7, and 10 advance. The others are
+unchanged.
+
+Native PKCE is an engineering preference because it can avoid a persistent
+client secret on the attended probe. It is not a provider recommendation
+and it is not selected. ADR-0005 is Proposed. Its Decision is blank.
+
+### Boundary
+
+No source, test, migration, or configuration file is changed. The first
+probe is specified and not executed. An unexpected `Trade` scope stops as
+`UNEXPECTED_SCOPE_GRANTED`. An unexpected refresh token is discarded and
+stops as `UNEXPECTED_REFRESH_TOKEN_RETURNED`. Raw account identifiers are
+not written here. Local check counts for this documentation change are
+recorded in a descendant journal note if the checks require their own
+commit. This entry does not embed its own commit hash.

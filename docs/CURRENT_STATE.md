@@ -1,10 +1,14 @@
 # Current State
 
-- Last updated: 2026-10-05
+- Last updated: 2026-10-06
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
   offline Group 4A email contract is on canonical `main` by exact
-  fast-forward of `ce045c14b119d882505a947a7826005ff6d99103`
+  fast-forward of `ce045c14b119d882505a947a7826005ff6d99103`. On this
+  branch, 2026-10-06 TradeStation Client Experience answers are recorded
+  in `docs/P2_TS_PROVIDER_EVIDENCE.md`. They are not on canonical `main`
+  until this branch lands. They do not authorize a credential, a SIM call,
+  or `LIVE`. The Native PKCE callback form remains open.
 - Phase status: `PHASE1_COMPLETE` for governance, design, reconciliation,
   acceptance, and the offline `DRY_RUN` foundation; `PHASE1_ACCEPTED` remains
   the bounded meaning of the exact broker-neutral offline deterministic
@@ -97,6 +101,7 @@
 | Offline Group 2 foundation | Operator authorizes the offline Group 2 foundation only. Later decisions: non-Cursor bootstrap injector, key custody, retention, and SIM database host. The authorization commit itself added no application code. The implementation is on this branch at `904a362ac716aa8a7d3c9e830444a19108feed67` and is not merged. |
 | C1/U-10 closure | Operator accepts ADR-0002 after independent review `C1_U10_CONTRACT_PASS` on `a4213f8356a9e32ca4647865ee98e13660e3d656`, tree `c07487c88f24f9432de89df7f574130274d50b4b`. C1/U-10 is **RESOLVED**. Non-blocking residuals do not reopen C1. Not operational credential certification, key management, Supabase selection, or `LIVE` authorization. |
 | Offline Group 4A email contract | On canonical `main` by exact fast-forward of certified commit `ce045c14b119d882505a947a7826005ff6d99103`, tree `67a0b57526ea219972fa0574b191562f0f52b598`. No squash, rebase, force-push, or merge commit. The pre-fast-forward sentence that this work was unmerged is superseded for location only. Remediation commit `05dfff9f69d27b869dcb1c392d8d103b7f21d6b4`, tree `b25892d7cd6ad43769e44cd67cd53c3dd7cb8602`, parent `229a38b4b6f7ab628d1c656974686e7888075302`, remains an ancestor. The Operator accepted ADR-0003: a `CanonicalInstructionEnvelope` carries a required-field `NewTradeInstruction` or a reserved amendment, exit-alert, or cancel payload. Only new-trade parsing is implemented. `EMAIL_RETENTION_POLICY` is `HASH_PROVIDER_REF_FIELD_EVIDENCE`. Exit-policy negation or same-source conflict quarantines as `CONFLICTING_ECONOMIC_INSTRUCTION` and does not become the positive policy. Quantity rounding, market calendar, and timezone remain unresolved. PR #20. No Gmail, broker, credential, Supabase, order, SIM, or `LIVE` authority. |
+| TradeStation provider evidence (2026-10-06) | Recorded on this branch. Not on canonical `main` until this branch lands. Draft PR #19 (`bc6ab7ea92310ffa133b75b498f7f245af11f166`) is not an ancestor of `main` and is not updated. ADR-0005 is Proposed; its Decision is blank. A SIM-only API key is not available. Default personal-use refresh tokens are non-rotating and long-lived. `offline_access` may be omitted for an attended probe. Groups 6, 7, and 10 advance and stay open. Groups 1–5, 8, 9, 11, and 12 are unchanged. Native PKCE is an engineering preference and is not selected. No credential, authorization, SIM call, LIVE call, order, Gmail change, or Supabase connection. |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
 `phase1-accepted-abc1fb6` fixes the accepted commit without making the
@@ -184,8 +189,10 @@ direction.
 2. Bounded Phase 1 acceptance does not expand ADR-0001 or authorize
    implementation. ADR-0001 remains Proposed. ADR-0002 is Accepted for
    C1/U-10 only and does not expand `PHASE1_ACCEPTED`.
-3. Twelve production-critical broker behavior groups remain unresolved;
-   strategy/data and risk/operations facts remain unresearched.
+3. Twelve production-critical broker behavior groups remain unresolved.
+   The 2026-10-06 Client Experience answers advance groups 6, 7, and 10
+   and do not close them. Groups 1–5, 8, 9, 11, and 12 are unchanged.
+   Strategy/data and risk/operations facts remain unresearched.
 4. Legal, regulatory, entitlement, security, and data-licensing obligations
    are unknown.
 5. Technology, persistence, deployment, operating thresholds, recovery
@@ -285,3 +292,16 @@ process-local same-attempt tracking, fence monotonicity not forced,
 `read_redacted` not environment-scoped, and stale "not implemented"
 wording in the historical proposal documents. Those residuals do not
 reopen C1. No source or test file changes. This branch is not merged.
+
+On 2026-10-06 the Operator supplied written TradeStation Client Experience
+answers. They are recorded in `docs/P2_TS_PROVIDER_EVIDENCE.md` and
+reconciled in `docs/P2_PRE_CREDENTIAL_DECISION.md`, with dated addenda on
+the broker, authentication, and question documents. ADR-0005 is Proposed
+and its Decision is blank. The provider did not select an application
+type. A SIM-only key is not available, so LIVE denial cannot depend on
+one. Default personal-use refresh tokens are non-rotating and long-lived;
+that does not close the published 30-versus-40-minute rotating-token
+conflict. The Native PKCE callback form is open, so no API client is
+created. No TradeStation authentication, token, SIM call, LIVE call,
+order, Gmail change, or Supabase connection follows. Gmail draft PR #21
+is not modified. Draft PR #19 is not updated.

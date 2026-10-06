@@ -912,3 +912,46 @@ Repository evidence, read at canonical base
 - [`PHASE_2_PLAN.md`](PHASE_2_PLAN.md): P2-B ownership, r1/r2 scope, H2, G1,
   and G2 boundaries. Limitation: planning artifact only; it grants no phase,
   credential, or network authority.
+
+## Dated addendum — Client Experience answers (2026-10-06)
+
+This addendum does not edit the proposal above and does not fill the blank
+Decision. Status remains **PROPOSED**. The Operator-supplied answers are
+quoted in `docs/P2_TS_PROVIDER_EVIDENCE.md`. No authentication was performed.
+
+Supersession, limited to the stated facts:
+
+- U-17, for an attended probe only. Client Experience confirmed
+  `offline_access` may be omitted. The session then lasts at most 20 minutes
+  before re-authorization. The historical page conflict stays in the evidence
+  register. It is not the live answer for that probe. The first probe omits
+  the scope and does not expect a refresh token.
+- U-04's "undocumented" clause. A SIM-only API key is not available. The same
+  key is used for both environments; the base URL differs. The risk that the
+  material is LIVE-capable is confirmed, not removed. G1 stays closed. Local
+  host, transport, and test controls cannot be replaced by a provider SIM-only
+  key. OAuth audience behavior was not answered.
+- The assumption that default personal-use refresh tokens rotate every 30 or
+  40 minutes or expire after 24 hours. For that default they are non-rotating,
+  non-expiring, and long-lived. Refreshed access tokens last at most 20
+  minutes. U-01 itself stays open: it asks which interval applies to a
+  rotating configuration, and that configuration was not answered.
+- U-09, in part. The quota identity named by the provider is the login.
+  Aggregation across processes or tokens under one login stays unknown.
+  U-09 is not closed. No additional login is provisioned.
+
+Still open, and not chosen by this addendum:
+
+- U-01 for rotating tokens, U-02 default-scope mechanics, U-03 confidential
+  client plus PKCE, U-05 Native loopback and removal of default or wildcard
+  callbacks, U-06 and U-08 revocation and refresh concurrency, U-07, U-14,
+  and U-16.
+- Application type. Regular Web requires `client_secret`. Native or Single
+  Page can omit it and use a Code Verifier. The provider did not recommend
+  one. Native PKCE remains an engineering preference in ADR-0005 and is not
+  selected, because the callback form is unconfirmed.
+
+A long-lived refresh token is a high-value secret. It is out of scope while
+`offline_access` is omitted. Before any unattended phase, custody,
+revocation, concurrency, replacement, compromise response, and TokenStore
+behavior still require certification. This addendum grants none of those.

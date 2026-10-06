@@ -313,3 +313,44 @@ P2-A/r1 facts or close group 6.
 
 No claim here establishes profitability, production readiness, SIM
 certification, LIVE fidelity, or authorization to cross any gate.
+
+## Dated addendum — Client Experience answers (2026-10-06)
+
+This addendum does not rewrite the round-one matrix above. The Operator
+supplied written TradeStation Client Experience answers. Verbatim text,
+classifications, and the per-group reconciliation are in
+`docs/P2_TS_PROVIDER_EVIDENCE.md`. No TradeStation call was made.
+
+What changes, and only for the stated configuration:
+
+- Group 6 advances and stays open. Application type maps to a flow:
+  Regular Web uses Authorization Code with `client_secret`; Native or
+  Single Page can use Authorization Code with PKCE and a Code Verifier.
+  TradeStation did not select a type. `offline_access` may be omitted, with
+  a 20-minute maximum session before re-authorization. That supersedes the
+  assumption that the published "required" wording blocks an attended
+  no-refresh probe. The page conflict itself stays recorded. Default
+  personal-use refresh tokens are non-rotating and long-lived; access
+  tokens minted from them last at most 20 minutes. That supersedes treating
+  30 minutes, 40 minutes, or a 24-hour absolute lifetime as the description
+  of that default. The 30-versus-40 conflict stays open for an optional
+  rotating configuration. Scope configuration "could be configured" after a
+  key exists; subset mechanics, returned `scope`, and the three-way default
+  conflict stay open. Callback registration by email is partial; Native
+  loopback behavior stays open.
+- Group 7 advances and stays open. Access is the authenticated login's
+  accounts. No additional entitlement is required to view that login's own
+  accounts or data subscriptions. A SIM-only API key is not available.
+  Account inventory is still an Operator record kept outside Git.
+- Group 10 advances and stays open. Rate limits are enforced per login.
+  Additional logins are not part of the design. Process, token, and account
+  aggregation under one login, and the numeric quotas, stay open.
+- Group 5 does not advance. The same-key, different-base-URL answer is
+  environment routing, not fill or reject fidelity.
+- Groups 1, 2, 3, 4, 8, 9, 11, and 12 are unchanged. None of the twelve
+  groups is closed.
+
+Round-one "fully resolved by public docs: 0/12" remains the 2026-09-26
+result. It is not restated as a claim that the 2026-10-06 answers were
+already known. This addendum authorizes no credential, probe, SIM call,
+order, or `LIVE` use.
