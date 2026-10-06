@@ -346,9 +346,9 @@ Later facts, without deleting the earlier conflicts:
   10 remain the published-page conflict for a rotating configuration and for
   default-scope wording. They are not the description of that personal-use
   default.
-- `offline_access` may be omitted. The unattended session maximum is then
-  20 minutes. The Scopes-table conflict recorded in the 2026-09-29 addendum
-  stays a page conflict.
+- `offline_access` may be omitted. The session then lasts at most 20
+  minutes before re-authorization. The Scopes-table conflict recorded in
+  the 2026-09-29 addendum stays a page conflict.
 - A SIM-only API key is not available. SIM and LIVE separation for that key
   is the request base URL. That strengthens host denial. It does not close
   group 5.

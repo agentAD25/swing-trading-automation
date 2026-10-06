@@ -2273,6 +2273,25 @@ No source, test, migration, or configuration file is changed. The first
 probe is specified and not executed. An unexpected `Trade` scope stops as
 `UNEXPECTED_SCOPE_GRANTED`. An unexpected refresh token is discarded and
 stops as `UNEXPECTED_REFRESH_TOKEN_RETURNED`. Raw account identifiers are
-not written here. Local check counts for this documentation change are
-recorded in a descendant journal note if the checks require their own
-commit. This entry does not embed its own commit hash.
+not written here. Local check counts are in the note below. This entry
+does not embed its own commit hash.
+
+### Local checks
+
+Run against commit `247f61249209024ae1eab0f0c0aa7128a6de02fd`, tree
+`6f4d304839205292ff0d40679dd6e25c56b3bae0`, with
+`SWINGTRADE_TEST_POSTGRES_URL` unset. The follow-up wording fix is one
+sentence in `docs/BROKER_CONTRACT.md` plus this note. It does not change
+the source tree those checks ran against. `tests/validate_phase1_contracts.py`
+PASS. `tests/contracts`: 37 passed, 0 skipped. `tests/offline`: 112 passed,
+12 skipped. `tests/group3_auth`: 56 passed, 0 skipped. Configured Phase 1
+pytest: 119 passed, 99 skipped. Every skip reason is
+`SWINGTRADE_TEST_POSTGRES_URL is required`. Those skips were not executed
+and are not reported as passed. The 12 Group 2 token-store skips remain
+`NO_ACCEPTED_EVIDENCE_FOUND`. The 99 Phase 1 PostgreSQL skips remain
+`INHERITED_ACCEPTED_EVIDENCE_UNCHANGED`. No source file changed, so Ruff
+and mypy were not re-run. `git diff --check` was clean. A secret-assignment
+scan of the documentation diff found no credential material. A scan for
+HTTP-client and broker-call primitives found no calls; the word "requests"
+appears only inside the quoted provider sentences. No TradeStation network
+request was made. This note does not embed its own commit hash.
