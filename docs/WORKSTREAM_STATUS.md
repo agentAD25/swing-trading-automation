@@ -32,18 +32,18 @@ certification.
 | Current state | `ACTIVE` |
 | Current branch | `cursor/integration-four-lane-governance-8992` |
 | PR number | Draft PR #23 |
-| Last attested SHA | `9caac14ed655f419ef5de73a472c039e63be757a` |
-| Last attested tree | `85d62f2ed0746f7e5f41a0c5fdc25cf4378813bd` |
+| Last attested SHA | Independently verified tip `3676e116591087c0cbf979b7929a2fb964415862` (descendant evidence commits may follow without changing semantics) |
+| Last attested tree | Independently verified tree `2cbbe8232063d75c83333850a32bd40c2b24a46d` |
 | Canonical main baseline | `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` / `39f0ab05c49b533270964b303601539feeff570f` |
 | Current objective | Establish durable four-lane governance, dependency registry, and integration protocol without specialist implementation |
-| Current blocker | None for governance bootstrap authorship; Operator review required before any merge to `main` |
-| Next permitted action | Run governance validation; obtain independent verification; await Operator integration authorization |
-| Next prohibited action | Implementing TradeStation, Gmail, or database functionality; authenticating to providers; merging specialist PRs; provisioning paid infrastructure |
+| Current blocker | Operator review/authorization required before any merge to `main` |
+| Next permitted action | Await Operator integration authorization per `docs/INTEGRATION_PROTOCOL.md`; no specialist implementation |
+| Next prohibited action | Implementing TradeStation, Gmail, or database functionality; authenticating to providers; merging specialist PRs; provisioning paid infrastructure; self-merging this PR |
 | Contract dependencies | `DEP-CORE-001`, `DEP-CORE-002` (tracked; not owned as specialist work) |
-| Certification status | Governance bootstrap in progress; not certified until independent verification and Operator review |
-| Integration eligibility | Eligible only after independent verification returns pass and Operator authorizes merge; docs-only scope |
-| Last verification date | 2026-10-08 (baseline attestation); independent gate pending |
-| Evidence references | Draft PR https://github.com/agentAD25/swing-trading-automation/pull/23 ; this registry; `docs/WORKSTREAM_OWNERSHIP.md`; `docs/WORKSTREAM_DEPENDENCIES.md`; `docs/INTEGRATION_PROTOCOL.md`; `docs/ENGINEERING_JOURNAL.md` entry dated 2026-10-08 |
+| Certification status | Independent verification PASS for governance bootstrap; Operator merge authorization still required |
+| Integration eligibility | Docs-only governance candidate is ready for Operator-authorized integration review; not self-merged |
+| Last verification date | 2026-10-08 (independent verifier PASS) |
+| Evidence references | Draft PR https://github.com/agentAD25/swing-trading-automation/pull/23 ; independent verifier agent `bc-3289987e-ba29-5c68-a93e-fd3b27b71e9e`; this registry; ownership/dependencies/protocol docs; journal 2026-10-08 |
 
 ## Lane 2 — TradeStation / Broker
 
