@@ -32,8 +32,8 @@ certification.
 | Current state | `ACTIVE` |
 | Current branch | `cursor/integration-four-lane-governance-8992` |
 | PR number | Draft PR #23 |
-| Last attested SHA | Recorded after status/validation evidence commit on this branch |
-| Last attested tree | Recorded after status/validation evidence commit on this branch |
+| Last attested SHA | `9caac14ed655f419ef5de73a472c039e63be757a` |
+| Last attested tree | `85d62f2ed0746f7e5f41a0c5fdc25cf4378813bd` |
 | Canonical main baseline | `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` / `39f0ab05c49b533270964b303601539feeff570f` |
 | Current objective | Establish durable four-lane governance, dependency registry, and integration protocol without specialist implementation |
 | Current blocker | None for governance bootstrap authorship; Operator review required before any merge to `main` |
