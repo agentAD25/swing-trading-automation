@@ -5,9 +5,9 @@ Conversation claims are never authoritative by themselves. Resolve conflicts
 using `docs/INTEGRATION_PROTOCOL.md` and the operating hierarchy in
 `docs/WORKSTREAM_OWNERSHIP.md`.
 
-Last attestation date: 2026-10-08  
-Canonical main baseline (attested): `41218abb2eda5f06001703fb83c2cb9e43e5ec2e`  
-Canonical main tree (attested): `39f0ab05c49b533270964b303601539feeff570f`  
+Last attestation date: 2026-10-08
+Canonical main baseline (attested): `41218abb2eda5f06001703fb83c2cb9e43e5ec2e`
+Canonical main tree (attested): `39f0ab05c49b533270964b303601539feeff570f`
 Attestation method: `gh api repos/agentAD25/swing-trading-automation/commits/main`
 plus local `git rev-parse` on a clean checkout matching `origin/main`.
 

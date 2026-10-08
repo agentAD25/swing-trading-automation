@@ -4,7 +4,7 @@ Cross-lane dependency registry. Identifiers are stable. No specialist may mark
 another lane's dependency resolved without cited evidence. Conversation claims
 alone are insufficient.
 
-Last attestation date: 2026-10-08  
+Last attestation date: 2026-10-08
 Canonical main baseline: `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` /
 `39f0ab05c49b533270964b303601539feeff570f`
 
