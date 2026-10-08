@@ -2350,3 +2350,47 @@ LANE-1 set to `INTEGRATED`. LANE-2/3/4 specialist states unchanged except
 canonical baseline pointer. Group 4A remains `INTEGRATED_AND_CERTIFIED`.
 This descendant evidence commit updates status/state/journal only and is not
 the governance candidate tree `1700b1b442ef72b31b24aa8dcdf65e43525376e4` itself.
+
+## 2026-10-08 — Lane 4 zero-cost bootstrap research
+
+Docs-only specialist evidence on branch
+`cursor/db-zero-cost-bootstrap-51f4` from canonical main
+`24466ab9e551c6bb13dc1af67c6b33f148ac854a` /
+`74ef01fd9ae067e29ae7ecc97c466a39104da2f1`. Agent run
+`bc-f38dad08-03c5-5ee8-9b28-8701f8b051f4`.
+
+### Scope
+
+Added `docs/LANE4_ZERO_COST_BOOTSTRAP_RESEARCH.md`. Re-verified published
+Supabase Free and Neon Free envelopes under
+`INITIAL_DATABASE_INCREMENTAL_SERVICE_COST = 0 USD`. Inventoried and ran the
+twelve TokenStore PostgreSQL test nodes against disposable local PostgreSQL
+16.15 in this Cursor Cloud VM. Did not connect to Supabase, Operator local
+PostgreSQL, or operational databases. Did not provision paid services. Did
+not select a provider. Did not authorize `SIM` or `LIVE`.
+
+### Dependency claims
+
+| ID | Claim |
+| --- | --- |
+| `DEP-DB-001` | Remains `OPEN`. Supabase restated `NOT_ACCEPTED`. Neon Free documented as a 0 USD comparative envelope only. |
+| `DEP-DB-002` | Implementer PASS recorded for all twelve nodes. Remains open until independent certification distinct from this implementer. |
+
+### Local validation (implementer; not independent gate)
+
+Disposable local PostgreSQL 16.15 on `127.0.0.1:5432`, database
+`swingtrade_test`, with
+`SWINGTRADE_TEST_POSTGRES_URL=postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade_test`:
+
+- Twelve TokenStore PostgreSQL nodes: **12 passed, 32 deselected**
+- `python3 -m pytest tests/offline tests/contracts --tb=no`: **161 passed**
+
+No remote dial. TokenStore local-authority rules continue to reject
+`supabase` / `neon.tech` / `amazonaws` hosts for these tests.
+
+### Non-claims
+
+This entry does not accept Supabase or Neon, does not close `DEP-DB-001` or
+`DEP-DB-002`, does not update `docs/WORKSTREAM_STATUS.md` (Lane 1 registry),
+and does not merge to `main`. Requested Lane 4 state for coordinator review:
+`READY_FOR_VERIFICATION`.
