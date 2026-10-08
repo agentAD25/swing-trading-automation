@@ -31,19 +31,19 @@ certification.
 | Workstream name | Integration / Coordinator |
 | Current state | `ACTIVE` |
 | Current branch | `cursor/integration-four-lane-governance-8992` |
-| PR number | Pending draft PR for this bootstrap (not yet opened at first write) |
-| Last attested SHA | Local branch tip at attestation time; record after push |
-| Last attested tree | Record after push |
+| PR number | Draft PR #23 |
+| Last attested SHA | Recorded after status/validation evidence commit on this branch |
+| Last attested tree | Recorded after status/validation evidence commit on this branch |
 | Canonical main baseline | `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` / `39f0ab05c49b533270964b303601539feeff570f` |
 | Current objective | Establish durable four-lane governance, dependency registry, and integration protocol without specialist implementation |
 | Current blocker | None for governance bootstrap authorship; Operator review required before any merge to `main` |
-| Next permitted action | Open/update draft PR; run governance validation; obtain independent verification; await Operator integration authorization |
+| Next permitted action | Run governance validation; obtain independent verification; await Operator integration authorization |
 | Next prohibited action | Implementing TradeStation, Gmail, or database functionality; authenticating to providers; merging specialist PRs; provisioning paid infrastructure |
 | Contract dependencies | `DEP-CORE-001`, `DEP-CORE-002` (tracked; not owned as specialist work) |
 | Certification status | Governance bootstrap in progress; not certified until independent verification and Operator review |
 | Integration eligibility | Eligible only after independent verification returns pass and Operator authorizes merge; docs-only scope |
 | Last verification date | 2026-10-08 (baseline attestation); independent gate pending |
-| Evidence references | This registry; `docs/WORKSTREAM_OWNERSHIP.md`; `docs/WORKSTREAM_DEPENDENCIES.md`; `docs/INTEGRATION_PROTOCOL.md`; `docs/ENGINEERING_JOURNAL.md` entry dated 2026-10-08 |
+| Evidence references | Draft PR https://github.com/agentAD25/swing-trading-automation/pull/23 ; this registry; `docs/WORKSTREAM_OWNERSHIP.md`; `docs/WORKSTREAM_DEPENDENCIES.md`; `docs/INTEGRATION_PROTOCOL.md`; `docs/ENGINEERING_JOURNAL.md` entry dated 2026-10-08 |
 
 ## Lane 2 — TradeStation / Broker
 

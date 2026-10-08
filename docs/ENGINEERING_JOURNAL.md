@@ -2259,3 +2259,34 @@ Stable dependency IDs recorded: `DEP-TS-001`, `DEP-GMAIL-001`, `DEP-DB-001`,
 This entry does not accept ADR-0004 or ADR-0005, does not merge PR #21/#22,
 does not revive PR #19, does not select Supabase, and does not close
 TokenStore PostgreSQL evidence gaps.
+
+### Local validation (implementer; not independent gate)
+
+Draft PR #23 opened for branch
+`cursor/integration-four-lane-governance-8992`. First tip
+`da593f014f91585a8611b942585537bea5d6c3c5`, tree
+`f9b7498bb610344d836dba3fae9104ccb7d9975e`.
+
+Commands and outcomes with `SWINGTRADE_TEST_POSTGRES_URL` unset:
+
+- `python3 tests/validate_phase1_contracts.py` — PASS
+- `git diff --check` — clean
+- Duplicate ADR numbers on branch — none
+- Unique `### DEP-*` headings — 6
+- Secret heuristic on new governance paths — no matches
+- PR #21 head unchanged `a2cef6f3527b2aab7319a2628874fcdcaf03acac`
+- PR #22 head unchanged `a6c5f1d7109e156eb0e9257216c3b5dbed17f653`
+- Configured pytest paths: 119 passed, 99 skipped; every skip reason
+  `SWINGTRADE_TEST_POSTGRES_URL is required`
+- `tests/offline` + `tests/contracts`: 149 passed, 12 skipped
+- `tests/group3_auth`: 56 passed
+- `tests/group4_email`: 81 passed
+- `python3 -m ruff check .` — All checks passed
+- `python3 -m mypy src` — Success, 37 source files
+- Semantic idempotency check for required governance files and lane/DEP
+  presence — PASS
+- PostgreSQL was not provisioned; TokenStore PostgreSQL evidence remains
+  open (`DEP-DB-002`)
+
+These local checks are not Operator acceptance and not independent
+verification.
