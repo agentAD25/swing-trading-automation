@@ -2456,3 +2456,32 @@ marker). The twelve-node inventory is the parametrized expansion of the six
 This entry does not close `DEP-DB-001` or `DEP-DB-002`, does not accept
 Supabase or Neon, does not edit `docs/WORKSTREAM_STATUS.md`, and does not
 merge to `main`. Token: `LANE4_DEP_DB_002_INDEPENDENT_PASS`.
+
+## 2026-10-08 — Lane 4 certification packet and zero-cost host readiness
+
+Docs-only continuation on draft PR #24 by
+`bc-6040b738-314c-499a-96c2-7383ac84c385`. The local reconfirm used
+canonical `main` `af0d69b1dfc2046899db05a2f12767fc20b623ae`, tree
+`4e1ed263e745b9896bf9384a2a9453566ebd6e0b`, which was then the merge-base
+of PR HEAD `db570fac13cb33b84c98afb89c3f4722128ae179`. No `src/`, `tests/`,
+or `migrations/` delta versus that main. `main` then advanced to
+coordinator tip `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829`
+(`DOCS_ONLY_COORDINATOR_CHECKPOINT`). That tip is merged and its
+governance sentences are kept.
+
+Added:
+
+- `docs/LANE4_DB_CERTIFICATION_PACKET.md`
+- `docs/LANE4_ZERO_COST_HOST_READINESS.md`
+- `docs/LANE4_PROVIDER_NEUTRAL_READINESS.md`
+- `docs/LANE4_REMOTE_SMOKE_TEST.md`
+
+Local twelve-node evidence was reconfirmed on `db570fa`: **12 passed,
+32 deselected in 0.81s**; `tests/offline` and `tests/contracts` **161
+passed in 0.88s**; URL unset **12 skipped**. Neon Free is the preferred
+unevaluated candidate. Supabase Free remains the alternative. Neither is
+accepted. No remote database was created.
+
+`DEP-DB-001` and `DEP-DB-002` stay open. Lane 4 stays
+`READY_FOR_VERIFICATION` until Lane 1 reviews the packet. Token:
+`LANE4_DB_CERTIFICATION_PACKET_READY`.
