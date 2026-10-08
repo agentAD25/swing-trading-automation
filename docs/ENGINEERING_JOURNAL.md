@@ -2210,3 +2210,52 @@ integration. Supabase is not selected.
 
 This commit edits only `docs/CURRENT_STATE.md` and this journal. It is
 not the certified implementation tree `67a0b57526ea219972fa0574b191562f0f52b598`.
+
+## 2026-10-08 — Four-lane workstream governance bootstrap (Lane 1)
+
+Coordinator-only governance bootstrap. No TradeStation, Gmail, or database
+specialist implementation. No provider authentication, credential
+provisioning, Supabase connection, paid database service, remote migration,
+order submission, TradeStation `SIM`, or `LIVE` authority. `DRY_RUN` remains
+the sole authorized execution mode.
+
+### Baseline attestation
+
+GitHub `main` and local `origin/main` both report commit
+`41218abb2eda5f06001703fb83c2cb9e43e5ec2e`, tree
+`39f0ab05c49b533270964b303601539feeff570f`. Classification versus the task
+starting reference: `BASELINE_MATCH`. No unexpected main rewrite was
+performed.
+
+### Specialist PR attestation (not integrated)
+
+| Lane | PR | Branch | Head SHA | Tree | State |
+| --- | --- | --- | --- | --- | --- |
+| Gmail | #21 draft | `cursor/p2-g4-gmail-readonly-gate-a-99c1` | `a2cef6f3527b2aab7319a2628874fcdcaf03acac` | `557b4c939d7ac570f20b2fa69176b24234189d76` | `WAITING_OPERATOR`; ADR-0004 Proposed |
+| TradeStation | #22 draft | `cursor/p2-ts-provider-evidence-99c1` | `a6c5f1d7109e156eb0e9257216c3b5dbed17f653` | `3d19daec787e5796af55a98de36a54d0d1f77a79` | `WAITING_PROVIDER`; ADR-0005 Proposed |
+| TradeStation historical | #19 draft | `cursor/pre-credential-decision-3a31` | `bc6ab7ea92310ffa133b75b498f7f245af11f166` | `4cd4768c34bf82a5bfb97189c38fbd79ae99fbcf` | `SUPERSEDED`; conflicting ADR-0003 vs accepted Group 4A ADR-0003 |
+| Database | none | none | n/a | n/a | `NOT_STARTED` |
+
+PR #21 and PR #22 histories are preserved; branches were not recreated for
+naming. Offline Group 4A remains `INTEGRATED_AND_CERTIFIED` on main via PR
+#20 / ADR-0003 Accepted.
+
+### Durable artifacts added or updated
+
+Created: `docs/WORKSTREAM_STATUS.md`, `docs/WORKSTREAM_DEPENDENCIES.md`,
+`docs/WORKSTREAM_OWNERSHIP.md`, `docs/INTEGRATION_PROTOCOL.md`,
+`docs/WORKSTREAM_HANDOFF_TEMPLATE.md`,
+`.cursor/rules/80-workstream-coordination.mdc`,
+`.cursor/agents/integration-coordinator.md`.
+
+Updated: `docs/AGENT_AUTHORITY.md` (Lane 1 role + hierarchy overlay),
+`docs/CURRENT_STATE.md`, this journal.
+
+Stable dependency IDs recorded: `DEP-TS-001`, `DEP-GMAIL-001`, `DEP-DB-001`,
+`DEP-DB-002`, `DEP-CORE-001`, `DEP-CORE-002`.
+
+### Non-claims
+
+This entry does not accept ADR-0004 or ADR-0005, does not merge PR #21/#22,
+does not revive PR #19, does not select Supabase, and does not close
+TokenStore PostgreSQL evidence gaps.
