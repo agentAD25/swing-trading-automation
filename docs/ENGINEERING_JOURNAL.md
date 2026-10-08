@@ -2394,3 +2394,34 @@ This entry does not accept Supabase or Neon, does not close `DEP-DB-001` or
 `DEP-DB-002`, does not update `docs/WORKSTREAM_STATUS.md` (Lane 1 registry),
 and does not merge to `main`. Requested Lane 4 state for coordinator review:
 `READY_FOR_VERIFICATION`.
+
+## 2026-10-08 — Lane 4 independent TokenStore PostgreSQL verification
+
+Distinct verifier `bc-6040b738-314c-499a-96c2-7383ac84c385`
+(https://cursor.com/agents/bc-6040b738-314c-499a-96c2-7383ac84c385).
+Implementer remains `bc-f38dad08-03c5-5ee8-9b28-8701f8b051f4`. Evidence is
+recorded in `docs/LANE4_DEP_DB_002_INDEPENDENT_VERIFICATION.md`.
+
+Code under test is implementer commit
+`d949ce0197bc51ceef0b627eea325e9c4d13aaaf`, tree
+`d54619c30221dac05dd3a08887397cd7cad237e0`. `src/`, `tests/`,
+`migrations/`, `pyproject.toml`, and `docker-compose.yml` are identical to
+canonical main `af0d69b1dfc2046899db05a2f12767fc20b623ae` (empty path diff).
+Main’s extra commit is docs-only registry reconciliation.
+
+Disposable local PostgreSQL 16.15 listened on localhost port 5432 only.
+With `SWINGTRADE_TEST_POSTGRES_URL` set to the local `swingtrade_test`
+fixture URL (same public `docker-compose.yml` password pattern):
+
+- Twelve TokenStore node IDs: **12 passed, 32 deselected** in 0.80s
+- `python3 -m pytest tests/offline tests/contracts`: **161 passed** in 0.88s
+- Same twelve nodes with the URL unset: **12 skipped, 32 deselected**;
+  skip reason `SWINGTRADE_TEST_POSTGRES_URL is required`
+
+`-m postgres` collects nothing (the tests use `skipif`, not a `postgres`
+marker). The twelve-node inventory is the parametrized expansion of the six
+`pytestmark_postgres` functions.
+
+This entry does not close `DEP-DB-001` or `DEP-DB-002`, does not accept
+Supabase or Neon, does not edit `docs/WORKSTREAM_STATUS.md`, and does not
+merge to `main`. Token: `LANE4_DEP_DB_002_INDEPENDENT_PASS`.
