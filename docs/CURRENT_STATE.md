@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-10-08
+- Last updated: 2026-10-08 (governance PR #23 integrated)
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
   offline Group 4A email contract is on canonical `main` by exact
@@ -97,7 +97,7 @@
 | Offline Group 2 foundation | Operator authorizes the offline Group 2 foundation only. Later decisions: non-Cursor bootstrap injector, key custody, retention, and SIM database host. The authorization commit itself added no application code. The implementation is on this branch at `904a362ac716aa8a7d3c9e830444a19108feed67` and is not merged. |
 | C1/U-10 closure | Operator accepts ADR-0002 after independent review `C1_U10_CONTRACT_PASS` on `a4213f8356a9e32ca4647865ee98e13660e3d656`, tree `c07487c88f24f9432de89df7f574130274d50b4b`. C1/U-10 is **RESOLVED**. Non-blocking residuals do not reopen C1. Not operational credential certification, key management, Supabase selection, or `LIVE` authorization. |
 | Offline Group 4A email contract | On canonical `main` by exact fast-forward of certified commit `ce045c14b119d882505a947a7826005ff6d99103`, tree `67a0b57526ea219972fa0574b191562f0f52b598`. No squash, rebase, force-push, or merge commit. The pre-fast-forward sentence that this work was unmerged is superseded for location only. Remediation commit `05dfff9f69d27b869dcb1c392d8d103b7f21d6b4`, tree `b25892d7cd6ad43769e44cd67cd53c3dd7cb8602`, parent `229a38b4b6f7ab628d1c656974686e7888075302`, remains an ancestor. The Operator accepted ADR-0003: a `CanonicalInstructionEnvelope` carries a required-field `NewTradeInstruction` or a reserved amendment, exit-alert, or cancel payload. Only new-trade parsing is implemented. `EMAIL_RETENTION_POLICY` is `HASH_PROVIDER_REF_FIELD_EVIDENCE`. Exit-policy negation or same-source conflict quarantines as `CONFLICTING_ECONOMIC_INSTRUCTION` and does not become the positive policy. Quantity rounding, market calendar, and timezone remain unresolved. PR #20. No Gmail, broker, credential, Supabase, order, SIM, or `LIVE` authority. Group 4A status for workstream registry purposes: `INTEGRATED_AND_CERTIFIED` (offline only). |
-| Four-lane workstream governance | Lane 1 coordinator bootstrap on branch `cursor/integration-four-lane-governance-8992`, draft PR #23 (not on `main` until authorized integration). Attested canonical `main` at bootstrap: `41218abb2eda5f06001703fb83c2cb9e43e5ec2e`, tree `39f0ab05c49b533270964b303601539feeff570f` (`BASELINE_MATCH`). Independently verified tip `3676e116591087c0cbf979b7929a2fb964415862`, tree `2cbbe8232063d75c83333850a32bd40c2b24a46d` (**PASS**; verifier `bc-3289987e-ba29-5c68-a93e-fd3b27b71e9e`). Registry: `docs/WORKSTREAM_STATUS.md`. Ownership/hierarchy: `docs/WORKSTREAM_OWNERSHIP.md`. Dependencies: `docs/WORKSTREAM_DEPENDENCIES.md` (`DEP-TS-001`, `DEP-GMAIL-001`, `DEP-DB-001`, `DEP-DB-002`, `DEP-CORE-001`, `DEP-CORE-002`). Integration gates: `docs/INTEGRATION_PROTOCOL.md`. Active specialist drafts remain unmerged: Gmail PR #21 head `a2cef6f3527b2aab7319a2628874fcdcaf03acac` (`WAITING_OPERATOR`, ADR-0004 Proposed); TradeStation PR #22 head `a6c5f1d7109e156eb0e9257216c3b5dbed17f653` (`WAITING_PROVIDER`, ADR-0005 Proposed). Historical TradeStation PR #19 is `SUPERSEDED` (ADR number conflicts with accepted ADR-0003; do not auto-merge). Database lane `NOT_STARTED`. This bootstrap implements no TradeStation, Gmail, or database functionality and grants no credential, broker, Supabase, order, SIM, or `LIVE` authority. |
+| Four-lane workstream governance | On canonical `main` by history-preserving fast-forward of PR #23 tip `f5880cfcfaa6d994f369e04d73c844fd1402d74c`, tree `1700b1b442ef72b31b24aa8dcdf65e43525376e4` from prior main `41218abb2eda5f06001703fb83c2cb9e43e5ec2e`, tree `39f0ab05c49b533270964b303601539feeff570f`. No squash, rebase, force-push, or merge commit. Independent PASS at `3676e11` / `2cbbe823…`; post-PASS successors classified `EVIDENCE_ONLY_PLUS_NONSEMANTIC` (verifier `bc-e255e4a7-f783-5ef6-8fc3-f4cbd2d0d926`). Registry activated: `docs/WORKSTREAM_STATUS.md`. Dependencies unchanged IDs. Active specialist drafts remain unmerged and were not rewritten: Gmail PR #21 `a2cef6f3…` (`WAITING_OPERATOR`, ADR-0004 Proposed); TradeStation PR #22 `a6c5f1d7…` (`WAITING_PROVIDER`, ADR-0005 Proposed). PR #19 `SUPERSEDED`. Database lane `NOT_STARTED`. No credential, broker, Supabase, order, SIM, or `LIVE` authority. |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
 `phase1-accepted-abc1fb6` fixes the accepted commit without making the
@@ -126,10 +126,10 @@ the later explicit human Operator decision recorded here does.
 
 - Repository governance and least-authority rules
 - Four scoped Phase 1 agent roles: coordinator plus three researchers
-- Four-lane Phase 2 workstream coordination contracts on the Lane 1
-  governance branch (status, ownership, dependencies, integration protocol,
+- Four-lane Phase 2 workstream coordination contracts on canonical `main`
+  via PR #23 (status, ownership, dependencies, integration protocol,
   handoff template, `.cursor` coordination rule and integration-coordinator
-  agent); not authoritative on `main` until integrated
+  agent)
 - ADR process and research evidence contract
 - Skeleton locations for configuration, documentation, source, and tests
 - Explicit fail-closed boundary around `LIVE`, credentials, real accounts, and

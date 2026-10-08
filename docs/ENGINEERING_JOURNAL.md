@@ -2311,3 +2311,42 @@ Recommended token:
 `P2_FOUR_LANE_GOVERNANCE_READY_FOR_INTEGRATION`.
 Operator merge authorization remains required. This journal note does not
 embed its own successor commit hash.
+
+## 2026-10-08 — Integrate four-lane governance PR #23 onto `main`
+
+Evidence-only integration record. No TradeStation, Gmail, or database
+specialist implementation. No provider authentication, credentials, Supabase
+connection, paid database, remote migration, orders, `SIM`, or `LIVE`.
+`DRY_RUN` remains the sole authorized execution mode.
+
+### Integration
+
+Prior canonical `main`: `41218abb2eda5f06001703fb83c2cb9e43e5ec2e`, tree `39f0ab05c49b533270964b303601539feeff570f`.
+Candidate tip: `f5880cfcfaa6d994f369e04d73c844fd1402d74c`, tree `1700b1b442ef72b31b24aa8dcdf65e43525376e4` (branch
+`cursor/integration-four-lane-governance-8992`, PR #23).
+Method: `git merge --ff-only f5880cfcfaa6d994f369e04d73c844fd1402d74c` on local `main`, then
+`git push origin main`. No squash, rebase, force-push, or convenience merge
+commit. GitHub records PR #23 `MERGED` with merge commit identical to the
+fast-forward tip.
+
+Independent verification PASS at `3676e116591087c0cbf979b7929a2fb964415862` /
+`2cbbe8232063d75c83333850a32bd40c2b24a46d`. Successor commits through
+`f5880cfcfaa6d994f369e04d73c844fd1402d74c` classified `EVIDENCE_ONLY_PLUS_NONSEMANTIC` by independent
+verifier `bc-e255e4a7-f783-5ef6-8fc3-f4cbd2d0d926` (`INTEGRATION_GATES_PASS`).
+
+### Preserved specialist identities
+
+- PR #21 head `a2cef6f3527b2aab7319a2628874fcdcaf03acac` remains OPEN draft
+  (`WAITING_OPERATOR`); not merged; not rewritten.
+- PR #22 head `a6c5f1d7109e156eb0e9257216c3b5dbed17f653` remains OPEN draft
+  (`WAITING_PROVIDER`); not merged; not rewritten.
+- PR #19 remains OPEN draft `SUPERSEDED` / conflicting; not merged.
+- Those specialist branches predate this main tip; later integration requires
+  governance-aware reconciliation.
+
+### Registry
+
+LANE-1 set to `INTEGRATED`. LANE-2/3/4 specialist states unchanged except
+canonical baseline pointer. Group 4A remains `INTEGRATED_AND_CERTIFIED`.
+This descendant evidence commit updates status/state/journal only and is not
+the governance candidate tree `1700b1b442ef72b31b24aa8dcdf65e43525376e4` itself.

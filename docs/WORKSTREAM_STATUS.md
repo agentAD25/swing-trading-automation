@@ -6,10 +6,10 @@ using `docs/INTEGRATION_PROTOCOL.md` and the operating hierarchy in
 `docs/WORKSTREAM_OWNERSHIP.md`.
 
 Last attestation date: 2026-10-08
-Canonical main baseline (attested): `41218abb2eda5f06001703fb83c2cb9e43e5ec2e`
-Canonical main tree (attested): `39f0ab05c49b533270964b303601539feeff570f`
-Attestation method: `gh api repos/agentAD25/swing-trading-automation/commits/main`
-plus local `git rev-parse` on a clean checkout matching `origin/main`.
+Canonical main baseline (attested): `f5880cfcfaa6d994f369e04d73c844fd1402d74c`
+Canonical main tree (attested): `1700b1b442ef72b31b24aa8dcdf65e43525376e4`
+Attestation method: post-integration `gh api`/`git` after history-preserving
+fast-forward of PR #23 tip `f5880cfcfaa6d994f369e04d73c844fd1402d74c` onto prior main `41218abb2eda5f06001703fb83c2cb9e43e5ec2e`.
 
 ## Controlled states
 
@@ -29,21 +29,21 @@ certification.
 | --- | --- |
 | Lane identifier | `LANE-1` |
 | Workstream name | Integration / Coordinator |
-| Current state | `ACTIVE` |
-| Current branch | `cursor/integration-four-lane-governance-8992` |
-| PR number | Draft PR #23 |
-| Last attested SHA | Independently verified tip `3676e116591087c0cbf979b7929a2fb964415862` (descendant evidence commits may follow without changing semantics) |
-| Last attested tree | Independently verified tree `2cbbe8232063d75c83333850a32bd40c2b24a46d` |
-| Canonical main baseline | `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` / `39f0ab05c49b533270964b303601539feeff570f` |
-| Current objective | Establish durable four-lane governance, dependency registry, and integration protocol without specialist implementation |
-| Current blocker | Operator review/authorization required before any merge to `main` |
-| Next permitted action | Await Operator integration authorization per `docs/INTEGRATION_PROTOCOL.md`; no specialist implementation |
-| Next prohibited action | Implementing TradeStation, Gmail, or database functionality; authenticating to providers; merging specialist PRs; provisioning paid infrastructure; self-merging this PR |
+| Current state | `INTEGRATED` |
+| Current branch | `main` (via PR #23 history-preserving fast-forward) |
+| PR number | PR #23 (MERGED) |
+| Last attested SHA | Integrated tip `f5880cfcfaa6d994f369e04d73c844fd1402d74c` (includes independently verified `3676e11` ancestry plus evidence/whitespace successors) |
+| Last attested tree | `1700b1b442ef72b31b24aa8dcdf65e43525376e4` |
+| Canonical main baseline | `f5880cfcfaa6d994f369e04d73c844fd1402d74c` / `1700b1b442ef72b31b24aa8dcdf65e43525376e4` |
+| Current objective | Maintain four-lane registry, dependencies, and integration authority; coordinate specialists without implementing their features |
+| Current blocker | None for governance presence on main; specialist blockers remain on their lanes |
+| Next permitted action | Coordinate specialist bootstrap/handoffs; propose later specialist integrations only after protocol gates |
+| Next prohibited action | Implementing TradeStation, Gmail, or database specialist features; merging PR #21/#22/#19; authorizing credentials or LIVE |
 | Contract dependencies | `DEP-CORE-001`, `DEP-CORE-002` (tracked; not owned as specialist work) |
-| Certification status | Independent verification PASS for governance bootstrap; Operator merge authorization still required |
-| Integration eligibility | Docs-only governance candidate is ready for Operator-authorized integration review; not self-merged |
-| Last verification date | 2026-10-08 (independent verifier PASS) |
-| Evidence references | Draft PR https://github.com/agentAD25/swing-trading-automation/pull/23 ; independent verifier agent `bc-3289987e-ba29-5c68-a93e-fd3b27b71e9e`; this registry; ownership/dependencies/protocol docs; journal 2026-10-08 |
+| Certification status | Governance bootstrap integrated on main after independent PASS and Operator-authorized FF |
+| Integration eligibility | Already integrated |
+| Last verification date | 2026-10-08 (integration attestation) |
+| Evidence references | PR https://github.com/agentAD25/swing-trading-automation/pull/23 MERGED; independent verifiers `bc-3289987e-ba29-5c68-a93e-fd3b27b71e9e` and `bc-e255e4a7-f783-5ef6-8fc3-f4cbd2d0d926`; journal 2026-10-08 integration entry |
 
 ## Lane 2 — TradeStation / Broker
 
@@ -56,7 +56,7 @@ certification.
 | PR number | Draft PR #22 |
 | Last attested SHA | `a6c5f1d7109e156eb0e9257216c3b5dbed17f653` |
 | Last attested tree | `3d19daec787e5796af55a98de36a54d0d1f77a79` |
-| Canonical main baseline | `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` / `39f0ab05c49b533270964b303601539feeff570f` |
+| Canonical main baseline | `f5880cfcfaa6d994f369e04d73c844fd1402d74c` / `1700b1b442ef72b31b24aa8dcdf65e43525376e4` (specialist branch may predate this tip) |
 | Current objective | Reconcile TradeStation Client Experience answers and provider-evidence constraints for a future attended probe; keep ADR-0005 Proposed |
 | Current blocker | `DEP-TS-001` — native PKCE callback confirmation / provider callback clarification |
 | Next permitted action | Docs-only provider-evidence clarification; update Proposed ADR-0005; retain PR #22 history |
@@ -78,7 +78,7 @@ certification.
 | PR number | Draft PR #19 (OPEN, merge conflicts with `main`) |
 | Last attested SHA | `bc6ab7ea92310ffa133b75b498f7f245af11f166` |
 | Last attested tree | `4cd4768c34bf82a5bfb97189c38fbd79ae99fbcf` |
-| Canonical main baseline | `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` / `39f0ab05c49b533270964b303601539feeff570f` |
+| Canonical main baseline | `f5880cfcfaa6d994f369e04d73c844fd1402d74c` / `1700b1b442ef72b31b24aa8dcdf65e43525376e4` (specialist branch may predate this tip) |
 | Current objective | Preserve audit history only |
 | Current blocker | ADR numbering conflicts with accepted ADR-0003 on `main`; PR is conflicting and pre-credential |
 | Next permitted action | Leave open for audit or Operator-directed close; never auto-merge |
@@ -100,7 +100,7 @@ certification.
 | PR number | Draft PR #21 |
 | Last attested SHA | `a2cef6f3527b2aab7319a2628874fcdcaf03acac` |
 | Last attested tree | `557b4c939d7ac570f20b2fa69176b24234189d76` |
-| Canonical main baseline | `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` / `39f0ab05c49b533270964b303601539feeff570f` |
+| Canonical main baseline | `f5880cfcfaa6d994f369e04d73c844fd1402d74c` / `1700b1b442ef72b31b24aa8dcdf65e43525376e4` (specialist branch may predate this tip) |
 | Current objective | Propose Gmail read-only corpus Gate A; keep ADR-0004 Proposed until Operator OAuth setup |
 | Current blocker | `DEP-GMAIL-001` — Google OAuth setup by Operator |
 | Next permitted action | Docs-only Gate A preparation; sanitized fixture planning; retain PR #21 history |
@@ -122,7 +122,7 @@ certification.
 | PR number | PR #20 (MERGED; fast-forward evidence on main) |
 | Last attested SHA | Certified implementation `ce045c14b119d882505a947a7826005ff6d99103`; main evidence tip `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` |
 | Last attested tree | Certified `67a0b57526ea219972fa0574b191562f0f52b598`; main tip `39f0ab05c49b533270964b303601539feeff570f` |
-| Canonical main baseline | `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` / `39f0ab05c49b533270964b303601539feeff570f` |
+| Canonical main baseline | `f5880cfcfaa6d994f369e04d73c844fd1402d74c` / `1700b1b442ef72b31b24aa8dcdf65e43525376e4` (specialist branch may predate this tip) |
 | Current objective | Preserve integrated offline parser; no Gmail authority |
 | Current blocker | Quantity rounding, market calendar, and timezone remain unresolved (`DEP-CORE-001`, `DEP-CORE-002`) |
 | Next permitted action | Consume as canonical offline contract; Gmail work stays on Lane 3 PR #21 |
@@ -144,7 +144,7 @@ certification.
 | PR number | None |
 | Last attested SHA | N/A (no active database-lane tip) |
 | Last attested tree | N/A |
-| Canonical main baseline | `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` / `39f0ab05c49b533270964b303601539feeff570f` |
+| Canonical main baseline | `f5880cfcfaa6d994f369e04d73c844fd1402d74c` / `1700b1b442ef72b31b24aa8dcdf65e43525376e4` (specialist branch may predate this tip) |
 | Current objective | Establish a dedicated infrastructure lane for zero-incremental-cost remotely accessible PostgreSQL selection evidence and TokenStore PostgreSQL certification planning — without connecting or provisioning in this bootstrap |
 | Current blocker | `DEP-DB-001` (provider selection), `DEP-DB-002` (TokenStore PostgreSQL execution evidence). Local PostgreSQL is inaccessible from Cursor Cloud. Supabase remains a candidate and is **NOT_ACCEPTED**. |
 | Next permitted action | Docs-only suitability research and evidence planning on a new `cursor/db-<gate>-*` branch after Operator/coordinator dispatch |
@@ -157,10 +157,12 @@ certification.
 
 ## Baseline difference classification
 
-| Claimed baseline | Attested GitHub `main` | Classification |
+| Claimed/prior baseline | Attested GitHub `main` | Classification |
 | --- | --- | --- |
-| SHA `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` | Identical | `BASELINE_MATCH` |
-| Tree `39f0ab05c49b533270964b303601539feeff570f` | Identical | `BASELINE_MATCH` |
+| Pre-integration SHA `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` | Superseded by FF of PR #23 | `SUPERSEDED_BY_AUTHORIZED_INTEGRATION` |
+| Integrated SHA `f5880cfcfaa6d994f369e04d73c844fd1402d74c` | Identical | `BASELINE_MATCH` |
+| Integrated tree `1700b1b442ef72b31b24aa8dcdf65e43525376e4` | Identical | `BASELINE_MATCH` |
 
-No unexpected main divergence was observed at attestation time. Unexpected
-future divergence must be classified, never overwritten or reset.
+PR #23 was integrated by history-preserving fast-forward. Specialist PR #21/#22
+branches predate this tip and were not rewritten. Unexpected future divergence
+must be classified, never overwritten or reset.
