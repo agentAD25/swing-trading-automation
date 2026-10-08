@@ -81,7 +81,7 @@ Canonical main baseline: `af0d69b1dfc2046899db05a2f12767fc20b623ae` /
 | Severity | `BLOCKING` for TokenStore PostgreSQL certification |
 | Blocking/nonblocking | Blocking |
 | Resolution authority | `SPECIALIST` evidence + coordinator certification review; Operator for acceptance of certification claims |
-| Current state | `OPEN` — implementer on `d949ce0197bc51ceef0b627eea325e9c4d13aaaf` reported 12/12 local TokenStore PostgreSQL passes. Independent verification is `NOT_RUN`. Not accepted evidence. |
+| Current state | `OPEN` — independent verifier `bc-6040b738-314c-499a-96c2-7383ac84c385` recorded `LANE4_DEP_DB_002_INDEPENDENT_PASS` (12 passed, 32 deselected; URL unset: 12 skipped) against executable bytes of `d949ce0` / main `af0d69b`. Not closed. Operator certification acceptance is still required. |
 
 ### DEP-CORE-001
 

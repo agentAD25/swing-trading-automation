@@ -2408,3 +2408,35 @@ Six dependency IDs stay open. Lane 4 documentation draft PR is
 journal reconciliation. Checkpoint token:
 `LANE1_INTEGRATION_CONFLICT_REQUIRES_RECONCILIATION`.
 This entry does not embed its own commit hash.
+
+## 2026-10-08 — Refresh checkpoint with PR #24 independent evidence
+
+The preceding checkpoint entry is historical. It must not overwrite newer
+Lane 4 evidence.
+
+### Fresh identities
+
+Canonical `main` still `af0d69b1dfc2046899db05a2f12767fc20b623ae` /
+`4e1ed263e745b9896bf9384a2a9453566ebd6e0b`. PR #21 and PR #22 heads
+unchanged and still `CONFLICTING`. PR #23 remains MERGED.
+
+Draft PR #24 on `cursor/db-dep-db-002-verify-c385` tip
+`db570fac13cb33b84c98afb89c3f4722128ae179`, tree
+`d754a9b28dfcf77a25a32f114c5882767fac8e59`, contains `main` and is
+`MERGEABLE` against that tip. Independent verifier
+`bc-6040b738-314c-499a-96c2-7383ac84c385` recorded
+`LANE4_DEP_DB_002_INDEPENDENT_PASS`: 12 passed, 32 deselected; with the
+URL unset, 12 skipped. Offline+contracts: 161 passed, 0 skipped in that
+run. Evidence applies to `src/` and `tests/` bytes of
+`d949ce0197bc51ceef0b627eea325e9c4d13aaaf` which match main `af0d69b`.
+Merge commit `db570fa` versus verification commit `13d6a93` changes docs
+only. `DEP-DB-001` and `DEP-DB-002` stay OPEN. Lane 4 stays
+`READY_FOR_VERIFICATION` and not integration-eligible. No second Lane 4
+PR is opened. PR #24 is not merged here.
+
+### Reconciliation contract
+
+`docs/INTEGRATION_PROTOCOL.md` now states the specialist merge rules:
+preserve history, merge current main without force-push, resolve only
+owned conflicts, and submit a fresh exact-tree verification. Lane 1 does
+not edit PR #21, PR #22, or the Lane 4 branch in this refresh.

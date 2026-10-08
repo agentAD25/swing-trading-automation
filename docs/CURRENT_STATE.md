@@ -246,9 +246,13 @@ a prohibition on later additive coordination roles.
    `af0d69b1dfc2046899db05a2f12767fc20b623ae` /
    `4e1ed263e745b9896bf9384a2a9453566ebd6e0b` (`BASELINE_MATCH`).
    PR #21 and PR #22 are `CONFLICTING` with that main on
-   `docs/CURRENT_STATE.md` and `docs/ENGINEERING_JOURNAL.md`. Lane 4
-   research conflicts on the journal versus `af0d69b` and is not
-   draft-PR eligible until independent PostgreSQL verification.
+   `docs/CURRENT_STATE.md` and `docs/ENGINEERING_JOURNAL.md`.
+   Newer Lane 4 draft PR #24 tip `db570fac13cb33b84c98afb89c3f4722128ae179`
+   contains that main and records independent local TokenStore PostgreSQL
+   PASS (`LANE4_DEP_DB_002_INDEPENDENT_PASS`). `DEP-DB-002` stays OPEN.
+   Lane 4 stays `READY_FOR_VERIFICATION`, not integration-eligible.
+   The earlier sentence that Lane 4 had no draft PR and that independent
+   verification was `NOT_RUN` is superseded for those two facts only.
    No specialist branch was rewritten. No specialist PR was merged.
 
 ## Evidence
