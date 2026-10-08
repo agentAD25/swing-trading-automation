@@ -2457,6 +2457,65 @@ This entry does not close `DEP-DB-001` or `DEP-DB-002`, does not accept
 Supabase or Neon, does not edit `docs/WORKSTREAM_STATUS.md`, and does not
 merge to `main`. Token: `LANE4_DEP_DB_002_INDEPENDENT_PASS`.
 
+## 2026-10-08 — Lane 1 coordination checkpoint
+
+Evidence-only coordination. No specialist implementation, no specialist
+merge, no rebase or force-push, no credentials, no provider auth, no
+SIM/LIVE.
+
+### Reattestation
+
+Canonical `main` remained
+`af0d69b1dfc2046899db05a2f12767fc20b623ae`, tree
+`4e1ed263e745b9896bf9384a2a9453566ebd6e0b` (`BASELINE_MATCH` versus the
+checkpoint brief). PR #23 stayed MERGED at fast-forward tip
+`f5880cfcfaa6d994f369e04d73c844fd1402d74c`. PR #21 and PR #22 heads were
+unchanged and GitHub reported `CONFLICTING` against current main.
+Conflict paths: `docs/CURRENT_STATE.md` and `docs/ENGINEERING_JOURNAL.md`
+for both. Lane 4 tip `d949ce0` / `d54619c3` conflicts only on
+`docs/ENGINEERING_JOURNAL.md` (merge-base `24466ab`). ADR-0003 remains
+Accepted. ADR-0004 and ADR-0005 remain absent from `main`.
+
+### Decision
+
+Six dependency IDs stay open. Lane 4 documentation draft PR is
+`NOT_ELIGIBLE` until independent TokenStore PostgreSQL verification and
+journal reconciliation. Checkpoint token:
+`LANE1_INTEGRATION_CONFLICT_REQUIRES_RECONCILIATION`.
+This entry does not embed its own commit hash.
+
+## 2026-10-08 — Refresh checkpoint with PR #24 independent evidence
+
+The preceding checkpoint entry is historical. It must not overwrite newer
+Lane 4 evidence.
+
+### Fresh identities
+
+Canonical `main` still `af0d69b1dfc2046899db05a2f12767fc20b623ae` /
+`4e1ed263e745b9896bf9384a2a9453566ebd6e0b`. PR #21 and PR #22 heads
+unchanged and still `CONFLICTING`. PR #23 remains MERGED.
+
+Draft PR #24 on `cursor/db-dep-db-002-verify-c385` tip
+`db570fac13cb33b84c98afb89c3f4722128ae179`, tree
+`d754a9b28dfcf77a25a32f114c5882767fac8e59`, contains `main` and is
+`MERGEABLE` against that tip. Independent verifier
+`bc-6040b738-314c-499a-96c2-7383ac84c385` recorded
+`LANE4_DEP_DB_002_INDEPENDENT_PASS`: 12 passed, 32 deselected; with the
+URL unset, 12 skipped. Offline+contracts: 161 passed, 0 skipped in that
+run. Evidence applies to `src/` and `tests/` bytes of
+`d949ce0197bc51ceef0b627eea325e9c4d13aaaf` which match main `af0d69b`.
+Merge commit `db570fa` versus verification commit `13d6a93` changes docs
+only. `DEP-DB-001` and `DEP-DB-002` stay OPEN. Lane 4 stays
+`READY_FOR_VERIFICATION` and not integration-eligible. No second Lane 4
+PR is opened. PR #24 is not merged here.
+
+### Reconciliation contract
+
+`docs/INTEGRATION_PROTOCOL.md` now states the specialist merge rules:
+preserve history, merge current main without force-push, resolve only
+owned conflicts, and submit a fresh exact-tree verification. Lane 1 does
+not edit PR #21, PR #22, or the Lane 4 branch in this refresh.
+
 ## 2026-10-08 — Lane 4 certification packet and zero-cost host readiness
 
 Docs-only continuation on draft PR #24 by

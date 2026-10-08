@@ -6,11 +6,12 @@ using `docs/INTEGRATION_PROTOCOL.md` and the operating hierarchy in
 `docs/WORKSTREAM_OWNERSHIP.md`.
 
 Last attestation date: 2026-10-08
-Canonical main baseline (attested): `24466ab9e551c6bb13dc1af67c6b33f148ac854a`
-Canonical main tree (attested): `74ef01fd9ae067e29ae7ecc97c466a39104da2f1`
-Attestation method: post-integration evidence tip on `main` after PR #23
-fast-forward (`f5880cfcfaa6d994f369e04d73c844fd1402d74c`) plus registry activation; specialist handoffs
-reconciled on 2026-10-08.
+Canonical main baseline (attested): `af0d69b1dfc2046899db05a2f12767fc20b623ae`
+Canonical main tree (attested): `4e1ed263e745b9896bf9384a2a9453566ebd6e0b`
+Attestation method: coordination checkpoint `gh api`/`git fetch` on 2026-10-08.
+Classification versus the prior reported tip: `BASELINE_MATCH` (no commits after
+`af0d69b`). Governance fast-forward tip remains
+`f5880cfcfaa6d994f369e04d73c844fd1402d74c` / `1700b1b442ef72b31b24aa8dcdf65e43525376e4`.
 
 ## Controlled states
 
@@ -141,20 +142,20 @@ certification.
 | Lane identifier | `LANE-4` |
 | Workstream name | Database / PostgreSQL Infrastructure |
 | Current state | `READY_FOR_VERIFICATION` |
-| Current branch | `cursor/db-zero-cost-bootstrap-51f4` |
-| PR number | None yet (specialist draft-PR create denied by token; Lane 1 may open later) |
-| Last attested SHA | `d949ce0197bc51ceef0b627eea325e9c4d13aaaf` |
-| Last attested tree | `d54619c30221dac05dd3a08887397cd7cad237e0` |
-| Canonical main baseline | `24466ab9e551c6bb13dc1af67c6b33f148ac854a` / `74ef01fd9ae067e29ae7ecc97c466a39104da2f1` |
-| Current objective | Zero-cost PostgreSQL hosting research and TokenStore PostgreSQL local evidence under 0 USD incremental cost; no provider acceptance |
-| Current blocker | `DEP-DB-001` OPEN (Operator selection; Supabase/Neon Free **NOT_ACCEPTED**). `DEP-DB-002` has implementer local PASS only — independent verification still required. |
-| Next permitted action | Independent verification of twelve TokenStore PostgreSQL nodes; Lane 1 may open draft PR from specialist branch; Operator host-selection path |
-| Next prohibited action | Treat implementer PASS as certification; Supabase/Neon connection; paid provisioning; remote migration; self-integration; LIVE |
+| Current branch | Review target `cursor/db-dep-db-002-verify-c385` (contains ancestor `cursor/db-zero-cost-bootstrap-51f4`) |
+| PR number | Draft PR #24 (do not open a second PR from the older tip) |
+| Last attested SHA | `db570fac13cb33b84c98afb89c3f4722128ae179` (parents `13d6a93` verification record and main `af0d69b`) |
+| Last attested tree | `d754a9b28dfcf77a25a32f114c5882767fac8e59` |
+| Canonical main baseline | `af0d69b1dfc2046899db05a2f12767fc20b623ae` / `4e1ed263e745b9896bf9384a2a9453566ebd6e0b` |
+| Current objective | Preserve zero-cost research and independent local TokenStore PostgreSQL evidence; no provider acceptance and no integration |
+| Current blocker | `DEP-DB-001` OPEN (Supabase/Neon Free **NOT_ACCEPTED**). `DEP-DB-002` has independent local PASS but stays OPEN until coordinator certification review and Operator acceptance of any certification claim. |
+| Next permitted action | Lane 4 owner merges later coordinator main updates without force-push; Operator host-selection path remains separate |
+| Next prohibited action | Set `READY_FOR_INTEGRATION`; close `DEP-DB-002` from verifier PASS alone; Supabase/Neon connection; paid provisioning; self-integration; LIVE |
 | Contract dependencies | `DEP-DB-001`, `DEP-DB-002` |
-| Certification status | Not certified. Implementer recorded 12/12 local TokenStore PostgreSQL PASS; not accepted until distinct verifier + coordinator review. |
+| Certification status | Independent verifier PASS for twelve local nodes on code identical to main `af0d69b`. Not Operator-accepted certification. Not integration approval. |
 | Integration eligibility | Not eligible |
-| Last verification date | 2026-10-08 (specialist bootstrap; agent `bc-f38dad08-03c5-5ee8-9b28-8701f8b051f4`) |
-| Evidence references | Branch `cursor/db-zero-cost-bootstrap-51f4`; `docs/LANE4_ZERO_COST_BOOTSTRAP_RESEARCH.md`; token `LANE4_ZERO_COST_RESEARCH_READY` |
+| Last verification date | 2026-10-08 (independent verifier `bc-6040b738-314c-499a-96c2-7383ac84c385`; implementer `bc-f38dad08-03c5-5ee8-9b28-8701f8b051f4`) |
+| Evidence references | Draft PR #24; `docs/LANE4_DEP_DB_002_INDEPENDENT_VERIFICATION.md`; token `LANE4_DEP_DB_002_INDEPENDENT_PASS`; executable bytes attested at `d949ce0` / `d54619c3` and identical `src/` `tests/` on main `af0d69b` |
 
 ## Baseline difference classification
 
@@ -162,10 +163,80 @@ certification.
 | --- | --- | --- |
 | Pre-integration SHA `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` | Superseded by FF of PR #23 | `SUPERSEDED_BY_AUTHORIZED_INTEGRATION` |
 | Governance FF tip `f5880cfcfaa6d994f369e04d73c844fd1402d74c` | Ancestor of current main | `GOVERNANCE_FF_TIP` |
-| Current main evidence tip `24466ab9e551c6bb13dc1af67c6b33f148ac854a` | Identical | `BASELINE_MATCH` |
-| Current main tree `74ef01fd9ae067e29ae7ecc97c466a39104da2f1` | Identical | `BASELINE_MATCH` |
+| Prior registry tip `24466ab9e551c6bb13dc1af67c6b33f148ac854a` | Ancestor of current main | `SUPERSEDED_BY_REGISTRY_COMMIT` |
+| Current main `af0d69b1dfc2046899db05a2f12767fc20b623ae` | Identical | `BASELINE_MATCH` |
+| Current main tree `4e1ed263e745b9896bf9384a2a9453566ebd6e0b` | Identical | `BASELINE_MATCH` |
 
 PR #23 was integrated by history-preserving fast-forward. Specialist PR #21/#22
 branches predate the governance tip and were not rewritten. Lane 4 research
 branch `cursor/db-zero-cost-bootstrap-51f4` is not integrated. Unexpected
 future divergence must be classified, never overwritten or reset.
+
+## Coordination checkpoint (2026-10-08)
+
+This section records integration-readiness conditions. It does not merge
+specialist work and does not close dependencies.
+
+### Specialist compatibility with current main
+
+| Lane | Tip | Contains current main? | GitHub merge state | Conflicting paths |
+| --- | --- | --- | --- | --- |
+| LANE-2 PR #22 | `a6c5f1d7109e156eb0e9257216c3b5dbed17f653` | No (merge-base `41218abb`) | `CONFLICTING` / `DIRTY` | `docs/CURRENT_STATE.md`, `docs/ENGINEERING_JOURNAL.md` |
+| LANE-3 PR #21 | `a2cef6f3527b2aab7319a2628874fcdcaf03acac` | No (merge-base `41218abb`) | `CONFLICTING` / `DIRTY` | `docs/CURRENT_STATE.md`, `docs/ENGINEERING_JOURNAL.md` |
+| LANE-4 PR #24 | `db570fac13cb33b84c98afb89c3f4722128ae179` | Yes (contains `af0d69b`) | `MERGEABLE` / `CLEAN` versus `af0d69b` | None versus that main tip. Older tip `d949ce0` remains an ancestor and is not a second PR. |
+| LANE-2-HIST-19 | `bc6ab7ea92310ffa133b75b498f7f245af11f166` | No | OPEN / superseded | Do not reconcile as current authority |
+
+Non-conflicting specialist additions on PR #21: `docs/GMAIL_READONLY_CORPUS_GATE.md`, Proposed ADR-0004. On PR #22: broker/auth evidence docs and Proposed ADR-0005. Those files are not the conflict set.
+
+### Reconciliation instructions (specialist owners; Lane 1 does not edit those branches here)
+
+1. Start from a fresh worktree of the existing branch. Do not recreate the branch and do not force-push.
+2. Rebase or merge is **not** automatic. Prefer a new descendant commit that merges current `main` (`af0d69b`) and resolves only shared-file conflicts.
+3. For `docs/CURRENT_STATE.md` and `docs/ENGINEERING_JOURNAL.md`, keep canonical main governance text and append the specialist evidence. Do not drop ADR-0003 Accepted, four-lane registry facts, or `DRY_RUN` / `LIVE` unauthorized statements.
+4. Do not accept ADR-0004 or ADR-0005 during reconciliation.
+5. Do not mark `DEP-*` resolved.
+6. After reconciliation, request independent verification of the new SHA/tree before any integration proposal.
+7. The pre-PR #24 sentence that Lane 4 still lacked a distinct verifier is superseded for execution evidence only. Draft PR #24 already records independent PASS `LANE4_DEP_DB_002_INDEPENDENT_PASS`. That PASS does not close `DEP-DB-002` and does not make the lane integration-eligible.
+
+### Lane 4 draft PR eligibility
+
+Draft PR #24 already exists and is the review target. Do not create a replacement PR. Integration remains `NOT_ELIGIBLE`:
+
+- Independent local execution is **PASS** (12 passed, 32 deselected; unset URL: 12 skipped). It applies to executable `src/` and `tests/` bytes shared by `d949ce0` and main `af0d69b`. The later merge commit `db570fa` changes docs only (`CURRENT_STATE`, journal, status) relative to verification commit `13d6a93`.
+- `DEP-DB-002` stays OPEN. Verifier PASS is not Operator-accepted certification.
+- `DEP-DB-001` stays OPEN. Supabase and Neon Free stay **NOT_ACCEPTED**.
+- State stays `READY_FOR_VERIFICATION`, not `READY_FOR_INTEGRATION`.
+
+### Recommended future integration sequence
+
+Preconditions apply before each step. No step authorizes credentials, SIM, or `LIVE`.
+
+1. Keep governance on `main` (already integrated). Do not re-merge PR #23.
+2. Lane 4 draft PR #24 may be integrated only after a later explicit authorization, dependency review, and a fresh shared-doc reconcile if main moves. Independent PASS does not authorize that merge in this task. Provider selection stays closed.
+3. Lane 3 PR #21 only after Operator OAuth attestation (`DEP-GMAIL-001`), shared-doc reconciliation, and independent verification. ADR-0004 stays Proposed until Operator acceptance.
+4. Lane 2 PR #22 only after provider callback evidence (`DEP-TS-001`) or an explicit Operator decision to integrate docs-only bounds without closing `DEP-TS-001`, plus shared-doc reconciliation and independent verification. ADR-0005 stays Proposed until Operator acceptance.
+5. `DEP-CORE-001` and `DEP-CORE-002` before any economic quantity, calendar, or timezone acceptance. They do not block docs-only conflict reconciliation.
+
+### Acceptance gate vocabulary for future specialist integration
+
+Use `PASS`, `FAIL`, `BLOCKED`, `SKIPPED`, or `NOT_RUN`. Skipped tests are not passes.
+
+| Gate | LANE-2 PR #22 | LANE-3 PR #21 | LANE-4 research |
+| --- | --- | --- | --- |
+| Branch identity attested | PASS | PASS | PASS |
+| Contains current main `af0d69b` | FAIL | FAIL | PASS (PR #24 tip `db570fa`) |
+| Exact SHA/tree attested | PASS | PASS | PASS |
+| Governance compliance (no LIVE/auth) | PASS (docs inspection) | PASS (docs inspection) | PASS (research text) |
+| Scope isolation | PASS (docs) | PASS (docs) | PASS (docs) |
+| Shared-file compatibility vs `af0d69b` | BLOCKED | BLOCKED | PASS vs `af0d69b`; re-merge required if coordinator main advances |
+| Dependency closure | BLOCKED (`DEP-TS-001`) | BLOCKED (`DEP-GMAIL-001`) | BLOCKED (`DEP-DB-001` OPEN; `DEP-DB-002` OPEN despite local PASS) |
+| Independent verification of tip | NOT_RUN for post-main reconcile | NOT_RUN for post-main reconcile | PASS for twelve local nodes on identical `src/`/`tests/`; not certification closure |
+| Automated tests | NOT_RUN this checkpoint | NOT_RUN this checkpoint | Verifier: 161 passed offline+contracts; 0 skips in that run |
+| PostgreSQL-backed tests | NOT_RUN | NOT_RUN | PASS 12 / deselected 32; unset URL SKIPPED 12 (not passes) |
+| Secret/credential handling | PASS (no new secrets observed) | PASS | PASS (fixture URL only in research text) |
+| Regression vs main | NOT_RUN | NOT_RUN | NOT_RUN |
+| Merge readiness | BLOCKED | BLOCKED | BLOCKED |
+
+### Local isolation note
+
+Worktrees present: `/workspace/.worktrees/lane2-ts` at PR #22 tip; `lane3-gmail` at PR #21 tip; `lane4-db` on local `cursor/db-zero-cost-bootstrap-8992` at `24466ab`, which is **not** remote research tip `d949ce0`. Do not treat the local Lane 4 worktree as the research branch. Do not rewrite those checkouts from this checkpoint.
