@@ -2514,3 +2514,26 @@ was clean. A secret-assignment scan of the diff found no credential
 material. No TradeStation network request was made by the tests. This
 entry does not embed its own commit hash and does not claim independent
 verification.
+
+### Independent verification
+
+Verifier agent `bc-e2d7b87b-2d7e-55d1-8dd8-631005b76379` checked out
+`19154eae43990df1d83a78be7b6dac3710a28804`, tree
+`de97145c7278afbfe432463733a02b5e8a74ced9`, in a separate worktree and
+imported `swingtrade.group3_auth.boundary` from that worktree.
+`SWINGTRADE_TEST_POSTGRES_URL` was unset. Results: lane-2 readiness
+14 passed; `tests/group3_auth` 70 passed; `tests/offline` 112 passed,
+12 skipped; `tests/contracts` 37 passed; configured Phase 1 pytest
+119 passed, 99 skipped; `tests/validate_phase1_contracts.py` PASS;
+Ruff check passed. ADR-0005 was Proposed with a blank Decision.
+`NOT_CLOSED_BY_PROVIDER` was present. Profile B raises
+`PROFILE_B_NOT_AUTHORIZED`.
+
+The verifier also flagged `from urllib.parse import urlsplit` in
+`boundary.py`. That import splits a URL. It is not `urllib.request`,
+and the existing group3 forbidden-module test allows it. The same
+parser is already used by `src/swingtrade/group3_auth/request.py`.
+No socket was opened. This note does not treat the flag as a failed
+test. It does not claim TradeStation connectivity. This descendant
+commit records that verification and does not change the verified
+source tree.

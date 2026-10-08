@@ -346,3 +346,8 @@ connection, elevated scopes, profile B, and HTTP 429 retries. No
 credential was onboarded. No TradeStation call was made. Canonical
 `main` at the start of this intake was
 `af0d69b1dfc2046899db05a2f12767fc20b623ae`. PR #22 is not merged.
+Independent verification of implementation commit
+`19154eae43990df1d83a78be7b6dac3710a28804`, tree
+`de97145c7278afbfe432463733a02b5e8a74ced9`, passed the local DRY_RUN
+suites named in `docs/ENGINEERING_JOURNAL.md`. That pass is not
+TradeStation connectivity.
