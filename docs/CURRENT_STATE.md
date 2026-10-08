@@ -242,6 +242,14 @@ a prohibition on later additive coordination roles.
    evidence (`DEP-DB-001`/`DEP-DB-002` still open). Quantity rounding
    (`DEP-CORE-001`) and market calendar/timezone (`DEP-CORE-002`) remain
    unresolved. Supabase remains **NOT_ACCEPTED**.
+   Coordination checkpoint on 2026-10-08 reattested canonical main
+   `af0d69b1dfc2046899db05a2f12767fc20b623ae` /
+   `4e1ed263e745b9896bf9384a2a9453566ebd6e0b` (`BASELINE_MATCH`).
+   PR #21 and PR #22 are `CONFLICTING` with that main on
+   `docs/CURRENT_STATE.md` and `docs/ENGINEERING_JOURNAL.md`. Lane 4
+   research conflicts on the journal versus `af0d69b` and is not
+   draft-PR eligible until independent PostgreSQL verification.
+   No specialist branch was rewritten. No specialist PR was merged.
 
 ## Evidence
 

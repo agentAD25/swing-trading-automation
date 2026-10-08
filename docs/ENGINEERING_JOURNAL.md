@@ -2381,3 +2381,30 @@ PR #21 head `a2cef6f3527b2aab7319a2628874fcdcaf03acac` and PR #22 head
 PR #19 remains `SUPERSEDED` and unmerged. Lane 4 tip
 `d949ce0197bc51ceef0b627eea325e9c4d13aaaf` is not integrated; `DEP-DB-001`
 and `DEP-DB-002` remain open for Operator/independent verification.
+
+## 2026-10-08 — Lane 1 coordination checkpoint
+
+Evidence-only coordination. No specialist implementation, no specialist
+merge, no rebase or force-push, no credentials, no provider auth, no
+SIM/LIVE.
+
+### Reattestation
+
+Canonical `main` remained
+`af0d69b1dfc2046899db05a2f12767fc20b623ae`, tree
+`4e1ed263e745b9896bf9384a2a9453566ebd6e0b` (`BASELINE_MATCH` versus the
+checkpoint brief). PR #23 stayed MERGED at fast-forward tip
+`f5880cfcfaa6d994f369e04d73c844fd1402d74c`. PR #21 and PR #22 heads were
+unchanged and GitHub reported `CONFLICTING` against current main.
+Conflict paths: `docs/CURRENT_STATE.md` and `docs/ENGINEERING_JOURNAL.md`
+for both. Lane 4 tip `d949ce0` / `d54619c3` conflicts only on
+`docs/ENGINEERING_JOURNAL.md` (merge-base `24466ab`). ADR-0003 remains
+Accepted. ADR-0004 and ADR-0005 remain absent from `main`.
+
+### Decision
+
+Six dependency IDs stay open. Lane 4 documentation draft PR is
+`NOT_ELIGIBLE` until independent TokenStore PostgreSQL verification and
+journal reconciliation. Checkpoint token:
+`LANE1_INTEGRATION_CONFLICT_REQUIRES_RECONCILIATION`.
+This entry does not embed its own commit hash.

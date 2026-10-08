@@ -5,8 +5,8 @@ another lane's dependency resolved without cited evidence. Conversation claims
 alone are insufficient.
 
 Last attestation date: 2026-10-08
-Canonical main baseline: `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` /
-`39f0ab05c49b533270964b303601539feeff570f`
+Canonical main baseline: `af0d69b1dfc2046899db05a2f12767fc20b623ae` /
+`4e1ed263e745b9896bf9384a2a9453566ebd6e0b`
 
 ## Severity vocabulary
 
@@ -36,7 +36,7 @@ Canonical main baseline: `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` /
 | Severity | `BLOCKING` for operational probe design closure |
 | Blocking/nonblocking | Blocking |
 | Resolution authority | `PROVIDER` with Operator recording; coordinator reconciles into contracts |
-| Current state | `OPEN` — Lane 2 state `WAITING_PROVIDER` on draft PR #22 head `a6c5f1d7109e156eb0e9257216c3b5dbed17f653` |
+| Current state | `OPEN` — Lane 2 `WAITING_PROVIDER` on draft PR #22 head `a6c5f1d7109e156eb0e9257216c3b5dbed17f653`. Continuity verified 2026-10-08. PR is `CONFLICTING` with current main on shared docs. Not resolved. |
 
 ### DEP-GMAIL-001
 
@@ -51,7 +51,7 @@ Canonical main baseline: `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` /
 | Severity | `BLOCKING` for Gate A progression beyond docs-only proposal |
 | Blocking/nonblocking | Blocking |
 | Resolution authority | `OPERATOR` |
-| Current state | `OPEN` — Lane 3 state `WAITING_OPERATOR` on draft PR #21 head `a2cef6f3527b2aab7319a2628874fcdcaf03acac` |
+| Current state | `OPEN` — Lane 3 `WAITING_OPERATOR` on draft PR #21 head `a2cef6f3527b2aab7319a2628874fcdcaf03acac`. Continuity verified 2026-10-08. PR is `CONFLICTING` with current main on shared docs. Not resolved. |
 
 ### DEP-DB-001
 
@@ -66,7 +66,7 @@ Canonical main baseline: `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` /
 | Severity | `BLOCKING` for remote autonomous-SIM database use |
 | Blocking/nonblocking | Blocking |
 | Resolution authority | `OPERATOR` |
-| Current state | `OPEN` — remote autonomous-SIM database not selected; local PostgreSQL inaccessible from Cursor Cloud |
+| Current state | `OPEN` — remote autonomous-SIM database not selected. Supabase and Neon Free remain **NOT_ACCEPTED**. Lane 4 research records a disposable local PostgreSQL run; that does not select a remote host and does not close this dependency. |
 
 ### DEP-DB-002
 
@@ -81,7 +81,7 @@ Canonical main baseline: `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` /
 | Severity | `BLOCKING` for TokenStore PostgreSQL certification |
 | Blocking/nonblocking | Blocking |
 | Resolution authority | `SPECIALIST` evidence + coordinator certification review; Operator for acceptance of certification claims |
-| Current state | `OPEN` — `NO_ACCEPTED_EVIDENCE_FOUND` per main journal/current-state residual |
+| Current state | `OPEN` — implementer on `d949ce0197bc51ceef0b627eea325e9c4d13aaaf` reported 12/12 local TokenStore PostgreSQL passes. Independent verification is `NOT_RUN`. Not accepted evidence. |
 
 ### DEP-CORE-001
 
