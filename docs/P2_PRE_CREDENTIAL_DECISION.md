@@ -24,8 +24,10 @@ erase the historical page conflicts.
 Current stop token:
 `P2_TS_PROVIDER_EVIDENCE_RECONCILED_CALLBACK_CLARIFICATION_REQUIRED`.
 
-ADR-0005 is Proposed. Its Decision is blank. Native PKCE is an engineering
-preference, not a selected or provider-recommended type.
+ADR-0005 is Proposed. Its Decision is blank. The 2026-10-06 Native PKCE
+preference is historical. The 2026-10-08 proposal is Option A, Regular
+Web, and is not accepted. See
+`docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md`.
 
 ## First-probe profile
 
@@ -148,3 +150,10 @@ Preserved, and superseded only where the 2026-10-06 table conflicts:
 - Memory-only authorization code and access token, and erasure of an
   unexpected refresh token, remain the local rule.
 - Bootstrap custody was not selected. It remains unselected.
+
+## 2026-10-08 boundary note
+
+`src/swingtrade/group3_auth/boundary.py` now denies LIVE hosts, SIM
+connection, redirects, and host overrides under `DRY_RUN`. It does not
+open a socket and does not authorize the future SIM probe described
+above. Naming `https://sim-api.tradestation.com/v3` still cannot connect.

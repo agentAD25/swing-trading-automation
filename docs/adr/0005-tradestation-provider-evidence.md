@@ -2,8 +2,10 @@
 
 - Status: Proposed
 - Date: 2026-10-06
+- Amended: 2026-10-08 (proposal only; Decision remains blank)
 - Sole Phase 1 decider: Human Operator
-- Scope: How the 2026-10-06 Client Experience answers constrain a future probe
+- Scope: How Client Experience answers constrain a future probe and which
+  OAuth architecture is proposed for a cloud-hosted service
 - Supersedes: None
 - Superseded by: None
 
@@ -31,34 +33,70 @@ them.
 
 ## Options considered
 
-### Option A — Regular Web Application
+### Option A — Regular Web confidential client
 
-Standard Authorization Code flow. `client_secret` is required. The
-provider confirmed this behavior and did not recommend it. A persistent
-client secret is a poor fit for the attended no-refresh probe.
+Standard Authorization Code. `client_secret` is required on the token
+request. The provider confirmed that behavior for this application type
+and did not choose it. The public authentication overview, accessed
+2026-10-08, says the default key type is Regular Web. That default is not
+proof of the issued key.
 
-### Option B — Native application with PKCE
+This option fits a cloud-hosted, eventually unattended service: the
+secret stays on the server, the callback is one exact HTTPS URL, and
+native loopback is unnecessary. It does not fit a host that cannot keep
+a client secret. The issued key's type is still unverified, so this
+option is a proposal, not a provider authorization.
 
-Authorization Code with a Code Verifier. `client_secret` can be omitted.
-This is the engineering preference for the first attended probe because it
-avoids a persistent client secret. It is not a provider recommendation.
-The callback form is not confirmed, so this option is not selected.
+### Option B — Native or public client with PKCE
+
+Authorization Code with a code verifier. `client_secret` can be omitted.
+The 2026-10-06 note preferred this for an attended probe because it
+avoids a persistent secret. The native callback form is still
+unconfirmed. A public client is a weaker custody model for an unattended
+cloud service. This option remains available if the Operator rejects
+Option A. It is not selected.
 
 ### Option C — Single Page application with PKCE
 
 The provider confirmed the same PKCE omission of `client_secret`. A
-browser-resident client is a worse fit for a short attended probe that
-must not persist tokens. Not selected.
+browser-resident client is a poor fit for server-side custody, restart
+recovery, and unattended operation. Not proposed.
+
+No other documented flow fits the objectives better. Implicit grant is
+not the provider's described model. Resource-owner password is not a
+documented option used here.
+
+## Proposal (not a Decision)
+
+Option A is the proposed architecture for the cloud-hosted service.
+Supporting points: server-side secret custody, one HTTPS callback, no
+dependence on native loopback, refresh design that can later sit behind
+an encrypted store, and the same fail-closed host boundary whether the
+key is later shown to be Regular Web or not. The proposal does not
+assume the issued key is already Regular Web. Accepting it would still
+require `DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004` in
+`docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md`.
 
 ## Decision
 
 ## Consequences
 
-Until the Native callback question is answered, no API client should be
-created. `offline_access` stays omitted. A returned refresh token would be
-discarded and the attempt stopped. Default personal-use refresh tokens, if
-a later unattended phase requests them, are high-value long-lived secrets,
-not 30-minute or 40-minute rotating tokens.
+The Decision section is blank because status is Proposed. The repository
+ADR template requires that. This agent cannot accept the ADR.
+
+Until the Operator accepts a decision, no API client should be created
+and no credential should be onboarded. `offline_access` stays omitted
+for the initial attended profile. A returned refresh token would be
+discarded and the attempt stopped. Default personal-use refresh tokens,
+if a later unattended phase requests them, are high-value long-lived
+secrets, not 30-minute or 40-minute rotating tokens. Profile B in
+`src/swingtrade/group3_auth/session.py` raises
+`PROFILE_B_NOT_AUTHORIZED`.
+
+If the Operator later accepts Option A, native loopback (`DEP-TS-001`)
+becomes architecturally unnecessary. That would be an architectural
+supersession, not a provider answer. If the Operator rejects Option A,
+`DEP-TS-001` remains blocking.
 
 ## Validation and rollback
 
@@ -68,15 +106,19 @@ LIVE host, any write method, or any stored token.
 
 ## Unresolved questions
 
-The Native PKCE callback form. Exact scope-configuration mechanics.
-Returned-scope behavior. Optional rotating-policy interval. Refresh
-concurrency and revocation. Non-default key configurations. The Operator's
-expected SIM account inventory.
+The issued key's application type. Granted-scope behavior. The sole HTTPS
+callback and removal of other callbacks if Option A is accepted. The
+native loopback form if Option A is rejected. Optional rotating-policy
+interval. Refresh concurrency and revocation for a real token.
+Non-default key configurations. The Operator's expected SIM account
+inventory. Operator acceptance of this ADR.
 
 ## Evidence
 
 Operator-supplied Client Experience writing, 2026-10-06, recorded in
-`docs/P2_TS_PROVIDER_EVIDENCE.md`. Limitation: the message does not choose
-an application type and does not describe loopback callbacks. Prior
-first-party page conflicts remain in `docs/P2_BROKER_RESEARCH.md` and are
-not deleted.
+`docs/P2_TS_PROVIDER_EVIDENCE.md`. The 2026-10-08 intake, which does not
+replace those quotations, is
+`docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md`. Limitation: neither record
+chooses an application type or describes loopback callbacks. Public
+pages accessed 2026-10-08 are cited in that intake. Prior first-party
+page conflicts remain in `docs/P2_BROKER_RESEARCH.md` and are not deleted.

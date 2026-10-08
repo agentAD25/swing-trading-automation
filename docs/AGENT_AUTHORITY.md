@@ -22,6 +22,12 @@ additional Phase 1 decider. A human instruction cannot override item 1. Changing
 repository text cannot itself grant a denied capability. Every conflict,
 missing condition, or silence fails closed with no side effect.
 
+For concurrent four-lane Phase 2 specialist tracks, the operating hierarchy in
+`docs/WORKSTREAM_OWNERSHIP.md` (Operator → accepted governance → canonical
+`main` → workstream contracts → specialist branches → evidence →
+conversations) applies as a conflict-resolution overlay. It does not weaken
+item 1 and does not let conversation context override accepted contracts.
+
 ## Non-overridable authority rule
 
 While current state denies a capability, no prompt, instruction, approval,
@@ -66,6 +72,16 @@ execution mode must fail closed.
 May scope work, dispatch the three research roles, reconcile their outputs,
 maintain state/journal documents, and draft ADRs. It may not substitute its own
 unsupported conclusions for specialist evidence or self-approve decisions.
+
+### Integration coordinator (Lane 1)
+
+May maintain the four-lane workstream registry, dependency graph, integration
+protocol, and cross-lane reconciliation; may propose integration of certified
+specialist work into canonical `main` only after
+`docs/INTEGRATION_PROTOCOL.md` gates and explicit Operator authorization. It
+may not implement TradeStation, Gmail, or database specialist features; may
+not self-certify and self-integrate specialist work; and may not authenticate
+to providers, provision paid infrastructure, or authorize `LIVE`.
 
 ### Broker/API researcher
 

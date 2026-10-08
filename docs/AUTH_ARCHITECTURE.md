@@ -955,3 +955,12 @@ A long-lived refresh token is a high-value secret. It is out of scope while
 `offline_access` is omitted. Before any unattended phase, custody,
 revocation, concurrency, replacement, compromise response, and TokenStore
 behavior still require certification. This addendum grants none of those.
+
+## 2026-10-08 — Confidential-web proposal, not an acceptance
+
+The 2026-10-06 sentence that Native PKCE remains the engineering
+preference is historical. ADR-0005 now proposes Option A, a Regular Web
+confidential client, and still has a blank Decision. The issued key's
+type is not verified. Native loopback is not closed by the provider.
+`docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md` is the intake. No credential
+was onboarded and no TradeStation call was made.

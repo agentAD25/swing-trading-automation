@@ -386,3 +386,36 @@ you to choose the application type.
 Please do not include a client id, client secret, authorization code,
 access token, refresh token, password, or account number in the reply.
 ```
+
+### Unsent 2026-10-08 follow-up
+
+Not sent. The 2026-10-08 intake does not close the native callback
+question. ADR-0005 proposes a cloud-hosted Regular Web client and leaves
+the Decision blank. If the Operator accepts that proposal, native
+loopback is architecturally unnecessary and this follow-up replaces the
+native question. If the Operator rejects it, the unsent native question
+above remains the blocking question. This draft does not ask for a
+secret or an account number.
+
+```text
+Subject: Key type, read-only scope, and one HTTPS callback
+
+Hello,
+
+Please answer only these three questions, in writing, about the API key
+already issued to this login. Please do not change the key unless a
+separate request asks for that change.
+
+1. Is this key configured as a Regular Web application, a Native
+   application, or a Single Page application?
+2. Can an authorization request for only openid and ReadAccount be
+   granted with no Trade, MarketData, Matrix, OptionSpreads, or
+   offline_access scope, and does the token response scope field list
+   every granted scope?
+3. For a confidential Regular Web client, what exact HTTPS callback URL
+   can be the only registered callback, and can every other registered
+   callback be removed?
+
+Please do not include a client id, client secret, authorization code,
+access token, refresh token, password, or account number in the reply.
+```

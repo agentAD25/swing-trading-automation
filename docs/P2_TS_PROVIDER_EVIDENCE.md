@@ -262,3 +262,8 @@ Blockers, in order:
 
 `GROUP4B_TRADE_PLAN_ENGINE_READY` is unchanged and is not this workstream.
 Gmail PR #21 is not modified.
+
+The 2026-10-08 intake does not rewrite the quotations above. It is
+`docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md`. Native PKCE is no longer
+the proposed architecture. ADR-0005 remains Proposed and its Decision
+remains blank.
