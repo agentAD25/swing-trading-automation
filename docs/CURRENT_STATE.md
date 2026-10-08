@@ -234,13 +234,14 @@ a prohibition on later additive coordination roles.
    parser is not merged is pre-fast-forward. It grants no Gmail, broker,
    credential, Supabase, order, SIM, or `LIVE` authority.
 9. Four-lane specialist tracks are not integrated merely by registry
-   existence. Gmail PR #21 awaits Operator OAuth setup (`DEP-GMAIL-001`).
-   TradeStation PR #22 awaits provider callback clarification
-   (`DEP-TS-001`). Database lane awaits zero-cost remote PostgreSQL
-   selection (`DEP-DB-001`) and TokenStore PostgreSQL execution evidence
-   (`DEP-DB-002`). Quantity rounding (`DEP-CORE-001`) and market
-   calendar/timezone (`DEP-CORE-002`) remain unresolved. Supabase remains
-   **NOT_ACCEPTED**.
+   existence. After PR #23 integration, continuity/bootstrap agents
+   attested: Gmail PR #21 still awaits Operator OAuth (`DEP-GMAIL-001`);
+   TradeStation PR #22 still awaits provider callback clarification
+   (`DEP-TS-001`); Database branch `cursor/db-zero-cost-bootstrap-51f4`
+   holds zero-cost research + implementer-only local TokenStore PG
+   evidence (`DEP-DB-001`/`DEP-DB-002` still open). Quantity rounding
+   (`DEP-CORE-001`) and market calendar/timezone (`DEP-CORE-002`) remain
+   unresolved. Supabase remains **NOT_ACCEPTED**.
 
 ## Evidence
 

@@ -2395,6 +2395,37 @@ This entry does not accept Supabase or Neon, does not close `DEP-DB-001` or
 and does not merge to `main`. Requested Lane 4 state for coordinator review:
 `READY_FOR_VERIFICATION`.
 
+## 2026-10-08 — Four-lane specialist bootstrap delegation
+
+Coordinator orchestration after PR #23 integration. No credentials, Gmail
+corpus acquisition, TradeStation C2 probe, operational Supabase deployment,
+broker execution, or `LIVE` activity.
+
+### Canonical baseline
+
+Current `main`: `24466ab9e551c6bb13dc1af67c6b33f148ac854a`, tree `74ef01fd9ae067e29ae7ecc97c466a39104da2f1`.
+Governance FF tip: `f5880cfcfaa6d994f369e04d73c844fd1402d74c`, tree `1700b1b442ef72b31b24aa8dcdf65e43525376e4` (PR #23 MERGED).
+
+### Specialist isolation
+
+Local worktrees prepared under `/workspace/.worktrees/` for lanes 2–4.
+Existing specialist branches preserved. New Lane 4 branch created by
+specialist from post-integration main (not empty progress PR).
+
+### Delegated cloud agents (verifiable identities)
+
+| Lane | Agent ID | Token |
+| --- | --- | --- |
+| LANE-2 | `bc-d4b7c1e4-6ba3-542d-abb3-54ba045f0f93` | `LANE2_WAITING_PROVIDER_CONTINUITY_VERIFIED` |
+| LANE-3 | `bc-f47aa4eb-faff-54ed-8dd0-9d738fab7bc4` | `LANE3_WAITING_OPERATOR_OAUTH_CONTINUITY_VERIFIED` |
+| LANE-4 | `bc-f38dad08-03c5-5ee8-9b28-8701f8b051f4` | `LANE4_ZERO_COST_RESEARCH_READY` |
+
+PR #21 head `a2cef6f3527b2aab7319a2628874fcdcaf03acac` and PR #22 head
+`a6c5f1d7109e156eb0e9257216c3b5dbed17f653` remain OPEN and unmerged.
+PR #19 remains `SUPERSEDED` and unmerged. Lane 4 tip
+`d949ce0197bc51ceef0b627eea325e9c4d13aaaf` is not integrated; `DEP-DB-001`
+and `DEP-DB-002` remain open for Operator/independent verification.
+
 ## 2026-10-08 — Lane 4 independent TokenStore PostgreSQL verification
 
 Distinct verifier `bc-6040b738-314c-499a-96c2-7383ac84c385`
