@@ -2351,6 +2351,50 @@ canonical baseline pointer. Group 4A remains `INTEGRATED_AND_CERTIFIED`.
 This descendant evidence commit updates status/state/journal only and is not
 the governance candidate tree `1700b1b442ef72b31b24aa8dcdf65e43525376e4` itself.
 
+## 2026-10-08 — Lane 4 zero-cost bootstrap research
+
+Docs-only specialist evidence on branch
+`cursor/db-zero-cost-bootstrap-51f4` from canonical main
+`24466ab9e551c6bb13dc1af67c6b33f148ac854a` /
+`74ef01fd9ae067e29ae7ecc97c466a39104da2f1`. Agent run
+`bc-f38dad08-03c5-5ee8-9b28-8701f8b051f4`.
+
+### Scope
+
+Added `docs/LANE4_ZERO_COST_BOOTSTRAP_RESEARCH.md`. Re-verified published
+Supabase Free and Neon Free envelopes under
+`INITIAL_DATABASE_INCREMENTAL_SERVICE_COST = 0 USD`. Inventoried and ran the
+twelve TokenStore PostgreSQL test nodes against disposable local PostgreSQL
+16.15 in this Cursor Cloud VM. Did not connect to Supabase, Operator local
+PostgreSQL, or operational databases. Did not provision paid services. Did
+not select a provider. Did not authorize `SIM` or `LIVE`.
+
+### Dependency claims
+
+| ID | Claim |
+| --- | --- |
+| `DEP-DB-001` | Remains `OPEN`. Supabase restated `NOT_ACCEPTED`. Neon Free documented as a 0 USD comparative envelope only. |
+| `DEP-DB-002` | Implementer PASS recorded for all twelve nodes. Remains open until independent certification distinct from this implementer. |
+
+### Local validation (implementer; not independent gate)
+
+Disposable local PostgreSQL 16.15 on `127.0.0.1:5432`, database
+`swingtrade_test`, with
+`SWINGTRADE_TEST_POSTGRES_URL=postgresql+psycopg://swingtrade:swingtrade@127.0.0.1:5432/swingtrade_test`:
+
+- Twelve TokenStore PostgreSQL nodes: **12 passed, 32 deselected**
+- `python3 -m pytest tests/offline tests/contracts --tb=no`: **161 passed**
+
+No remote dial. TokenStore local-authority rules continue to reject
+`supabase` / `neon.tech` / `amazonaws` hosts for these tests.
+
+### Non-claims
+
+This entry does not accept Supabase or Neon, does not close `DEP-DB-001` or
+`DEP-DB-002`, does not update `docs/WORKSTREAM_STATUS.md` (Lane 1 registry),
+and does not merge to `main`. Requested Lane 4 state for coordinator review:
+`READY_FOR_VERIFICATION`.
+
 ## 2026-10-08 — Four-lane specialist bootstrap delegation
 
 Coordinator orchestration after PR #23 integration. No credentials, Gmail
@@ -2381,6 +2425,37 @@ PR #21 head `a2cef6f3527b2aab7319a2628874fcdcaf03acac` and PR #22 head
 PR #19 remains `SUPERSEDED` and unmerged. Lane 4 tip
 `d949ce0197bc51ceef0b627eea325e9c4d13aaaf` is not integrated; `DEP-DB-001`
 and `DEP-DB-002` remain open for Operator/independent verification.
+
+## 2026-10-08 — Lane 4 independent TokenStore PostgreSQL verification
+
+Distinct verifier `bc-6040b738-314c-499a-96c2-7383ac84c385`
+(https://cursor.com/agents/bc-6040b738-314c-499a-96c2-7383ac84c385).
+Implementer remains `bc-f38dad08-03c5-5ee8-9b28-8701f8b051f4`. Evidence is
+recorded in `docs/LANE4_DEP_DB_002_INDEPENDENT_VERIFICATION.md`.
+
+Code under test is implementer commit
+`d949ce0197bc51ceef0b627eea325e9c4d13aaaf`, tree
+`d54619c30221dac05dd3a08887397cd7cad237e0`. `src/`, `tests/`,
+`migrations/`, `pyproject.toml`, and `docker-compose.yml` are identical to
+canonical main `af0d69b1dfc2046899db05a2f12767fc20b623ae` (empty path diff).
+Main’s extra commit is docs-only registry reconciliation.
+
+Disposable local PostgreSQL 16.15 listened on localhost port 5432 only.
+With `SWINGTRADE_TEST_POSTGRES_URL` set to the local `swingtrade_test`
+fixture URL (same public `docker-compose.yml` password pattern):
+
+- Twelve TokenStore node IDs: **12 passed, 32 deselected** in 0.80s
+- `python3 -m pytest tests/offline tests/contracts`: **161 passed** in 0.88s
+- Same twelve nodes with the URL unset: **12 skipped, 32 deselected**;
+  skip reason `SWINGTRADE_TEST_POSTGRES_URL is required`
+
+`-m postgres` collects nothing (the tests use `skipif`, not a `postgres`
+marker). The twelve-node inventory is the parametrized expansion of the six
+`pytestmark_postgres` functions.
+
+This entry does not close `DEP-DB-001` or `DEP-DB-002`, does not accept
+Supabase or Neon, does not edit `docs/WORKSTREAM_STATUS.md`, and does not
+merge to `main`. Token: `LANE4_DEP_DB_002_INDEPENDENT_PASS`.
 
 ## 2026-10-08 — Lane 1 coordination checkpoint
 
@@ -2489,6 +2564,35 @@ Registry identities in coordinator-owned docs are updated to the heads
 above. Six dependency IDs stay OPEN. No second governance hierarchy is
 added. This entry does not embed its own commit hash.
 
+## 2026-10-08 — Lane 4 certification packet and zero-cost host readiness
+
+Docs-only continuation on draft PR #24 by
+`bc-6040b738-314c-499a-96c2-7383ac84c385`. The local reconfirm used
+canonical `main` `af0d69b1dfc2046899db05a2f12767fc20b623ae`, tree
+`4e1ed263e745b9896bf9384a2a9453566ebd6e0b`, which was then the merge-base
+of PR HEAD `db570fac13cb33b84c98afb89c3f4722128ae179`. No `src/`, `tests/`,
+or `migrations/` delta versus that main. `main` then advanced to
+coordinator tip `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829`
+(`DOCS_ONLY_COORDINATOR_CHECKPOINT`). That tip is merged and its
+governance sentences are kept.
+
+Added:
+
+- `docs/LANE4_DB_CERTIFICATION_PACKET.md`
+- `docs/LANE4_ZERO_COST_HOST_READINESS.md`
+- `docs/LANE4_PROVIDER_NEUTRAL_READINESS.md`
+- `docs/LANE4_REMOTE_SMOKE_TEST.md`
+
+Local twelve-node evidence was reconfirmed on `db570fa`: **12 passed,
+32 deselected in 0.81s**; `tests/offline` and `tests/contracts` **161
+passed in 0.88s**; URL unset **12 skipped**. Neon Free is the preferred
+unevaluated candidate. Supabase Free remains the alternative. Neither is
+accepted. No remote database was created.
+
+`DEP-DB-001` and `DEP-DB-002` stay open. Lane 4 stays
+`READY_FOR_VERIFICATION` until Lane 1 reviews the packet. Token:
+`LANE4_DB_CERTIFICATION_PACKET_READY`.
+
 ## 2026-10-05 — Gmail read-only corpus Gate A
 
 This entry records research for a future read-only Gmail corpus. It does
@@ -2525,3 +2629,29 @@ Git and outside chat.
 Quantity rounding, timezone, and the market calendar remain unresolved.
 The 12 Group 2 token-store PostgreSQL tests remain
 `NO_ACCEPTED_EVIDENCE_FOUND`.
+
+## 2026-10-09 — Lane 4 Supabase Free preference
+
+Docs-only. Operator preference recorded in
+`docs/LANE4_ZERO_COST_HOST_READINESS.md` section 1. Supabase Free is
+preferred. It is not accepted. No project exists. Provisioning,
+connection, migration, remote testing, and integration are not granted.
+Neon Free is no longer the preferred candidate and stays
+**NOT_ACCEPTED**.
+
+`DEP-DB-001` and `DEP-DB-002` stay open. Lane 4 stays
+`READY_FOR_VERIFICATION`. Integration eligibility stays `not_eligible`.
+Coordinator-owned registry files were not edited. Canonical `main`
+`2c895291a3b4282f8cf5c7426c705bfdab365c47` is merged, including the
+Gmail Gate A documents. The 2026-10-05 Gmail journal sentence that
+TokenStore evidence was `NO_ACCEPTED_EVIDENCE_FOUND` is unchanged
+historical text.
+
+No Supabase connection. No new tests. Executable `src/`, `tests/`, and
+`migrations/` match `main`. The independent verification file was not
+rewritten. `PostgresIntentRepository` driver-error exposure remains an
+unresolved security issue and was not patched.
+
+Token: `LANE4_SUPABASE_SELECTION_DOCUMENTED`. This entry does not embed
+its own commit hash. A distinct agent should review the documentation
+tree before integration.
