@@ -4,9 +4,9 @@ Cross-lane dependency registry. Identifiers are stable. No specialist may mark
 another lane's dependency resolved without cited evidence. Conversation claims
 alone are insufficient.
 
-Last attestation date: 2026-10-08
-Canonical main baseline: `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` /
-`39f0ab05c49b533270964b303601539feeff570f`
+Last attestation date: 2026-10-09
+Canonical main baseline: `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829` /
+`fc97582f22ebf2d24f132c9afe2720430b197f9f`
 
 ## Severity vocabulary
 
@@ -36,7 +36,7 @@ Canonical main baseline: `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` /
 | Severity | `BLOCKING` for operational probe design closure |
 | Blocking/nonblocking | Blocking |
 | Resolution authority | `PROVIDER` with Operator recording; coordinator reconciles into contracts |
-| Current state | `OPEN` — Lane 2 state `WAITING_PROVIDER` on draft PR #22 head `a6c5f1d7109e156eb0e9257216c3b5dbed17f653` |
+| Current state | `OPEN` — Lane 2 `WAITING_PROVIDER` on draft PR #22 head `16aa5788a17ac77291530bb836af256a6f79f89f` / `74ce64cb17585fd1aefc58970ef4850cfc40c948`. Continuity verification on 2026-10-08 covers ancestor `a6c5f1d` only and does not transfer. The advanced head remains `CONFLICTING` with attested main `8cef3d7` on shared docs. Not resolved. |
 
 ### DEP-GMAIL-001
 
@@ -51,7 +51,7 @@ Canonical main baseline: `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` /
 | Severity | `BLOCKING` for Gate A progression beyond docs-only proposal |
 | Blocking/nonblocking | Blocking |
 | Resolution authority | `OPERATOR` |
-| Current state | `OPEN` — Lane 3 state `WAITING_OPERATOR` on draft PR #21 head `a2cef6f3527b2aab7319a2628874fcdcaf03acac` |
+| Current state | `OPEN` — Lane 3 `WAITING_OPERATOR` on draft PR #21 head `a2cef6f3527b2aab7319a2628874fcdcaf03acac` / `557b4c939d7ac570f20b2fa69176b24234189d76` (unchanged on 2026-10-09). Continuity verified 2026-10-08 for that head only. PR is `CONFLICTING` with attested main `8cef3d7` on shared docs. Not resolved. |
 
 ### DEP-DB-001
 
@@ -66,7 +66,7 @@ Canonical main baseline: `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` /
 | Severity | `BLOCKING` for remote autonomous-SIM database use |
 | Blocking/nonblocking | Blocking |
 | Resolution authority | `OPERATOR` |
-| Current state | `OPEN` — remote autonomous-SIM database not selected; local PostgreSQL inaccessible from Cursor Cloud |
+| Current state | `OPEN` — remote autonomous-SIM database not selected. Supabase and Neon Free remain **NOT_ACCEPTED**. Lane 4 research records a disposable local PostgreSQL run; that does not select a remote host and does not close this dependency. |
 
 ### DEP-DB-002
 
@@ -81,7 +81,7 @@ Canonical main baseline: `41218abb2eda5f06001703fb83c2cb9e43e5ec2e` /
 | Severity | `BLOCKING` for TokenStore PostgreSQL certification |
 | Blocking/nonblocking | Blocking |
 | Resolution authority | `SPECIALIST` evidence + coordinator certification review; Operator for acceptance of certification claims |
-| Current state | `OPEN` — `NO_ACCEPTED_EVIDENCE_FOUND` per main journal/current-state residual |
+| Current state | `OPEN` — independent verifier `bc-6040b738-314c-499a-96c2-7383ac84c385` recorded `LANE4_DEP_DB_002_INDEPENDENT_PASS` (12 passed, 32 deselected; URL unset: 12 skipped) against executable bytes of `d949ce0`. Those `src/` and `tests/` bytes are unchanged at PR #24 tip `d491c3434872fac88b1c5be28281dce94ea11a8b`. The later certification-packet docs are outside that PASS. Not closed. Operator certification acceptance is still required. Fresh verification of tip `d491c34` is `NOT_RUN`. |
 
 ### DEP-CORE-001
 

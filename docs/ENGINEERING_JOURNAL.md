@@ -2467,6 +2467,113 @@ PR #19 remains `SUPERSEDED` and unmerged. Lane 4 tip
 `d949ce0197bc51ceef0b627eea325e9c4d13aaaf` is not integrated; `DEP-DB-001`
 and `DEP-DB-002` remain open for Operator/independent verification.
 
+## 2026-10-08 — Lane 1 coordination checkpoint
+
+Evidence-only coordination. No specialist implementation, no specialist
+merge, no rebase or force-push, no credentials, no provider auth, no
+SIM/LIVE.
+
+### Reattestation
+
+Canonical `main` remained
+`af0d69b1dfc2046899db05a2f12767fc20b623ae`, tree
+`4e1ed263e745b9896bf9384a2a9453566ebd6e0b` (`BASELINE_MATCH` versus the
+checkpoint brief). PR #23 stayed MERGED at fast-forward tip
+`f5880cfcfaa6d994f369e04d73c844fd1402d74c`. PR #21 and PR #22 heads were
+unchanged and GitHub reported `CONFLICTING` against current main.
+Conflict paths: `docs/CURRENT_STATE.md` and `docs/ENGINEERING_JOURNAL.md`
+for both. Lane 4 tip `d949ce0` / `d54619c3` conflicts only on
+`docs/ENGINEERING_JOURNAL.md` (merge-base `24466ab`). ADR-0003 remains
+Accepted. ADR-0004 and ADR-0005 remain absent from `main`.
+
+### Decision
+
+Six dependency IDs stay open. Lane 4 documentation draft PR is
+`NOT_ELIGIBLE` until independent TokenStore PostgreSQL verification and
+journal reconciliation. Checkpoint token:
+`LANE1_INTEGRATION_CONFLICT_REQUIRES_RECONCILIATION`.
+This entry does not embed its own commit hash.
+
+## 2026-10-08 — Refresh checkpoint with PR #24 independent evidence
+
+The preceding checkpoint entry is historical. It must not overwrite newer
+Lane 4 evidence.
+
+### Fresh identities
+
+Canonical `main` still `af0d69b1dfc2046899db05a2f12767fc20b623ae` /
+`4e1ed263e745b9896bf9384a2a9453566ebd6e0b`. PR #21 and PR #22 heads
+unchanged and still `CONFLICTING`. PR #23 remains MERGED.
+
+Draft PR #24 on `cursor/db-dep-db-002-verify-c385` tip
+`db570fac13cb33b84c98afb89c3f4722128ae179`, tree
+`d754a9b28dfcf77a25a32f114c5882767fac8e59`, contains `main` and is
+`MERGEABLE` against that tip. Independent verifier
+`bc-6040b738-314c-499a-96c2-7383ac84c385` recorded
+`LANE4_DEP_DB_002_INDEPENDENT_PASS`: 12 passed, 32 deselected; with the
+URL unset, 12 skipped. Offline+contracts: 161 passed, 0 skipped in that
+run. Evidence applies to `src/` and `tests/` bytes of
+`d949ce0197bc51ceef0b627eea325e9c4d13aaaf` which match main `af0d69b`.
+Merge commit `db570fa` versus verification commit `13d6a93` changes docs
+only. `DEP-DB-001` and `DEP-DB-002` stay OPEN. Lane 4 stays
+`READY_FOR_VERIFICATION` and not integration-eligible. No second Lane 4
+PR is opened. PR #24 is not merged here.
+
+### Reconciliation contract
+
+`docs/INTEGRATION_PROTOCOL.md` now states the specialist merge rules:
+preserve history, merge current main without force-push, resolve only
+owned conflicts, and submit a fresh exact-tree verification. Lane 1 does
+not edit PR #21, PR #22, or the Lane 4 branch in this refresh.
+
+## 2026-10-09 — Governance version audit and registry identity sync
+
+Documentation-only coordination. No specialist implementation, no specialist
+branch edit, no merge, no credentials, no provider auth, and no SIM/LIVE.
+
+### Reattestation
+
+Canonical `main` is `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829`, tree
+`fc97582f22ebf2d24f132c9afe2720430b197f9f` (PR #25 MERGED; PR #23 remains
+MERGED at `f5880cfcfaa6d994f369e04d73c844fd1402d74c`).
+
+| PR | State | Head | Tree | Merge vs attested main |
+| --- | --- | --- | --- | --- |
+| #19 | OPEN draft, superseded | `bc6ab7ea92310ffa133b75b498f7f245af11f166` | `4cd4768c34bf82a5bfb97189c38fbd79ae99fbcf` | `CONFLICTING`; merge-base `12e852c6` |
+| #21 | OPEN draft | `a2cef6f3527b2aab7319a2628874fcdcaf03acac` (unchanged) | `557b4c939d7ac570f20b2fa69176b24234189d76` | `CONFLICTING`; merge-base `41218abb` |
+| #22 | OPEN draft | `16aa5788a17ac77291530bb836af256a6f79f89f` | `74ce64cb17585fd1aefc58970ef4850cfc40c948` | `CONFLICTING`; merge-base `af0d69b` |
+| #24 | OPEN draft | `d491c3434872fac88b1c5be28281dce94ea11a8b` | `ac228e7342c8f75868cc0a683920e26d75cea31f` | `MERGEABLE`; contains `8cef3d7` |
+
+PR #22 advanced through `19154ea` (fail-closed DRY_RUN boundary code) and
+docs descendant `16aa578`. Continuity token
+`LANE2_WAITING_PROVIDER_CONTINUITY_VERIFIED` stays bound to `a6c5f1d`.
+`DEP-TS-001` stays OPEN. New independent verification of `16aa578` is
+required before integration.
+
+PR #24 advanced through docs commit `5e748ad` and merge `d491c34`.
+`src/`, `tests/`, `migrations/`, `pyproject.toml`, and `docker-compose.yml`
+match `d949ce0`, so `LANE4_DEP_DB_002_INDEPENDENT_PASS` still describes
+those executable bytes only. It does not certify the packet docs and does
+not close `DEP-DB-001` or `DEP-DB-002`. Lane 4 stays
+`READY_FOR_VERIFICATION`. Fresh verification of tip `d491c34` is `NOT_RUN`.
+
+### Advisory versions
+
+Uploaded v1.1.0 governance digest
+`44267e30691d4f73dcbb7440c0111e2ecc2a6c4e46fd1c854489076e86cbc026` and
+v1.1 instructions digest
+`b6223d1ac067eb55d47fb37786b861b5b756c898666a58eab72d82193f9a237b` were
+inspected as session references. v1.0 uploads remain historical
+references. Neither advisory file is a Git blob on main or on the
+specialist tips above. Active Cursor rules were not replaced. ChatGPT
+Project settings were not modified and are not inspectable here.
+
+### Decision
+
+Registry identities in coordinator-owned docs are updated to the heads
+above. Six dependency IDs stay OPEN. No second governance hierarchy is
+added. This entry does not embed its own commit hash.
+
 ## 2026-10-08 — Lane 2 provider-evidence intake
 
 The Operator presented the written Client Experience clarification for
