@@ -2525,3 +2525,54 @@ Git and outside chat.
 Quantity rounding, timezone, and the market calendar remain unresolved.
 The 12 Group 2 token-store PostgreSQL tests remain
 `NO_ACCEPTED_EVIDENCE_FOUND`.
+
+## 2026-10-09 — Gmail PR #21 merge record and local custody design
+
+Coordinator documentation only. No credential module, no OAuth, no Gmail
+API call, and no specialist implementation.
+
+### PR #21
+
+GitHub reports PR #21 MERGED at 2026-10-09T15:49:31Z. Merge commit and
+fast-forward tip are the same commit,
+`2c895291a3b4282f8cf5c7426c705bfdab365c47`, tree
+`25ebd09e495bb2db7b7f856963a0af876a378457`. Parents are
+`a2cef6f3527b2aab7319a2628874fcdcaf03acac` and
+`7c33d45c0a057d189ad6c5acc288625d57539413`. The diff versus
+`7c33d45` is four documentation files:
+`docs/CURRENT_STATE.md`, `docs/ENGINEERING_JOURNAL.md`,
+`docs/GMAIL_READONLY_CORPUS_GATE.md`, and
+`docs/adr/0004-gmail-readonly-corpus-acquisition.md`. No `src/`, `tests/`,
+or `migrations/` change. ADR-0004 remains Proposed with a blank Decision.
+ADR-0003 remains Accepted. `DEP-GMAIL-001` remains OPEN.
+
+### Prior verification gap
+
+Integration protocol step 8 requires a distinct verifier before
+integration. Verifier `bc-c3ebf977-b66a-5fac-80ac-93c7416edf31` returned
+`LANE3_RECONCILE_VERIFY_PASS` on that exact SHA and tree before the
+fast-forward. The repository journal did not record that verification
+when main moved. This entry records the gap. A later reading of the same
+tree does not rewrite the fact that the journal was silent at integration
+time, and it does not create a new Gmail certification.
+
+### Custody design
+
+The Operator accepted a local storage design and did not authorize
+runtime use. Windows Credential Manager; `CRED_TYPE_GENERIC` = 1;
+`CRED_PERSIST_LOCAL_MACHINE` = 2; current operator-controlled Windows
+user; target name `swing-trading/lane3/gmail/dev/refresh-token`; purpose
+limited to a future Lane 3 Gmail OAuth development bootstrap; incremental
+cost 0 USD. Real consent, token creation, real-token storage, mailbox
+access, API calls, deployment, broker credentials, SIM, and LIVE remain
+unauthorized.
+
+### Offline module
+
+Not authorized. Current state denies credentials and does not authorize a
+Gmail implementation phase. Lane 1 cannot create that authority by editing
+this journal. ADR-0004 is not accepted. `DEP-GMAIL-001` is not closed.
+Lane 3 must not start the credential module until a later explicit
+Operator authorization says so.
+
+This entry does not embed its own commit hash.

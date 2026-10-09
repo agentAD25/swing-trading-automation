@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-10-09 (registry identity sync). Governance PR #23 and checkpoint PR #25 remain integrated.
+- Last updated: 2026-10-09 (Gmail PR #21 merge recorded; local custody design recorded; offline credential module not authorized). Governance PR #23 and checkpoint PR #25 remain integrated.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
   offline Group 4A email contract is on canonical `main` by exact
@@ -99,7 +99,7 @@
 | C1/U-10 closure | Operator accepts ADR-0002 after independent review `C1_U10_CONTRACT_PASS` on `a4213f8356a9e32ca4647865ee98e13660e3d656`, tree `c07487c88f24f9432de89df7f574130274d50b4b`. C1/U-10 is **RESOLVED**. Non-blocking residuals do not reopen C1. Not operational credential certification, key management, Supabase selection, or `LIVE` authorization. |
 | Offline Group 4A email contract | On canonical `main` by exact fast-forward of certified commit `ce045c14b119d882505a947a7826005ff6d99103`, tree `67a0b57526ea219972fa0574b191562f0f52b598`. No squash, rebase, force-push, or merge commit. The pre-fast-forward sentence that this work was unmerged is superseded for location only. Remediation commit `05dfff9f69d27b869dcb1c392d8d103b7f21d6b4`, tree `b25892d7cd6ad43769e44cd67cd53c3dd7cb8602`, parent `229a38b4b6f7ab628d1c656974686e7888075302`, remains an ancestor. The Operator accepted ADR-0003: a `CanonicalInstructionEnvelope` carries a required-field `NewTradeInstruction` or a reserved amendment, exit-alert, or cancel payload. Only new-trade parsing is implemented. `EMAIL_RETENTION_POLICY` is `HASH_PROVIDER_REF_FIELD_EVIDENCE`. Exit-policy negation or same-source conflict quarantines as `CONFLICTING_ECONOMIC_INSTRUCTION` and does not become the positive policy. Quantity rounding, market calendar, and timezone remain unresolved. PR #20. No Gmail, broker, credential, Supabase, order, SIM, or `LIVE` authority. Group 4A status for workstream registry purposes: `INTEGRATED_AND_CERTIFIED` (offline only). |
 | Four-lane workstream governance | On canonical `main` by history-preserving fast-forward of PR #23 tip `f5880cfcfaa6d994f369e04d73c844fd1402d74c`, tree `1700b1b442ef72b31b24aa8dcdf65e43525376e4` from prior main `41218abb2eda5f06001703fb83c2cb9e43e5ec2e`, tree `39f0ab05c49b533270964b303601539feeff570f`. No squash, rebase, force-push, or merge commit. Independent PASS at `3676e11` / `2cbbe823…`; post-PASS successors classified `EVIDENCE_ONLY_PLUS_NONSEMANTIC` (verifier `bc-e255e4a7-f783-5ef6-8fc3-f4cbd2d0d926`). Registry activated: `docs/WORKSTREAM_STATUS.md`. Dependencies unchanged IDs. Active specialist drafts remain unmerged and were not rewritten: Gmail PR #21 `a2cef6f3…` (`WAITING_OPERATOR`, ADR-0004 Proposed); TradeStation PR #22 `a6c5f1d7…` (`WAITING_PROVIDER`, ADR-0005 Proposed). PR #19 `SUPERSEDED`. Database lane `NOT_STARTED`. No credential, broker, Supabase, order, SIM, or `LIVE` authority. The specialist SHAs and the database `NOT_STARTED` sentence in this cell are the PR #23 integration-time record. Unresolved item 9 carries the 2026-10-09 identity. |
-| Gmail read-only corpus | Gate A research only. ADR-0004 is Proposed. No Gmail API call, OAuth grant, or credential is recorded. The researched minimum scope is `https://www.googleapis.com/auth/gmail.readonly`. Broader Gmail scopes are not requested. Supabase and TradeStation are not connected. |
+| Gmail read-only corpus | Gate A proposal text is on canonical `main` by fast-forward of PR #21 merge `2c895291a3b4282f8cf5c7426c705bfdab365c47`, tree `25ebd09e495bb2db7b7f856963a0af876a378457`, parents `a2cef6f3527b2aab7319a2628874fcdcaf03acac` and `7c33d45c0a057d189ad6c5acc288625d57539413`, merged 2026-10-09T15:49:31Z. ADR-0004 remains Proposed. Its Decision section remains blank. No Gmail API call, OAuth grant, or credential is recorded. The researched minimum scope is `https://www.googleapis.com/auth/gmail.readonly`. Broader Gmail scopes are not requested. Supabase and TradeStation are not connected. This merge is not a connection certification. |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
 `phase1-accepted-abc1fb6` fixes the accepted commit without making the
@@ -271,8 +271,32 @@ a prohibition on later additive coordination roles.
    and is `MERGEABLE`. Lane 4 stays `READY_FOR_VERIFICATION`.
    `DEP-DB-001` and `DEP-DB-002` stay OPEN. The earlier local PASS
    still describes unchanged executable bytes of `d949ce0` and does not
-   certify the later documentation commits. ChatGPT advisory files were
+   certify the later documentation commits.    ChatGPT advisory files were
    not added to Git. No specialist branch was rewritten in this sync.
+   PR #21 later merged by fast-forward at
+   `2c895291a3b4282f8cf5c7426c705bfdab365c47`. The sentences above that
+   call PR #21 an open conflicting draft are the pre-merge record.
+10. Local Gmail credential custody design, accepted 2026-10-09 as a
+    design only. Storage is Windows Credential Manager. Credential type
+    is `CRED_TYPE_GENERIC` = 1. Persistence is
+    `CRED_PERSIST_LOCAL_MACHINE` = 2. Identity is the current
+    operator-controlled Windows user. The proposed target name is
+    `swing-trading/lane3/gmail/dev/refresh-token`. Purpose is a future
+    local development bootstrap for Lane 3 Gmail OAuth only. Incremental
+    service cost is 0 USD. This acceptance does not authorize real Gmail
+    OAuth consent, credential provisioning, refresh-token creation,
+    storage of a real Gmail token, mailbox access, Gmail API requests,
+    cloud deployment, TradeStation credential access, SIM orders, LIVE
+    orders, or any other economic action. ADR-0004 stays Proposed.
+    `DEP-GMAIL-001` stays OPEN. No offline credential-module
+    implementation is authorized by this design record. Current state
+    still denies credentials and does not mark a Gmail implementation
+    phase authorized. A later explicit Operator authorization, recorded
+    in current state, is required before Lane 3 may write that module.
+    Synthetic fixtures and mocked Windows API behavior do not remove
+    that requirement. ADR-0002 remains the accepted provider-neutral
+    TokenStore decision and is not modified. Group 4A remains the
+    certified offline parser only.
 
 ## Evidence
 

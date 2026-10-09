@@ -5,8 +5,8 @@ another lane's dependency resolved without cited evidence. Conversation claims
 alone are insufficient.
 
 Last attestation date: 2026-10-09
-Canonical main baseline: `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829` /
-`fc97582f22ebf2d24f132c9afe2720430b197f9f`
+Canonical main baseline: `2c895291a3b4282f8cf5c7426c705bfdab365c47` /
+`25ebd09e495bb2db7b7f856963a0af876a378457`
 
 ## Severity vocabulary
 
@@ -51,7 +51,7 @@ Canonical main baseline: `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829` /
 | Severity | `BLOCKING` for Gate A progression beyond docs-only proposal |
 | Blocking/nonblocking | Blocking |
 | Resolution authority | `OPERATOR` |
-| Current state | `OPEN` — Lane 3 `WAITING_OPERATOR` on draft PR #21 head `a2cef6f3527b2aab7319a2628874fcdcaf03acac` / `557b4c939d7ac570f20b2fa69176b24234189d76` (unchanged on 2026-10-09). Continuity verified 2026-10-08 for that head only. PR is `CONFLICTING` with attested main `8cef3d7` on shared docs. Not resolved. |
+| Current state | `OPEN` — Gate A proposal text is on main at merged PR #21 `2c895291a3b4282f8cf5c7426c705bfdab365c47` / `25ebd09e495bb2db7b7f856963a0af876a378457`. The Operator has not attested Google OAuth setup. No consent, refresh token, or mailbox access is recorded. Not resolved. |
 
 ### DEP-DB-001
 
