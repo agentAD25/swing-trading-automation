@@ -964,3 +964,8 @@ confidential client, and still has a blank Decision. The issued key's
 type is not verified. Native loopback is not closed by the provider.
 `docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md` is the intake. No credential
 was onboarded and no TradeStation call was made.
+
+On 2026-10-09 the Operator recorded
+`OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`. That
+preference selects the confidential-web proposal for planning only. It
+does not accept ADR-0005, create a secret store, or open a callback.

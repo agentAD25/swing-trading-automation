@@ -1,7 +1,7 @@
 # Current State
 
-- Last updated: 2026-10-09 (registry identity sync). Governance PR #23 and checkpoint PR #25 remain integrated.
-- This branch also records the 2026-10-08 Lane 2 provider-evidence intake.
+- Last updated: 2026-10-09 (Lane 2 Option A preference). Governance PR #23 and checkpoint PR #25 remain integrated.
+- This branch also records the 2026-10-08 Lane 2 provider-evidence intake and the 2026-10-09 Operator preference `OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`. That preference is not ADR acceptance.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
   offline Group 4A email contract is on canonical `main` by exact
@@ -15,7 +15,10 @@
   confidential client in ADR-0005 and leaves that ADR Proposed. It does
   not verify the issued key's application type, onboard a credential, or
   authorize SIM or `LIVE`. Native PKCE callback confirmation remains
-  unclosed by the provider.
+  unclosed by the provider. The 2026-10-09 preference does not close it
+  and does not accept ADR-0005. `DEP-TS-002`, `DEP-TS-003`, and
+  `DEP-TS-004` stay open. The consolidated Client Experience follow-up is
+  unsent.
 - Phase status: `PHASE1_COMPLETE` for governance, design, reconciliation,
   acceptance, and the offline `DRY_RUN` foundation; `PHASE1_ACCEPTED` remains
   the bounded meaning of the exact broker-neutral offline deterministic
@@ -112,6 +115,7 @@
 | Gmail read-only corpus | Gate A research only. ADR-0004 is Proposed. No Gmail API call, OAuth grant, or credential is recorded. The researched minimum scope is `https://www.googleapis.com/auth/gmail.readonly`. Broader Gmail scopes are not requested. Supabase and TradeStation are not connected. |
 | TradeStation provider evidence (2026-10-06) | Recorded on this branch. Not on canonical `main` until this branch lands. Draft PR #19 (`bc6ab7ea92310ffa133b75b498f7f245af11f166`) is not an ancestor of `main` and is not updated. ADR-0005 is Proposed; its Decision is blank. A SIM-only API key is not available. Default personal-use refresh tokens are non-rotating and long-lived. `offline_access` may be omitted for an attended probe. Groups 6, 7, and 10 advance and stay open. Groups 1–5, 8, 9, 11, and 12 are unchanged. Native PKCE was an engineering preference and was not selected. No credential, authorization, SIM call, LIVE call, order, Gmail change, or Supabase connection. |
 | TradeStation provider evidence (2026-10-08) | Same branch, draft PR #22. The Operator's written clarification is reconciled in `docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md` without replacing the 2026-10-06 quotations. ADR-0005 proposes Regular Web Option A and remains Proposed with a blank Decision. `DEP-TS-001` is not closed by the provider. DRY_RUN destination denial, scope checks, fake 1,200-second sessions, fixture reads, and per-login 429 stops are local and non-network. No credential onboarding, SIM call, LIVE call, or order. |
+| TradeStation Option A preference (2026-10-09) | Same branch, draft PR #22. Operator preference `OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT` is recorded for planning and provider clarification. ADR-0005 stays Proposed with a blank Decision. Recommended `DEP-TS-001` narrative is `SUPERSEDED_BY_OPTION_A_PENDING_ARCHITECTURE_ACCEPTANCE`; registry state stays `OPEN` until Lane 1 records it, and the provider did not close it. `DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004` stay open. The 2026-10-09 Client Experience draft is `UNSENT`. No credential, OAuth login, broker request, SIM call, LIVE call, order, or Phase 2 authorization. |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
 `phase1-accepted-abc1fb6` fixes the accepted commit without making the

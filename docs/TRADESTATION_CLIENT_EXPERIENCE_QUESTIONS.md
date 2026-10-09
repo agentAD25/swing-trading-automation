@@ -389,13 +389,14 @@ access token, refresh token, password, or account number in the reply.
 
 ### Unsent 2026-10-08 follow-up
 
-Not sent. The 2026-10-08 intake does not close the native callback
-question. ADR-0005 proposes a cloud-hosted Regular Web client and leaves
-the Decision blank. If the Operator accepts that proposal, native
-loopback is architecturally unnecessary and this follow-up replaces the
-native question. If the Operator rejects it, the unsent native question
-above remains the blocking question. This draft does not ask for a
-secret or an account number.
+Not sent. Retained as history. It is not the active draft. The 2026-10-09
+consolidated follow-up below is the draft prepared after the Operator
+recorded an architectural preference for Option A. Neither draft has been
+sent. The native question above is not the active question unless Option A
+later becomes infeasible. This 2026-10-08 draft does not ask for a secret
+or an account number. Its third question asks the provider to name an
+exact callback URL; the active draft does not, because no production
+hostname is selected.
 
 ```text
 Subject: Key type, read-only scope, and one HTTPS callback
@@ -418,4 +419,59 @@ separate request asks for that change.
 
 Please do not include a client id, client secret, authorization code,
 access token, refresh token, password, or account number in the reply.
+```
+
+### Unsent 2026-10-09 consolidated follow-up
+
+Status: `UNSENT`. This is a draft only. It has not been sent. It does not
+record a provider reply and it does not confirm `DEP-TS-002`,
+`DEP-TS-003`, or `DEP-TS-004`. It covers those three dependencies. It does
+not ask the native PKCE callback question. It does not name a production
+callback hostname. It asks for no change to the existing key.
+
+```text
+Subject: Regular Web key type, read-only scopes, and one HTTPS callback
+
+Hello,
+
+This follows your written replies about our issued API key. Those replies
+explained Authorization Code behavior for Regular Web, Native, and Single
+Page application types; that the same key is used for both the SIM and
+LIVE base URLs; that scopes can be configured after a key is issued; that
+offline_access may be omitted with a session lifetime of at most 20
+minutes; and that additional callback URLs can be requested by email to
+Client Experience.
+
+Our architectural preference, which is not a request to change the key, is
+a cloud-hosted Regular Web confidential client using Authorization Code
+with a client secret held only on the server. We are not asking you to
+select a different architecture unless the issued key cannot support that
+one.
+
+Please answer only these questions, in writing. Please do not change the
+existing key, its application type, its scopes, or its callback
+registrations unless a later request asks for that change.
+
+1. Is the existing issued API key configured as a Regular Web application?
+   If it is not, can TradeStation convert it, or configure an equivalent
+   compatible Regular Web application, without doing so now?
+
+2. Can an authorization for this key request and be granted only these
+   scopes: openid and ReadAccount? We want Trade, MarketData, Matrix,
+   OptionSpreads, and offline_access excluded. Does the scope field
+   returned with the token list every granted scope, so a restriction is
+   visible in that response?
+
+3. Can this key use one specifically registered HTTPS callback URL as its
+   only callback, with unused callback registrations removed? We have not
+   chosen the hostname. Please do not propose or register a production
+   hostname for us, and please do not make the registration now. A yes or
+   no on whether a single later-supplied HTTPS callback can be the sole
+   registered callback is enough.
+
+Please do not include a client id, client secret, authorization code,
+access token, refresh token, password, account number, or other
+identifying secret in ordinary email. If you must verify the login or the
+key before answering, please describe a secure provider-approved process
+for that verification instead of requesting those values here.
 ```

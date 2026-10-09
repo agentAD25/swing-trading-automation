@@ -2,7 +2,8 @@
 
 - Status: Proposed
 - Date: 2026-10-06
-- Amended: 2026-10-08 (proposal only; Decision remains blank)
+- Amended: 2026-10-08 (proposal only); 2026-10-09 (Operator
+  architectural preference recorded; Decision remains blank)
 - Sole Phase 1 decider: Human Operator
 - Scope: How Client Experience answers constrain a future probe and which
   OAuth architecture is proposed for a cloud-hosted service
@@ -45,7 +46,9 @@ This option fits a cloud-hosted, eventually unattended service: the
 secret stays on the server, the callback is one exact HTTPS URL, and
 native loopback is unnecessary. It does not fit a host that cannot keep
 a client secret. The issued key's type is still unverified, so this
-option is a proposal, not a provider authorization.
+option is a proposal, not a provider authorization. On 2026-10-09 the
+Operator recorded a preference for this option. That preference is stated
+under Proposal and is not an acceptance of this ADR.
 
 ### Option B — Native or public client with PKCE
 
@@ -53,8 +56,11 @@ Authorization Code with a code verifier. `client_secret` can be omitted.
 The 2026-10-06 note preferred this for an attended probe because it
 avoids a persistent secret. The native callback form is still
 unconfirmed. A public client is a weaker custody model for an unattended
-cloud service. This option remains available if the Operator rejects
-Option A. It is not selected.
+cloud service. Native or public-client PKCE is not the currently preferred
+architecture. It remains an alternative if the existing issued key cannot
+support the confidential-client architecture. This record does not
+characterize PKCE as insecure or unsupported, and it does not claim that
+TradeStation rejected it.
 
 ### Option C — Single Page application with PKCE
 
@@ -68,21 +74,80 @@ documented option used here.
 
 ## Proposal (not a Decision)
 
-Option A is the proposed architecture for the cloud-hosted service.
-Supporting points: server-side secret custody, one HTTPS callback, no
-dependence on native loopback, refresh design that can later sit behind
-an encrypted store, and the same fail-closed host boundary whether the
-key is later shown to be Regular Web or not. The proposal does not
-assume the issued key is already Regular Web. Accepting it would still
-require `DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004` in
-`docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md`.
+### Proposed selection
+
+Regular Web confidential-client Authorization Code.
+
+On 2026-10-09 the Operator recorded this architectural preference:
+
+`OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`
+
+The token is limited to architectural planning, provider clarification,
+and non-credential readiness preparation. It is conditional on existing
+repository governance, accepted authorization requirements, TradeStation
+provider confirmation, a compatible configuration of the issued API key,
+and continued SIM/LIVE safety enforcement. It does not accept this ADR,
+onboard a credential, authorize OAuth login, authorize a broker request,
+authorize SIM or LIVE connectivity or orders, authorize Phase 2, or
+authorize a PR merge. `DRY_RUN` remains the only authorized runtime
+posture.
+
+Recorded preference details:
+
+- Deployment architecture: cloud-hosted backend.
+- OAuth flow: confidential-client Authorization Code.
+- Application type: Regular Web, subject to provider confirmation.
+- Callback: one explicitly registered HTTPS endpoint, subject to provider
+  confirmation. No production callback hostname is selected in this ADR.
+- Client secret: eventual secure server-side custody.
+- Initial validation profile: attended, read-only, without `offline_access`.
+- Future unattended profile: design-only and separately authorized.
+- API execution posture: `DRY_RUN`.
+- `LIVE`: prohibited.
+
+The proposal does not assume the issued key is already Regular Web.
+
+### Rationale
+
+- The flow is appropriate for a cloud-hosted backend.
+- A confidential client secret can eventually be held server-side.
+- The deployment does not require native desktop-loopback authentication.
+- The shape can support the intended unattended architecture later, subject
+  to token-lifecycle constraints and a separate authorization.
+- One narrowly defined registered HTTPS callback is sufficient.
+
+### Conditions
+
+- Verify the actual issued key's application type (`DEP-TS-002`).
+- Confirm provider-supported callback registration (`DEP-TS-004`).
+- Confirm the desired minimum granted scopes (`DEP-TS-003`).
+- Maintain an explicit credential-onboarding authorization before any
+  secret is stored or used.
+- Maintain `DRY_RUN`-only operation until a later authorization.
+- Preserve the LIVE host prohibition.
+- Preserve independent SIM and LIVE safety gates.
+
+### Known limitation
+
+TradeStation confirmed that the same API key can address both SIM and LIVE
+by changing the base URL. The credential itself does not enforce SIM
+isolation. The adapter and runtime governance must independently prevent
+LIVE connectivity. Accepting this ADR later would still not grant LIVE,
+SIM, or credential use while `docs/CURRENT_STATE.md` denies them.
+
+### Deferred alternative
+
+Native or public-client PKCE (Option B) is not the currently preferred
+architecture. It remains an alternative if the existing issued key cannot
+support the confidential-client architecture. Option C stays not proposed.
 
 ## Decision
 
 ## Consequences
 
 The Decision section is blank because status is Proposed. The repository
-ADR template requires that. This agent cannot accept the ADR.
+ADR template requires that. This agent cannot accept the ADR. The
+2026-10-09 preference is not that acceptance.
 
 Until the Operator accepts a decision, no API client should be created
 and no credential should be onboarded. `offline_access` stays omitted
@@ -93,10 +158,14 @@ secrets, not 30-minute or 40-minute rotating tokens. Profile B in
 `src/swingtrade/group3_auth/session.py` raises
 `PROFILE_B_NOT_AUTHORIZED`.
 
-If the Operator later accepts Option A, native loopback (`DEP-TS-001`)
-becomes architecturally unnecessary. That would be an architectural
-supersession, not a provider answer. If the Operator rejects Option A,
-`DEP-TS-001` remains blocking.
+The Operator preference makes native loopback (`DEP-TS-001`) unnecessary
+for the proposed deployment. That is an architectural preference, not a
+provider answer. Lane 2 recommends the narrative disposition
+`SUPERSEDED_BY_OPTION_A_PENDING_ARCHITECTURE_ACCEPTANCE`. The Lane 1
+registry still records `OPEN`. The controlled lane state `SUPERSEDED` is
+not requested, because ADR acceptance is still pending. `DEP-TS-001` is
+not provider-confirmed. If Option A later becomes infeasible, the native
+callback question is blocking again.
 
 ## Validation and rollback
 
@@ -106,19 +175,24 @@ LIVE host, any write method, or any stored token.
 
 ## Unresolved questions
 
-The issued key's application type. Granted-scope behavior. The sole HTTPS
-callback and removal of other callbacks if Option A is accepted. The
-native loopback form if Option A is rejected. Optional rotating-policy
-interval. Refresh concurrency and revocation for a real token.
-Non-default key configurations. The Operator's expected SIM account
-inventory. Operator acceptance of this ADR.
+The issued key's application type. Granted-scope behavior. Whether one
+HTTPS callback can be the sole registered callback, with no hostname
+chosen here. Native loopback only if Option A becomes infeasible.
+Optional rotating-policy interval. Refresh concurrency and revocation for
+a real token. Non-default key configurations. The Operator's expected SIM
+account inventory. Operator acceptance of this ADR. The 2026-10-09
+preference does not close that acceptance.
 
 ## Evidence
 
 Operator-supplied Client Experience writing, 2026-10-06, recorded in
 `docs/P2_TS_PROVIDER_EVIDENCE.md`. The 2026-10-08 intake, which does not
 replace those quotations, is
-`docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md`. Limitation: neither record
-chooses an application type or describes loopback callbacks. Public
+`docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md`. The 2026-10-09 preference
+is recorded in that intake and in
+`docs/TRADESTATION_CLIENT_EXPERIENCE_QUESTIONS.md`. Limitation: neither
+the 2026-10-06 quotations nor the 2026-10-08 intake chooses an
+application type or describes loopback callbacks. The preference is an
+Operator architecture choice, not a provider confirmation. Public
 pages accessed 2026-10-08 are cited in that intake. Prior first-party
 page conflicts remain in `docs/P2_BROKER_RESEARCH.md` and are not deleted.

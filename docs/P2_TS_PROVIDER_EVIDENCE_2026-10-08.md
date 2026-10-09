@@ -265,21 +265,27 @@ while status is Proposed, and this agent cannot accept an ADR.
 `FORMAL_REGISTRY_STATUS = OPEN_FOR_LANE_1`
 
 `docs/WORKSTREAM_DEPENDENCIES.md` is Lane 1's registry. This branch does
-not change it. Lane 1 may, after Operator acceptance of ADR-0005 Option A,
-record DEP-TS-001 as superseded by that architectural decision. If the
-Operator rejects Option A, the native callback question becomes blocking
-again. The historical unsent native question stays in
-`docs/TRADESTATION_CLIENT_EXPERIENCE_QUESTIONS.md` and is not sent by
-this task.
+not change it. On 2026-10-09 the Operator recorded
+`OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`. That
+preference is not ADR acceptance and is not a provider answer. Lane 2
+recommends the narrative disposition
+`SUPERSEDED_BY_OPTION_A_PENDING_ARCHITECTURE_ACCEPTANCE`. Until Lane 1
+records it, the registry Current state stays `OPEN`. The controlled lane
+state `SUPERSEDED` is not the recommendation, because architecture
+acceptance is still pending. `DEP-TS-001` stays
+`NOT_CLOSED_BY_PROVIDER`. If Option A later becomes infeasible, the
+native callback question is blocking again. The historical unsent native
+question stays in `docs/TRADESTATION_CLIENT_EXPERIENCE_QUESTIONS.md` and
+is not the active follow-up.
 
 Separate open items, proposed for Lane 1 registration and not inserted
 into that file here:
 
 | Proposed id | State | Claim |
 | --- | --- | --- |
-| `DEP-TS-002` | UNRESOLVED | Issued key application type is unverified |
-| `DEP-TS-003` | UNRESOLVED | Granted scope is not confirmed as only `openid` and `ReadAccount` |
-| `DEP-TS-004` | UNRESOLVED | Sole cloud HTTPS callback, and removal of other callbacks, are not confirmed |
+| `DEP-TS-002` | `OPEN` / UNRESOLVED | Issued key application type is unverified. Ask whether it is Regular Web, and whether conversion is possible, without requesting a change now |
+| `DEP-TS-003` | `OPEN` / UNRESOLVED | Granted scope is not confirmed as only `openid` and `ReadAccount`, excluding Trade, MarketData, Matrix, OptionSpreads, and `offline_access` |
+| `DEP-TS-004` | `OPEN` / UNRESOLVED | Whether one later-named HTTPS callback can be the sole registration is not confirmed. No production hostname is selected |
 
 ## ADR-0005 proposal
 
@@ -287,9 +293,12 @@ Status remains **Proposed**. Decision section remains blank.
 
 PROPOSAL: Option A, Regular Web confidential-client Authorization Code,
 for a cloud-hosted service. Rationale is in the ADR. The issued key is
-not assumed to be configured that way. Option B remains available if the
-Operator rejects Option A. Option C, a browser SPA, is a worse fit for
-unattended server custody.
+not assumed to be configured that way. On 2026-10-09 the Operator recorded
+`OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`. That
+preference is not acceptance. Option B remains an alternative if the
+issued key cannot support the confidential-client architecture. It is not
+characterized as insecure or unsupported, and TradeStation did not reject
+it. Option C, a browser SPA, is a worse fit for unattended server custody.
 
 ## Offline boundary that this intake adds
 
@@ -349,3 +358,66 @@ Still required before any connection:
 
 `GROUP4B_TRADE_PLAN_ENGINE_READY` is unchanged. Gmail PR #21 and the
 Lane 4 branch are not modified.
+
+## 2026-10-09 Operator preference
+
+`OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`
+
+Fact: the Operator approved Option A as the preferred TradeStation OAuth
+architecture. The approval is limited to architectural planning, provider
+clarification, and non-credential readiness preparation. It is conditional
+on repository governance, accepted authorization requirements, provider
+confirmation, a compatible issued-key configuration, and continued SIM/LIVE
+safety enforcement.
+
+Fact: the approval does not accept ADR-0005, onboard a credential, start
+OAuth, make a broker request, connect to SIM or LIVE, submit an order,
+authorize Phase 2, or merge PR #22. ADR-0005 status remains Proposed. Its
+Decision section remains blank. `DRY_RUN` remains the only authorized
+runtime posture.
+
+### Dependency recommendation
+
+| ID | Evidence classification | Registry recommendation |
+| --- | --- | --- |
+| `DEP-TS-001` | `NOT_CLOSED_BY_PROVIDER` | Narrative `SUPERSEDED_BY_OPTION_A_PENDING_ARCHITECTURE_ACCEPTANCE`. Current state stays `OPEN` until Lane 1 records it. Not provider-confirmed |
+| `DEP-TS-002` | UNRESOLVED | Stay `OPEN`. Is the issued key Regular Web? If not, can it be converted or replaced by an equivalent compatible application, with no change requested now? |
+| `DEP-TS-003` | UNRESOLVED | Stay `OPEN`. Can the key and authorization be restricted to `openid` and `ReadAccount`, excluding Trade, MarketData, Matrix, OptionSpreads, and `offline_access`, and do returned granted scopes reflect that restriction? |
+| `DEP-TS-004` | UNRESOLVED | Stay `OPEN`. Can one specifically registered HTTPS callback be the sole callback, with unused registrations removed? No production hostname is chosen |
+
+Lane 1 owns the registry. The request is in `docs/LANE2_OPTION_A_HANDOFF.md`.
+This file does not edit `docs/WORKSTREAM_DEPENDENCIES.md` or
+`docs/WORKSTREAM_STATUS.md`.
+
+The active provider draft is the unsent 2026-10-09 consolidated follow-up
+in `docs/TRADESTATION_CLIENT_EXPERIENCE_QUESTIONS.md`. It is not sent.
+The native PKCE draft remains historical and is not the active question.
+
+### Onboarding architecture review
+
+This review inspects existing contracts. It does not create a secret store,
+a callback service, a hostname, or a token.
+
+| Control | Existing coverage | Gap |
+| --- | --- | --- |
+| Confidential client-secret storage | `docs/AUTH_ARCHITECTURE.md` separates a bootstrap secret holder from TokenStore and rejects repository, file, and environment-variable copies | No operational secret store exists |
+| Secure server-side handling | Same design: auth coordinator is the only future exchanger; forms in `src/swingtrade/group3_auth/forms.py` are unsent templates with `connect_allowed` false | No server is deployed |
+| HTTPS callback validation | `src/swingtrade/group3_auth/callback.py` classifies an allowlisted callback and does not retain the authorization code. `docs/AUTH_ARCHITECTURE.md` requires one exact pre-registered HTTPS callback | No production hostname or callback service. `DEP-TS-004` is open |
+| OAuth state and CSRF | `src/swingtrade/group3_auth/state.py` issues single-use process-local state and is not a token store. The callback path validates and consumes it | Process-local only. Not a deployed CSRF binding |
+| Token-exchange restrictions | Standard-flow form templates require `client_secret` and are not posted. `boundary.py` denies auth-endpoint connection, redirects, and host overrides under `DRY_RUN` | No exchange is authorized |
+| Expiration and reauthorization | `session.py` accepts only a 1,200-second attended session and returns `REAUTHORIZATION_REQUIRED` after restart | Fake markers only |
+| Future refresh-token handling | Profile B raises `PROFILE_B_NOT_AUTHORIZED`. Design refresh rules are in `docs/AUTH_ARCHITECTURE.md` | Unattended refresh is not authorized |
+| Long-lived refresh protection | Design rejects storing a non-expiring unconstrained refresh token. Provider default personal-use refresh tokens are non-rotating and non-expiring | Whether this key uses that default is unresolved. No refresh credential is held |
+| Secret rotation | Design separates client-secret rotation from refresh revocation. Provider evidence says rotating the client secret does not invalidate existing non-expiring refresh tokens | No rotation procedure is implemented |
+| Credential revocation | Design requires provider revocation plus local deletion, and records that key disable and logout are insufficient | Exact revocation request encoding remains unresolved in `docs/AUTH_ARCHITECTURE.md` |
+| Audit without secrets | Design allowlists diagnostic fields. Session and callback rendering omit secret values | No operational audit sink |
+| SIM host allowlisting | `docs/AUTH_ARCHITECTURE.md` names `sim-api.tradestation.com` as a future allowlist entry. `boundary.py` denies SIM connection in `DRY_RUN` | SIM connectivity is unauthorized |
+| LIVE host denial | `boundary.py` denies the LIVE host without treating the SIM host as LIVE. `docs/SIM_LIVE_BOUNDARY.md` keeps LIVE unauthorized | Must stay independent of the shared API key |
+| Unexpected elevated scopes | `scopes.py` fail-closes Trade, MarketData, Matrix, OptionSpreads, and `offline_access` | Granted-scope behavior for this key is `DEP-TS-003` and remains open |
+
+Inference: the design covers the listed controls as contracts and offline
+checks. It does not cover them as an operational credential integration.
+Assumption: a future hosting architecture and DNS owner will name the
+callback. That hostname is unknown. Open questions are `DEP-TS-002`,
+`DEP-TS-003`, `DEP-TS-004`, ADR acceptance, and a separate credential
+authorization.

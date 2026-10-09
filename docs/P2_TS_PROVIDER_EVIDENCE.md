@@ -265,5 +265,9 @@ Gmail PR #21 is not modified.
 
 The 2026-10-08 intake does not rewrite the quotations above. It is
 `docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md`. Native PKCE is no longer
-the proposed architecture. ADR-0005 remains Proposed and its Decision
-remains blank.
+the proposed architecture. On 2026-10-09 the Operator recorded
+`OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`. That
+preference is not ADR acceptance. ADR-0005 remains Proposed and its
+Decision remains blank. The native-callback blocker in the list above is
+the 2026-10-06 record. The active unsent question is the 2026-10-09
+consolidated follow-up.

@@ -26,7 +26,10 @@ Current stop token:
 
 ADR-0005 is Proposed. Its Decision is blank. The 2026-10-06 Native PKCE
 preference is historical. The 2026-10-08 proposal is Option A, Regular
-Web, and is not accepted. See
+Web, and is not accepted. On 2026-10-09 the Operator recorded
+`OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT` for
+planning and provider clarification only. That preference does not accept
+the ADR and does not change this stop token. See
 `docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md`.
 
 ## First-probe profile

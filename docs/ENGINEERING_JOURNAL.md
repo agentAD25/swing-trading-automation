@@ -2681,3 +2681,58 @@ Git and outside chat.
 Quantity rounding, timezone, and the market calendar remain unresolved.
 The 12 Group 2 token-store PostgreSQL tests remain
 `NO_ACCEPTED_EVIDENCE_FOUND`.
+
+## 2026-10-09 — Lane 2 Option A operator preference
+
+The Operator approved Option A, Regular Web confidential-client
+Authorization Code, as an architectural preference. This entry records
+`OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`. It does
+not accept ADR-0005, onboard a credential, authenticate, call SIM or
+LIVE, place an order, authorize Phase 2, or merge PR #22. `DRY_RUN`
+remains the sole authorized execution mode.
+
+### Identity at start of this record
+
+Canonical `main` was `2c895291a3b4282f8cf5c7426c705bfdab365c47`, tree
+`25ebd09e495bb2db7b7f856963a0af876a378457`. The PR branch already
+contained merge `1dd39815639c1226ab09442726c7576f925a3ab5`. A further
+history-preserving merge of that main tip conflicted only in
+`docs/CURRENT_STATE.md` and this journal. Both histories were kept.
+`docs/WORKSTREAM_DEPENDENCIES.md` and `docs/WORKSTREAM_STATUS.md` were
+not edited. `OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`
+was absent from main and from the PR branch before this record. This
+entry does not embed its own commit hash.
+
+### What changed
+
+ADR-0005 stays Proposed. Its Decision stays blank. The Proposal section
+now states the preference, the rationale, the conditions, the shared-key
+SIM/LIVE limitation, and Option B as a deferred alternative. Option B is
+not described as insecure, unsupported, or rejected by TradeStation.
+
+`DEP-TS-001` stays `NOT_CLOSED_BY_PROVIDER`. The recommended Lane 1
+narrative is `SUPERSEDED_BY_OPTION_A_PENDING_ARCHITECTURE_ACCEPTANCE`.
+The registry Current state remains `OPEN` until Lane 1 records it. The
+controlled lane state `SUPERSEDED` is not requested. `DEP-TS-002`,
+`DEP-TS-003`, and `DEP-TS-004` stay open. The handoff is
+`docs/LANE2_OPTION_A_HANDOFF.md`.
+
+The active Client Experience draft is the 2026-10-09 consolidated
+follow-up in `docs/TRADESTATION_CLIENT_EXPERIENCE_QUESTIONS.md`. Status
+`UNSENT`. It covers `DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004`. It
+does not ask the native PKCE question and does not name a callback
+hostname. No email was sent.
+
+The onboarding review in the 2026-10-08 intake file compares existing
+offline modules and `docs/AUTH_ARCHITECTURE.md` with the future controls.
+It finds design and local fail-closed checks, and it finds no secret
+store, callback service, hostname, or authorized token exchange.
+
+### Prior verification preserved
+
+Independent verifier `bc-e2d7b87b-2d7e-55d1-8dd8-631005b76379` checked
+`19154eae43990df1d83a78be7b6dac3710a28804`, tree
+`de97145c7278afbfe432463733a02b5e8a74ced9`. This record does not change
+`src/` or `tests/` relative to that commit. PostgreSQL skips in that
+verification remain skips. No new implementation verification is claimed
+for this documentation change.
