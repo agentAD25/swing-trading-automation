@@ -2736,3 +2736,13 @@ Independent verifier `bc-e2d7b87b-2d7e-55d1-8dd8-631005b76379` checked
 `src/` or `tests/` relative to that commit. PostgreSQL skips in that
 verification remain skips. No new implementation verification is claimed
 for this documentation change.
+
+### Preference-commit identity
+
+The preference documentation commit is
+`c32052832900360ec0993be29d989141e71cb214`, tree
+`7b7c1a7a9f08b03d7693439d3a98fac661fa6c07`. `git diff --check` on that
+commit was clean. `tests/validate_phase1_contracts.py` returned PASS.
+`src/` and `tests/` match
+`19154eae43990df1d83a78be7b6dac3710a28804`. This descendant records that
+identity and does not embed its own hash.
