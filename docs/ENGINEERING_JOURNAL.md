@@ -2576,3 +2576,64 @@ Lane 3 must not start the credential module until a later explicit
 Operator authorization says so.
 
 This entry does not embed its own commit hash.
+
+## 2026-10-09 — Offline Gmail custody intent is not implementation permission
+
+Coordinator documentation only. No credential module, no OAuth, no Gmail
+API call, no Windows Credential Manager call, and no specialist
+implementation.
+
+### Operator sentence
+
+The Operator authorized pursuing an offline-only Lane 3 Windows
+Credential Manager implementation that uses synthetic values and mocked
+Windows API calls, subject to all accepted repository authorization
+gates. The same decision withholds real credential provisioning, real
+credential reads and writes, refresh-token creation and storage, Google
+OAuth consent and callback execution, Gmail API calls, mailbox
+acquisition, TradeStation API calls, TokenStore changes, Supabase
+deployment, `SIM` and `LIVE` activity, broker order submission,
+acceptance of ADR-0004, and closure of `DEP-GMAIL-001`.
+
+### Why the gate is not effective
+
+`docs/AGENT_AUTHORITY.md` places the current deny state above an
+Operator chat instruction. That deny still covers credentials, broker
+and network activity, TradeStation `SIM`, Phase 2 as a general
+capability, order submission, and `LIVE`. Synthetic values and mocked
+`advapi32` calls are eligible to be specified because they do not
+exercise those denied capabilities. They are not eligible to be coded
+yet.
+
+The same document requires an Operator-accepted ADR for a material
+architecture or safety decision, and it requires implementation to be
+marked authorized in current state on canonical `main`. The custody
+adapter is a material safety decision. ADR-0004 stays Proposed and is
+the Gmail-acquisition proposal, so accepting it would exceed this
+decision. Lane 1 does not author and accept a substitute ADR. A draft
+current-state sentence is not canonical current state. `DEP-GMAIL-001`
+stays OPEN. `DRY_RUN` remains the only authorized execution mode.
+
+The design constants are unchanged: Windows Credential Manager,
+`CRED_TYPE_GENERIC` = 1, `CRED_PERSIST_LOCAL_MACHINE` = 2, the current
+operator-controlled Windows user, and the target name
+`swing-trading/lane3/gmail/dev/refresh-token` as an identifier only.
+Local-machine persistence is not hardware-backed security.
+
+### Remaining decision
+
+The Operator decides whether to accept a later narrow ADR whose only
+decision is the offline synthetic and mocked adapter. Until that ADR is
+Accepted and a separate integration gate places the authorization on
+canonical `main`, Lane 3 has no implementation permission.
+
+### Parallel lanes observed, not edited
+
+At the time of this entry, PR #22 head was
+`daae1e179b00c7166003b50121f325cfed909b1b` and PR #24 head was
+`a567d5ed8cae07e2d61cc8b3d2e491971f48ba44`. Both contain canonical main
+`2c895291a3b4282f8cf5c7426c705bfdab365c47`. Neither contains this draft.
+Their branches were not edited. This observation is not a certification
+of those heads.
+
+This entry does not embed its own commit hash.

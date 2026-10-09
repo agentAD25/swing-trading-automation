@@ -102,13 +102,13 @@ certification.
 | Last attested SHA | `2c895291a3b4282f8cf5c7426c705bfdab365c47` |
 | Last attested tree | `25ebd09e495bb2db7b7f856963a0af876a378457` |
 | Canonical main baseline | `2c895291a3b4282f8cf5c7426c705bfdab365c47` / `25ebd09e495bb2db7b7f856963a0af876a378457` |
-| Current objective | Keep the merged Gate A proposal text Proposed. Do not start Gate B, OAuth, or a credential module. |
-| Current blocker | `DEP-GMAIL-001` — Google OAuth setup by Operator. Design acceptance of a future local store does not close this dependency. |
-| Next permitted action | Wait for an explicit Operator authorization before any offline credential-module work. Retain PR #21 history. |
-| Next prohibited action | Gmail authentication; mailbox access; storing a real token; implementing the credential module from the design record alone; secret material in Git/chat/PR; self-integration |
+| Current objective | Keep Gate A Proposed. Record the Operator's offline-mock intent without starting Gate B, OAuth, or credential-module code. |
+| Current blocker | `DEP-GMAIL-001` stays OPEN. Offline module work is separately blocked: no Operator-accepted ADR covers the custody implementation, and ADR-0004 must stay Proposed. |
+| Next permitted action | Wait for an Operator-accepted narrow ADR and a later integration of that authorization onto canonical main. Do not code from the 2026-10-09 intent sentence or from draft PR #27. Retain PR #21 history. |
+| Next prohibited action | Gmail authentication; mailbox access; storing a real token; invoking real Windows Credential Manager APIs; treating the Operator intent sentence or draft PR #27 as implementation permission; secret material in Git/chat/PR; self-integration |
 | Contract dependencies | `DEP-GMAIL-001`, `DEP-CORE-001`, `DEP-CORE-002` |
-| Certification status | Gate A proposal text is on main. Not a Gmail connection certification. ADR-0004 remains Proposed. Offline Group 4A on `main` is separately `INTEGRATED` (see below). |
-| Integration eligibility | Proposal text is already integrated. Connection, OAuth, and credential implementation are not eligible. |
+| Certification status | Gate A proposal text is on main. Not a Gmail connection certification. ADR-0004 remains Proposed. Offline credential implementation is not authorized. Offline Group 4A on `main` is separately `INTEGRATED` (see below). |
+| Integration eligibility | Proposal text is already integrated. The offline custody gate is not effective. Connection, OAuth, and credential implementation are not eligible. |
 | Last verification date | 2026-10-09. Pre-merge verifier `bc-c3ebf977-b66a-5fac-80ac-93c7416edf31` returned `LANE3_RECONCILE_VERIFY_PASS` on this exact SHA before the fast-forward. That result was not copied into the journal at integration time. |
 | Evidence references | https://github.com/agentAD25/swing-trading-automation/pull/21 MERGED; parents `a2cef6f3527b2aab7319a2628874fcdcaf03acac` and `7c33d45c0a057d189ad6c5acc288625d57539413`; ADR-0004 Proposed; `DEP-GMAIL-001` OPEN |
 

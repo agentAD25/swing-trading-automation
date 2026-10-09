@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-10-09 (Gmail PR #21 merge recorded; local custody design recorded; offline credential module not authorized). Governance PR #23 and checkpoint PR #25 remain integrated.
+- Last updated: 2026-10-09 (Operator offline-custody intent recorded; implementation permission not effective). Governance PR #23 and checkpoint PR #25 remain integrated.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
   offline Group 4A email contract is on canonical `main` by exact
@@ -271,7 +271,7 @@ a prohibition on later additive coordination roles.
    and is `MERGEABLE`. Lane 4 stays `READY_FOR_VERIFICATION`.
    `DEP-DB-001` and `DEP-DB-002` stay OPEN. The earlier local PASS
    still describes unchanged executable bytes of `d949ce0` and does not
-   certify the later documentation commits.    ChatGPT advisory files were
+   certify the later documentation commits. ChatGPT advisory files were
    not added to Git. No specialist branch was rewritten in this sync.
    PR #21 later merged by fast-forward at
    `2c895291a3b4282f8cf5c7426c705bfdab365c47`. The sentences above that
@@ -297,6 +297,48 @@ a prohibition on later additive coordination roles.
     that requirement. ADR-0002 remains the accepted provider-neutral
     TokenStore decision and is not modified. Group 4A remains the
     certified offline parser only.
+11. Operator decision of 2026-10-09, recorded as intent only. The
+    Operator authorized pursuing an offline-only Lane 3 Windows
+    Credential Manager implementation that uses synthetic values and
+    mocked Windows API calls, subject to every accepted repository
+    authorization gate. The sentence does not authorize real Windows
+    Credential Manager provisioning, real credential reads or writes,
+    refresh-token creation or storage, Google OAuth consent or callback
+    execution, Gmail API calls, mailbox acquisition, TradeStation API
+    calls, TokenStore changes, Supabase deployment, `SIM` or `LIVE`
+    activity, broker order submission, acceptance of ADR-0004, or
+    closure of `DEP-GMAIL-001`.
+    The scope that may be considered only after the remaining gates
+    pass is a Python credential-storage interface, a Windows Credential
+    Manager adapter for future use, synthetic test values, mocked
+    `advapi32` calls, deterministic unit tests, explicit failure-path
+    tests, unsupported-platform and permission-denied handling, and
+    offline use of abstractions that are already authorized. Tests must
+    show that real credential APIs and external network calls are not
+    invoked. The target name
+    `swing-trading/lane3/gmail/dev/refresh-token` stays a design
+    constant and is not a provisioning instruction. Credential type
+    stays `CRED_TYPE_GENERIC` = 1. Persistence stays
+    `CRED_PERSIST_LOCAL_MACHINE` = 2. Identity stays the current
+    operator-controlled Windows user. Incremental credential-store cost
+    stays 0 USD. Local-machine persistence is not hardware-backed
+    security and does not protect a compromised Windows session.
+    This record is not implementation permission.
+    `docs/AGENT_AUTHORITY.md` requires an Operator-accepted ADR for a
+    material architecture or safety decision, and it requires an
+    implementation phase to be marked authorized in current state on
+    canonical `main`. ADR-0004 stays Proposed. Its scope is Gmail
+    acquisition, and accepting it is outside this decision. Lane 1 does
+    not author and accept a substitute ADR. `DEP-GMAIL-001` stays OPEN.
+    The denials of credentials, broker and network activity,
+    TradeStation `SIM`, order submission, and `LIVE` are unchanged.
+    `DRY_RUN` remains the only authorized execution mode. Lane 3 must
+    not receive coding instructions from this item. The remaining
+    Operator decision is whether to accept a later narrow ADR whose
+    only decision is the offline synthetic and mocked adapter above.
+    Until that ADR is Accepted by the Operator and a separate
+    integration gate places the authorization on canonical `main`,
+    implementation permission does not exist.
 
 ## Evidence
 
