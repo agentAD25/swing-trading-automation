@@ -2644,3 +2644,40 @@ No socket was opened. This note does not treat the flag as a failed
 test. It does not claim TradeStation connectivity. This descendant
 commit records that verification and does not change the verified
 source tree.
+
+## 2026-10-05 — Gmail read-only corpus Gate A
+
+This entry records research for a future read-only Gmail corpus. It does
+not connect Gmail, complete OAuth, change the parser, begin Group 4B, or
+authorize Supabase, TradeStation, credentials, orders, `SIM`, or `LIVE`.
+`DRY_RUN` remains the sole authorized execution mode.
+
+### Identity
+
+Started from canonical `main`
+`41218abb2eda5f06001703fb83c2cb9e43e5ec2e`, tree
+`39f0ab05c49b533270964b303601539feeff570f`. The certified Group 4A
+implementation `ce045c14b119d882505a947a7826005ff6d99103`, tree
+`67a0b57526ea219972fa0574b191562f0f52b598`, is an ancestor. No Google,
+Gmail, OAuth, or refresh-token environment name was set in the process
+that prepared this entry. No secret value was read or written.
+
+### Research conclusion
+
+The official Gmail API methods `users.messages.list` and
+`users.messages.get` are sufficient for list, search, and MIME retrieval.
+The minimum scope that both searches the mailbox and returns message
+content is `https://www.googleapis.com/auth/gmail.readonly`.
+`gmail.metadata` excludes the body and cannot use the list search
+parameter. Broader scopes are not required. IMAP and SMTP are not
+selected. ADR-0004 records the proposal and stays Proposed. The Operator
+must create the Google Cloud project, enable the Gmail API, configure
+consent, create the OAuth client, and store any resulting secret outside
+Git and outside chat.
+
+### Stop
+
+`P2_GMAIL_OPERATOR_OAUTH_SETUP_REQUIRED`. Gate B has not started.
+Quantity rounding, timezone, and the market calendar remain unresolved.
+The 12 Group 2 token-store PostgreSQL tests remain
+`NO_ACCEPTED_EVIDENCE_FOUND`.
