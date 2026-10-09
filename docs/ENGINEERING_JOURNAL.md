@@ -2637,3 +2637,87 @@ Their branches were not edited. This observation is not a certification
 of those heads.
 
 This entry does not embed its own commit hash.
+
+## 2026-10-09 — Lane 3 handoff for Proposed ADR-0006
+
+Coordinator documentation only. This entry does not add an ADR file, does
+not accept an ADR, and does not authorize implementation.
+
+### Ownership
+
+`docs/AGENT_AUTHORITY.md` allows the governance-coordinator research role
+to draft ADRs. The integration-coordinator role assigned to Lane 1 does
+not include that grant, and Lane 1 does not own Gmail feature work.
+`docs/WORKSTREAM_OWNERSHIP.md` assigns Gmail OAuth and the read-only
+source adapter to Lane 3. `docs/adr/` is coordination-sensitive: a
+specialist may add the lane's ADR, and Lane 1 reconciles it onto
+canonical `main` later. ADR-0004 was introduced on the Lane 3 branch.
+ADR-0005 exists only on open PR #22. The same pattern applies here.
+
+Only the human Operator, as sole Phase 1 decider, may move the ADR to
+Accepted (`docs/adr/README.md`). The authoring agent must not approve it.
+An Accepted ADR still does not authorize implementation. Canonical `main`
+must also record an explicit Operator implementation sentence in
+`docs/CURRENT_STATE.md`. `DRY_RUN` remains the only authorized execution
+mode while the credential, network, `SIM`, and `LIVE` denials stand.
+
+### Why a new number is required
+
+ADR-0004 stays Proposed. Its scope is Gmail acquisition, and its Decision
+section stays blank. Accepting it would exceed the offline adapter.
+ADR-0005 is `docs/adr/0005-tradestation-provider-evidence.md` on PR #22
+and must not be reused. The next number is **0006**. No equivalent
+proposal exists on main or on this draft.
+
+### Lane 3 drafting requirements
+
+Start from canonical main
+`2c895291a3b4282f8cf5c7426c705bfdab365c47`, tree
+`25ebd09e495bb2db7b7f856963a0af876a378457`, or from a later attested main
+if main has moved. Use a new `cursor/gmail-<gate>-...` branch. Do not
+commit on the merged PR #21 branch, on PR #22, on PR #24, or on this
+coordinator branch. Do not modify those other branches.
+
+Add only `docs/adr/0006-lane3-offline-windows-credential-adapter.md`, plus
+an append-only journal note if the lane's evidence practice requires one.
+Do not authorize implementation in `docs/CURRENT_STATE.md`. Use
+`docs/adr/ADR-TEMPLATE.md`. Set Status to `Proposed`, name the Human
+Operator as sole Phase 1 decider, and leave the Decision section blank.
+Supersedes none. Do not supersede ADR-0002, ADR-0003, or ADR-0004.
+
+Cite, without restating a second custody design, the design already
+recorded on this draft at `eae6a9be0d5c8485f9c7bf0df5b2283954f742d8`:
+Windows Credential Manager, `CRED_TYPE_GENERIC` = 1,
+`CRED_PERSIST_LOCAL_MACHINE` = 2, the current operator-controlled Windows
+user, incremental cost 0 USD, and the target identifier
+`swing-trading/lane3/gmail/dev/refresh-token`. That identifier is not a
+provisioning instruction. Local-machine persistence is not
+hardware-backed security.
+
+The proposed scope, still not a grant, is a Python credential-storage
+interface, a Windows Credential Manager adapter, synthetic non-sensitive
+test values, mocked `advapi32` calls, deterministic offline unit tests,
+negative and failure-path tests, and explicit safeguards so tests cannot
+call an unmocked Windows credential API or any external network.
+
+The prohibited scope is real credential reads or writes, Google tokens,
+OAuth consent, token exchange, refresh operations, Gmail API requests,
+mailbox access, TradeStation TokenStore changes, broker activity, `SIM`
+orders, `LIVE` orders, operational database provisioning, paid services,
+and any automatic move to Gmail Gate B. ADR-0004 remains Proposed.
+`DEP-GMAIL-001` remains OPEN.
+
+### Later gates, in order
+
+1. Lane 3 publishes the Proposed ADR. Its Decision stays blank.
+2. A verifier that did not author the ADR reviews that exact SHA and tree.
+3. The Operator separately accepts or rejects that exact proposal.
+4. An agent other than the author records Accepted status and the
+   Decision only after that Operator acceptance.
+5. A later integration gate places the Accepted ADR and a current-state
+   implementation sentence on canonical `main`. The authorization commit
+   adds no application code.
+6. Only that integrated pair is implementation permission. Lane 3 coding
+   stays unauthorized until then.
+
+This entry does not embed its own commit hash.

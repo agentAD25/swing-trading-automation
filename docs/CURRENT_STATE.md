@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-10-09 (Operator offline-custody intent recorded; implementation permission not effective). Governance PR #23 and checkpoint PR #25 remain integrated.
+- Last updated: 2026-10-09 (offline custody ADR handoff assigned to Lane 3; implementation permission not effective). Governance PR #23 and checkpoint PR #25 remain integrated.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
   offline Group 4A email contract is on canonical `main` by exact
@@ -339,6 +339,13 @@ a prohibition on later additive coordination roles.
     Until that ADR is Accepted by the Operator and a separate
     integration gate places the authorization on canonical `main`,
     implementation permission does not exist.
+    Lane 3 drafts that record. Lane 1 does not author it. The number is
+    `0006` because `0005` is the Proposed TradeStation ADR on open PR
+    #22. ADR-0004 stays a separate Proposed acquisition record. The new
+    record stays Proposed, with a blank Decision, until the Operator
+    accepts it. Operator acceptance, independent verification, canonical
+    integration, and a current-state implementation sentence remain
+    separate gates. None of those gates is satisfied by this item.
 
 ## Evidence
 
