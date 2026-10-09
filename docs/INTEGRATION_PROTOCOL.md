@@ -78,9 +78,9 @@ Each specialist owner must:
 
 Current owners:
 
-- Lane 2: reconcile draft PR #22 (`cursor/p2-ts-provider-evidence-99c1`) after main advances. `DEP-TS-001` stays open.
+- Lane 2: reconcile draft PR #22 (`cursor/p2-ts-provider-evidence-99c1`) head `16aa5788a17ac77291530bb836af256a6f79f89f`. It contains `af0d69b` and does not contain attested main `8cef3d7`. `DEP-TS-001` stays open.
 - Lane 3: reconcile draft PR #21 (`cursor/p2-g4-gmail-readonly-gate-a-99c1`). `DEP-GMAIL-001` stays open.
-- Lane 4: draft PR #24 (`cursor/db-dep-db-002-verify-c385`) already contains main `af0d69b`. If a later coordinator commit advances `main`, merge that tip without opening a second PR. `DEP-DB-001` and `DEP-DB-002` stay open. Do not self-merge.
+- Lane 4: draft PR #24 (`cursor/db-dep-db-002-verify-c385`) tip `d491c3434872fac88b1c5be28281dce94ea11a8b` contains attested main `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829`. If a later coordinator commit advances `main` past that attestation, merge that tip without opening a second PR. `DEP-DB-001` and `DEP-DB-002` stay open. Do not self-merge.
 
 Documentation-only eligibility is not operational authorization.
 
