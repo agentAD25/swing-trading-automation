@@ -2629,3 +2629,29 @@ Git and outside chat.
 Quantity rounding, timezone, and the market calendar remain unresolved.
 The 12 Group 2 token-store PostgreSQL tests remain
 `NO_ACCEPTED_EVIDENCE_FOUND`.
+
+## 2026-10-09 — Lane 4 Supabase Free preference
+
+Docs-only. Operator preference recorded in
+`docs/LANE4_ZERO_COST_HOST_READINESS.md` section 1. Supabase Free is
+preferred. It is not accepted. No project exists. Provisioning,
+connection, migration, remote testing, and integration are not granted.
+Neon Free is no longer the preferred candidate and stays
+**NOT_ACCEPTED**.
+
+`DEP-DB-001` and `DEP-DB-002` stay open. Lane 4 stays
+`READY_FOR_VERIFICATION`. Integration eligibility stays `not_eligible`.
+Coordinator-owned registry files were not edited. Canonical `main`
+`2c895291a3b4282f8cf5c7426c705bfdab365c47` is merged, including the
+Gmail Gate A documents. The 2026-10-05 Gmail journal sentence that
+TokenStore evidence was `NO_ACCEPTED_EVIDENCE_FOUND` is unchanged
+historical text.
+
+No Supabase connection. No new tests. Executable `src/`, `tests/`, and
+`migrations/` match `main`. The independent verification file was not
+rewritten. `PostgresIntentRepository` driver-error exposure remains an
+unresolved security issue and was not patched.
+
+Token: `LANE4_SUPABASE_SELECTION_DOCUMENTED`. This entry does not embed
+its own commit hash. A distinct agent should review the documentation
+tree before integration.

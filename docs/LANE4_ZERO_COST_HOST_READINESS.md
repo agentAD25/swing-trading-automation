@@ -1,35 +1,58 @@
 # Lane 4 zero-cost host readiness
 
 - Workstream: `LANE-4`
-- Status: comparative evidence for Operator host selection.
-  **Neon Free is not ACCEPTED. Supabase Free is not ACCEPTED.
-  No project, billing account, connection, or database was created.**
-- Access date (UTC): 2026-10-08
+- Status: comparative evidence, plus the Operator preference recorded
+  on 2026-10-09. **Supabase Free is the preferred provider. It is not
+  ACCEPTED. Neon Free is not ACCEPTED. No project, billing account,
+  connection, or database was created.**
+- Preference date (UTC): 2026-10-09
+- Envelope access date (UTC): 2026-10-08, with Supabase pages re-fetched
+  2026-10-09 for the preference note in section 7
 - Constraint: `INITIAL_DATABASE_INCREMENTAL_SERVICE_COST = 0 USD`
 - Prior research left unchanged:
   `docs/LANE4_ZERO_COST_BOOTSTRAP_RESEARCH.md`,
   `docs/P2_C_ZERO_INCREMENTAL_COST.md`, `docs/DB_DEPLOYMENT.md`
 
-## 1. Recommendation
+## 1. Operator preference
 
-**Preferred unevaluated candidate: Neon Free.**
+On 2026-10-09 the Operator selected **Supabase Free** as the preferred
+hosting provider.
 
-Supabase Free remains the alternative. Neither is selected. This
-recommendation does not authorize provisioning, a connection string, or
-integration.
+| Decision | Value |
+| --- | --- |
+| Preferred provider | Supabase Free |
+| Existing remote PostgreSQL project | None |
+| Maximum incremental database-service cost | $0 |
+| Provisioning | Not granted |
+| Connection | Not granted |
+| Migration | Not granted |
+| Remote testing | Not granted |
+| Integration | Not granted |
 
-Neon is preferred for evaluation because the Operator named it, and
-because the fetched Free envelope includes a 6-hour instant-restore
-history and does not bill overages. Supabase Free has no automatic
-backups, and point-in-time recovery is a paid add-on. Both envelopes
-fail an unattended always-on SIM. Neon’s idle suspend is 5 minutes and
-cannot be disabled on Free. Supabase pauses a Free project after about
-a week of low activity.
+This is a provider preference. It is not provider acceptance, not an
+infrastructure deployment, and not a change to economic authority.
+`DEP-DB-001` stays `OPEN`. Supabase Free stays **NOT_ACCEPTED**. Neon
+Free stays **NOT_ACCEPTED** and is no longer the preferred candidate.
 
-`src/swingtrade/offline/token_store.py` still refuses host markers
-`neon.tech` and `supabase`. Selecting a provider later still requires a
-separate authorized code change and a new verification by an agent other
-than the author of that change.
+`src/swingtrade/offline/token_store.py` still refuses the host marker
+`supabase`. No later code change is authorized by this preference.
+Section 7 records the 2026-10-09 Supabase re-fetch. Supabase itself was
+not connected or tested.
+
+### 1.1 Historical specialist recommendation (2026-10-08)
+
+The paragraphs below are the prior specialist recommendation. The
+Operator preference above supersedes them. They are kept so the earlier
+evidence is not rewritten.
+
+**Preferred unevaluated candidate at that date: Neon Free.** Supabase
+Free was the alternative. Neither was selected. Neon was preferred then
+because the task named it for evaluation and because its Free envelope
+includes a 6-hour instant-restore history. Supabase Free has no
+automatic backups, and point-in-time recovery is a paid add-on. Both
+envelopes fail an unattended always-on SIM. Neon’s idle suspend is 5
+minutes and cannot be disabled on Free. Supabase pauses a Free project
+after about a week of low activity.
 
 ## 2. Facts fetched 2026-10-08
 
@@ -125,8 +148,9 @@ suspension or read-only mode would block new durable writes.
    project. Not pinned here.
 3. Supabase `statement_timeout` defaults. Not in the pages fetched for
    this packet.
-4. Whether the Operator already has a Free slot on either vendor.
-   Not inspected. No account was opened.
+4. Whether the Operator already had a Free slot was open on
+   2026-10-08. On 2026-10-09 the Operator stated that no remote
+   PostgreSQL project exists. No account was opened by this agent.
 
 ## 6. Source catalog
 
@@ -168,3 +192,138 @@ suspension or read-only mode would block new durable writes.
   https://supabase.com/docs/guides/platform/migrating-and-upgrading-projects
 - **[S9]** Supabase, “Postgres SSL Enforcement,”
   https://supabase.com/docs/guides/platform/ssl-enforcement
+- **[S10]** Supabase, “Connect to your database,”
+  https://supabase.com/docs/guides/database/connecting-to-postgres
+  (fetched 2026-10-09)
+- **[S11]** Supabase, “Connection pooling and limits,”
+  https://supabase.com/docs/guides/database/connecting-to-postgres/pooling-and-limits
+  (fetched 2026-10-09)
+- **[S12]** Supabase, “Disabling Prepared statements,”
+  https://supabase.com/docs/guides/troubleshooting/disabling-prepared-statements-qL8lEL
+  (fetched 2026-10-09)
+- **[S13]** Supabase, “Control your costs,”
+  https://supabase.com/docs/guides/platform/spend-cap
+  (fetched 2026-10-09)
+- **[S14]** Supabase, “Connection management,”
+  https://supabase.com/docs/guides/database/connection-management
+  (fetched 2026-10-09)
+- **[S15]** Supabase, “Backup and Restore using the CLI,”
+  https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore
+  (fetched 2026-10-09)
+
+## 7. Supabase Free readiness after the Operator preference
+
+Fetched 2026-10-09. These facts do not authorize a project. No Supabase
+host was contacted.
+
+### 7.1 Free-tier restrictions and inactivity
+
+Free is $0/month, two active projects, 500 MB database size, 5 GB
+egress, and Nano compute ([S1], [S2]). A Free project pauses after about
+one week of insufficient database activity. A few requests each day over
+the previous week is described as typically enough to avoid pausing.
+Restore is a dashboard action and is available for up to one year
+([S3]). Above 500 MB database size, the project becomes read-only
+([S5]).
+
+### 7.2 Zero-dollar billing and upgrade safeguards
+
+The spend-cap page says the Free plan is not charged ([S13]). The spend
+cap itself is a Pro-plan control. It does not cover compute, the IPv4
+add-on, or point-in-time recovery; those are explicit paid opt-ins
+([S13]). Exceeding a Free quota produces notification and service
+restrictions, not a Free overage invoice ([S7], [S5]). Whether signup
+asks for a payment method was not stated on the pages fetched this date.
+
+**Cost risk:** enabling the IPv4 add-on, PITR, a compute upgrade, or
+Pro to avoid pausing would leave the $0 constraint. None of those are
+authorized.
+
+### 7.3 IPv4 and IPv6
+
+On Free, the direct host is IPv6. The shared Supavisor pooler is IPv4
+in both session mode (port 5432) and transaction mode (port 6543)
+([S10]). The dedicated IPv4 add-on is Pro and above and replaces the
+project’s IPv6 DNS record with IPv4 ([S6], [S10]). Dedicated PgBouncer
+is paid and absent on Free ([S11]).
+
+### 7.4 Pooling compatibility
+
+Supabase documents migrations, `pg_dump`, restore, and replication on
+the direct connection ([S10]). Direct connections and session mode
+support prepared statements, `SET`, `LISTEN/NOTIFY`, and temporary
+tables. Transaction mode does not ([S10], [S12]). Psycopg transaction
+mode requires `prepare_threshold=None` ([S12]).
+
+Inspected local code, not a Supabase session:
+
+- `PostgresTokenStore._dial` calls `psycopg.connect` without
+  `prepare_threshold`. Installed psycopg 3.3.6 defaults that argument
+  to 5. Each TokenStore call opens a connection, runs one statement,
+  and closes it. **Inference:** one statement stays under that
+  threshold, so transaction mode may not prepare. That was not executed
+  against Supabase.
+- `PostgresIntentRepository` and Alembic use a SQLAlchemy engine. This
+  tree does not set `prepare_threshold=None`.
+- Alembic revisions are the documented “direct connection” case. On
+  Free, that path is IPv6-only. Session-mode pooler is the zero-dollar
+  IPv4 alternative and supports session state, but it is not the
+  documented migration endpoint.
+
+**Unresolved:** whether a future runner has IPv6. Using the paid IPv4
+add-on to reach a direct host is outside $0.
+
+### 7.5 TLS
+
+Postgres SSL is optional until enforcement is enabled ([S9]). Client
+default `prefer` can fall back to plaintext. `sslmode=require` encrypts
+without checking the hostname. `verify-full` plus the dashboard CA is
+the documented check ([S9], [S10]). A future client must use
+`verify-full`. Turning enforcement on reboots the database and is not
+authorized now.
+
+### 7.6 Roles
+
+Connection management lists `postgres` as the role for the dashboard and
+external tools such as SQLAlchemy ([S14]). That role is broader than an
+application role. `supabase_admin` is for platform monitoring. No custom
+role was created. A later authorized project needs a login role limited
+to the application schema, with a separate role for Alembic. The exact
+`GRANT` list is unresolved. Custom login-role passwords are not restored
+with a dump and must be set again ([S15]).
+
+### 7.7 Isolation
+
+No remote project exists. Supabase projects include platform schemas and
+about 40–60 MB of preinstalled objects ([S5]). Future fixture tests must
+use a disposable schema or a separate database, not the schema that
+would later hold operational rows. Creating that project is not
+authorized. A second active Free project would count toward the two
+active-project limit ([S1]).
+
+### 7.8 Backup and recovery
+
+Automatic daily backups and PITR are outside Free ([S1], [S4]). Free
+recovery is a manual `supabase db dump` / `pg_dump` on a direct
+connection, plus the pause-restore window ([S3], [S4], [S15]). Pause
+restore is not a point-in-time backup. Deleting a project permanently
+removes its backups ([S4]).
+
+### 7.9 Pauses, disconnects, and quota exhaustion
+
+TokenStore maps driver failures to `AUTH_UNKNOWN`, does not retry, and
+does not fall back to memory. A pause or a dropped connection therefore
+fails the attempt closed. `PostgresIntentRepository` can surface the
+driver error, including a URL (section 1.1 of
+`docs/LANE4_PROVIDER_NEUTRAL_READINESS.md`). Read-only mode above 500 MB
+uses SQLSTATE `25006` ([S5]). This code does not special-case that
+state. **Unresolved:** there is no tested pause, reconnect, or
+quota-exhaustion behavior, because no remote test is authorized.
+
+### 7.10 Secrets
+
+The future URL and password must stay in an ignored environment file or
+an approved secret manager. They must not enter Git, chat, or logs.
+TokenStore already replaces driver errors with reason codes. The intent
+repository does not. That redaction gap stays open and is not patched
+here.

@@ -59,7 +59,7 @@ These are not interchangeable.
 | --- | --- | --- |
 | 1. Local implementation verification | Did the twelve TokenStore PostgreSQL nodes pass on disposable local PostgreSQL, with skips remaining skips? | **Sufficient.** Independent PASS already recorded. Reconfirmed on PR HEAD `db570fa` in section 3. |
 | 2. Coordinator certification | Does Lane 1 accept that local evidence as the `DEP-DB-002` execution record? | **Not done.** Requested in section 6. This agent cannot certify its own packet as closed. |
-| 3. Remote provider acceptance | Is Neon Free or Supabase Free the selected host? | **Not done.** Both remain **NOT_ACCEPTED**. Comparison is in `docs/LANE4_ZERO_COST_HOST_READINESS.md`. |
+| 3. Remote provider acceptance | Is a remote host accepted for use? | **Not done.** On 2026-10-09 the Operator preferred Supabase Free. That preference is not acceptance. Neon Free and Supabase Free remain **NOT_ACCEPTED**. Record: `docs/LANE4_ZERO_COST_HOST_READINESS.md` section 1. |
 | 4. Remote integration authorization | May the application open a remote database, run migrations there, or store SIM state? | **Not authorized.** `DRY_RUN` remains the only execution mode. TokenStore still refuses non-local dials. |
 
 No additional local tests are required for decision 1. Remote smoke tests
@@ -169,7 +169,7 @@ Do not apply this table in this branch.
 | Certification status | Keep the `8cef3d7` wording: independent local PASS, not Operator-accepted, not integration approval. This packet adds host-readiness evidence; it is not a second verifier pass. |
 | Integration eligibility | `not_eligible` |
 | `DEP-DB-002` current state | Keep `OPEN` as updated on `8cef3d7`. Do not mark resolved. |
-| `DEP-DB-001` current state | Keep `OPEN`. Optional later note: Neon Free is the preferred unevaluated candidate; Supabase Free remains the alternative; neither is accepted. |
+| `DEP-DB-001` current state | Keep `OPEN`. Optional later note: Operator preference is Supabase Free; no project exists; provisioning, connection, migration, remote testing, and integration are not granted; Supabase Free is not accepted. |
 | PR | Stay on draft #24. Do not open a second PR. A distinct agent should verify the post-merge SHA before any integration proposal, because this merge is a new tree even though `src/` and `tests/` are unchanged. |
 
 ## 7. Safety attestation

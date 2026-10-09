@@ -28,6 +28,19 @@ does not self-certify such a change.
 | Bounded retries | **Not implemented.** TokenStore performs one attempt and then fails closed. There is no retry loop and no sleep/backoff. The explicit outcomes are `STALE_WRITER`, `TERMINAL_STATE_REJECTED`, `SAME_ATTEMPT_RETRY_DENIED`, and `AUTH_UNKNOWN`. Adding retries would change certified behavior and is out of scope for this packet. |
 | Secrets not logged by this store | TokenStore replaces driver exceptions with reason codes. It does not log the URL, password, or ciphertext. Redacted reads omit `refresh_ciphertext`. **Gap:** `PostgresIntentRepository` does not catch driver exceptions. A connection failure can therefore surface a SQLAlchemy or psycopg message that contains the URL. That gap is recorded, not patched, here. |
 
+## 1.1 Unresolved security issue
+
+`PostgresIntentRepository` does not catch driver exceptions. A failed
+connection or statement can therefore propagate a SQLAlchemy or psycopg
+message that includes the database URL. TokenStore does not have this
+gap: it replaces those exceptions with `AUTH_UNKNOWN` and does not log
+the URL, password, or ciphertext.
+
+This issue is unresolved. This record does not patch it. A later fix
+would change error behavior and needs a verifier other than the author
+of that fix. Until then, a future remote URL must still stay out of Git,
+chat, and process logs, because this repository path can echo it.
+
 ## 2. Remote path is still closed
 
 `require_local_database_connection` allows only `DEV` and `TEST`.
