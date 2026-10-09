@@ -22,9 +22,10 @@ is not canonical `main`. That record names Windows Credential Manager,
 `CRED_TYPE_GENERIC` = 1, `CRED_PERSIST_LOCAL_MACHINE` = 2, the current
 operator-controlled Windows user, incremental cost 0 USD, and the target
 identifier `swing-trading/lane3/gmail/dev/refresh-token`. The identifier
-is not a provisioning instruction. Local-machine persistence is not
-hardware-backed security. This proposal does not invent a second custody
-design.
+is not a provisioning instruction. `CRED_PERSIST_LOCAL_MACHINE` does not
+provide hardware-backed protection. It does not prevent code running
+under a compromised Windows user session from retrieving the credential.
+This proposal does not invent a second custody design.
 
 Canonical `main` at the branch point of this proposal is
 `2c895291a3b4282f8cf5c7426c705bfdab365c47`, tree
@@ -70,12 +71,32 @@ credential store.
 Specify one Python credential-storage interface and one Windows
 Credential Manager adapter. The adapter speaks `CRED_TYPE_GENERIC` and
 requests `CRED_PERSIST_LOCAL_MACHINE` for the current process token's
-Windows user, using only the recorded target identifier. Unit tests are
-deterministic and offline. They cover store, retrieve, replace, and
-delete, plus collision, missing entry, bad logon session, unsupported
-persistence, API failure, restart of the fake store, redaction, and
-rejection of every other target. The Windows boundary is a mock. A test
-fails if the mock is bypassed or if a network call is attempted.
+Windows user, using only the recorded target identifier. Native
+`CredWriteW` creates a credential when that target and type are absent
+and replaces the credential when they already exist. The adapter does
+not inherit that replace behavior. Initial store fails if a credential
+already exists for the canonical target and `CRED_TYPE_GENERIC`,
+including when the stored name differs only by case. Replace is a
+separate explicit operation and fails if the target is absent. Those
+rules are adapter guarantees. They are not guarantees of `CredWriteW`.
+Windows treats credential target names as case-insensitive, so a case
+variation must not create a second credential or bypass collision
+detection. The canonical target string remains the only accepted
+identifier.
+
+A future real `CredReadW` call must release the returned native
+credential allocation with `CredFree`, including on exceptional paths.
+This proposal does not call `CredWriteW`, `CredReadW`, or `CredFree`.
+
+Unit tests are deterministic and offline. They cover store, retrieve,
+replace, and delete, plus collision, case-insensitive collision, missing
+entry, bad logon session, unsupported operating system, permission
+denied, unsupported persistence, API failure, restart of the fake store,
+redaction, and rejection of every other target. The Windows boundary is
+a mock. A test fails if the mock is bypassed or if a network call is
+attempted. Unsupported operating system and a permission-denied
+credential API result both fail closed without exposing credential
+contents.
 
 Benefits: matches the design already recorded on `eae6a9be` and keeps
 real secrets out of the suite. Costs: a later accepted ADR plus a
@@ -118,8 +139,12 @@ Future offline tests, after a separate implementation authorization,
 are not evidence for this proposal. They would need to show at least:
 
 - an existing target collides and is not overwritten
+- a case variation of the canonical target collides, does not create a second credential, and does not bypass collision detection
+- the canonical target string remains the only accepted identifier
 - a missing target fails closed on retrieve and delete
 - an invalid Windows security context fails closed
+- an unsupported operating system fails closed without exposing credential contents
+- a permission-denied Windows credential API result fails closed without exposing credential contents
 - persistence other than `CRED_PERSIST_LOCAL_MACHINE` is rejected
 - store, retrieve, replace, and delete failures fail closed
 - a fake restart still returns a synthetic value stored with local-machine persistence
@@ -128,6 +153,7 @@ are not evidence for this proposal. They would need to show at least:
 - a second store without replace collides
 - an interrupted write is not reported as success
 - replace fails when the target is absent
+- initial store is not implemented by calling `CredWriteW` on an existing target, because that native call would replace it
 - a second delete fails
 - an unmocked `advapi32` call or any external network call fails the test
 
@@ -175,4 +201,18 @@ it, and to write no adapter.
   sessions of the same user on the same computer, not for that user
   on other computers; a generic target name is case-insensitive.
   Limitation: this citation fixes the recorded constants. It does not
-  authorize a call.
+  authorize a call. Case-insensitive naming is why a case variation
+  collides with the canonical target.
+- Title: CredWriteW function (wincred.h). URL:
+  https://learn.microsoft.com/en-us/windows/win32/api/wincred/nf-wincred-credwritew.
+  Accessed 2026-10-09. Supports: `CredWriteW` creates a credential when
+  the target and type are absent and replaces the existing credential
+  when they are present. Limitation: the adapter's fail-on-existing
+  store and explicit replace are stricter than this function and are
+  not properties of the function.
+- Title: CredReadW function (wincred.h). URL:
+  https://learn.microsoft.com/en-us/windows/win32/api/wincred/nf-wincred-credreadw.
+  Accessed 2026-10-09. Supports: the returned credential buffer must be
+  freed with `CredFree`. Limitation: this draft does not call
+  `CredReadW` or `CredFree`. A future implementation must free that
+  allocation on exceptional paths as well as on the success path.
