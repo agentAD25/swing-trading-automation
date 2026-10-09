@@ -2211,6 +2211,284 @@ integration. Supabase is not selected.
 This commit edits only `docs/CURRENT_STATE.md` and this journal. It is
 not the certified implementation tree `67a0b57526ea219972fa0574b191562f0f52b598`.
 
+## 2026-10-08 — Four-lane workstream governance bootstrap (Lane 1)
+
+Coordinator-only governance bootstrap. No TradeStation, Gmail, or database
+specialist implementation. No provider authentication, credential
+provisioning, Supabase connection, paid database service, remote migration,
+order submission, TradeStation `SIM`, or `LIVE` authority. `DRY_RUN` remains
+the sole authorized execution mode.
+
+### Baseline attestation
+
+GitHub `main` and local `origin/main` both report commit
+`41218abb2eda5f06001703fb83c2cb9e43e5ec2e`, tree
+`39f0ab05c49b533270964b303601539feeff570f`. Classification versus the task
+starting reference: `BASELINE_MATCH`. No unexpected main rewrite was
+performed.
+
+### Specialist PR attestation (not integrated)
+
+| Lane | PR | Branch | Head SHA | Tree | State |
+| --- | --- | --- | --- | --- | --- |
+| Gmail | #21 draft | `cursor/p2-g4-gmail-readonly-gate-a-99c1` | `a2cef6f3527b2aab7319a2628874fcdcaf03acac` | `557b4c939d7ac570f20b2fa69176b24234189d76` | `WAITING_OPERATOR`; ADR-0004 Proposed |
+| TradeStation | #22 draft | `cursor/p2-ts-provider-evidence-99c1` | `a6c5f1d7109e156eb0e9257216c3b5dbed17f653` | `3d19daec787e5796af55a98de36a54d0d1f77a79` | `WAITING_PROVIDER`; ADR-0005 Proposed |
+| TradeStation historical | #19 draft | `cursor/pre-credential-decision-3a31` | `bc6ab7ea92310ffa133b75b498f7f245af11f166` | `4cd4768c34bf82a5bfb97189c38fbd79ae99fbcf` | `SUPERSEDED`; conflicting ADR-0003 vs accepted Group 4A ADR-0003 |
+| Database | none | none | n/a | n/a | `NOT_STARTED` |
+
+PR #21 and PR #22 histories are preserved; branches were not recreated for
+naming. Offline Group 4A remains `INTEGRATED_AND_CERTIFIED` on main via PR
+#20 / ADR-0003 Accepted.
+
+### Durable artifacts added or updated
+
+Created: `docs/WORKSTREAM_STATUS.md`, `docs/WORKSTREAM_DEPENDENCIES.md`,
+`docs/WORKSTREAM_OWNERSHIP.md`, `docs/INTEGRATION_PROTOCOL.md`,
+`docs/WORKSTREAM_HANDOFF_TEMPLATE.md`,
+`.cursor/rules/80-workstream-coordination.mdc`,
+`.cursor/agents/integration-coordinator.md`.
+
+Updated: `docs/AGENT_AUTHORITY.md` (Lane 1 role + hierarchy overlay),
+`docs/CURRENT_STATE.md`, this journal.
+
+Stable dependency IDs recorded: `DEP-TS-001`, `DEP-GMAIL-001`, `DEP-DB-001`,
+`DEP-DB-002`, `DEP-CORE-001`, `DEP-CORE-002`.
+
+### Non-claims
+
+This entry does not accept ADR-0004 or ADR-0005, does not merge PR #21/#22,
+does not revive PR #19, does not select Supabase, and does not close
+TokenStore PostgreSQL evidence gaps.
+
+### Local validation (implementer; not independent gate)
+
+Draft PR #23 opened for branch
+`cursor/integration-four-lane-governance-8992`. First tip
+`da593f014f91585a8611b942585537bea5d6c3c5`, tree
+`f9b7498bb610344d836dba3fae9104ccb7d9975e`.
+
+Commands and outcomes with `SWINGTRADE_TEST_POSTGRES_URL` unset:
+
+- `python3 tests/validate_phase1_contracts.py` — PASS
+- `git diff --check` — clean
+- Duplicate ADR numbers on branch — none
+- Unique `### DEP-*` headings — 6
+- Secret heuristic on new governance paths — no matches
+- PR #21 head unchanged `a2cef6f3527b2aab7319a2628874fcdcaf03acac`
+- PR #22 head unchanged `a6c5f1d7109e156eb0e9257216c3b5dbed17f653`
+- Configured pytest paths: 119 passed, 99 skipped; every skip reason
+  `SWINGTRADE_TEST_POSTGRES_URL is required`
+- `tests/offline` + `tests/contracts`: 149 passed, 12 skipped
+- `tests/group3_auth`: 56 passed
+- `tests/group4_email`: 81 passed
+- `python3 -m ruff check .` — All checks passed
+- `python3 -m mypy src` — Success, 37 source files
+- Semantic idempotency check for required governance files and lane/DEP
+  presence — PASS
+- PostgreSQL was not provisioned; TokenStore PostgreSQL evidence remains
+  open (`DEP-DB-002`)
+
+These local checks are not Operator acceptance and not independent
+verification.
+
+### Independent verification
+
+Independent verifier (distinct agent
+`bc-3289987e-ba29-5c68-a93e-fd3b27b71e9e`, role governance-coordinator)
+reviewed tip `3676e116591087c0cbf979b7929a2fb964415862`, tree
+`2cbbe8232063d75c83333850a32bd40c2b24a46d`, against base main
+`41218abb2eda5f06001703fb83c2cb9e43e5ec2e` /
+`39f0ab05c49b533270964b303601539feeff570f`.
+
+Verdict: **PASS**. Confirmed four lanes; hierarchy consistency; PR #21/#22
+heads preserved; ADR-0003 Accepted; ADR-0004/0005 not Accepted on this
+branch; no unauthorized specialist integration; no `src/` or `migrations/`
+delta; no secrets; unique DEP IDs; `CROSS_WORKSTREAM_CONTRACT_CONFLICT`
+handling; integration steps 1–20; LIVE/auth safety; PR #19 SUPERSEDED
+guidance.
+
+Recommended token:
+`P2_FOUR_LANE_GOVERNANCE_READY_FOR_INTEGRATION`.
+Operator merge authorization remains required. This journal note does not
+embed its own successor commit hash.
+
+## 2026-10-08 — Integrate four-lane governance PR #23 onto `main`
+
+Evidence-only integration record. No TradeStation, Gmail, or database
+specialist implementation. No provider authentication, credentials, Supabase
+connection, paid database, remote migration, orders, `SIM`, or `LIVE`.
+`DRY_RUN` remains the sole authorized execution mode.
+
+### Integration
+
+Prior canonical `main`: `41218abb2eda5f06001703fb83c2cb9e43e5ec2e`, tree `39f0ab05c49b533270964b303601539feeff570f`.
+Candidate tip: `f5880cfcfaa6d994f369e04d73c844fd1402d74c`, tree `1700b1b442ef72b31b24aa8dcdf65e43525376e4` (branch
+`cursor/integration-four-lane-governance-8992`, PR #23).
+Method: `git merge --ff-only f5880cfcfaa6d994f369e04d73c844fd1402d74c` on local `main`, then
+`git push origin main`. No squash, rebase, force-push, or convenience merge
+commit. GitHub records PR #23 `MERGED` with merge commit identical to the
+fast-forward tip.
+
+Independent verification PASS at `3676e116591087c0cbf979b7929a2fb964415862` /
+`2cbbe8232063d75c83333850a32bd40c2b24a46d`. Successor commits through
+`f5880cfcfaa6d994f369e04d73c844fd1402d74c` classified `EVIDENCE_ONLY_PLUS_NONSEMANTIC` by independent
+verifier `bc-e255e4a7-f783-5ef6-8fc3-f4cbd2d0d926` (`INTEGRATION_GATES_PASS`).
+
+### Preserved specialist identities
+
+- PR #21 head `a2cef6f3527b2aab7319a2628874fcdcaf03acac` remains OPEN draft
+  (`WAITING_OPERATOR`); not merged; not rewritten.
+- PR #22 head `a6c5f1d7109e156eb0e9257216c3b5dbed17f653` remains OPEN draft
+  (`WAITING_PROVIDER`); not merged; not rewritten.
+- PR #19 remains OPEN draft `SUPERSEDED` / conflicting; not merged.
+- Those specialist branches predate this main tip; later integration requires
+  governance-aware reconciliation.
+
+### Registry
+
+LANE-1 set to `INTEGRATED`. LANE-2/3/4 specialist states unchanged except
+canonical baseline pointer. Group 4A remains `INTEGRATED_AND_CERTIFIED`.
+This descendant evidence commit updates status/state/journal only and is not
+the governance candidate tree `1700b1b442ef72b31b24aa8dcdf65e43525376e4` itself.
+
+## 2026-10-08 — Four-lane specialist bootstrap delegation
+
+Coordinator orchestration after PR #23 integration. No credentials, Gmail
+corpus acquisition, TradeStation C2 probe, operational Supabase deployment,
+broker execution, or `LIVE` activity.
+
+### Canonical baseline
+
+Current `main`: `24466ab9e551c6bb13dc1af67c6b33f148ac854a`, tree `74ef01fd9ae067e29ae7ecc97c466a39104da2f1`.
+Governance FF tip: `f5880cfcfaa6d994f369e04d73c844fd1402d74c`, tree `1700b1b442ef72b31b24aa8dcdf65e43525376e4` (PR #23 MERGED).
+
+### Specialist isolation
+
+Local worktrees prepared under `/workspace/.worktrees/` for lanes 2–4.
+Existing specialist branches preserved. New Lane 4 branch created by
+specialist from post-integration main (not empty progress PR).
+
+### Delegated cloud agents (verifiable identities)
+
+| Lane | Agent ID | Token |
+| --- | --- | --- |
+| LANE-2 | `bc-d4b7c1e4-6ba3-542d-abb3-54ba045f0f93` | `LANE2_WAITING_PROVIDER_CONTINUITY_VERIFIED` |
+| LANE-3 | `bc-f47aa4eb-faff-54ed-8dd0-9d738fab7bc4` | `LANE3_WAITING_OPERATOR_OAUTH_CONTINUITY_VERIFIED` |
+| LANE-4 | `bc-f38dad08-03c5-5ee8-9b28-8701f8b051f4` | `LANE4_ZERO_COST_RESEARCH_READY` |
+
+PR #21 head `a2cef6f3527b2aab7319a2628874fcdcaf03acac` and PR #22 head
+`a6c5f1d7109e156eb0e9257216c3b5dbed17f653` remain OPEN and unmerged.
+PR #19 remains `SUPERSEDED` and unmerged. Lane 4 tip
+`d949ce0197bc51ceef0b627eea325e9c4d13aaaf` is not integrated; `DEP-DB-001`
+and `DEP-DB-002` remain open for Operator/independent verification.
+
+## 2026-10-08 — Lane 1 coordination checkpoint
+
+Evidence-only coordination. No specialist implementation, no specialist
+merge, no rebase or force-push, no credentials, no provider auth, no
+SIM/LIVE.
+
+### Reattestation
+
+Canonical `main` remained
+`af0d69b1dfc2046899db05a2f12767fc20b623ae`, tree
+`4e1ed263e745b9896bf9384a2a9453566ebd6e0b` (`BASELINE_MATCH` versus the
+checkpoint brief). PR #23 stayed MERGED at fast-forward tip
+`f5880cfcfaa6d994f369e04d73c844fd1402d74c`. PR #21 and PR #22 heads were
+unchanged and GitHub reported `CONFLICTING` against current main.
+Conflict paths: `docs/CURRENT_STATE.md` and `docs/ENGINEERING_JOURNAL.md`
+for both. Lane 4 tip `d949ce0` / `d54619c3` conflicts only on
+`docs/ENGINEERING_JOURNAL.md` (merge-base `24466ab`). ADR-0003 remains
+Accepted. ADR-0004 and ADR-0005 remain absent from `main`.
+
+### Decision
+
+Six dependency IDs stay open. Lane 4 documentation draft PR is
+`NOT_ELIGIBLE` until independent TokenStore PostgreSQL verification and
+journal reconciliation. Checkpoint token:
+`LANE1_INTEGRATION_CONFLICT_REQUIRES_RECONCILIATION`.
+This entry does not embed its own commit hash.
+
+## 2026-10-08 — Refresh checkpoint with PR #24 independent evidence
+
+The preceding checkpoint entry is historical. It must not overwrite newer
+Lane 4 evidence.
+
+### Fresh identities
+
+Canonical `main` still `af0d69b1dfc2046899db05a2f12767fc20b623ae` /
+`4e1ed263e745b9896bf9384a2a9453566ebd6e0b`. PR #21 and PR #22 heads
+unchanged and still `CONFLICTING`. PR #23 remains MERGED.
+
+Draft PR #24 on `cursor/db-dep-db-002-verify-c385` tip
+`db570fac13cb33b84c98afb89c3f4722128ae179`, tree
+`d754a9b28dfcf77a25a32f114c5882767fac8e59`, contains `main` and is
+`MERGEABLE` against that tip. Independent verifier
+`bc-6040b738-314c-499a-96c2-7383ac84c385` recorded
+`LANE4_DEP_DB_002_INDEPENDENT_PASS`: 12 passed, 32 deselected; with the
+URL unset, 12 skipped. Offline+contracts: 161 passed, 0 skipped in that
+run. Evidence applies to `src/` and `tests/` bytes of
+`d949ce0197bc51ceef0b627eea325e9c4d13aaaf` which match main `af0d69b`.
+Merge commit `db570fa` versus verification commit `13d6a93` changes docs
+only. `DEP-DB-001` and `DEP-DB-002` stay OPEN. Lane 4 stays
+`READY_FOR_VERIFICATION` and not integration-eligible. No second Lane 4
+PR is opened. PR #24 is not merged here.
+
+### Reconciliation contract
+
+`docs/INTEGRATION_PROTOCOL.md` now states the specialist merge rules:
+preserve history, merge current main without force-push, resolve only
+owned conflicts, and submit a fresh exact-tree verification. Lane 1 does
+not edit PR #21, PR #22, or the Lane 4 branch in this refresh.
+
+## 2026-10-09 — Governance version audit and registry identity sync
+
+Documentation-only coordination. No specialist implementation, no specialist
+branch edit, no merge, no credentials, no provider auth, and no SIM/LIVE.
+
+### Reattestation
+
+Canonical `main` is `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829`, tree
+`fc97582f22ebf2d24f132c9afe2720430b197f9f` (PR #25 MERGED; PR #23 remains
+MERGED at `f5880cfcfaa6d994f369e04d73c844fd1402d74c`).
+
+| PR | State | Head | Tree | Merge vs attested main |
+| --- | --- | --- | --- | --- |
+| #19 | OPEN draft, superseded | `bc6ab7ea92310ffa133b75b498f7f245af11f166` | `4cd4768c34bf82a5bfb97189c38fbd79ae99fbcf` | `CONFLICTING`; merge-base `12e852c6` |
+| #21 | OPEN draft | `a2cef6f3527b2aab7319a2628874fcdcaf03acac` (unchanged) | `557b4c939d7ac570f20b2fa69176b24234189d76` | `CONFLICTING`; merge-base `41218abb` |
+| #22 | OPEN draft | `16aa5788a17ac77291530bb836af256a6f79f89f` | `74ce64cb17585fd1aefc58970ef4850cfc40c948` | `CONFLICTING`; merge-base `af0d69b` |
+| #24 | OPEN draft | `d491c3434872fac88b1c5be28281dce94ea11a8b` | `ac228e7342c8f75868cc0a683920e26d75cea31f` | `MERGEABLE`; contains `8cef3d7` |
+
+PR #22 advanced through `19154ea` (fail-closed DRY_RUN boundary code) and
+docs descendant `16aa578`. Continuity token
+`LANE2_WAITING_PROVIDER_CONTINUITY_VERIFIED` stays bound to `a6c5f1d`.
+`DEP-TS-001` stays OPEN. New independent verification of `16aa578` is
+required before integration.
+
+PR #24 advanced through docs commit `5e748ad` and merge `d491c34`.
+`src/`, `tests/`, `migrations/`, `pyproject.toml`, and `docker-compose.yml`
+match `d949ce0`, so `LANE4_DEP_DB_002_INDEPENDENT_PASS` still describes
+those executable bytes only. It does not certify the packet docs and does
+not close `DEP-DB-001` or `DEP-DB-002`. Lane 4 stays
+`READY_FOR_VERIFICATION`. Fresh verification of tip `d491c34` is `NOT_RUN`.
+
+### Advisory versions
+
+Uploaded v1.1.0 governance digest
+`44267e30691d4f73dcbb7440c0111e2ecc2a6c4e46fd1c854489076e86cbc026` and
+v1.1 instructions digest
+`b6223d1ac067eb55d47fb37786b861b5b756c898666a58eab72d82193f9a237b` were
+inspected as session references. v1.0 uploads remain historical
+references. Neither advisory file is a Git blob on main or on the
+specialist tips above. Active Cursor rules were not replaced. ChatGPT
+Project settings were not modified and are not inspectable here.
+
+### Decision
+
+Registry identities in coordinator-owned docs are updated to the heads
+above. Six dependency IDs stay OPEN. No second governance hierarchy is
+added. This entry does not embed its own commit hash.
+
 ## 2026-10-05 — Gmail read-only corpus Gate A
 
 This entry records research for a future read-only Gmail corpus. It does

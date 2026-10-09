@@ -1,0 +1,33 @@
+---
+description: Four-lane workstream coordination and integration boundaries
+alwaysApply: true
+---
+
+# Workstream coordination
+
+- Four lanes exist: Integration/Coordinator, TradeStation/Broker,
+  Gmail/Signal Ingestion, and Database/PostgreSQL Infrastructure.
+- Only Lane 1 may propose integrating certified specialist work into
+  canonical `main`. Specialists may not self-certify and self-integrate.
+- Read `docs/WORKSTREAM_STATUS.md`, `docs/WORKSTREAM_OWNERSHIP.md`,
+  `docs/WORKSTREAM_DEPENDENCIES.md`, and `docs/INTEGRATION_PROTOCOL.md`
+  before cross-lane or integration work.
+- Resolve conflicts by the Level 0–6 hierarchy in
+  `docs/WORKSTREAM_OWNERSHIP.md`. Conversations never override accepted
+  contracts or canonical main.
+- Preserve existing specialist PR histories (including draft PR #21 and
+  PR #22). Do not recreate those branches only to rename them. Do not
+  auto-merge or reconstruct stale PR #19.
+- Concurrent writers require separate worktrees or isolated checkouts.
+  No force pushes, no automatic post-certification rebases, and no
+  cross-lane cherry-picks without Lane 1 authorization.
+- Overlapping edits to coordination-sensitive files require explicit
+  reconciliation. If incompatible contracts collide, return
+  `CROSS_WORKSTREAM_CONTRACT_CONFLICT` and stop silent selection.
+- Proposed ADRs are not Accepted. Passing tests are not integration
+  approval. Provider confirmation is not operational certification.
+- Dependency IDs in `docs/WORKSTREAM_DEPENDENCIES.md` are stable. Do not
+  mark another lane's dependency resolved without evidence.
+- This bootstrap and coordination layer authorize no TradeStation auth,
+  Gmail auth, Supabase connection, paid database, remote migration,
+  credential provisioning, or `LIVE` path.

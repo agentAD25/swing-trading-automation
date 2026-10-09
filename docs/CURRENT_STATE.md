@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-10-05
+- Last updated: 2026-10-09 (registry identity sync). Governance PR #23 and checkpoint PR #25 remain integrated.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
   offline Group 4A email contract is on canonical `main` by exact
@@ -97,7 +97,8 @@
 | PR #13 zero-cost evidence | History-preserving merge of exact commit `78f485b33bdd3f859d540458ba170b2353c04c61`, tree `28b3ced5663c00f4b8d32828ed2b160344d09805`, as `e0ec755e39c897492fbc8d970bb165d8335d361c`, tree `5e687dc37376b1b9c092a2a56a40348e5d36532f`. Versus the PR #14 tip this adds only `docs/P2_C_ZERO_INCREMENTAL_COST.md`. `docs/DB_DEPLOYMENT.md` is unchanged. `INITIAL_DATABASE_INCREMENTAL_SERVICE_COST = 0 USD`. Supersedes only the initial-deployment effect of the historical RDS recommendation. Supabase is **NOT_ACCEPTED**. |
 | Offline Group 2 foundation | Operator authorizes the offline Group 2 foundation only. Later decisions: non-Cursor bootstrap injector, key custody, retention, and SIM database host. The authorization commit itself added no application code. The implementation is on this branch at `904a362ac716aa8a7d3c9e830444a19108feed67` and is not merged. |
 | C1/U-10 closure | Operator accepts ADR-0002 after independent review `C1_U10_CONTRACT_PASS` on `a4213f8356a9e32ca4647865ee98e13660e3d656`, tree `c07487c88f24f9432de89df7f574130274d50b4b`. C1/U-10 is **RESOLVED**. Non-blocking residuals do not reopen C1. Not operational credential certification, key management, Supabase selection, or `LIVE` authorization. |
-| Offline Group 4A email contract | On canonical `main` by exact fast-forward of certified commit `ce045c14b119d882505a947a7826005ff6d99103`, tree `67a0b57526ea219972fa0574b191562f0f52b598`. No squash, rebase, force-push, or merge commit. The pre-fast-forward sentence that this work was unmerged is superseded for location only. Remediation commit `05dfff9f69d27b869dcb1c392d8d103b7f21d6b4`, tree `b25892d7cd6ad43769e44cd67cd53c3dd7cb8602`, parent `229a38b4b6f7ab628d1c656974686e7888075302`, remains an ancestor. The Operator accepted ADR-0003: a `CanonicalInstructionEnvelope` carries a required-field `NewTradeInstruction` or a reserved amendment, exit-alert, or cancel payload. Only new-trade parsing is implemented. `EMAIL_RETENTION_POLICY` is `HASH_PROVIDER_REF_FIELD_EVIDENCE`. Exit-policy negation or same-source conflict quarantines as `CONFLICTING_ECONOMIC_INSTRUCTION` and does not become the positive policy. Quantity rounding, market calendar, and timezone remain unresolved. PR #20. No Gmail, broker, credential, Supabase, order, SIM, or `LIVE` authority. |
+| Offline Group 4A email contract | On canonical `main` by exact fast-forward of certified commit `ce045c14b119d882505a947a7826005ff6d99103`, tree `67a0b57526ea219972fa0574b191562f0f52b598`. No squash, rebase, force-push, or merge commit. The pre-fast-forward sentence that this work was unmerged is superseded for location only. Remediation commit `05dfff9f69d27b869dcb1c392d8d103b7f21d6b4`, tree `b25892d7cd6ad43769e44cd67cd53c3dd7cb8602`, parent `229a38b4b6f7ab628d1c656974686e7888075302`, remains an ancestor. The Operator accepted ADR-0003: a `CanonicalInstructionEnvelope` carries a required-field `NewTradeInstruction` or a reserved amendment, exit-alert, or cancel payload. Only new-trade parsing is implemented. `EMAIL_RETENTION_POLICY` is `HASH_PROVIDER_REF_FIELD_EVIDENCE`. Exit-policy negation or same-source conflict quarantines as `CONFLICTING_ECONOMIC_INSTRUCTION` and does not become the positive policy. Quantity rounding, market calendar, and timezone remain unresolved. PR #20. No Gmail, broker, credential, Supabase, order, SIM, or `LIVE` authority. Group 4A status for workstream registry purposes: `INTEGRATED_AND_CERTIFIED` (offline only). |
+| Four-lane workstream governance | On canonical `main` by history-preserving fast-forward of PR #23 tip `f5880cfcfaa6d994f369e04d73c844fd1402d74c`, tree `1700b1b442ef72b31b24aa8dcdf65e43525376e4` from prior main `41218abb2eda5f06001703fb83c2cb9e43e5ec2e`, tree `39f0ab05c49b533270964b303601539feeff570f`. No squash, rebase, force-push, or merge commit. Independent PASS at `3676e11` / `2cbbe823…`; post-PASS successors classified `EVIDENCE_ONLY_PLUS_NONSEMANTIC` (verifier `bc-e255e4a7-f783-5ef6-8fc3-f4cbd2d0d926`). Registry activated: `docs/WORKSTREAM_STATUS.md`. Dependencies unchanged IDs. Active specialist drafts remain unmerged and were not rewritten: Gmail PR #21 `a2cef6f3…` (`WAITING_OPERATOR`, ADR-0004 Proposed); TradeStation PR #22 `a6c5f1d7…` (`WAITING_PROVIDER`, ADR-0005 Proposed). PR #19 `SUPERSEDED`. Database lane `NOT_STARTED`. No credential, broker, Supabase, order, SIM, or `LIVE` authority. The specialist SHAs and the database `NOT_STARTED` sentence in this cell are the PR #23 integration-time record. Unresolved item 9 carries the 2026-10-09 identity. |
 | Gmail read-only corpus | Gate A research only. ADR-0004 is Proposed. No Gmail API call, OAuth grant, or credential is recorded. The researched minimum scope is `https://www.googleapis.com/auth/gmail.readonly`. Broader Gmail scopes are not requested. Supabase and TradeStation are not connected. |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
@@ -126,7 +127,11 @@ the later explicit human Operator decision recorded here does.
 ## Established
 
 - Repository governance and least-authority rules
-- Four scoped agent roles: coordinator plus three researchers
+- Four scoped Phase 1 agent roles: coordinator plus three researchers
+- Four-lane Phase 2 workstream coordination contracts on canonical `main`
+  via PR #23 (status, ownership, dependencies, integration protocol,
+  handoff template, `.cursor` coordination rule and integration-coordinator
+  agent)
 - ADR process and research evidence contract
 - Skeleton locations for configuration, documentation, source, and tests
 - Explicit fail-closed boundary around `LIVE`, credentials, real accounts, and
@@ -160,10 +165,13 @@ production certification.
 
 ## Research readiness gates
 
-The three workstreams may begin only after Phase 1A validation confirms:
+The three Phase 1B research workstreams may begin only after Phase 1A
+validation confirms:
 
 - all required governance artifacts exist;
-- exactly four agent definitions exist;
+- exactly four Phase 1 agent definitions exist
+  (`governance-coordinator`, `broker-api-researcher`,
+  `strategy-data-researcher`, `risk-operations-researcher`);
 - all mandatory rules are always applied;
 - the then-current `SIM`-only and `LIVE`-unauthorized Phase 1A language was
   consistent (superseded for active authority by Phase 1D `DRY_RUN`);
@@ -177,6 +185,13 @@ All listed readiness gates passed on 2026-09-25. The broker/API,
 strategy/data, and risk/operations workstreams are ready to begin independently
 once this governance baseline is adopted through merge or explicit human
 direction.
+
+Additive four-lane coordination (2026-10-08, Lane 1 branch, not yet on
+`main`) introduces `integration-coordinator` and
+`.cursor/rules/80-workstream-coordination.mdc` without removing the four
+Phase 1 agents or rewriting the Phase 1 acceptance manifest. The historical
+"exactly four" gate remains the Phase 1A research-readiness record; it is not
+a prohibition on later additive coordination roles.
 
 ## Unresolved items
 
@@ -220,6 +235,44 @@ direction.
    `ce045c14b119d882505a947a7826005ff6d99103`. The sentence that the
    parser is not merged is pre-fast-forward. It grants no Gmail, broker,
    credential, Supabase, order, SIM, or `LIVE` authority.
+9. Four-lane specialist tracks are not integrated merely by registry
+   existence. After PR #23 integration, continuity/bootstrap agents
+   attested: Gmail PR #21 still awaits Operator OAuth (`DEP-GMAIL-001`);
+   TradeStation PR #22 still awaits provider callback clarification
+   (`DEP-TS-001`); Database branch `cursor/db-zero-cost-bootstrap-51f4`
+   holds zero-cost research + implementer-only local TokenStore PG
+   evidence (`DEP-DB-001`/`DEP-DB-002` still open). Quantity rounding
+   (`DEP-CORE-001`) and market calendar/timezone (`DEP-CORE-002`) remain
+   unresolved. Supabase remains **NOT_ACCEPTED**.
+   Coordination checkpoint on 2026-10-08 reattested canonical main
+   `af0d69b1dfc2046899db05a2f12767fc20b623ae` /
+   `4e1ed263e745b9896bf9384a2a9453566ebd6e0b` (`BASELINE_MATCH`).
+   PR #21 and PR #22 are `CONFLICTING` with that main on
+   `docs/CURRENT_STATE.md` and `docs/ENGINEERING_JOURNAL.md`.
+   Newer Lane 4 draft PR #24 tip `db570fac13cb33b84c98afb89c3f4722128ae179`
+   contains that main and records independent local TokenStore PostgreSQL
+   PASS (`LANE4_DEP_DB_002_INDEPENDENT_PASS`). `DEP-DB-002` stays OPEN.
+   Lane 4 stays `READY_FOR_VERIFICATION`, not integration-eligible.
+   The earlier sentence that Lane 4 had no draft PR and that independent
+   verification was `NOT_RUN` is superseded for those two facts only.
+   No specialist branch was rewritten. No specialist PR was merged.
+   Governance and registry reattestation on 2026-10-09: canonical main
+   `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829` /
+   `fc97582f22ebf2d24f132c9afe2720430b197f9f` (PR #25 MERGED).
+   PR #21 head is unchanged at `a2cef6f3527b2aab7319a2628874fcdcaf03acac`
+   and remains `CONFLICTING` (merge-base `41218abb`).
+   PR #22 head advanced to `16aa5788a17ac77291530bb836af256a6f79f89f` /
+   `74ce64cb17585fd1aefc58970ef4850cfc40c948`, merge-base `af0d69b`,
+   and remains `CONFLICTING` on `docs/CURRENT_STATE.md` and
+   `docs/ENGINEERING_JOURNAL.md`. `DEP-TS-001` stays OPEN.
+   Continuity verification does not cover `16aa578`.
+   PR #24 head advanced to `d491c3434872fac88b1c5be28281dce94ea11a8b` /
+   `ac228e7342c8f75868cc0a683920e26d75cea31f`, contains attested main,
+   and is `MERGEABLE`. Lane 4 stays `READY_FOR_VERIFICATION`.
+   `DEP-DB-001` and `DEP-DB-002` stay OPEN. The earlier local PASS
+   still describes unchanged executable bytes of `d949ce0` and does not
+   certify the later documentation commits. ChatGPT advisory files were
+   not added to Git. No specialist branch was rewritten in this sync.
 
 ## Evidence
 
