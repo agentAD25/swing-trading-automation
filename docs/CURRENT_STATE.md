@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-10-09 (offline custody ADR handoff assigned to Lane 3; implementation permission not effective). Governance PR #23 and checkpoint PR #25 remain integrated.
+- Last updated: 2026-10-10 (ADR-0006 design acceptance recorded; implementation permission not effective; not on canonical main). Governance PR #23 and checkpoint PR #25 remain integrated.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
   offline Group 4A email contract is on canonical `main` by exact
@@ -332,20 +332,36 @@ a prohibition on later additive coordination roles.
     not author and accept a substitute ADR. `DEP-GMAIL-001` stays OPEN.
     The denials of credentials, broker and network activity,
     TradeStation `SIM`, order submission, and `LIVE` are unchanged.
-    `DRY_RUN` remains the only authorized execution mode. Lane 3 must
-    not receive coding instructions from this item. The remaining
-    Operator decision is whether to accept a later narrow ADR whose
-    only decision is the offline synthetic and mocked adapter above.
-    Until that ADR is Accepted by the Operator and a separate
-    integration gate places the authorization on canonical `main`,
-    implementation permission does not exist.
-    Lane 3 drafts that record. Lane 1 does not author it. The number is
-    `0006` because `0005` is the Proposed TradeStation ADR on open PR
-    #22. ADR-0004 stays a separate Proposed acquisition record. The new
-    record stays Proposed, with a blank Decision, until the Operator
-    accepts it. Operator acceptance, independent verification, canonical
-    integration, and a current-state implementation sentence remain
-    separate gates. None of those gates is satisfied by this item.
+    `DRY_RUN` remains the only authorized execution mode.     Lane 3 must
+    not receive coding instructions from this item.
+12. Operator acceptance of ADR-0006, design only, recorded 2026-10-10.
+    The accepted artifact is the Proposed file at commit
+    `5855d5bb7380be49422671aeecd870589d38b8c1`, tree
+    `13a3d644b9136b1fcda739e7035fd40bdfa51e9b`, blob
+    `c3fd7516211d338226af3d531d56c8a030dfef3b`, verification token
+    `LANE3_ADR0006_REVERIFIED_PASS`. Lane 3 authored that proposal.
+    Lane 1 records the Operator's acceptance and does not author the
+    design. The accepted scope is the Gmail-only offline synthetic and
+    mocked Windows Credential Manager adapter: `CRED_TYPE_GENERIC` = 1,
+    `CRED_PERSIST_LOCAL_MACHINE` = 2, the current operator-controlled
+    Windows user, target
+    `swing-trading/lane3/gmail/dev/refresh-token`, no Enterprise
+    roaming, no TradeStation TokenStore integration, zero incremental
+    credential-storage service cost, and no deployment host. Credential
+    Manager is not hardware-backed isolation and cannot stop retrieval
+    by code running as the same Windows user.
+    This acceptance does not authorize implementation, native credential
+    API calls, real credential storage or retrieval, OAuth, Gmail API
+    access, mailbox access, cloud deployment, TradeStation
+    authentication, broker orders, `SIM`, `LIVE`, or any economic
+    action. ADR-0004 stays Proposed. ADR-0003 stays Accepted.
+    `DEP-GMAIL-001` stays OPEN. `DRY_RUN` remains the only authorized
+    execution mode. The Accepted ADR text is a new blob and is not
+    certified by `LANE3_ADR0006_REVERIFIED_PASS`. This item is on the
+    coordinator draft, not on canonical `main`, until a separate
+    integration authorization. Implementation permission still requires
+    that integration and a later current-state sentence whose commit
+    adds no application source. That sentence is not in effect.
 
 ## Evidence
 

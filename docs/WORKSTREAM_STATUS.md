@@ -102,9 +102,9 @@ certification.
 | Last attested SHA | `2c895291a3b4282f8cf5c7426c705bfdab365c47` |
 | Last attested tree | `25ebd09e495bb2db7b7f856963a0af876a378457` |
 | Canonical main baseline | `2c895291a3b4282f8cf5c7426c705bfdab365c47` / `25ebd09e495bb2db7b7f856963a0af876a378457` |
-| Current objective | Keep Gate A Proposed. Lane 3 may draft Proposed ADR-0006 for the offline mocked adapter. Do not start Gate B, OAuth, or credential-module code. |
-| Current blocker | `DEP-GMAIL-001` stays OPEN. Offline module work is separately blocked: no Operator-accepted ADR covers the custody implementation, and ADR-0004 must stay Proposed. |
-| Next permitted action | Lane 3 drafts Proposed ADR-0006 on a new branch from canonical main, with a blank Decision. Lane 1 does not author that file. Do not code, and do not treat draft PR #27 as implementation permission. Retain PR #21 history. |
+| Current objective | Keep Gate A Proposed. The ADR-0006 design is accepted on this draft only. Do not start Gate B, OAuth, or credential-module code. |
+| Current blocker | `DEP-GMAIL-001` stays OPEN. The Accepted ADR is not on canonical main. No current-state implementation sentence is in effect. ADR-0004 must stay Proposed. |
+| Next permitted action | Wait for a separate Operator authorization to integrate this acceptance candidate. Do not code, and do not treat ADR acceptance or draft PR #27 as implementation permission. Retain PR #21 history. |
 | Next prohibited action | Gmail authentication; mailbox access; storing a real token; invoking real Windows Credential Manager APIs; treating the Operator intent sentence or draft PR #27 as implementation permission; secret material in Git/chat/PR; self-integration |
 | Contract dependencies | `DEP-GMAIL-001`, `DEP-CORE-001`, `DEP-CORE-002` |
 | Certification status | Gate A proposal text is on main. Not a Gmail connection certification. ADR-0004 remains Proposed. Offline credential implementation is not authorized. Offline Group 4A on `main` is separately `INTEGRATED` (see below). |

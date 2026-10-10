@@ -2721,3 +2721,62 @@ and any automatic move to Gmail Gate B. ADR-0004 remains Proposed.
    stays unauthorized until then.
 
 This entry does not embed its own commit hash.
+
+## 2026-10-10 — ADR-0006 design acceptance is not implementation permission
+
+Coordinator documentation only. No adapter code, no Windows credential
+API call, no OAuth, no Gmail call, and no merge to canonical `main`.
+
+### Accepted artifact
+
+The Operator accepts the Proposed ADR-0006 design at commit
+`5855d5bb7380be49422671aeecd870589d38b8c1`, tree
+`13a3d644b9136b1fcda739e7035fd40bdfa51e9b`, blob
+`c3fd7516211d338226af3d531d56c8a030dfef3b`. The reported verification
+token for that blob is `LANE3_ADR0006_REVERIFIED_PASS`. Lane 3 authored
+the proposal. Lane 1 records the acceptance and does not author the
+design. Changing Status to Accepted and filling the Decision changes
+the blob, so that token does not certify the Accepted text.
+
+The accepted scope is Gmail-only: Windows Credential Manager,
+`CRED_TYPE_GENERIC` = 1, `CRED_PERSIST_LOCAL_MACHINE` = 2, the current
+operator-controlled Windows user, target
+`swing-trading/lane3/gmail/dev/refresh-token`, no Enterprise roaming,
+no TradeStation TokenStore integration, zero incremental
+credential-storage service cost, and no deployment host. Credential
+Manager is not hardware-backed isolation.
+
+### Still withheld
+
+Implementation, native credential API calls, real credential storage or
+retrieval, OAuth consent, token generation, Gmail API requests, mailbox
+access, cloud deployment, TradeStation authentication, broker orders,
+`SIM`, `LIVE`, and any economic action. ADR-0004 stays Proposed.
+ADR-0003 stays Accepted. `DEP-GMAIL-001` stays OPEN. `DRY_RUN` remains
+the only authorized execution mode. PR #28 remains the verified Proposed
+head. This draft is not merged.
+
+### Integration
+
+`docs/INTEGRATION_PROTOCOL.md` step 16 requires explicit Operator
+authorization for a material merge. Acceptance of the design is not that
+authorization. Canonical `main` stays
+`2c895291a3b4282f8cf5c7426c705bfdab365c47`.
+
+### Proposed implementation sentence, not in effect
+
+A later Operator decision would be required before the following text
+could be added to `docs/CURRENT_STATE.md` on canonical `main`. It is not
+active. Its commit would add no application source:
+
+The Operator authorizes Lane 3 to implement and independently verify a
+Gmail-specific Windows Credential Manager abstraction using synthetic
+values and mocked native API responses only. That work stays separate
+from Google OAuth bootstrap and mailbox acquisition. Real credential
+creation or access, unmocked `CredWriteW`, `CredReadW`, or `CredDeleteW`,
+real Google OAuth consent or token exchange, Gmail API calls, mailbox
+ingestion, TradeStation access, `SIM`, `LIVE`, and any economic action
+remain unauthorized. ADR-0004 stays Proposed. `DEP-GMAIL-001` stays OPEN.
+`DRY_RUN` remains the only authorized execution mode.
+
+This entry does not embed its own commit hash.

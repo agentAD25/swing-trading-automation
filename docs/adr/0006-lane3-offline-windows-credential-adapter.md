@@ -1,6 +1,6 @@
 # ADR-0006: Lane 3 offline Windows credential adapter
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-09
 - Sole Phase 1 decider: Human Operator
 - Scope: Offline, synthetic, mocked credential-storage interface for one recorded Lane 3 development target
@@ -115,6 +115,35 @@ broker TokenStore, and DPAPI-as-a-second-design are outside this record.
 
 ## Decision
 
+Accepted: Option A, as a design only. The human Operator accepts the
+independently verified Proposed text at commit
+`5855d5bb7380be49422671aeecd870589d38b8c1`, tree
+`13a3d644b9136b1fcda739e7035fd40bdfa51e9b`, ADR blob
+`c3fd7516211d338226af3d531d56c8a030dfef3b`. The verification token for
+that blob is `LANE3_ADR0006_REVERIFIED_PASS`. That token does not cover
+this Accepted file, because changing Status and this Decision changes
+the blob.
+
+The accepted decision is the Gmail-only offline synthetic and mocked
+Windows Credential Manager adapter in Option A. The constants are
+`CRED_TYPE_GENERIC` = 1, `CRED_PERSIST_LOCAL_MACHINE` = 2, the current
+operator-controlled Windows user, and target identifier
+`swing-trading/lane3/gmail/dev/refresh-token`. There is no Enterprise
+credential roaming, no TradeStation TokenStore integration, no selected
+deployment host, and zero incremental credential-storage service cost.
+Credential Manager does not provide hardware-backed isolation. It cannot
+prevent retrieval by malicious code running as the same Windows user.
+
+This acceptance does not authorize adapter implementation, a native
+Windows credential API call, storage or retrieval of a real credential,
+OAuth consent, authorization-code or refresh-token generation, a Gmail
+API request, mailbox access, cloud deployment, TradeStation
+authentication, a broker order, `SIM`, `LIVE`, or any economic action.
+ADR-0004 stays Proposed. `DEP-GMAIL-001` stays OPEN. A later explicit
+implementation sentence in `docs/CURRENT_STATE.md` on canonical `main`
+is still required before any code, and that sentence's commit must add
+no application source.
+
 ## Consequences
 
 If the Operator later accepts this exact proposal, the only decision
@@ -162,10 +191,12 @@ it, and to write no adapter.
 
 ## Unresolved questions
 
-- Whether the Operator accepts or rejects this exact proposal. The
-  authoring agent cannot decide.
-- The exact commit and tree a later independent verifier will attest.
-  That attestation does not exist yet.
+- The Operator has accepted the Proposed design cited in the Decision.
+  The authoring agent did not accept it. Implementation authorization
+  remains a separate decision and is not made here.
+- `LANE3_ADR0006_REVERIFIED_PASS` attests blob
+  `c3fd7516211d338226af3d531d56c8a030dfef3b` only. The Accepted text
+  needs its own independent verification.
 - The current-state sentence that would authorize implementation. It is
   intentionally absent.
 - How a future real refresh token would be stored. This identifier is
