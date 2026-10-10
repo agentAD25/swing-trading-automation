@@ -2847,3 +2847,20 @@ reason is `SWINGTRADE_TEST_POSTGRES_URL is required`. Those skips are not
 passes. `tests/validate_phase1_contracts.py` PASS. Ruff check passed.
 `git diff --check` was clean. Mypy reported no issues in the parser
 module. This entry does not claim independent verification.
+
+### Independent verification
+
+Verifier `bc-0a306c68-0d69-5aee-a999-736cff1a54d8` checked out
+`227db721944dc0a470046fdec4b60f581ff28d38`, tree
+`980ec01635c5e4eb0abec297fe8bbf37f12d18fa`, in a separate worktree and
+imported `swingtrade.group3_auth.brokerage_read` from that worktree.
+`SWINGTRADE_TEST_POSTGRES_URL` was unset. Results: compatibility 5
+passed; lane-2 readiness 14 passed; `tests/group3_auth` 75 passed;
+`tests/offline` 112 passed, 12 skipped; `tests/contracts` 37 passed;
+configured Phase 1 pytest 119 passed, 99 skipped;
+`tests/validate_phase1_contracts.py` PASS; Ruff check passed. Skips are
+`SWINGTRADE_TEST_POSTGRES_URL is required` and are not passes. The
+verifier rejected malformed `Spread` values, null quantities, list-order
+`OrderID`, and confirmed `safe_to_retry` is false. DRY_RUN denial was
+unchanged. This descendant records that verification and does not change
+the verified source tree.
