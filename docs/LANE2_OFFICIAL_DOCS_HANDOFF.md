@@ -12,11 +12,14 @@ It does not accept ADR-0005.
 - Agent role: Lane 2 specialist documentation
 - Branch: `cursor/p2-ts-provider-evidence-99c1`
 - PR number (if any): Draft PR #22
-- Exact HEAD SHA: `daae1e179b00c7166003b50121f325cfed909b1b` (branch HEAD
-  before this research note). This handoff cannot embed the commit that
-  adds it.
-- Exact tree SHA: `c14001b8bee36a95ae0811d56859ca9d4c7a3798` (same
-  pre-change tree)
+- Exact HEAD SHA: `00b6e7ede7fdae99710bd4e82129902cde244237` (research
+  documentation commit). The pre-change parent was
+  `daae1e179b00c7166003b50121f325cfed909b1b`. A descendant identity note
+  records this SHA and does not embed its own hash. Lane 1 should read
+  the PR head for the branch tip.
+- Exact tree SHA: `f3f92d19d96ddd15d1d0dd530da11f054ade580a` (research
+  documentation tree). Pre-change tree was
+  `c14001b8bee36a95ae0811d56859ca9d4c7a3798`
 - Canonical main baseline SHA/tree used at branch start:
   `2c895291a3b4282f8cf5c7426c705bfdab365c47` /
   `25ebd09e495bb2db7b7f856963a0af876a378457`

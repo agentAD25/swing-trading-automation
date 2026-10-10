@@ -2802,3 +2802,13 @@ editing the parser. This entry does not open that gate.
 `DEP-TS-001` stays unconfirmed by the provider. `DEP-TS-002`,
 `DEP-TS-003`, and `DEP-TS-004` stay open. The handoff is
 `docs/LANE2_OFFICIAL_DOCS_HANDOFF.md`.
+
+### Research-commit identity
+
+The research documentation commit is
+`00b6e7ede7fdae99710bd4e82129902cde244237`, tree
+`f3f92d19d96ddd15d1d0dd530da11f054ade580a`. `git diff --check` on that
+commit was clean. `tests/validate_phase1_contracts.py` returned PASS.
+`src/` and `tests/` match
+`19154eae43990df1d83a78be7b6dac3710a28804`. This descendant records that
+identity and does not embed its own hash.
