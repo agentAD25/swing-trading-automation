@@ -421,3 +421,11 @@ Assumption: a future hosting architecture and DNS owner will name the
 callback. That hostname is unknown. Open questions are `DEP-TS-002`,
 `DEP-TS-003`, `DEP-TS-004`, ADR acceptance, and a separate credential
 authorization.
+
+## 2026-10-10 official documentation
+
+`docs/P2_TS_OFFICIAL_DOCS_2026-10-10.md` compares current TradeStation
+pages with this intake. It does not replace the provider quotations or
+the classifications above. Published defaults are not key-specific
+confirmation. `DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004` stay open.
+ADR-0005 stays Proposed.

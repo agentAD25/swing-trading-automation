@@ -3,7 +3,8 @@
 - Status: Proposed
 - Date: 2026-10-06
 - Amended: 2026-10-08 (proposal only); 2026-10-09 (Operator
-  architectural preference recorded; Decision remains blank)
+  architectural preference recorded; Decision remains blank); 2026-10-10
+  (official-documentation research cited; Decision remains blank)
 - Sole Phase 1 decider: Human Operator
 - Scope: How Client Experience answers constrain a future probe and which
   OAuth architecture is proposed for a cloud-hosted service
@@ -196,3 +197,6 @@ application type or describes loopback callbacks. The preference is an
 Operator architecture choice, not a provider confirmation. Public
 pages accessed 2026-10-08 are cited in that intake. Prior first-party
 page conflicts remain in `docs/P2_BROKER_RESEARCH.md` and are not deleted.
+The 2026-10-10 official-documentation comparison is
+`docs/P2_TS_OFFICIAL_DOCS_2026-10-10.md`. It does not confirm the issued
+key and does not fill this Decision.

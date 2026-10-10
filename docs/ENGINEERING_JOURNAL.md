@@ -2746,3 +2746,59 @@ commit was clean. `tests/validate_phase1_contracts.py` returned PASS.
 `src/` and `tests/` match
 `19154eae43990df1d83a78be7b6dac3710a28804`. This descendant records that
 identity and does not embed its own hash.
+
+## 2026-10-10 — Lane 2 official documentation research
+
+The Operator confirmed that the October 2026 Client Experience
+correspondence is the final currently available direct provider response.
+This entry records a public-documentation comparison. It does not send
+email, authenticate, read a key, call SIM or LIVE, place an order, accept
+ADR-0005, or merge PR #22. `DRY_RUN` remains the sole authorized execution
+mode.
+
+### Identity at start
+
+Canonical `main` was `2c895291a3b4282f8cf5c7426c705bfdab365c47`, tree
+`25ebd09e495bb2db7b7f856963a0af876a378457`. Draft PR #22 head was
+`daae1e179b00c7166003b50121f325cfed909b1b`, tree
+`c14001b8bee36a95ae0811d56859ca9d4c7a3798`. Both matched the previously
+reported identifiers. `main` was an ancestor of the branch. No parallel
+document already contained this research. `docs/WORKSTREAM_DEPENDENCIES.md`
+and `docs/WORKSTREAM_STATUS.md` were not edited. This entry does not embed
+its own commit hash.
+
+### What the pages support
+
+`docs/P2_TS_OFFICIAL_DOCS_2026-10-10.md` is the record. Accessed
+2026-10-10. Regular Web Authorization Code is the published default for
+Auth0 keys. The FAQ format test distinguishes Auth0 keys from legacy
+OAuth2 keys and does not identify Regular Web, Native, or SPA. Legacy
+Swagger 2.0, linked from the FAQ, uses v2 security URLs and lowercase
+scopes. It is secondary evidence.
+
+Default-scope pages still disagree, including `Matrix` and
+`OptionSpreads`. The 30-minute versus 40-minute optional refresh rotation
+conflict is still present. The written provider sentence on non-expiring
+default refresh tokens and on omitting `offline_access` is preserved.
+Neither optional rotation interval is applied to this key.
+
+The v3 OpenAPI document lists brokerage GET paths for accounts, balances,
+positions, today's and open orders, and order lookup by id. It does not
+attach per-operation scopes. Its `servers` array names only
+`https://api.tradestation.com`. The SIM host remains the separate SIM
+page. One HTTPS callback fits the documented Regular Web flow. No
+hostname was chosen.
+
+### Implementation comparison
+
+`src/` and `tests/` were not changed. Fail-closed DRY_RUN denial,
+exact-scope rejection, the 1,200-second session, and stop-on-429 remain.
+Order `Spread` is a string in the current order schema, while the parser
+comment still calls it an unpinned object and rejects it. Null fields and
+HTTP 400/404 are also stricter than the public pages. Those are
+fail-closed gaps. A later remediation gate would be required before
+editing the parser. This entry does not open that gate.
+
+`DEP-TS-001` stays unconfirmed by the provider. `DEP-TS-002`,
+`DEP-TS-003`, and `DEP-TS-004` stay open. The handoff is
+`docs/LANE2_OFFICIAL_DOCS_HANDOFF.md`.
