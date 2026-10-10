@@ -2780,3 +2780,45 @@ remain unauthorized. ADR-0004 stays Proposed. `DEP-GMAIL-001` stays OPEN.
 `DRY_RUN` remains the only authorized execution mode.
 
 This entry does not embed its own commit hash.
+
+## 2026-10-10 — Offline Gmail adapter implementation sentence
+
+Coordinator documentation only. No adapter source, no Windows credential
+API call, no OAuth, and no Gmail call.
+
+### Operator decision
+
+The Operator authorized Lane 3 to proceed with offline-only development
+of the Windows Credential Manager adapter, without real credential
+access, and without an extra approval cycle beyond accepted repository
+gates. Independent verification of the exact authorization tree is still
+required. Real credentials, OAuth, Gmail access, broker activity, `SIM`,
+and `LIVE` stay unauthorized.
+
+### Effective sentence
+
+Current-state item 13 states: Lane 3 may implement and test the
+Gmail-specific Windows Credential Manager adapter using only synthetic
+values and mocked Windows native API responses, in a strictly offline
+development environment, under Accepted ADR-0006. The parent main is
+`5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d`, tree
+`38c29d18be5930bda628bc32947d484fccb860dc`, ADR-0006 blob
+`ebdb79e3fac0299582e2555d5cd63c460328bb01`. This entry does not embed
+its own commit hash. The historical paragraph above that called the
+same sentence "not in effect" is the pre-decision record.
+
+`DEP-GMAIL-001` stays OPEN. It blocks Google OAuth setup, not this
+offline mocked scope. ADR-0004 stays Proposed. ADR-0002 and ADR-0003
+stay Accepted. `DRY_RUN` remains the only authorized execution mode.
+
+### Lane 3 constraints
+
+Real native API execution stays disabled by default. Tests use
+injectable mocks. They must not read or write a production credential,
+must not use a genuine token, and must fail on an unmocked `CredWriteW`,
+`CredReadW`, or `CredDeleteW` or on any external network call. Errors,
+logs, and tracebacks must omit credential material. Unexpected native
+access fails closed. The adapter stays separate from TradeStation
+TokenStore and broker execution. Lane 3 must not self-merge the result.
+
+This entry does not embed its own commit hash.

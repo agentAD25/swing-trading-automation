@@ -5,10 +5,10 @@ Conversation claims are never authoritative by themselves. Resolve conflicts
 using `docs/INTEGRATION_PROTOCOL.md` and the operating hierarchy in
 `docs/WORKSTREAM_OWNERSHIP.md`.
 
-Last attestation date: 2026-10-09
-Canonical main baseline (attested): `2c895291a3b4282f8cf5c7426c705bfdab365c47`
-Canonical main tree (attested): `25ebd09e495bb2db7b7f856963a0af876a378457`
-Attestation method: Gmail custody reconciliation via `gh`/`git fetch` on 2026-10-09. PR #21 is that main tip.
+Last attestation date: 2026-10-10
+Canonical main baseline at the start of this authorization (attested): `5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d`
+Canonical main tree at the start of this authorization (attested): `38c29d18be5930bda628bc32947d484fccb860dc`
+Attestation method: Offline Gmail adapter authorization via `gh`/`git fetch` on 2026-10-10. PR #27 is merged at that main tip. This descendant commit cannot embed its own hash.
 Classification versus the prior registry tip: PR #21 is MERGED. Prior registry main `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829` is an ancestor. PR #22 and PR #24 rows below the Gmail row are the pre-merge snapshot and are not re-certified here.
 This attestation names the pre-change main. A descendant documentation commit cannot embed its own hash.
 
@@ -97,18 +97,18 @@ certification.
 | Lane identifier | `LANE-3` |
 | Workstream name | Gmail / Signal Ingestion |
 | Current state | `WAITING_OPERATOR` |
-| Current branch | `main` (PR #21 history-preserving fast-forward of the Gate A proposal) |
-| PR number | PR #21 (MERGED 2026-10-09T15:49:31Z) |
-| Last attested SHA | `2c895291a3b4282f8cf5c7426c705bfdab365c47` |
-| Last attested tree | `25ebd09e495bb2db7b7f856963a0af876a378457` |
-| Canonical main baseline | `2c895291a3b4282f8cf5c7426c705bfdab365c47` / `25ebd09e495bb2db7b7f856963a0af876a378457` |
-| Current objective | Keep Gate A Proposed. The ADR-0006 design is accepted on this draft only. Do not start Gate B, OAuth, or credential-module code. |
-| Current blocker | `DEP-GMAIL-001` stays OPEN. The Accepted ADR is not on canonical main. No current-state implementation sentence is in effect. ADR-0004 must stay Proposed. |
-| Next permitted action | Wait for a separate Operator authorization to integrate this acceptance candidate. Do not code, and do not treat ADR acceptance or draft PR #27 as implementation permission. Retain PR #21 history. |
-| Next prohibited action | Gmail authentication; mailbox access; storing a real token; invoking real Windows Credential Manager APIs; treating the Operator intent sentence or draft PR #27 as implementation permission; secret material in Git/chat/PR; self-integration |
+| Current branch | `main` (PR #21 history-preserving fast-forward of the Gate A proposal; ADR-0006 design acceptance is main `5a04c5e`) |
+| PR number | PR #21 (MERGED 2026-10-09T15:49:31Z). PR #27 (MERGED 2026-10-10T15:19:28Z) carries the Accepted ADR-0006 design. |
+| Last attested SHA | `5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d` |
+| Last attested tree | `38c29d18be5930bda628bc32947d484fccb860dc` |
+| Canonical main baseline | `5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d` / `38c29d18be5930bda628bc32947d484fccb860dc` |
+| Current objective | Implement and test only the offline synthetic and mocked Gmail Windows Credential Manager adapter under Accepted ADR-0006 and current-state item 13. Do not start Gate B or OAuth. |
+| Current blocker | `DEP-GMAIL-001` stays OPEN for Google OAuth. ADR-0004 stays Proposed. Those do not block the offline mocked adapter. |
+| Next permitted action | On a new branch from canonical main, implement the offline adapter with synthetic values and mocked native API responses. Do not self-merge. Retain PR #21 history. |
+| Next prohibited action | Real Credential Manager calls; unmocked `CredWriteW`, `CredReadW`, or `CredDeleteW`; real tokens; OAuth; Gmail API or mailbox access; TradeStation or TokenStore changes; remote database activity; deployment; `SIM`; `LIVE`; broker orders; Gate B; self-integration |
 | Contract dependencies | `DEP-GMAIL-001`, `DEP-CORE-001`, `DEP-CORE-002` |
-| Certification status | Gate A proposal text is on main. Not a Gmail connection certification. ADR-0004 remains Proposed. Offline credential implementation is not authorized. Offline Group 4A on `main` is separately `INTEGRATED` (see below). |
-| Integration eligibility | Proposal text is already integrated. The offline custody gate is not effective. Connection, OAuth, and credential implementation are not eligible. |
+| Certification status | Gate A proposal text is on main. ADR-0006 design is Accepted. ADR-0004 remains Proposed. Offline adapter code is not yet present and is not certified. Offline Group 4A on `main` is separately `INTEGRATED` (see below). |
+| Integration eligibility | The design acceptance is integrated. Adapter implementation is not eligible for integration until a later authorized gate. |
 | Last verification date | 2026-10-09. Pre-merge verifier `bc-c3ebf977-b66a-5fac-80ac-93c7416edf31` returned `LANE3_RECONCILE_VERIFY_PASS` on this exact SHA before the fast-forward. That result was not copied into the journal at integration time. |
 | Evidence references | https://github.com/agentAD25/swing-trading-automation/pull/21 MERGED; parents `a2cef6f3527b2aab7319a2628874fcdcaf03acac` and `7c33d45c0a057d189ad6c5acc288625d57539413`; ADR-0004 Proposed; `DEP-GMAIL-001` OPEN |
 

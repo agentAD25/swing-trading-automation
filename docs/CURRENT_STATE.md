@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-10-10 (ADR-0006 design acceptance recorded; implementation permission not effective; not on canonical main). Governance PR #23 and checkpoint PR #25 remain integrated.
+- Last updated: 2026-10-10 (offline Gmail credential-adapter implementation authorized; real credentials, OAuth, and Gmail access remain unauthorized). Governance PR #23 and checkpoint PR #25 remain integrated.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
   offline Group 4A email contract is on canonical `main` by exact
@@ -357,11 +357,33 @@ a prohibition on later additive coordination roles.
     action. ADR-0004 stays Proposed. ADR-0003 stays Accepted.
     `DEP-GMAIL-001` stays OPEN. `DRY_RUN` remains the only authorized
     execution mode. The Accepted ADR text is a new blob and is not
-    certified by `LANE3_ADR0006_REVERIFIED_PASS`. This item is on the
-    coordinator draft, not on canonical `main`, until a separate
-    integration authorization. Implementation permission still requires
-    that integration and a later current-state sentence whose commit
-    adds no application source. That sentence is not in effect.
+    certified by `LANE3_ADR0006_REVERIFIED_PASS`. Fast-forward of
+    `5a04c5e` placed this design acceptance on canonical `main`. That
+    fast-forward did not authorize implementation.
+13. Offline Gmail credential-adapter implementation, authorized
+    2026-10-10. Lane 3 may implement and test the Gmail-specific
+    Windows Credential Manager adapter using only synthetic values and
+    mocked Windows native API responses, in a strictly offline
+    development environment, under Accepted ADR-0006. This commit adds
+    no application source. The authorization is the Gmail-only scope in
+    ADR-0006: `CRED_TYPE_GENERIC` = 1, `CRED_PERSIST_LOCAL_MACHINE` = 2,
+    the current operator-controlled Windows user, and target identifier
+    `swing-trading/lane3/gmail/dev/refresh-token`. Tests must keep real
+    native API execution disabled and must fail if an unmocked Windows
+    credential call or any external network call is attempted.
+    Credential Manager is not hardware-backed isolation.
+    This sentence does not authorize real Credential Manager calls,
+    unmocked `CredWriteW`, `CredReadW`, or `CredDeleteW`, real token
+    generation, storage, retrieval, or deletion, OAuth consent,
+    redirects, callbacks, or token exchange, Gmail API or mailbox
+    access, TradeStation or TokenStore changes, remote database
+    activity, operational deployment, `SIM` or `LIVE` trading, broker
+    orders, or Gmail Gate B. ADR-0006 stays Accepted as that design.
+    ADR-0004 stays Proposed. ADR-0002 and ADR-0003 stay Accepted.
+    `DEP-GMAIL-001` stays OPEN. `DRY_RUN` remains the only authorized
+    execution mode. A later integration gate is required before any
+    resulting adapter commit may enter canonical `main`. Lane 3 must
+    not self-merge that work.
 
 ## Evidence
 
