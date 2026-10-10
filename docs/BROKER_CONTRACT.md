@@ -331,3 +331,30 @@ Pointer facts for later readers:
    addendum does not choose a winner.
 4. This pointer is documentation only. It does not authorize credentials,
    probes, TradeStation `SIM`, orders, or `LIVE`.
+
+## Dated addendum — Client Experience answers (2026-10-06)
+
+This addendum does not rewrite findings 9 or 10 or the 2026-09-29 statement
+that all twelve groups were then unresolved. Those sentences described the
+public pages and that integration. The 2026-10-06 Client Experience writing
+is later evidence. It is recorded in `docs/P2_TS_PROVIDER_EVIDENCE.md`.
+
+Later facts, without deleting the earlier conflicts:
+
+- Default personal-use refresh tokens are non-rotating and long-lived.
+  Access tokens obtained from them last at most 20 minutes. Findings 9 and
+  10 remain the published-page conflict for a rotating configuration and for
+  default-scope wording. They are not the description of that personal-use
+  default.
+- `offline_access` may be omitted. The session then lasts at most 20
+  minutes before re-authorization. The Scopes-table conflict recorded in
+  the 2026-09-29 addendum stays a page conflict.
+- A SIM-only API key is not available. SIM and LIVE separation for that key
+  is the request base URL. That strengthens host denial. It does not close
+  group 5.
+- Rate limits are enforced per login. Group 10 stays open on aggregation and
+  numeric quotas.
+- Groups 6, 7, and 10 are advanced. No `BROKER_BEHAVIOR_UNRESOLVED` item is
+  closed.
+
+No credential, probe, SIM call, order, or `LIVE` use is authorized.

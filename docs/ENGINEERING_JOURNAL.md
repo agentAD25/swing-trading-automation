@@ -2211,6 +2211,91 @@ integration. Supabase is not selected.
 This commit edits only `docs/CURRENT_STATE.md` and this journal. It is
 not the certified implementation tree `67a0b57526ea219972fa0574b191562f0f52b598`.
 
+## 2026-10-06 — TradeStation Client Experience evidence reconciliation
+
+The Operator supplied written Client Experience answers. This entry records
+those answers in the research contracts. It does not authenticate to
+TradeStation, create a key, request a token, call SIM or LIVE, place an
+order, connect Gmail or Supabase, modify Gmail draft PR #21, or begin
+Group 4B. `DRY_RUN` remains the sole authorized execution mode.
+
+### Repository identity at start
+
+Canonical `main` was `41218abb2eda5f06001703fb83c2cb9e43e5ec2e`, tree
+`39f0ab05c49b533270964b303601539feeff570f`. Group 4A is integrated and
+certified on that commit. Gmail Gate A remains the separate branch
+`cursor/p2-g4-gmail-readonly-gate-a-99c1` at
+`a2cef6f3527b2aab7319a2628874fcdcaf03acac` (draft PR #21) and is not
+modified.
+
+Draft PR #19 head `bc6ab7ea92310ffa133b75b498f7f245af11f166` is based on
+`12e852c6d523a8fbfe2082a33887e36045ee04ae` and is not an ancestor of
+`main`. Its Proposed ADR used number 0003, which canonical `main` already
+uses for the accepted Group 4A ADR. Updating PR #19 would mix that history
+with current `CURRENT_STATE.md` and this journal. This work therefore
+starts a replacement branch, `cursor/p2-ts-provider-evidence-99c1`, from
+current `main`. PR #19 is left open and is not merged.
+
+### What the provider confirmed
+
+Regular Web uses Authorization Code and requires `client_secret`. Native
+or Single Page can use Authorization Code with PKCE and a Code Verifier,
+and can omit `client_secret`. The provider did not choose a type. A
+SIM-only API key is not available; the same key is used for both
+environments and the base URL differs. A generated key's scopes could be
+configured; the mechanism was not described. `offline_access` may be
+omitted, with a maximum session of 20 minutes. Default personal-use
+refresh tokens are non-rotating, non-expiring, and long-lived. Access
+tokens obtained from them last at most 20 minutes. Additional callback
+URLs may be requested by email. API access is limited to accounts under
+the authenticated login, and no additional entitlement is required to view
+that login's own accounts or data subscriptions. Rate limits are enforced
+per login.
+
+### What stays open
+
+The Native loopback callback form, whether the port may vary, and whether
+default or wildcard localhost callbacks can be removed. Returned-scope
+behavior. Exact subset-scope mechanics. The 30-versus-40-minute interval
+for a rotating configuration. Refresh concurrency, revocation, and
+non-default keys. Confidential Authorization Code plus PKCE. The
+Operator's expected SIM account inventory. None of the twelve broker
+behavior groups is closed. Groups 6, 7, and 10 advance. The others are
+unchanged.
+
+Native PKCE is an engineering preference because it can avoid a persistent
+client secret on the attended probe. It is not a provider recommendation
+and it is not selected. ADR-0005 is Proposed. Its Decision is blank.
+
+### Boundary
+
+No source, test, migration, or configuration file is changed. The first
+probe is specified and not executed. An unexpected `Trade` scope stops as
+`UNEXPECTED_SCOPE_GRANTED`. An unexpected refresh token is discarded and
+stops as `UNEXPECTED_REFRESH_TOKEN_RETURNED`. Raw account identifiers are
+not written here. Local check counts are in the note below. This entry
+does not embed its own commit hash.
+
+### Local checks
+
+Run against commit `247f61249209024ae1eab0f0c0aa7128a6de02fd`, tree
+`6f4d304839205292ff0d40679dd6e25c56b3bae0`, with
+`SWINGTRADE_TEST_POSTGRES_URL` unset. The follow-up wording fix is one
+sentence in `docs/BROKER_CONTRACT.md` plus this note. It does not change
+the source tree those checks ran against. `tests/validate_phase1_contracts.py`
+PASS. `tests/contracts`: 37 passed, 0 skipped. `tests/offline`: 112 passed,
+12 skipped. `tests/group3_auth`: 56 passed, 0 skipped. Configured Phase 1
+pytest: 119 passed, 99 skipped. Every skip reason is
+`SWINGTRADE_TEST_POSTGRES_URL is required`. Those skips were not executed
+and are not reported as passed. The 12 Group 2 token-store skips remain
+`NO_ACCEPTED_EVIDENCE_FOUND`. The 99 Phase 1 PostgreSQL skips remain
+`INHERITED_ACCEPTED_EVIDENCE_UNCHANGED`. No source file changed, so Ruff
+and mypy were not re-run. `git diff --check` was clean. A secret-assignment
+scan of the documentation diff found no credential material. A scan for
+HTTP-client and broker-call primitives found no calls; the word "requests"
+appears only inside the quoted provider sentences. No TradeStation network
+request was made. This note does not embed its own commit hash.
+
 ## 2026-10-08 — Four-lane workstream governance bootstrap (Lane 1)
 
 Coordinator-only governance bootstrap. No TradeStation, Gmail, or database
@@ -2489,6 +2574,77 @@ Registry identities in coordinator-owned docs are updated to the heads
 above. Six dependency IDs stay OPEN. No second governance hierarchy is
 added. This entry does not embed its own commit hash.
 
+## 2026-10-08 — Lane 2 provider-evidence intake
+
+The Operator presented the written Client Experience clarification for
+intake. This entry records that clarification, proposes a confidential-web
+architecture, and adds fail-closed DRY_RUN checks. It does not authenticate
+to TradeStation, onboard a credential, call SIM or LIVE, place an order,
+accept ADR-0005, or merge PR #22. `DRY_RUN` remains the sole authorized
+execution mode. No Phase 2 authorization is granted.
+
+### Repository identity at start
+
+Canonical `main` was `af0d69b1dfc2046899db05a2f12767fc20b623ae`, tree
+`4e1ed263e745b9896bf9384a2a9453566ebd6e0b`. Draft PR #22 head was
+`a6c5f1d7109e156eb0e9257216c3b5dbed17f653`, tree
+`3d19daec787e5796af55a98de36a54d0d1f77a79`. Both matched the previously
+verified identifiers. `origin/main` was merged into
+`cursor/p2-ts-provider-evidence-99c1` without rebase or force-push.
+Conflicts were only `docs/CURRENT_STATE.md` and this journal. Both
+histories were kept. Lane 3 and Lane 4 branches were not modified.
+`docs/WORKSTREAM_DEPENDENCIES.md` was not edited.
+
+### Evidence
+
+`docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md` classifies TS-EVIDENCE-001
+through TS-EVIDENCE-008. The 2026-10-06 quotations are unchanged. Public
+TradeStation pages were compared on 2026-10-08. The issued key's
+application type is not verified. ADR-0005 proposes Regular Web Option A
+and remains Proposed with a blank Decision. `DEP-TS-001` is
+`NOT_CLOSED_BY_PROVIDER`. It would be architecturally unnecessary only if
+the Operator later accepts Option A. Proposed `DEP-TS-002`, `DEP-TS-003`,
+and `DEP-TS-004` are recorded for Lane 1 and are not inserted into the
+Lane 1 registry by this change.
+
+### Local checks
+
+`SWINGTRADE_TEST_POSTGRES_URL` was unset. `tests/group3_auth/test_lane2_readiness.py`:
+14 passed. `tests/group3_auth`: 70 passed. `tests/offline`: 112 passed,
+12 skipped. `tests/contracts`: 37 passed. Configured Phase 1 pytest:
+119 passed, 99 skipped. Every skip reason is
+`SWINGTRADE_TEST_POSTGRES_URL is required`. Those skips were not executed
+and are not reported as passed. `tests/validate_phase1_contracts.py` PASS.
+Ruff check passed on the group3 package and the new test. Ruff format
+passed. Mypy reported no issues in the five new modules. `git diff --check`
+was clean. A secret-assignment scan of the diff found no credential
+material. No TradeStation network request was made by the tests. This
+entry does not embed its own commit hash and does not claim independent
+verification.
+
+### Independent verification
+
+Verifier agent `bc-e2d7b87b-2d7e-55d1-8dd8-631005b76379` checked out
+`19154eae43990df1d83a78be7b6dac3710a28804`, tree
+`de97145c7278afbfe432463733a02b5e8a74ced9`, in a separate worktree and
+imported `swingtrade.group3_auth.boundary` from that worktree.
+`SWINGTRADE_TEST_POSTGRES_URL` was unset. Results: lane-2 readiness
+14 passed; `tests/group3_auth` 70 passed; `tests/offline` 112 passed,
+12 skipped; `tests/contracts` 37 passed; configured Phase 1 pytest
+119 passed, 99 skipped; `tests/validate_phase1_contracts.py` PASS;
+Ruff check passed. ADR-0005 was Proposed with a blank Decision.
+`NOT_CLOSED_BY_PROVIDER` was present. Profile B raises
+`PROFILE_B_NOT_AUTHORIZED`.
+
+The verifier also flagged `from urllib.parse import urlsplit` in
+`boundary.py`. That import splits a URL. It is not `urllib.request`,
+and the existing group3 forbidden-module test allows it. The same
+parser is already used by `src/swingtrade/group3_auth/request.py`.
+No socket was opened. This note does not treat the flag as a failed
+test. It does not claim TradeStation connectivity. This descendant
+commit records that verification and does not change the verified
+source tree.
+
 ## 2026-10-05 — Gmail read-only corpus Gate A
 
 This entry records research for a future read-only Gmail corpus. It does
@@ -2525,6 +2681,189 @@ Git and outside chat.
 Quantity rounding, timezone, and the market calendar remain unresolved.
 The 12 Group 2 token-store PostgreSQL tests remain
 `NO_ACCEPTED_EVIDENCE_FOUND`.
+
+## 2026-10-09 — Lane 2 Option A operator preference
+
+The Operator approved Option A, Regular Web confidential-client
+Authorization Code, as an architectural preference. This entry records
+`OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`. It does
+not accept ADR-0005, onboard a credential, authenticate, call SIM or
+LIVE, place an order, authorize Phase 2, or merge PR #22. `DRY_RUN`
+remains the sole authorized execution mode.
+
+### Identity at start of this record
+
+Canonical `main` was `2c895291a3b4282f8cf5c7426c705bfdab365c47`, tree
+`25ebd09e495bb2db7b7f856963a0af876a378457`. The PR branch already
+contained merge `1dd39815639c1226ab09442726c7576f925a3ab5`. A further
+history-preserving merge of that main tip conflicted only in
+`docs/CURRENT_STATE.md` and this journal. Both histories were kept.
+`docs/WORKSTREAM_DEPENDENCIES.md` and `docs/WORKSTREAM_STATUS.md` were
+not edited. `OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`
+was absent from main and from the PR branch before this record. This
+entry does not embed its own commit hash.
+
+### What changed
+
+ADR-0005 stays Proposed. Its Decision stays blank. The Proposal section
+now states the preference, the rationale, the conditions, the shared-key
+SIM/LIVE limitation, and Option B as a deferred alternative. Option B is
+not described as insecure, unsupported, or rejected by TradeStation.
+
+`DEP-TS-001` stays `NOT_CLOSED_BY_PROVIDER`. The recommended Lane 1
+narrative is `SUPERSEDED_BY_OPTION_A_PENDING_ARCHITECTURE_ACCEPTANCE`.
+The registry Current state remains `OPEN` until Lane 1 records it. The
+controlled lane state `SUPERSEDED` is not requested. `DEP-TS-002`,
+`DEP-TS-003`, and `DEP-TS-004` stay open. The handoff is
+`docs/LANE2_OPTION_A_HANDOFF.md`.
+
+The active Client Experience draft is the 2026-10-09 consolidated
+follow-up in `docs/TRADESTATION_CLIENT_EXPERIENCE_QUESTIONS.md`. Status
+`UNSENT`. It covers `DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004`. It
+does not ask the native PKCE question and does not name a callback
+hostname. No email was sent.
+
+The onboarding review in the 2026-10-08 intake file compares existing
+offline modules and `docs/AUTH_ARCHITECTURE.md` with the future controls.
+It finds design and local fail-closed checks, and it finds no secret
+store, callback service, hostname, or authorized token exchange.
+
+### Prior verification preserved
+
+Independent verifier `bc-e2d7b87b-2d7e-55d1-8dd8-631005b76379` checked
+`19154eae43990df1d83a78be7b6dac3710a28804`, tree
+`de97145c7278afbfe432463733a02b5e8a74ced9`. This record does not change
+`src/` or `tests/` relative to that commit. PostgreSQL skips in that
+verification remain skips. No new implementation verification is claimed
+for this documentation change.
+
+### Preference-commit identity
+
+The preference documentation commit is
+`c32052832900360ec0993be29d989141e71cb214`, tree
+`7b7c1a7a9f08b03d7693439d3a98fac661fa6c07`. `git diff --check` on that
+commit was clean. `tests/validate_phase1_contracts.py` returned PASS.
+`src/` and `tests/` match
+`19154eae43990df1d83a78be7b6dac3710a28804`. This descendant records that
+identity and does not embed its own hash.
+
+## 2026-10-10 — Lane 2 official documentation research
+
+The Operator confirmed that the October 2026 Client Experience
+correspondence is the final currently available direct provider response.
+This entry records a public-documentation comparison. It does not send
+email, authenticate, read a key, call SIM or LIVE, place an order, accept
+ADR-0005, or merge PR #22. `DRY_RUN` remains the sole authorized execution
+mode.
+
+### Identity at start
+
+Canonical `main` was `2c895291a3b4282f8cf5c7426c705bfdab365c47`, tree
+`25ebd09e495bb2db7b7f856963a0af876a378457`. Draft PR #22 head was
+`daae1e179b00c7166003b50121f325cfed909b1b`, tree
+`c14001b8bee36a95ae0811d56859ca9d4c7a3798`. Both matched the previously
+reported identifiers. `main` was an ancestor of the branch. No parallel
+document already contained this research. `docs/WORKSTREAM_DEPENDENCIES.md`
+and `docs/WORKSTREAM_STATUS.md` were not edited. This entry does not embed
+its own commit hash.
+
+### What the pages support
+
+`docs/P2_TS_OFFICIAL_DOCS_2026-10-10.md` is the record. Accessed
+2026-10-10. Regular Web Authorization Code is the published default for
+Auth0 keys. The FAQ format test distinguishes Auth0 keys from legacy
+OAuth2 keys and does not identify Regular Web, Native, or SPA. Legacy
+Swagger 2.0, linked from the FAQ, uses v2 security URLs and lowercase
+scopes. It is secondary evidence.
+
+Default-scope pages still disagree, including `Matrix` and
+`OptionSpreads`. The 30-minute versus 40-minute optional refresh rotation
+conflict is still present. The written provider sentence on non-expiring
+default refresh tokens and on omitting `offline_access` is preserved.
+Neither optional rotation interval is applied to this key.
+
+The v3 OpenAPI document lists brokerage GET paths for accounts, balances,
+positions, today's and open orders, and order lookup by id. It does not
+attach per-operation scopes. Its `servers` array names only
+`https://api.tradestation.com`. The SIM host remains the separate SIM
+page. One HTTPS callback fits the documented Regular Web flow. No
+hostname was chosen.
+
+### Implementation comparison
+
+`src/` and `tests/` were not changed. Fail-closed DRY_RUN denial,
+exact-scope rejection, the 1,200-second session, and stop-on-429 remain.
+Order `Spread` is a string in the current order schema, while the parser
+comment still calls it an unpinned object and rejects it. Null fields and
+HTTP 400/404 are also stricter than the public pages. Those are
+fail-closed gaps. A later remediation gate would be required before
+editing the parser. This entry does not open that gate.
+
+`DEP-TS-001` stays unconfirmed by the provider. `DEP-TS-002`,
+`DEP-TS-003`, and `DEP-TS-004` stay open. The handoff is
+`docs/LANE2_OFFICIAL_DOCS_HANDOFF.md`.
+
+### Research-commit identity
+
+The research documentation commit is
+`00b6e7ede7fdae99710bd4e82129902cde244237`, tree
+`f3f92d19d96ddd15d1d0dd530da11f054ade580a`. `git diff --check` on that
+commit was clean. `tests/validate_phase1_contracts.py` returned PASS.
+`src/` and `tests/` match
+`19154eae43990df1d83a78be7b6dac3710a28804`. This descendant records that
+identity and does not embed its own hash.
+
+## 2026-10-10 — Lane 2 read-only parser compatibility
+
+Four gaps from the official-documentation comparison are remediated in
+the offline parser. This entry does not authenticate, read a key, call
+SIM or LIVE, place an order, accept ADR-0005, or merge PR #22. `DRY_RUN`
+remains the sole authorized execution mode. This entry does not embed
+its own commit hash.
+
+### Changes
+
+`src/swingtrade/group3_auth/brokerage_read.py` accepts order `Spread`
+only as a string. JSON null is limited to an explicit set of
+non-economic blank strings. Null identifiers fail. Null economic strings
+return `NULL_ECONOMIC_FIELD` and are not rewritten as zero. HTTP 400 and
+404 are `HTTP_400` and `HTTP_404`, rejected, with `safe_to_retry` false.
+`ReadKind.ORDERS_BY_ID` allows optional string `OrderID` on that error
+object. List-order errors still reject it. Duplicate order-by-id error
+identities are `CONFLICTING_RESPONSE`. The identifier is not rendered.
+
+`tests/group3_auth/test_brokerage_read_compatibility.py` covers the
+string, null, status, and order-id fixtures and rechecks LIVE, SIM,
+auth, redirect, scope, and order-write denial. No shared economic
+contract and no Lane 1 registry file was edited.
+
+### Local checks
+
+`SWINGTRADE_TEST_POSTGRES_URL` was unset. Compatibility file: 5 passed.
+Lane 2 readiness: 14 passed. `tests/group3_auth`: 75 passed.
+`tests/offline`: 112 passed, 12 skipped. `tests/contracts`: 37 passed.
+Configured Phase 1 pytest: 119 passed, 99 skipped. Every inspected skip
+reason is `SWINGTRADE_TEST_POSTGRES_URL is required`. Those skips are not
+passes. `tests/validate_phase1_contracts.py` PASS. Ruff check passed.
+`git diff --check` was clean. Mypy reported no issues in the parser
+module. This entry does not claim independent verification.
+
+### Independent verification
+
+Verifier `bc-0a306c68-0d69-5aee-a999-736cff1a54d8` checked out
+`227db721944dc0a470046fdec4b60f581ff28d38`, tree
+`980ec01635c5e4eb0abec297fe8bbf37f12d18fa`, in a separate worktree and
+imported `swingtrade.group3_auth.brokerage_read` from that worktree.
+`SWINGTRADE_TEST_POSTGRES_URL` was unset. Results: compatibility 5
+passed; lane-2 readiness 14 passed; `tests/group3_auth` 75 passed;
+`tests/offline` 112 passed, 12 skipped; `tests/contracts` 37 passed;
+configured Phase 1 pytest 119 passed, 99 skipped;
+`tests/validate_phase1_contracts.py` PASS; Ruff check passed. Skips are
+`SWINGTRADE_TEST_POSTGRES_URL is required` and are not passes. The
+verifier rejected malformed `Spread` values, null quantities, list-order
+`OrderID`, and confirmed `safe_to_retry` is false. DRY_RUN denial was
+unchanged. This descendant records that verification and does not change
+the verified source tree.
 
 ## 2026-10-09 — Gmail PR #21 merge record and local custody design
 
@@ -2780,3 +3119,21 @@ remain unauthorized. ADR-0004 stays Proposed. `DEP-GMAIL-001` stays OPEN.
 `DRY_RUN` remains the only authorized execution mode.
 
 This entry does not embed its own commit hash.
+
+## 2026-10-10 — History-preserving merge of canonical main
+
+Lane 2 merged canonical main
+`5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d`, tree
+`38c29d18be5930bda628bc32947d484fccb860dc`, into
+`cursor/p2-ts-provider-evidence-99c1` at
+`3124ace419c1cd1ac3dc6ddf93334a5bc5b4b6e6`. Conflicts were only in
+`docs/CURRENT_STATE.md` and this journal. Both histories were kept.
+`docs/INTEGRATION_PROTOCOL.md`, `docs/WORKSTREAM_DEPENDENCIES.md`,
+`docs/WORKSTREAM_STATUS.md`, and
+`docs/adr/0006-lane3-offline-windows-credential-adapter.md` came from
+main unchanged. ADR-0006 design acceptance is not implementation
+permission and is not a TradeStation authorization. `src/` and `tests/`
+are unchanged versus the independently verified parser commit
+`227db721944dc0a470046fdec4b60f581ff28d38`, tree
+`980ec01635c5e4eb0abec297fe8bbf37f12d18fa`. This merge commit does not
+embed its own hash and is not a new verification of that parser tree.
