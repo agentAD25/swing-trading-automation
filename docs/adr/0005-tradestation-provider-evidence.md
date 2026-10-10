@@ -199,4 +199,6 @@ pages accessed 2026-10-08 are cited in that intake. Prior first-party
 page conflicts remain in `docs/P2_BROKER_RESEARCH.md` and are not deleted.
 The 2026-10-10 official-documentation comparison is
 `docs/P2_TS_OFFICIAL_DOCS_2026-10-10.md`. It does not confirm the issued
-key and does not fill this Decision.
+key and does not fill this Decision. A later offline parser change accepts
+the documented order `Spread` string and classifies HTTP 400 and 404. That
+change does not accept this ADR.

@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-10-10 (Lane 2 official-documentation research). Governance PR #23 and checkpoint PR #25 remain integrated.
+- Last updated: 2026-10-10 (Lane 2 read-only parser compatibility). Governance PR #23 and checkpoint PR #25 remain integrated.
 - This branch also records the 2026-10-08 Lane 2 provider-evidence intake and the 2026-10-09 Operator preference `OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`. That preference is not ADR acceptance.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
@@ -21,7 +21,10 @@
   unsent. The 2026-10-10 comparison in
   `docs/P2_TS_OFFICIAL_DOCS_2026-10-10.md` uses public documentation only.
   It does not confirm the issued key, onboard a credential, or authorize
-  SIM or `LIVE`.
+  SIM or `LIVE`. The same-day parser remediation accepts a documented
+  order `Spread` string, keeps economic nulls fail-closed, classifies
+  HTTP 400 and 404, and reads `OrderID` only on order-by-id errors. It
+  does not connect, retry, or submit an order.
 - Phase status: `PHASE1_COMPLETE` for governance, design, reconciliation,
   acceptance, and the offline `DRY_RUN` foundation; `PHASE1_ACCEPTED` remains
   the bounded meaning of the exact broker-neutral offline deterministic
@@ -119,7 +122,8 @@
 | TradeStation provider evidence (2026-10-06) | Recorded on this branch. Not on canonical `main` until this branch lands. Draft PR #19 (`bc6ab7ea92310ffa133b75b498f7f245af11f166`) is not an ancestor of `main` and is not updated. ADR-0005 is Proposed; its Decision is blank. A SIM-only API key is not available. Default personal-use refresh tokens are non-rotating and long-lived. `offline_access` may be omitted for an attended probe. Groups 6, 7, and 10 advance and stay open. Groups 1–5, 8, 9, 11, and 12 are unchanged. Native PKCE was an engineering preference and was not selected. No credential, authorization, SIM call, LIVE call, order, Gmail change, or Supabase connection. |
 | TradeStation provider evidence (2026-10-08) | Same branch, draft PR #22. The Operator's written clarification is reconciled in `docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md` without replacing the 2026-10-06 quotations. ADR-0005 proposes Regular Web Option A and remains Proposed with a blank Decision. `DEP-TS-001` is not closed by the provider. DRY_RUN destination denial, scope checks, fake 1,200-second sessions, fixture reads, and per-login 429 stops are local and non-network. No credential onboarding, SIM call, LIVE call, or order. |
 | TradeStation Option A preference (2026-10-09) | Same branch, draft PR #22. Preference documentation commit `c32052832900360ec0993be29d989141e71cb214`, tree `7b7c1a7a9f08b03d7693439d3a98fac661fa6c07`. Operator preference `OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT` is recorded for planning and provider clarification. ADR-0005 stays Proposed with a blank Decision. Recommended `DEP-TS-001` narrative is `SUPERSEDED_BY_OPTION_A_PENDING_ARCHITECTURE_ACCEPTANCE`; registry state stays `OPEN` until Lane 1 records it, and the provider did not close it. `DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004` stay open. The 2026-10-09 Client Experience draft is `UNSENT`. No credential, OAuth login, broker request, SIM call, LIVE call, order, or Phase 2 authorization. |
-| TradeStation official documentation (2026-10-10) | Same branch, draft PR #22. Research documentation commit `00b6e7ede7fdae99710bd4e82129902cde244237`, tree `f3f92d19d96ddd15d1d0dd530da11f054ade580a`. `docs/P2_TS_OFFICIAL_DOCS_2026-10-10.md` records current public pages. Regular Web is the published default and is not proof of the issued key. Key format does not prove application type. Scope and refresh-rotation page conflicts remain. One HTTPS callback is compatible with documented Regular Web and is not a registered callback. ADR-0005 stays Proposed. `DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004` stay open. No source change, credential, OAuth, SIM call, LIVE call, or order. |
+| TradeStation official documentation (2026-10-10) | Same branch, draft PR #22. Research documentation commit `00b6e7ede7fdae99710bd4e82129902cde244237`, tree `f3f92d19d96ddd15d1d0dd530da11f054ade580a`. `docs/P2_TS_OFFICIAL_DOCS_2026-10-10.md` records current public pages. Regular Web is the published default and is not proof of the issued key. Key format does not prove application type. Scope and refresh-rotation page conflicts remain. One HTTPS callback is compatible with documented Regular Web and is not a registered callback. ADR-0005 stays Proposed. `DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004` stay open. No credential, OAuth, SIM call, LIVE call, or order. |
+| TradeStation read-only parser compatibility (2026-10-10) | Same branch, draft PR #22. Offline fixtures only. Order `Spread` is a string. Economic nulls fail closed and are not coerced to zero. HTTP 400 and 404 have their own non-retryable reasons. Order-by-id errors may carry an opaque `OrderID`. DRY_RUN denial is unchanged. ADR-0005 stays Proposed. `DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004` stay open. |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
 `phase1-accepted-abc1fb6` fixes the accepted commit without making the

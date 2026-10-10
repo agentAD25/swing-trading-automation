@@ -341,7 +341,34 @@ not to close these IDs from this research. No new dependency ID is created.
 
 ## Next safe action
 
-Public documentation research for this pass is recorded. The next safe
+## Parser remediation after this research
+
+The four fail-closed gaps named above were remediated in
+`src/swingtrade/group3_auth/brokerage_read.py` without a transport change.
+
+- Order `Spread` is accepted only as a string, including omission and JSON
+  null. Objects, arrays, and numbers are `MALFORMED_RESPONSE`. The string
+  is not an order instruction.
+- Omission of optional fields stays accepted. JSON null is accepted only
+  for an explicit set of non-economic blank strings. Null identifiers fail.
+  Null quantities, prices, balances, and other economic strings fail as
+  `NULL_ECONOMIC_FIELD` and are not coerced to zero. OpenAPI marks none of
+  these properties `nullable`; the HTTP requests page says blank fields may
+  be null. Economic nulls stay fail-closed because a blank quantity is
+  ambiguous for reconciliation.
+- HTTP 400 is `HTTP_400` and HTTP 404 is `HTTP_404`. Both are rejected and
+  `safe_to_retry` stays false. 401, 403, 429, and 5xx classifications are
+  unchanged.
+- `ReadKind.ORDERS_BY_ID` accepts optional string `OrderID` on that error
+  object only. The list-order error object still rejects `OrderID`. The
+  identifier is not rendered and does not submit an order.
+
+No shared economic contract and no Lane 1 registry file was edited.
+
+## Next safe action
+
+Public documentation research for this pass is recorded. The parser
+remediation above is offline and does not onboard a credential. The next safe
 action is to leave `DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004` open and
 to keep the runtime on `DRY_RUN`. The unsent 2026-10-09 Client Experience
 draft stays unsent. Credential onboarding, OAuth, SIM, LIVE, and orders

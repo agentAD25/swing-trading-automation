@@ -16,6 +16,32 @@ from swingtrade.group3_auth.outcomes import AuthDecision, OutcomeCode, decision
 _STR = "str"
 _BOOL = "bool"
 _INT = "int"
+_IDENTIFIERS = frozenset({"OrderID", "PositionID"})
+# Optional strings whose JSON null means blank, not a quantity or order instruction.
+# Spread is the documented order-schema string. It is not an execution command.
+_NULL_BLANK = frozenset(
+    {
+        "AccountType",
+        "AdvancedOptions",
+        "Alias",
+        "AltID",
+        "ClosedDateTime",
+        "Currency",
+        "Error",
+        "ExpirationDate",
+        "GoodTillDate",
+        "GroupName",
+        "Message",
+        "NextToken",
+        "OpenedDateTime",
+        "RejectReason",
+        "Routing",
+        "Spread",
+        "StatusDescription",
+        "TimeUtc",
+        "Timestamp",
+    }
+)
 
 
 class ReadKind(StrEnum):
@@ -23,6 +49,7 @@ class ReadKind(StrEnum):
     BALANCES = "BALANCES"
     POSITIONS = "POSITIONS"
     ORDERS = "ORDERS"
+    ORDERS_BY_ID = "ORDERS_BY_ID"
 
 
 class ReadObservation:
@@ -111,6 +138,10 @@ def _parse_ok(kind: ReadKind, body: dict[str, object]) -> ReadObservation:
             return _empty(decision(OutcomeCode.REJECTED, "CONFLICTING_RESPONSE"), kind)
         seen[digest] = signature
         digests.append(digest)
+    if kind is ReadKind.ORDERS_BY_ID:
+        conflict = _error_identity_conflict(errors)
+        if conflict is not None:
+            return _empty(decision(OutcomeCode.REJECTED, conflict), kind)
     if errors:
         return ReadObservation(
             decision(OutcomeCode.UNKNOWN, "PARTIAL_RESPONSE"),
@@ -137,7 +168,9 @@ def _parse_ok(kind: ReadKind, body: dict[str, object]) -> ReadObservation:
     )
 
 
-def _check(value: object, schema: object) -> str | None:
+def _check(value: object, schema: object, *, key: str | None = None) -> str | None:
+    if value is None:
+        return _null(key, schema)
     if schema == _STR:
         return None if type(value) is str else "MALFORMED_RESPONSE"
     if schema == _BOOL:
@@ -161,13 +194,26 @@ def _check(value: object, schema: object) -> str | None:
     allowed = set(schema)
     if not set(value).issubset(allowed):
         return "UNDOCUMENTED_FIELD"
-    for key, item in value.items():
-        if key == "AccountID" and (type(item) is not str or not _account_text(item)):
+    for child, item in value.items():
+        if child == "AccountID" and type(item) is str and not _account_text(item):
             return "MALFORMED_ACCOUNT"
-        reason = _check(item, schema[key])
+        reason = _check(item, schema[child], key=child)
         if reason is not None:
             return reason
     return None
+
+
+def _null(key: str | None, schema: object) -> str | None:
+    """Blank JSON null is not a number. Identifiers and economic fields fail closed."""
+    if key == "AccountID":
+        return "MALFORMED_ACCOUNT"
+    if key in _IDENTIFIERS:
+        return "MALFORMED_IDENTITY"
+    if schema == _STR and key in _NULL_BLANK:
+        return None
+    if schema == _STR:
+        return "NULL_ECONOMIC_FIELD"
+    return "MALFORMED_RESPONSE"
 
 
 def _account_text(value: str) -> bool:
@@ -188,15 +234,37 @@ def _signature(record: Mapping[str, object]) -> str:
 def _http(status: int) -> AuthDecision | None:
     if status == 200:
         return None
+    if status == 400:
+        return decision(OutcomeCode.REJECTED, "HTTP_400")
     if status == 401:
         return decision(OutcomeCode.REJECTED, "HTTP_401")
     if status == 403:
         return decision(OutcomeCode.REJECTED, "HTTP_403")
+    if status == 404:
+        return decision(OutcomeCode.REJECTED, "HTTP_404")
     if status == 429:
         return decision(OutcomeCode.REJECTED, "HTTP_429")
     if 500 <= status <= 599:
         return decision(OutcomeCode.REJECTED, "HTTP_5XX")
     return decision(OutcomeCode.REJECTED, "HTTP_UNEXPECTED")
+
+
+def _error_identity_conflict(errors: list[object]) -> str | None:
+    """Duplicate order-by-id error identities fail closed. The id is not rendered."""
+    seen: dict[str, str] = {}
+    for item in errors:
+        if type(item) is not dict:
+            return "MALFORMED_RESPONSE"
+        order_id = item.get("OrderID")
+        if order_id is None:
+            continue
+        if type(order_id) is not str:
+            return "MALFORMED_IDENTITY"
+        digest = _digest(order_id)
+        if digest in seen:
+            return "CONFLICTING_RESPONSE"
+        seen[digest] = ""
+    return None
 
 
 def _kind(value: object) -> ReadKind | None:
@@ -349,6 +417,7 @@ _ORDER = {
     "RejectReason": _STR,
     "Routing": _STR,
     "ShowOnlyQuantity": _STR,
+    "Spread": _STR,
     "Status": _STR,
     "StatusDescription": _STR,
     "StopPrice": _STR,
@@ -356,8 +425,9 @@ _ORDER = {
     "TrailingStop": {"Amount": _STR, "Percent": _STR},
     "UnbundledRouteFee": _STR,
 }
-# Spread is a documented optional object whose nested types are not pinned
-# in this parser. Its presence fails closed as UNDOCUMENTED_FIELD.
+# Spread is the OpenAPI order string, accessed 2026-10-10. Objects and arrays
+# are not that type. A string is read-only data, not an order instruction.
+_ORDER_BY_ID_ERROR = {"AccountID": _STR, "Error": _STR, "Message": _STR, "OrderID": _STR}
 _ROOTS: dict[ReadKind, dict[str, object]] = {
     ReadKind.ACCOUNTS: {"Accounts": ("list", _ACCOUNT)},
     ReadKind.BALANCES: {"Balances": ("list", _BALANCE), "Errors": ("list", _ERROR)},
@@ -367,10 +437,15 @@ _ROOTS: dict[ReadKind, dict[str, object]] = {
         "Errors": ("list", _ERROR),
         "NextToken": _STR,
     },
+    ReadKind.ORDERS_BY_ID: {
+        "Errors": ("list", _ORDER_BY_ID_ERROR),
+        "Orders": ("list", _ORDER),
+    },
 }
 _COLLECTIONS = {
     ReadKind.ACCOUNTS: ("Accounts", "Errors", "AccountID"),
     ReadKind.BALANCES: ("Balances", "Errors", "AccountID"),
     ReadKind.POSITIONS: ("Positions", "Errors", "PositionID"),
     ReadKind.ORDERS: ("Orders", "Errors", "OrderID"),
+    ReadKind.ORDERS_BY_ID: ("Orders", "Errors", "OrderID"),
 }

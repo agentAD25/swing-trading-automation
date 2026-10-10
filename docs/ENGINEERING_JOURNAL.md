@@ -2812,3 +2812,38 @@ commit was clean. `tests/validate_phase1_contracts.py` returned PASS.
 `src/` and `tests/` match
 `19154eae43990df1d83a78be7b6dac3710a28804`. This descendant records that
 identity and does not embed its own hash.
+
+## 2026-10-10 — Lane 2 read-only parser compatibility
+
+Four gaps from the official-documentation comparison are remediated in
+the offline parser. This entry does not authenticate, read a key, call
+SIM or LIVE, place an order, accept ADR-0005, or merge PR #22. `DRY_RUN`
+remains the sole authorized execution mode. This entry does not embed
+its own commit hash.
+
+### Changes
+
+`src/swingtrade/group3_auth/brokerage_read.py` accepts order `Spread`
+only as a string. JSON null is limited to an explicit set of
+non-economic blank strings. Null identifiers fail. Null economic strings
+return `NULL_ECONOMIC_FIELD` and are not rewritten as zero. HTTP 400 and
+404 are `HTTP_400` and `HTTP_404`, rejected, with `safe_to_retry` false.
+`ReadKind.ORDERS_BY_ID` allows optional string `OrderID` on that error
+object. List-order errors still reject it. Duplicate order-by-id error
+identities are `CONFLICTING_RESPONSE`. The identifier is not rendered.
+
+`tests/group3_auth/test_brokerage_read_compatibility.py` covers the
+string, null, status, and order-id fixtures and rechecks LIVE, SIM,
+auth, redirect, scope, and order-write denial. No shared economic
+contract and no Lane 1 registry file was edited.
+
+### Local checks
+
+`SWINGTRADE_TEST_POSTGRES_URL` was unset. Compatibility file: 5 passed.
+Lane 2 readiness: 14 passed. `tests/group3_auth`: 75 passed.
+`tests/offline`: 112 passed, 12 skipped. `tests/contracts`: 37 passed.
+Configured Phase 1 pytest: 119 passed, 99 skipped. Every inspected skip
+reason is `SWINGTRADE_TEST_POSTGRES_URL is required`. Those skips are not
+passes. `tests/validate_phase1_contracts.py` PASS. Ruff check passed.
+`git diff --check` was clean. Mypy reported no issues in the parser
+module. This entry does not claim independent verification.

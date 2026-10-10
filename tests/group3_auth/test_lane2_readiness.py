@@ -318,7 +318,15 @@ def test_brokerage_fixtures_cover_empty_partial_and_failure_statuses() -> None:
     )
     assert undocumented.decision.reason == "UNDOCUMENTED_FIELD"
     assert hidden not in repr(undocumented)
-    statuses = ((401, "HTTP_401"), (403, "HTTP_403"), (429, "HTTP_429"), (503, "HTTP_5XX"))
+    statuses = (
+        (400, "HTTP_400"),
+        (401, "HTTP_401"),
+        (403, "HTTP_403"),
+        (404, "HTTP_404"),
+        (429, "HTTP_429"),
+        (503, "HTTP_5XX"),
+        (504, "HTTP_5XX"),
+    )
     for status, reason in statuses:
         observed = parse_brokerage_fixture(ReadKind.ACCOUNTS, {"Accounts": []}, status=status)
         assert observed.decision.reason == reason
