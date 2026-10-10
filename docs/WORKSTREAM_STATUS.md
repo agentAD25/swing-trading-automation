@@ -6,11 +6,11 @@ using `docs/INTEGRATION_PROTOCOL.md` and the operating hierarchy in
 `docs/WORKSTREAM_OWNERSHIP.md`.
 
 Last attestation date: 2026-10-09
-Canonical main baseline (attested): `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829`
-Canonical main tree (attested): `fc97582f22ebf2d24f132c9afe2720430b197f9f`
-Attestation method: governance-version and registry synchronization via `gh`/`git fetch` on 2026-10-09.
-Classification versus the prior registry tip: `REGISTRY_IDENTITY_STALE` for PR #22 and PR #24 heads. Prior checkpoint main `af0d69b1dfc2046899db05a2f12767fc20b623ae` is an ancestor (PR #25 MERGED). Governance fast-forward tip remains `f5880cfcfaa6d994f369e04d73c844fd1402d74c` / `1700b1b442ef72b31b24aa8dcdf65e43525376e4`.
-This attestation names the pre-sync main. A descendant documentation commit cannot embed its own hash.
+Canonical main baseline (attested): `2c895291a3b4282f8cf5c7426c705bfdab365c47`
+Canonical main tree (attested): `25ebd09e495bb2db7b7f856963a0af876a378457`
+Attestation method: Gmail custody reconciliation via `gh`/`git fetch` on 2026-10-09. PR #21 is that main tip.
+Classification versus the prior registry tip: PR #21 is MERGED. Prior registry main `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829` is an ancestor. PR #22 and PR #24 rows below the Gmail row are the pre-merge snapshot and are not re-certified here.
+This attestation names the pre-change main. A descendant documentation commit cannot embed its own hash.
 
 ## Controlled states
 
@@ -39,7 +39,7 @@ certification.
 | Current objective | Maintain four-lane registry, dependencies, and integration authority; coordinate specialists without implementing their features |
 | Current blocker | None for governance presence on main; specialist blockers remain on their lanes |
 | Next permitted action | Reconcile specialist handoffs; open/review DB draft PR when authorized; propose later integrations only after protocol gates |
-| Next prohibited action | Implementing TradeStation, Gmail, or database specialist features; merging PR #21/#22/#24/#19; authorizing credentials or LIVE |
+| Next prohibited action | Implementing TradeStation, Gmail, or database specialist features; merging PR #22/#24/#19; treating merged PR #21 as OAuth or credential authority; authorizing credentials or LIVE |
 | Contract dependencies | `DEP-CORE-001`, `DEP-CORE-002` (tracked; not owned as specialist work) |
 | Certification status | Governance bootstrap integrated on main after independent PASS and Operator-authorized FF. Checkpoint PR #25 is integrated evidence, not a new specialist certification. |
 | Integration eligibility | Already integrated |
@@ -97,20 +97,20 @@ certification.
 | Lane identifier | `LANE-3` |
 | Workstream name | Gmail / Signal Ingestion |
 | Current state | `WAITING_OPERATOR` |
-| Current branch | `cursor/p2-g4-gmail-readonly-gate-a-99c1` |
-| PR number | Draft PR #21 |
-| Last attested SHA | `a2cef6f3527b2aab7319a2628874fcdcaf03acac` |
-| Last attested tree | `557b4c939d7ac570f20b2fa69176b24234189d76` |
-| Canonical main baseline | `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829` / `fc97582f22ebf2d24f132c9afe2720430b197f9f` (merge-base `41218abb2eda5f06001703fb83c2cb9e43e5ec2e`; head unchanged; does not contain attested main) |
-| Current objective | Propose Gmail read-only corpus Gate A; keep ADR-0004 Proposed until Operator OAuth setup |
-| Current blocker | `DEP-GMAIL-001` — Google OAuth setup by Operator |
-| Next permitted action | Docs-only Gate A preparation; sanitized fixture planning; retain PR #21 history |
-| Next prohibited action | Gmail authentication in coordinator bootstrap; mailbox access; secret material in Git/chat/PR; self-integration |
+| Current branch | `main` (PR #21 history-preserving fast-forward of the Gate A proposal) |
+| PR number | PR #21 (MERGED 2026-10-09T15:49:31Z) |
+| Last attested SHA | `2c895291a3b4282f8cf5c7426c705bfdab365c47` |
+| Last attested tree | `25ebd09e495bb2db7b7f856963a0af876a378457` |
+| Canonical main baseline | `2c895291a3b4282f8cf5c7426c705bfdab365c47` / `25ebd09e495bb2db7b7f856963a0af876a378457` |
+| Current objective | Keep Gate A Proposed. The ADR-0006 design is accepted on this draft only. Do not start Gate B, OAuth, or credential-module code. |
+| Current blocker | `DEP-GMAIL-001` stays OPEN. The Accepted ADR is not on canonical main. No current-state implementation sentence is in effect. ADR-0004 must stay Proposed. |
+| Next permitted action | Wait for a separate Operator authorization to integrate this acceptance candidate. Do not code, and do not treat ADR acceptance or draft PR #27 as implementation permission. Retain PR #21 history. |
+| Next prohibited action | Gmail authentication; mailbox access; storing a real token; invoking real Windows Credential Manager APIs; treating the Operator intent sentence or draft PR #27 as implementation permission; secret material in Git/chat/PR; self-integration |
 | Contract dependencies | `DEP-GMAIL-001`, `DEP-CORE-001`, `DEP-CORE-002` |
-| Certification status | Not certified. ADR-0004 remains Proposed. Offline Group 4A on `main` is separately `INTEGRATED` (see below). |
-| Integration eligibility | Not eligible while waiting on Operator OAuth setup and later verification |
-| Last verification date | 2026-10-09 identity reattestation (head unchanged). Continuity verification 2026-10-08 covers `a2cef6f` only and is not a post-main reconcile. |
-| Evidence references | https://github.com/agentAD25/swing-trading-automation/pull/21 ; token `LANE3_WAITING_OPERATOR_OAUTH_CONTINUITY_VERIFIED`; ADR-0004 Proposed; docs conflict vs post-governance main needs Lane 1 reconcile before later integration |
+| Certification status | Gate A proposal text is on main. Not a Gmail connection certification. ADR-0004 remains Proposed. Offline credential implementation is not authorized. Offline Group 4A on `main` is separately `INTEGRATED` (see below). |
+| Integration eligibility | Proposal text is already integrated. The offline custody gate is not effective. Connection, OAuth, and credential implementation are not eligible. |
+| Last verification date | 2026-10-09. Pre-merge verifier `bc-c3ebf977-b66a-5fac-80ac-93c7416edf31` returned `LANE3_RECONCILE_VERIFY_PASS` on this exact SHA before the fast-forward. That result was not copied into the journal at integration time. |
+| Evidence references | https://github.com/agentAD25/swing-trading-automation/pull/21 MERGED; parents `a2cef6f3527b2aab7319a2628874fcdcaf03acac` and `7c33d45c0a057d189ad6c5acc288625d57539413`; ADR-0004 Proposed; `DEP-GMAIL-001` OPEN |
 
 ### Offline Group 4A (canonical, already on main)
 
@@ -183,7 +183,7 @@ specialist work and does not close dependencies.
 | Lane | Tip | Contains attested main? | GitHub merge state | Conflicting paths |
 | --- | --- | --- | --- | --- |
 | LANE-2 PR #22 | `16aa5788a17ac77291530bb836af256a6f79f89f` | No (merge-base `af0d69b`) | `CONFLICTING` / `DIRTY` | `docs/CURRENT_STATE.md`, `docs/ENGINEERING_JOURNAL.md` |
-| LANE-3 PR #21 | `a2cef6f3527b2aab7319a2628874fcdcaf03acac` | No (merge-base `41218abb`) | `CONFLICTING` / `DIRTY` | `docs/CURRENT_STATE.md`, `docs/ENGINEERING_JOURNAL.md` |
+| LANE-3 PR #21 | `2c895291a3b4282f8cf5c7426c705bfdab365c47` | Yes (this commit is main) | MERGED 2026-10-09T15:49:31Z | None. The earlier `a2cef6f` conflict row is historical. |
 | LANE-4 PR #24 | `d491c3434872fac88b1c5be28281dce94ea11a8b` | Yes (contains `8cef3d7`) | `MERGEABLE` / `CLEAN` | None versus attested main. Older tips `d949ce0` and `db570fa` remain ancestors and are not a second PR. |
 | LANE-2-HIST-19 | `bc6ab7ea92310ffa133b75b498f7f245af11f166` | No (merge-base `12e852c6`) | OPEN / `CONFLICTING` / superseded | Do not reconcile as current authority |
 
@@ -214,7 +214,7 @@ Preconditions apply before each step. No step authorizes credentials, SIM, or `L
 
 1. Keep governance on `main` (already integrated). Do not re-merge PR #23.
 2. Lane 4 draft PR #24 may be integrated only after a later explicit authorization, dependency review, and a fresh shared-doc reconcile if main moves. Independent PASS does not authorize that merge in this task. Provider selection stays closed.
-3. Lane 3 PR #21 only after Operator OAuth attestation (`DEP-GMAIL-001`), shared-doc reconciliation, and independent verification. ADR-0004 stays Proposed until Operator acceptance.
+3. Lane 3 Gate A proposal text is already on main at `2c89529`. ADR-0004 stays Proposed. `DEP-GMAIL-001` stays open. That merge does not start Gate B, OAuth, or a credential module.
 4. Lane 2 PR #22 only after provider callback evidence (`DEP-TS-001`) or an explicit Operator decision to integrate docs-only bounds without closing `DEP-TS-001`, plus shared-doc reconciliation and independent verification. ADR-0005 stays Proposed until Operator acceptance.
 5. `DEP-CORE-001` and `DEP-CORE-002` before any economic quantity, calendar, or timezone acceptance. They do not block docs-only conflict reconciliation.
 
