@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-10-11 (ADR-0007 Option A design acceptance recorded; implementation permission not effective; not on canonical main). Governance PR #23 and checkpoint PR #25 remain integrated.
+- Last updated: 2026-10-11 (ADR-0007 implementation authorization prepared on this draft; not in effect until an Operator-authorized integration onto canonical main). Governance PR #23 and checkpoint PR #25 remain integrated.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
   offline Group 4A email contract is on canonical `main` by exact
@@ -434,6 +434,51 @@ a prohibition on later additive coordination roles.
     integration authorization. Implementation permission still requires
     that integration and a later current-state sentence whose commit
     adds no application source. That sentence is not in effect.
+16. Offline implementation authorization for Accepted ADR-0007 Option A,
+    prepared 2026-10-11 and not in effect. The Accepted ADR is on
+    canonical main `557d9b1a7afe30e98cacb9ef1f6f47fe8a7922d0`, tree
+    `7b8eddf2a6118d2c3c7a51610a5d53439f5ec899`, blob
+    `c210976233f7bdba97cb12b5c7e1a1b599e2036d`. The fast-forward that
+    placed item 15 on main did not authorize coding. The sentence in
+    item 15 that calls the acceptance record a coordinator draft is
+    the pre-integration record.
+    Once an Operator-authorized fast-forward places this item on
+    canonical main, and not before, Lane 4 may implement and test only
+    the Option A boundary in `PostgresIntentRepository.create_or_get`
+    inside `src/swingtrade/persistence.py`, plus new or existing
+    persistence-focused tests. This commit adds no application source.
+    The permitted behavior is: catch `psycopg.Error` and
+    `sqlalchemy.exc.SQLAlchemyError` at that driver boundary; raise
+    `IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")` with
+    `from None`; keep driver text, credentials, database URLs, and
+    connection parameters out of the new exception's message, `args`,
+    and `repr`. `from None` suppresses normal chaining. It does not
+    erase `__context__`, traceback frame locals, or driver and pool
+    DEBUG logs. Preserve `AuthorizationDenied`,
+    `IntentIdentityConflict`, `NonCanonicalIntentKey`,
+    `DurableObservationError`, `DurableRepositoryRequired`, the
+    existing non-`DRY_RUN` guard, successful `OrderObservation`
+    results, canonical identity, idempotency, compare-and-swap, and
+    the `begin()` transaction boundary. Do not retry, replay,
+    resubmit, or fall back to memory. An ambiguous transaction outcome
+    stays unknown, not proof of rollback. Leave
+    `DryRunAdapter.dispatch` and shared broker interfaces unchanged.
+    Tests may use synthetic database URLs and injected SQLAlchemy or
+    psycopg exceptions only. They must not open a real PostgreSQL
+    connection, use a real credential, or contact a remote host.
+    This sentence does not authorize TokenStore changes, Gmail
+    changes, broker-adapter edits, schema migrations, Supabase or
+    other remote provisioning, PR #24 integration, automatic merge of
+    a later implementation pull request, TradeStation `SIM`, `LIVE`,
+    order submission, or any economic action. `DEP-DB-001` and
+    `DEP-DB-002` stay OPEN. Supabase Free stays preferred and
+    **NOT_ACCEPTED**. ADR-0007 stays Accepted as Option A. ADR-0002,
+    ADR-0003, and ADR-0006 stay Accepted. ADR-0004 and ADR-0005 stay
+    Proposed. `DRY_RUN` remains the only authorized execution mode.
+    Lane 4 must not start this work from the draft. A later
+    integration gate is required before the sentence is effective,
+    and a further integration gate is required before any resulting
+    implementation commit may enter canonical `main`.
 
 ## Evidence
 

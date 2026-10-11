@@ -2937,3 +2937,48 @@ effect. `from None` does not erase traceback frame locals or driver
 and pool DEBUG logs.
 
 This entry does not embed its own commit hash.
+
+## 2026-10-11 — Lane 1 prepares the ADR-0007 implementation sentence
+
+Coordinator documentation only. No `src/` or `tests/` change. The
+Accepted ADR blob stays
+`c210976233f7bdba97cb12b5c7e1a1b599e2036d`. PR #24 was not edited.
+This entry does not direct Lane 4 to code.
+
+### Parent main
+
+Canonical main at the start of this draft:
+`557d9b1a7afe30e98cacb9ef1f6f47fe8a7922d0`, tree
+`7b8eddf2a6118d2c3c7a51610a5d53439f5ec899`. That commit already
+contains Accepted ADR-0007. Its fast-forward did not authorize
+implementation. The sentence in item 15 that the acceptance record
+is not on canonical main is the pre-integration record.
+
+### Prepared sentence
+
+Current-state item 16 names the only future scope: catch
+`psycopg.Error` and `sqlalchemy.exc.SQLAlchemyError` inside
+`PostgresIntentRepository.create_or_get`, raise
+`IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")` with
+`from None`, and keep driver text, credentials, URLs, and connection
+parameters out of that exception's message, `args`, and `repr`.
+`from None` does not erase `__context__`, traceback frame locals, or
+driver and pool DEBUG logs. Domain exceptions, successful
+`OrderObservation` results, identity, idempotency, compare-and-swap,
+and the transaction boundary stay as they are. There is no retry,
+replay, resubmit, or memory fallback. An ambiguous outcome stays
+unknown. `DryRunAdapter.dispatch` stays unchanged. Tests, after the
+sentence is effective, may use synthetic URLs and injected exceptions
+only.
+
+### Not in effect
+
+Item 16 is ineffective until an Operator-authorized fast-forward
+places this candidate on canonical main. This commit adds no
+application source. `DEP-DB-001` and `DEP-DB-002` stay OPEN.
+Supabase Free stays preferred and **NOT_ACCEPTED**. `DRY_RUN`
+remains the only authorized execution mode. TradeStation `SIM` and
+`LIVE` stay unauthorized. A later implementation commit still needs
+its own integration gate.
+
+This entry does not embed its own commit hash.
