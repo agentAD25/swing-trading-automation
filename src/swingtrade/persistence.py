@@ -5,8 +5,10 @@ from datetime import datetime
 from decimal import Decimal, DecimalException
 from typing import Any
 
+import psycopg
 from sqlalchemy import JSON, Engine, Integer, String, UniqueConstraint, select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from swingtrade.domain import (
@@ -73,6 +75,14 @@ class NonCanonicalIntentKey(RuntimeError):
 
 class DurableObservationError(RuntimeError):
     """A durable DRY_RUN observation is missing or noncanonical."""
+
+
+class IntentRepositoryUnavailable(RuntimeError):
+    """A driver failure left the intent commit outcome unknown."""
+
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+        super().__init__(reason)
 
 
 @dataclass(frozen=True)
@@ -293,49 +303,54 @@ class PostgresIntentRepository:
             "canonical_intent": payload,
             "canonical_observation": observation,
         }
-        with self._engine.begin() as connection:
-            connection.execute(insert(OrderIntentRow).values(**values).on_conflict_do_nothing())
-            row = connection.execute(
-                select(OrderIntentRow).where(
-                    OrderIntentRow.idempotency_key == intent.idempotency_key
+        try:
+            with self._engine.begin() as connection:
+                connection.execute(
+                    insert(OrderIntentRow).values(**values).on_conflict_do_nothing()
                 )
-            ).one_or_none()
-            if row is None:
                 row = connection.execute(
-                    select(OrderIntentRow).where(OrderIntentRow.intent_id == intent.intent_id)
-                ).one()
-            persisted = PersistedIntent(
-                row._mapping["idempotency_key"],
-                row._mapping["intent_id"],
-                row._mapping["input_digest"],
-                row._mapping["canonical_intent"],
-                row._mapping["canonical_observation"],
-            )
-            stored_key = _stored_dispatch_key(persisted.canonical_intent)
-            if (
-                persisted.idempotency_key != stored_key
-                or persisted.canonical_intent.get("idempotency_key") != stored_key
-            ):
-                raise NonCanonicalIntentKey(
-                    "durable intent row contains a noncanonical dispatch key"
+                    select(OrderIntentRow).where(
+                        OrderIntentRow.idempotency_key == intent.idempotency_key
+                    )
+                ).one_or_none()
+                if row is None:
+                    row = connection.execute(
+                        select(OrderIntentRow).where(OrderIntentRow.intent_id == intent.intent_id)
+                    ).one()
+                persisted = PersistedIntent(
+                    row._mapping["idempotency_key"],
+                    row._mapping["intent_id"],
+                    row._mapping["input_digest"],
+                    row._mapping["canonical_intent"],
+                    row._mapping["canonical_observation"],
                 )
-            if not isinstance(persisted.canonical_observation, dict):
-                raise DurableObservationError(
-                    "durable intent row lacks a canonical DRY_RUN observation"
-                )
-            materialize_dry_run_observation(persisted)
-            if (
-                persisted.idempotency_key,
-                persisted.intent_id,
-                persisted.input_digest,
-                persisted.canonical_intent,
-            ) != (
-                intent.idempotency_key,
-                intent.intent_id,
-                digest,
-                payload,
-            ):
-                raise IntentIdentityConflict(
-                    "idempotency key or intent id reused with different canonical intent"
-                )
-            return persisted
+                stored_key = _stored_dispatch_key(persisted.canonical_intent)
+                if (
+                    persisted.idempotency_key != stored_key
+                    or persisted.canonical_intent.get("idempotency_key") != stored_key
+                ):
+                    raise NonCanonicalIntentKey(
+                        "durable intent row contains a noncanonical dispatch key"
+                    )
+                if not isinstance(persisted.canonical_observation, dict):
+                    raise DurableObservationError(
+                        "durable intent row lacks a canonical DRY_RUN observation"
+                    )
+                materialize_dry_run_observation(persisted)
+                if (
+                    persisted.idempotency_key,
+                    persisted.intent_id,
+                    persisted.input_digest,
+                    persisted.canonical_intent,
+                ) != (
+                    intent.idempotency_key,
+                    intent.intent_id,
+                    digest,
+                    payload,
+                ):
+                    raise IntentIdentityConflict(
+                        "idempotency key or intent id reused with different canonical intent"
+                    )
+                return persisted
+        except (psycopg.Error, SQLAlchemyError):
+            raise IntentRepositoryUnavailable("DATABASE_UNAVAILABLE") from None
