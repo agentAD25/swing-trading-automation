@@ -384,6 +384,26 @@ a prohibition on later additive coordination roles.
     execution mode. A later integration gate is required before any
     resulting adapter commit may enter canonical `main`. Lane 3 must
     not self-merge that work.
+14. TradeStation dependency registration, recorded 2026-10-11, against
+    canonical main `8a17bec501df94238fe7588f84f7f1f51fee8baf` / tree
+    `03d48c9ae453bdfc6a1cdf9cdc43a359e76efb1b`. Draft PR #22 head
+    `330c47c40249fdf4e1f2a1bf3fa61e36e05ae4fc` / tree
+    `864f0c16891af03bce27b40a4d52b843bb444b5f` is not merged.
+    `DEP-TS-001` stays `OPEN`. Its recommended narrative is
+    `SUPERSEDED_BY_OPTION_A_PENDING_ARCHITECTURE_ACCEPTANCE`. The
+    provider did not confirm the native PKCE callback, and the
+    controlled state `SUPERSEDED` is not applied. `DEP-TS-002`,
+    `DEP-TS-003`, and `DEP-TS-004` are registered `OPEN` for the issued
+    key's application type, the `openid ReadAccount` grant, and one
+    later HTTPS callback. Public documentation and the Operator
+    preference `OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`
+    do not close them. ADR-0005 stays Proposed on PR #22 with a blank
+    Decision and is not on this main. Offline parser `src/` and `tests/`
+    trees at that PR head match verified implementation
+    `227db721944dc0a470046fdec4b60f581ff28d38`. That match is not
+    integration eligibility, merge authorization, credential
+    onboarding, SIM access, or LIVE access. `DRY_RUN` remains the only
+    authorized execution mode.
 
 ## Evidence
 

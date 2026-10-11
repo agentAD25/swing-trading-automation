@@ -2822,3 +2822,53 @@ access fails closed. The adapter stays separate from TradeStation
 TokenStore and broker execution. Lane 3 must not self-merge the result.
 
 This entry does not embed its own commit hash.
+
+## 2026-10-11 — Lane 1 TradeStation dependency registration
+
+Coordinator documentation only. No `src/` or `tests/` change. PR #22 was
+not edited and was not merged. ADR-0005 was not accepted.
+
+### Attestation
+
+Canonical main at the start of this edit:
+`8a17bec501df94238fe7588f84f7f1f51fee8baf`, tree
+`03d48c9ae453bdfc6a1cdf9cdc43a359e76efb1b`.
+
+Draft PR #22 (`cursor/p2-ts-provider-evidence-99c1`):
+`330c47c40249fdf4e1f2a1bf3fa61e36e05ae4fc`, tree
+`864f0c16891af03bce27b40a4d52b843bb444b5f`. Parents
+`3124ace419c1cd1ac3dc6ddf93334a5bc5b4b6e6` and
+`5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d`. Merge-base with current main
+is `5a04c5e`. The PR does not contain `8a17bec`. `git merge-tree`
+reports content conflicts in `docs/CURRENT_STATE.md` and
+`docs/ENGINEERING_JOURNAL.md`. GitHub state: OPEN, draft, `CONFLICTING`.
+
+### Implementation inheritance
+
+Verified implementation `227db721944dc0a470046fdec4b60f581ff28d38`, tree
+`980ec01635c5e4eb0abec297fe8bbf37f12d18fa`, is an ancestor of the PR
+head. Its `src/` tree `4005e26d3744030efdefd61262b096a0f12de6fd` and
+`tests/` tree `d15d674a5f55e9e45bf4f41d4f6d162727a89274` are identical
+at `330c47c`. Independent verifier
+`bc-0a306c68-0d69-5aee-a999-736cff1a54d8` covers that implementation
+tree. Lane 1 did not rerun the parser suites. Later commits on the PR
+change documentation and merge main `5a04c5e`; they do not change
+`src/` or `tests/`.
+
+### Dependencies
+
+`DEP-TS-001` stays `OPEN`. Recommended narrative only:
+`SUPERSEDED_BY_OPTION_A_PENDING_ARCHITECTURE_ACCEPTANCE`. Not
+provider-confirmed. Supersession waits on ADR-0005 acceptance.
+`DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004` are new `OPEN` rows for
+the issued key's application type, `openid ReadAccount`, and one later
+HTTPS callback. The unsent 2026-10-09 draft does not close them.
+
+### Runtime
+
+`DRY_RUN` remains the only authorized execution mode. This entry does
+not authorize TradeStation OAuth, SIM, LIVE, orders, or credential
+onboarding. ADR-0005 stays Proposed. ADR-0006 stays Accepted as the
+Gmail design only.
+
+This entry does not embed its own commit hash.
