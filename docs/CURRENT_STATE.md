@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-10-09 (registry identity sync). Governance PR #23 and checkpoint PR #25 remain integrated.
+- Last updated: 2026-10-11 (ADR-0007 implementation-authority correction). Item 17 is the sole operative implementation authority for Accepted ADR-0007 when this commit is canonical `main` after an Operator decision authorizing integration of this independently verified correction candidate. Items 15 and 16 are the pre-correction record and do not prohibit that bounded implementation once item 17 is operative. Governance PR #23 and checkpoint PR #25 remain integrated.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
   offline Group 4A email contract is on canonical `main` by exact
@@ -99,7 +99,7 @@
 | C1/U-10 closure | Operator accepts ADR-0002 after independent review `C1_U10_CONTRACT_PASS` on `a4213f8356a9e32ca4647865ee98e13660e3d656`, tree `c07487c88f24f9432de89df7f574130274d50b4b`. C1/U-10 is **RESOLVED**. Non-blocking residuals do not reopen C1. Not operational credential certification, key management, Supabase selection, or `LIVE` authorization. |
 | Offline Group 4A email contract | On canonical `main` by exact fast-forward of certified commit `ce045c14b119d882505a947a7826005ff6d99103`, tree `67a0b57526ea219972fa0574b191562f0f52b598`. No squash, rebase, force-push, or merge commit. The pre-fast-forward sentence that this work was unmerged is superseded for location only. Remediation commit `05dfff9f69d27b869dcb1c392d8d103b7f21d6b4`, tree `b25892d7cd6ad43769e44cd67cd53c3dd7cb8602`, parent `229a38b4b6f7ab628d1c656974686e7888075302`, remains an ancestor. The Operator accepted ADR-0003: a `CanonicalInstructionEnvelope` carries a required-field `NewTradeInstruction` or a reserved amendment, exit-alert, or cancel payload. Only new-trade parsing is implemented. `EMAIL_RETENTION_POLICY` is `HASH_PROVIDER_REF_FIELD_EVIDENCE`. Exit-policy negation or same-source conflict quarantines as `CONFLICTING_ECONOMIC_INSTRUCTION` and does not become the positive policy. Quantity rounding, market calendar, and timezone remain unresolved. PR #20. No Gmail, broker, credential, Supabase, order, SIM, or `LIVE` authority. Group 4A status for workstream registry purposes: `INTEGRATED_AND_CERTIFIED` (offline only). |
 | Four-lane workstream governance | On canonical `main` by history-preserving fast-forward of PR #23 tip `f5880cfcfaa6d994f369e04d73c844fd1402d74c`, tree `1700b1b442ef72b31b24aa8dcdf65e43525376e4` from prior main `41218abb2eda5f06001703fb83c2cb9e43e5ec2e`, tree `39f0ab05c49b533270964b303601539feeff570f`. No squash, rebase, force-push, or merge commit. Independent PASS at `3676e11` / `2cbbe823…`; post-PASS successors classified `EVIDENCE_ONLY_PLUS_NONSEMANTIC` (verifier `bc-e255e4a7-f783-5ef6-8fc3-f4cbd2d0d926`). Registry activated: `docs/WORKSTREAM_STATUS.md`. Dependencies unchanged IDs. Active specialist drafts remain unmerged and were not rewritten: Gmail PR #21 `a2cef6f3…` (`WAITING_OPERATOR`, ADR-0004 Proposed); TradeStation PR #22 `a6c5f1d7…` (`WAITING_PROVIDER`, ADR-0005 Proposed). PR #19 `SUPERSEDED`. Database lane `NOT_STARTED`. No credential, broker, Supabase, order, SIM, or `LIVE` authority. The specialist SHAs and the database `NOT_STARTED` sentence in this cell are the PR #23 integration-time record. Unresolved item 9 carries the 2026-10-09 identity. |
-| Gmail read-only corpus | Gate A research only. ADR-0004 is Proposed. No Gmail API call, OAuth grant, or credential is recorded. The researched minimum scope is `https://www.googleapis.com/auth/gmail.readonly`. Broader Gmail scopes are not requested. Supabase and TradeStation are not connected. |
+| Gmail read-only corpus | Gate A proposal text is on canonical `main` by fast-forward of PR #21 merge `2c895291a3b4282f8cf5c7426c705bfdab365c47`, tree `25ebd09e495bb2db7b7f856963a0af876a378457`, parents `a2cef6f3527b2aab7319a2628874fcdcaf03acac` and `7c33d45c0a057d189ad6c5acc288625d57539413`, merged 2026-10-09T15:49:31Z. ADR-0004 remains Proposed. Its Decision section remains blank. No Gmail API call, OAuth grant, or credential is recorded. The researched minimum scope is `https://www.googleapis.com/auth/gmail.readonly`. Broader Gmail scopes are not requested. Supabase and TradeStation are not connected. This merge is not a connection certification. |
 
 `LIVE` remains unauthorized. The candidate-specific annotated tag
 `phase1-accepted-abc1fb6` fixes the accepted commit without making the
@@ -273,6 +273,291 @@ a prohibition on later additive coordination roles.
    still describes unchanged executable bytes of `d949ce0` and does not
    certify the later documentation commits. ChatGPT advisory files were
    not added to Git. No specialist branch was rewritten in this sync.
+   PR #21 later merged by fast-forward at
+   `2c895291a3b4282f8cf5c7426c705bfdab365c47`. The sentences above that
+   call PR #21 an open conflicting draft are the pre-merge record.
+10. Local Gmail credential custody design, accepted 2026-10-09 as a
+    design only. Storage is Windows Credential Manager. Credential type
+    is `CRED_TYPE_GENERIC` = 1. Persistence is
+    `CRED_PERSIST_LOCAL_MACHINE` = 2. Identity is the current
+    operator-controlled Windows user. The proposed target name is
+    `swing-trading/lane3/gmail/dev/refresh-token`. Purpose is a future
+    local development bootstrap for Lane 3 Gmail OAuth only. Incremental
+    service cost is 0 USD. This acceptance does not authorize real Gmail
+    OAuth consent, credential provisioning, refresh-token creation,
+    storage of a real Gmail token, mailbox access, Gmail API requests,
+    cloud deployment, TradeStation credential access, SIM orders, LIVE
+    orders, or any other economic action. ADR-0004 stays Proposed.
+    `DEP-GMAIL-001` stays OPEN. No offline credential-module
+    implementation is authorized by this design record. Current state
+    still denies credentials and does not mark a Gmail implementation
+    phase authorized. A later explicit Operator authorization, recorded
+    in current state, is required before Lane 3 may write that module.
+    Synthetic fixtures and mocked Windows API behavior do not remove
+    that requirement. ADR-0002 remains the accepted provider-neutral
+    TokenStore decision and is not modified. Group 4A remains the
+    certified offline parser only.
+11. Operator decision of 2026-10-09, recorded as intent only. The
+    Operator authorized pursuing an offline-only Lane 3 Windows
+    Credential Manager implementation that uses synthetic values and
+    mocked Windows API calls, subject to every accepted repository
+    authorization gate. The sentence does not authorize real Windows
+    Credential Manager provisioning, real credential reads or writes,
+    refresh-token creation or storage, Google OAuth consent or callback
+    execution, Gmail API calls, mailbox acquisition, TradeStation API
+    calls, TokenStore changes, Supabase deployment, `SIM` or `LIVE`
+    activity, broker order submission, acceptance of ADR-0004, or
+    closure of `DEP-GMAIL-001`.
+    The scope that may be considered only after the remaining gates
+    pass is a Python credential-storage interface, a Windows Credential
+    Manager adapter for future use, synthetic test values, mocked
+    `advapi32` calls, deterministic unit tests, explicit failure-path
+    tests, unsupported-platform and permission-denied handling, and
+    offline use of abstractions that are already authorized. Tests must
+    show that real credential APIs and external network calls are not
+    invoked. The target name
+    `swing-trading/lane3/gmail/dev/refresh-token` stays a design
+    constant and is not a provisioning instruction. Credential type
+    stays `CRED_TYPE_GENERIC` = 1. Persistence stays
+    `CRED_PERSIST_LOCAL_MACHINE` = 2. Identity stays the current
+    operator-controlled Windows user. Incremental credential-store cost
+    stays 0 USD. Local-machine persistence is not hardware-backed
+    security and does not protect a compromised Windows session.
+    This record is not implementation permission.
+    `docs/AGENT_AUTHORITY.md` requires an Operator-accepted ADR for a
+    material architecture or safety decision, and it requires an
+    implementation phase to be marked authorized in current state on
+    canonical `main`. ADR-0004 stays Proposed. Its scope is Gmail
+    acquisition, and accepting it is outside this decision. Lane 1 does
+    not author and accept a substitute ADR. `DEP-GMAIL-001` stays OPEN.
+    The denials of credentials, broker and network activity,
+    TradeStation `SIM`, order submission, and `LIVE` are unchanged.
+    `DRY_RUN` remains the only authorized execution mode.     Lane 3 must
+    not receive coding instructions from this item.
+12. Operator acceptance of ADR-0006, design only, recorded 2026-10-10.
+    The accepted artifact is the Proposed file at commit
+    `5855d5bb7380be49422671aeecd870589d38b8c1`, tree
+    `13a3d644b9136b1fcda739e7035fd40bdfa51e9b`, blob
+    `c3fd7516211d338226af3d531d56c8a030dfef3b`, verification token
+    `LANE3_ADR0006_REVERIFIED_PASS`. Lane 3 authored that proposal.
+    Lane 1 records the Operator's acceptance and does not author the
+    design. The accepted scope is the Gmail-only offline synthetic and
+    mocked Windows Credential Manager adapter: `CRED_TYPE_GENERIC` = 1,
+    `CRED_PERSIST_LOCAL_MACHINE` = 2, the current operator-controlled
+    Windows user, target
+    `swing-trading/lane3/gmail/dev/refresh-token`, no Enterprise
+    roaming, no TradeStation TokenStore integration, zero incremental
+    credential-storage service cost, and no deployment host. Credential
+    Manager is not hardware-backed isolation and cannot stop retrieval
+    by code running as the same Windows user.
+    This acceptance does not authorize implementation, native credential
+    API calls, real credential storage or retrieval, OAuth, Gmail API
+    access, mailbox access, cloud deployment, TradeStation
+    authentication, broker orders, `SIM`, `LIVE`, or any economic
+    action. ADR-0004 stays Proposed. ADR-0003 stays Accepted.
+    `DEP-GMAIL-001` stays OPEN. `DRY_RUN` remains the only authorized
+    execution mode. The Accepted ADR text is a new blob and is not
+    certified by `LANE3_ADR0006_REVERIFIED_PASS`. Fast-forward of
+    `5a04c5e` placed this design acceptance on canonical `main`. That
+    fast-forward did not authorize implementation.
+13. Offline Gmail credential-adapter implementation, authorized
+    2026-10-10. Lane 3 may implement and test the Gmail-specific
+    Windows Credential Manager adapter using only synthetic values and
+    mocked Windows native API responses, in a strictly offline
+    development environment, under Accepted ADR-0006. This commit adds
+    no application source. The authorization is the Gmail-only scope in
+    ADR-0006: `CRED_TYPE_GENERIC` = 1, `CRED_PERSIST_LOCAL_MACHINE` = 2,
+    the current operator-controlled Windows user, and target identifier
+    `swing-trading/lane3/gmail/dev/refresh-token`. Tests must keep real
+    native API execution disabled and must fail if an unmocked Windows
+    credential call or any external network call is attempted.
+    Credential Manager is not hardware-backed isolation.
+    This sentence does not authorize real Credential Manager calls,
+    unmocked `CredWriteW`, `CredReadW`, or `CredDeleteW`, real token
+    generation, storage, retrieval, or deletion, OAuth consent,
+    redirects, callbacks, or token exchange, Gmail API or mailbox
+    access, TradeStation or TokenStore changes, remote database
+    activity, operational deployment, `SIM` or `LIVE` trading, broker
+    orders, or Gmail Gate B. ADR-0006 stays Accepted as that design.
+    ADR-0004 stays Proposed. ADR-0002 and ADR-0003 stay Accepted.
+    `DEP-GMAIL-001` stays OPEN. `DRY_RUN` remains the only authorized
+    execution mode. A later integration gate is required before any
+    resulting adapter commit may enter canonical `main`. Lane 3 must
+    not self-merge that work.
+14. TradeStation dependency registration, recorded 2026-10-11, against
+    canonical main `8a17bec501df94238fe7588f84f7f1f51fee8baf` / tree
+    `03d48c9ae453bdfc6a1cdf9cdc43a359e76efb1b`. Draft PR #22 head
+    `330c47c40249fdf4e1f2a1bf3fa61e36e05ae4fc` / tree
+    `864f0c16891af03bce27b40a4d52b843bb444b5f` is not merged.
+    `DEP-TS-001` stays `OPEN`. Its recommended narrative is
+    `SUPERSEDED_BY_OPTION_A_PENDING_ARCHITECTURE_ACCEPTANCE`. The
+    provider did not confirm the native PKCE callback, and the
+    controlled state `SUPERSEDED` is not applied. `DEP-TS-002`,
+    `DEP-TS-003`, and `DEP-TS-004` are registered `OPEN` for the issued
+    key's application type, the `openid ReadAccount` grant, and one
+    later HTTPS callback. Public documentation and the Operator
+    preference `OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`
+    do not close them. ADR-0005 stays Proposed on PR #22 with a blank
+    Decision and is not on this main. Offline parser `src/` and `tests/`
+    trees at that PR head match verified implementation
+    `227db721944dc0a470046fdec4b60f581ff28d38`. That match is not
+    integration eligibility, merge authorization, credential
+    onboarding, SIM access, or LIVE access. `DRY_RUN` remains the only
+    authorized execution mode.
+15. Operator acceptance of ADR-0007, architectural design only,
+    recorded 2026-10-11. When item 17 is effective, every
+    implementation-withholding sentence in this item is historical.
+    That includes the statement that a later implementation sentence
+    is not in effect. Those sentences do not prohibit the bounded
+    implementation in item 17. The accepted artifact is the Proposed file at
+    commit `38534bc4416adbaec37983e00e4736ece80acc25`, tree
+    `00ef85ac23841d41d71716daea3045a5ea8d7bc9`, blob
+    `25621163ca06d9532b7641fd6a58eb3d76fa1bbb`. Lane 4 authored that
+    proposal. Lane 1 records the Operator's acceptance and does not
+    author the design. The accepted classification is Option A only:
+    `IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")`. A later
+    implementation, if separately authorized, may catch `psycopg.Error`
+    and `sqlalchemy.exc.SQLAlchemyError` inside
+    `PostgresIntentRepository.create_or_get` and raise that exception
+    with `from None`. `from None` suppresses normal chaining and does
+    not erase traceback frame locals or driver and pool DEBUG logs.
+    `DryRunAdapter.dispatch` stays unchanged unless a separate
+    shared-contract decision authorizes an edit.
+    This acceptance does not authorize implementation, tests,
+    migrations, TokenStore changes, Gmail changes, broker-adapter
+    edits, a merge of PR #31 or PR #24, Supabase or other remote
+    PostgreSQL provisioning, a database connection, credentials,
+    TradeStation `SIM`, `LIVE`, or any economic action. `DEP-DB-001`
+    and `DEP-DB-002` stay OPEN. Supabase Free stays preferred and
+    **NOT_ACCEPTED**. ADR-0002, ADR-0003, and ADR-0006 stay Accepted.
+    ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
+    authorized execution mode. The Accepted ADR text is a new blob and
+    is not certified by the Proposed-tree verifier
+    `bc-53ed5be3-37a2-5973-a69c-3807d96d37ec`. This item is on the
+    coordinator draft, not on canonical `main`, until a separate
+    integration authorization. Implementation permission still requires
+    that integration and a later current-state sentence whose commit
+    adds no application source. That sentence is not in effect.
+16. Historical pre-correction record of the offline implementation
+    authorization for Accepted ADR-0007 Option A. When item 17 is
+    effective, this item neither authorizes nor prohibits the bounded
+    implementation. The original contradictory text follows and is
+    not operative: its conditional grant, its statement that it is
+    not in effect, and its statement that Lane 4 must not start from
+    the draft. Original text: prepared 2026-10-11 and not in effect. The Accepted ADR is on
+    canonical main `557d9b1a7afe30e98cacb9ef1f6f47fe8a7922d0`, tree
+    `7b8eddf2a6118d2c3c7a51610a5d53439f5ec899`, blob
+    `c210976233f7bdba97cb12b5c7e1a1b599e2036d`. The fast-forward that
+    placed item 15 on main did not authorize coding. The sentence in
+    item 15 that calls the acceptance record a coordinator draft is
+    the pre-integration record.
+    Once an Operator-authorized fast-forward places this item on
+    canonical main, and not before, Lane 4 may implement and test only
+    the Option A boundary in `PostgresIntentRepository.create_or_get`
+    inside `src/swingtrade/persistence.py`, plus new or existing
+    persistence-focused tests. This commit adds no application source.
+    The permitted behavior is: catch `psycopg.Error` and
+    `sqlalchemy.exc.SQLAlchemyError` at that driver boundary; raise
+    `IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")` with
+    `from None`; keep driver text, credentials, database URLs, and
+    connection parameters out of the new exception's message, `args`,
+    and `repr`. `from None` suppresses normal chaining. It does not
+    erase `__context__`, traceback frame locals, or driver and pool
+    DEBUG logs. Preserve `AuthorizationDenied`,
+    `IntentIdentityConflict`, `NonCanonicalIntentKey`,
+    `DurableObservationError`, `DurableRepositoryRequired`, the
+    existing non-`DRY_RUN` guard, successful `OrderObservation`
+    results, canonical identity, idempotency, compare-and-swap, and
+    the `begin()` transaction boundary. Do not retry, replay,
+    resubmit, or fall back to memory. An ambiguous transaction outcome
+    stays unknown, not proof of rollback. Leave
+    `DryRunAdapter.dispatch` and shared broker interfaces unchanged.
+    Tests may use synthetic database URLs and injected SQLAlchemy or
+    psycopg exceptions only. They must not open a real PostgreSQL
+    connection, use a real credential, or contact a remote host.
+    This sentence does not authorize TokenStore changes, Gmail
+    changes, broker-adapter edits, schema migrations, Supabase or
+    other remote provisioning, PR #24 integration, automatic merge of
+    a later implementation pull request, TradeStation `SIM`, `LIVE`,
+    order submission, or any economic action. `DEP-DB-001` and
+    `DEP-DB-002` stay OPEN. Supabase Free stays preferred and
+    **NOT_ACCEPTED**. ADR-0007 stays Accepted as Option A. ADR-0002,
+    ADR-0003, and ADR-0006 stay Accepted. ADR-0004 and ADR-0005 stay
+    Proposed. `DRY_RUN` remains the only authorized execution mode.
+    Lane 4 must not start this work from the draft. A later
+    integration gate is required before the sentence is effective,
+    and a further integration gate is required before any resulting
+    implementation commit may enter canonical `main`.
+17. Operative ADR-0007 implementation authority. This item becomes
+    effective only when both of these are true: an Operator decision
+    has authorized integration of this independently verified
+    correction candidate, and this exact commit is canonical `main`.
+    No further activation step is required after that incorporation.
+    While either condition is unmet, this item does not authorize
+    coding. The prohibitions on the prior canonical commit stay
+    there; they are not restated here as authority over this commit
+    once this item is effective.
+    When this item is effective, Lane 4 is authorized to implement
+    only `IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")`, a
+    `RuntimeError`, inside `PostgresIntentRepository.create_or_get`
+    in `src/swingtrade/persistence.py`, together with new or existing
+    persistence-focused tests that use synthetic URLs and injected
+    `psycopg` or SQLAlchemy failures. This commit adds no application
+    source. The implementation may catch `psycopg.Error` and
+    `sqlalchemy.exc.SQLAlchemyError` at that boundary and raise
+    `IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")` with
+    `from None`. The new exception's message, `args`, and `repr`
+    must not contain driver text, connection URLs, credentials, or
+    connection parameters. `from None` suppresses normal chaining.
+    It does not erase `__context__`, traceback frame locals, or
+    driver and pool DEBUG logs. Preserve `AuthorizationDenied`,
+    `IntentIdentityConflict`, `NonCanonicalIntentKey`,
+    `DurableObservationError`, `DurableRepositoryRequired`, the
+    existing non-`DRY_RUN` guard, successful `OrderObservation`
+    results, canonical identity, idempotency, compare-and-swap, and
+    the `begin()` transaction boundary. Do not retry, replay,
+    resubmit, or fall back to memory. An ambiguous transaction
+    outcome stays unknown, not proof of rollback. Leave
+    `DryRunAdapter.dispatch` and shared broker interfaces unchanged.
+    Do not redesign logging or make any other shared-contract change.
+    When this item is effective, it does not authorize real
+    PostgreSQL credentials, a real or remote database connection,
+    Supabase provisioning or provider acceptance, schema migrations,
+    TokenStore changes, broker changes, Gmail changes, `SIM`,
+    `LIVE`, order submission, economic execution, integration of
+    PR #24, or automatic integration of a later implementation
+    pull request. `DEP-DB-001` and `DEP-DB-002` stay OPEN. Supabase
+    Free stays preferred and **NOT_ACCEPTED**. ADR-0007 stays
+    Accepted as Option A. `DRY_RUN` remains the only authorized
+    execution mode. Lane 4 stays `READY_FOR_VERIFICATION`.
+    Authorization to implement is not authorization to merge the
+    implementation.
+    Accepted ADR-0007 already requires one later explicit
+    implementation sentence in this file on canonical `main` before
+    code, and requires that sentence's commit to add no application
+    source. This item is that sentence when it is effective. The ADR
+    statements that acceptance itself does not authorize coding, and
+    that Lane 4 must not change `create_or_get` until that sentence
+    is on canonical `main`, are satisfied by this item. They are not
+    a further prohibition after this item is effective. The ADR is
+    unchanged.
+    Once this item is effective, these are historical pre-correction
+    records. They are not a second grant and they are not operative
+    prohibitions of that bounded implementation: the 2026-10-11
+    last-updated line on
+    `7fe37e8e4b89a303856662b9a6333e64fe6df640` that said the
+    authorization was not in effect; item 15's statement that the
+    implementation sentence is not in effect; the whole of item 16,
+    including its conditional grant and its statements that it is not
+    in effect, that Lane 4 must not start from the draft, and that a
+    later gate is required before that sentence is effective; and the
+    workstream and journal sentences from that same commit. Those
+    include the acceptance entry's sentence that no implementation
+    sentence is in effect, the preparation entry's sentence that
+    item 16 is ineffective until a fast-forward, and the instruction
+    that Lane 4 must not code `create_or_get`. Those sentences
+    document why implementation was blocked. Item 17 is the only
+    operative implementation grant after it is effective.
 
 ## Evidence
 
