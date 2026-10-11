@@ -2822,3 +2822,163 @@ access fails closed. The adapter stays separate from TradeStation
 TokenStore and broker execution. Lane 3 must not self-merge the result.
 
 This entry does not embed its own commit hash.
+
+## 2026-10-11 — Lane 1 TradeStation dependency registration
+
+Coordinator documentation only. No `src/` or `tests/` change. PR #22 was
+not edited and was not merged. ADR-0005 was not accepted.
+
+### Attestation
+
+Canonical main at the start of this edit:
+`8a17bec501df94238fe7588f84f7f1f51fee8baf`, tree
+`03d48c9ae453bdfc6a1cdf9cdc43a359e76efb1b`.
+
+Draft PR #22 (`cursor/p2-ts-provider-evidence-99c1`):
+`330c47c40249fdf4e1f2a1bf3fa61e36e05ae4fc`, tree
+`864f0c16891af03bce27b40a4d52b843bb444b5f`. Parents
+`3124ace419c1cd1ac3dc6ddf93334a5bc5b4b6e6` and
+`5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d`. Merge-base with current main
+is `5a04c5e`. The PR does not contain `8a17bec`. `git merge-tree`
+reports content conflicts in `docs/CURRENT_STATE.md` and
+`docs/ENGINEERING_JOURNAL.md`. GitHub state: OPEN, draft, `CONFLICTING`.
+
+### Implementation inheritance
+
+Verified implementation `227db721944dc0a470046fdec4b60f581ff28d38`, tree
+`980ec01635c5e4eb0abec297fe8bbf37f12d18fa`, is an ancestor of the PR
+head. Its `src/` tree `4005e26d3744030efdefd61262b096a0f12de6fd` and
+`tests/` tree `d15d674a5f55e9e45bf4f41d4f6d162727a89274` are identical
+at `330c47c`. Independent verifier
+`bc-0a306c68-0d69-5aee-a999-736cff1a54d8` covers that implementation
+tree. Lane 1 did not rerun the parser suites. Later commits on the PR
+change documentation and merge main `5a04c5e`; they do not change
+`src/` or `tests/`.
+
+### Dependencies
+
+`DEP-TS-001` stays `OPEN`. Recommended narrative only:
+`SUPERSEDED_BY_OPTION_A_PENDING_ARCHITECTURE_ACCEPTANCE`. Not
+provider-confirmed. Supersession waits on ADR-0005 acceptance.
+`DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004` are new `OPEN` rows for
+the issued key's application type, `openid ReadAccount`, and one later
+HTTPS callback. The unsent 2026-10-09 draft does not close them.
+
+### Runtime
+
+`DRY_RUN` remains the only authorized execution mode. This entry does
+not authorize TradeStation OAuth, SIM, LIVE, orders, or credential
+onboarding. ADR-0005 stays Proposed. ADR-0006 stays Accepted as the
+Gmail design only.
+
+This entry does not embed its own commit hash.
+
+## 2026-10-11 — Lane 4 Proposed ADR-0007
+
+Lane 4 proposes ADR-0007,
+`docs/adr/0007-intent-repository-unavailable.md`, status Proposed.
+The Decision section is blank. The human Operator has not accepted it.
+The proposal classifies a future sanitized driver failure from
+`PostgresIntentRepository.create_or_get` as
+`IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")`, propagating
+through the existing uncaught call in `DryRunAdapter.dispatch`.
+
+This entry does not authorize implementation, a repository edit, a
+test edit, a migration, a TokenStore change, a Gmail change, or a
+broker-adapter edit. `docs/CURRENT_STATE.md` is unchanged so this
+proposal cannot be read as a coding authorization.
+`DEP-DB-001` and `DEP-DB-002` stay OPEN. Supabase Free stays preferred
+and **NOT_ACCEPTED**. Lane 4 stays `READY_FOR_VERIFICATION`.
+Integration stays `not_eligible`. `DRY_RUN` remains the only
+authorized execution mode. TradeStation `SIM` and `LIVE` stay
+unauthorized. Draft PR #24 is not the carrier of this ADR.
+
+The runtime reproduction cited in the ADR is prior evidence from
+2026-10-10. It was not re-executed for this documentation commit.
+Persistence and broker blobs on canonical main
+`8a17bec501df94238fe7588f84f7f1f51fee8baf` match that inspection.
+This entry does not embed its own commit hash.
+
+## 2026-10-11 — Lane 1 records Operator acceptance of ADR-0007
+
+Coordinator documentation only. No `src/` or `tests/` change. PR #31
+and PR #24 were not merged. Lane 4's specialist branch was not edited.
+
+### Operator decision
+
+The Operator accepted ADR-0007 Option A:
+`IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")`. The scope is
+architectural acceptance only. It is not implementation, merge,
+provisioning, or integration authorization.
+
+### Provenance
+
+Lane 4 authored the Proposed ADR at
+`38534bc4416adbaec37983e00e4736ece80acc25`, tree
+`00ef85ac23841d41d71716daea3045a5ea8d7bc9`, blob
+`25621163ca06d9532b7641fd6a58eb3d76fa1bbb`. Reported verifier
+`bc-53ed5be3-37a2-5973-a69c-3807d96d37ec` covers that Proposed tree.
+The merge commit on this branch keeps that blob. This acceptance
+commit changes Status to Accepted and fills Decision, so the Accepted
+blob is different and is not covered by that verifier. Lane 1 does
+not author the design.
+
+The historical proposal entry above remains the pre-acceptance
+record. Its sentence that the Operator has not accepted the proposal
+is that earlier record.
+
+### Withheld authority
+
+`DEP-DB-001` and `DEP-DB-002` stay OPEN. Supabase Free stays preferred
+and **NOT_ACCEPTED**. Lane 4 stays `READY_FOR_VERIFICATION`.
+`DRY_RUN` remains the only authorized execution mode. TradeStation
+`SIM` and `LIVE` stay unauthorized. No implementation sentence is in
+effect. `from None` does not erase traceback frame locals or driver
+and pool DEBUG logs.
+
+This entry does not embed its own commit hash.
+
+## 2026-10-11 — Lane 1 prepares the ADR-0007 implementation sentence
+
+Coordinator documentation only. No `src/` or `tests/` change. The
+Accepted ADR blob stays
+`c210976233f7bdba97cb12b5c7e1a1b599e2036d`. PR #24 was not edited.
+This entry does not direct Lane 4 to code.
+
+### Parent main
+
+Canonical main at the start of this draft:
+`557d9b1a7afe30e98cacb9ef1f6f47fe8a7922d0`, tree
+`7b8eddf2a6118d2c3c7a51610a5d53439f5ec899`. That commit already
+contains Accepted ADR-0007. Its fast-forward did not authorize
+implementation. The sentence in item 15 that the acceptance record
+is not on canonical main is the pre-integration record.
+
+### Prepared sentence
+
+Current-state item 16 names the only future scope: catch
+`psycopg.Error` and `sqlalchemy.exc.SQLAlchemyError` inside
+`PostgresIntentRepository.create_or_get`, raise
+`IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")` with
+`from None`, and keep driver text, credentials, URLs, and connection
+parameters out of that exception's message, `args`, and `repr`.
+`from None` does not erase `__context__`, traceback frame locals, or
+driver and pool DEBUG logs. Domain exceptions, successful
+`OrderObservation` results, identity, idempotency, compare-and-swap,
+and the transaction boundary stay as they are. There is no retry,
+replay, resubmit, or memory fallback. An ambiguous outcome stays
+unknown. `DryRunAdapter.dispatch` stays unchanged. Tests, after the
+sentence is effective, may use synthetic URLs and injected exceptions
+only.
+
+### Not in effect
+
+Item 16 is ineffective until an Operator-authorized fast-forward
+places this candidate on canonical main. This commit adds no
+application source. `DEP-DB-001` and `DEP-DB-002` stay OPEN.
+Supabase Free stays preferred and **NOT_ACCEPTED**. `DRY_RUN`
+remains the only authorized execution mode. TradeStation `SIM` and
+`LIVE` stay unauthorized. A later implementation commit still needs
+its own integration gate.
+
+This entry does not embed its own commit hash.

@@ -5,12 +5,13 @@ Conversation claims are never authoritative by themselves. Resolve conflicts
 using `docs/INTEGRATION_PROTOCOL.md` and the operating hierarchy in
 `docs/WORKSTREAM_OWNERSHIP.md`.
 
-Last attestation date: 2026-10-10
-Canonical main baseline at the start of this authorization (attested): `5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d`
-Canonical main tree at the start of this authorization (attested): `38c29d18be5930bda628bc32947d484fccb860dc`
-Attestation method: Offline Gmail adapter authorization via `gh`/`git fetch` on 2026-10-10. PR #27 is merged at that main tip. This descendant commit cannot embed its own hash.
-Classification versus the prior registry tip: PR #21 is MERGED. Prior registry main `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829` is an ancestor. PR #22 and PR #24 rows below the Gmail row are the pre-merge snapshot and are not re-certified here.
-This attestation names the pre-change main. A descendant documentation commit cannot embed its own hash.
+Last attestation date: 2026-10-11
+Canonical main baseline at the start of this TradeStation registry edit (attested): `8a17bec501df94238fe7588f84f7f1f51fee8baf`
+Canonical main tree at the start of this edit (attested): `03d48c9ae453bdfc6a1cdf9cdc43a359e76efb1b`
+Attestation method: `git fetch` of `main` and draft PR #22 on 2026-10-11. This descendant commit cannot embed its own hash.
+Classification: PR #22 remains OPEN, draft, and `CONFLICTING`. Its Lane 2 row below is re-attested. Lane 3 and Lane 4 rows are not re-certified by this edit.
+Historical 2026-10-10 authorization baseline, now an ancestor: `5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d` / `38c29d18be5930bda628bc32947d484fccb860dc`.
+ADR-0007 implementation-authorization preparation, 2026-10-11: Accepted ADR-0007 is on canonical main `557d9b1a7afe30e98cacb9ef1f6f47fe8a7922d0` / `7b8eddf2a6118d2c3c7a51610a5d53439f5ec899`. This descendant cannot embed its own hash. Current-state item 16 is not in effect until an Operator-authorized fast-forward places it on canonical main. Lane 4 stays `READY_FOR_VERIFICATION`. PR #24 is not re-certified here.
 
 ## Controlled states
 
@@ -55,18 +56,18 @@ certification.
 | Current state | `WAITING_PROVIDER` |
 | Current branch | `cursor/p2-ts-provider-evidence-99c1` |
 | PR number | Draft PR #22 |
-| Last attested SHA | `16aa5788a17ac77291530bb836af256a6f79f89f` |
-| Last attested tree | `74ce64cb17585fd1aefc58970ef4850cfc40c948` |
-| Canonical main baseline | `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829` / `fc97582f22ebf2d24f132c9afe2720430b197f9f` (merge-base `af0d69b1dfc2046899db05a2f12767fc20b623ae`; does not contain attested main) |
-| Current objective | Reconcile TradeStation Client Experience answers and provider-evidence constraints for a future attended probe; keep ADR-0005 Proposed |
-| Current blocker | `DEP-TS-001` — native PKCE callback confirmation / provider callback clarification |
-| Next permitted action | Docs-only provider-evidence clarification; update Proposed ADR-0005; retain PR #22 history |
-| Next prohibited action | TradeStation authentication; broker network calls; SIM/LIVE orders; automatic merge; reconstructing or merging stale PR #19 |
-| Contract dependencies | `DEP-TS-001`, `DEP-CORE-001`, `DEP-CORE-002` |
-| Certification status | Not certified. ADR-0005 remains Proposed. Continuity token `LANE2_WAITING_PROVIDER_CONTINUITY_VERIFIED` (`bc-d4b7c1e4-6ba3-542d-abb3-54ba045f0f93`) applies to ancestor `a6c5f1d7109e156eb0e9257216c3b5dbed17f653` only. Intake commit `19154eae43990df1d83a78be7b6dac3710a28804` changes `src/swingtrade/group3_auth/` and `tests/group3_auth/test_lane2_readiness.py`. Descendant `16aa5788a17ac77291530bb836af256a6f79f89f` says it records verification of tree `19154ea` and does not change `src/` or `tests/`. Lane 1 has not independently re-verified that claim. Provider confirmation is not operational certification. |
-| Integration eligibility | Not eligible. `DEP-TS-001` stays OPEN. New independent verification is required before any integration proposal for head `16aa578`. |
-| Last verification date | 2026-10-09 identity reattestation. Continuity verification 2026-10-08 covers `a6c5f1d` only. |
-| Evidence references | https://github.com/agentAD25/swing-trading-automation/pull/22 ; prior token `LANE2_WAITING_PROVIDER_CONTINUITY_VERIFIED` on `a6c5f1d`; ADR-0005 Proposed; PR #19 `SUPERSEDED` |
+| Last attested SHA | `330c47c40249fdf4e1f2a1bf3fa61e36e05ae4fc` |
+| Last attested tree | `864f0c16891af03bce27b40a4d52b843bb444b5f` |
+| Canonical main baseline | `8a17bec501df94238fe7588f84f7f1f51fee8baf` / `03d48c9ae453bdfc6a1cdf9cdc43a359e76efb1b` (merge-base `5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d`; does not contain attested main; `CONFLICTING` on `docs/CURRENT_STATE.md` and `docs/ENGINEERING_JOURNAL.md`) |
+| Current objective | Preserve the verified offline read-only parser and Proposed ADR-0005; keep key-specific provider questions open |
+| Current blocker | `DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004` are `OPEN`. `DEP-TS-001` stays `OPEN` with recommended narrative `SUPERSEDED_BY_OPTION_A_PENDING_ARCHITECTURE_ACCEPTANCE` and is not provider-confirmed |
+| Next permitted action | Lane 2 may merge current main into PR #22 without rewriting history. Do not accept ADR-0005. Do not close `DEP-TS-*` |
+| Next prohibited action | TradeStation authentication; broker network calls; SIM/LIVE orders; credential onboarding; automatic merge; reconstructing or merging stale PR #19 |
+| Contract dependencies | `DEP-TS-001`, `DEP-TS-002`, `DEP-TS-003`, `DEP-TS-004`, `DEP-CORE-001`, `DEP-CORE-002` |
+| Certification status | Offline parser `src/` tree `4005e26d3744030efdefd61262b096a0f12de6fd` and `tests/` tree `d15d674a5f55e9e45bf4f41d4f6d162727a89274` match verified implementation `227db721944dc0a470046fdec4b60f581ff28d38` / `980ec01635c5e4eb0abec297fe8bbf37f12d18fa`. Independent verifier `bc-0a306c68-0d69-5aee-a999-736cff1a54d8`. Lane 1 compared those trees to PR #22 head `330c47c` on 2026-10-11 and found no `src/` or `tests/` delta. That inheritance does not certify later documentation commits, does not accept ADR-0005, and does not authorize a merge. |
+| Integration eligibility | Not eligible. Shared-doc conflict with main `8a17bec`. ADR-0005 remains Proposed. Key-specific dependencies stay `OPEN`. No Operator merge authorization. |
+| Last verification date | 2026-10-11 tree comparison of `src/` and `tests/` against `227db72`. Parser test execution remains the prior verifier's, not a new Lane 1 run. |
+| Evidence references | https://github.com/agentAD25/swing-trading-automation/pull/22 ; verifier `bc-0a306c68-0d69-5aee-a999-736cff1a54d8`; ADR-0005 Proposed; PR #19 `SUPERSEDED` |
 
 ### Historical TradeStation PR #19 (not an active lane tip)
 
@@ -146,9 +147,9 @@ certification.
 | Last attested SHA | `d491c3434872fac88b1c5be28281dce94ea11a8b` (parents `5e748ad9b5738c5fe8b1ea02f96cde2d677c102f` and attested main `8cef3d7`) |
 | Last attested tree | `ac228e7342c8f75868cc0a683920e26d75cea31f` |
 | Canonical main baseline | `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829` / `fc97582f22ebf2d24f132c9afe2720430b197f9f` (PR tip contains this attested main) |
-| Current objective | Preserve zero-cost research and independent local TokenStore PostgreSQL evidence; no provider acceptance and no integration |
-| Current blocker | `DEP-DB-001` OPEN (Supabase/Neon Free **NOT_ACCEPTED**). `DEP-DB-002` has independent local PASS but stays OPEN until coordinator certification review and Operator acceptance of any certification claim. |
-| Next permitted action | Lane 4 owner merges later coordinator main updates without force-push; Operator host-selection path remains separate |
+| Current objective | Preserve zero-cost research and independent local TokenStore PostgreSQL evidence. Accepted ADR-0007 is on canonical main. The implementation sentence is prepared on this draft and is not in effect. |
+| Current blocker | `DEP-DB-001` OPEN (Supabase/Neon Free **NOT_ACCEPTED**). `DEP-DB-002` stays OPEN. No current-state implementation sentence is in effect on canonical main. |
+| Next permitted action | Wait for a separate Operator authorization to integrate this implementation-authorization candidate. Do not code `create_or_get`. Do not merge PR #24. |
 | Next prohibited action | Set `READY_FOR_INTEGRATION`; close `DEP-DB-002` from verifier PASS alone; Supabase/Neon connection; paid provisioning; self-integration; LIVE |
 | Contract dependencies | `DEP-DB-001`, `DEP-DB-002` |
 | Certification status | Independent verifier PASS for twelve local nodes applies only to executable `src/` and `tests/` bytes of `d949ce0197bc51ceef0b627eea325e9c4d13aaaf`. Those paths, plus `migrations/`, `pyproject.toml`, and `docker-compose.yml`, are identical at PR #24 tip `d491c34`. Docs commits `5e748ad` and `d491c34` are outside that PASS. Not Operator-accepted certification. Not integration approval. |
@@ -215,7 +216,7 @@ Preconditions apply before each step. No step authorizes credentials, SIM, or `L
 1. Keep governance on `main` (already integrated). Do not re-merge PR #23.
 2. Lane 4 draft PR #24 may be integrated only after a later explicit authorization, dependency review, and a fresh shared-doc reconcile if main moves. Independent PASS does not authorize that merge in this task. Provider selection stays closed.
 3. Lane 3 Gate A proposal text is already on main at `2c89529`. ADR-0004 stays Proposed. `DEP-GMAIL-001` stays open. That merge does not start Gate B, OAuth, or a credential module.
-4. Lane 2 PR #22 only after provider callback evidence (`DEP-TS-001`) or an explicit Operator decision to integrate docs-only bounds without closing `DEP-TS-001`, plus shared-doc reconciliation and independent verification. ADR-0005 stays Proposed until Operator acceptance.
+4. Lane 2 PR #22 stays not eligible. The offline parser bytes at head `330c47c` match verified implementation `227db72`, and that match is not merge authorization. Integration still requires a normal merge of current main, preservation of `DRY_RUN`-only text, an explicit Operator integration decision, and either closure or an explicit Operator waiver of each open `DEP-TS-*` that the integration protocol treats as blocking for that merge. ADR-0005 stays Proposed until a separate Operator acceptance. `DEP-TS-001` is not superseded by the Option A preference.
 5. `DEP-CORE-001` and `DEP-CORE-002` before any economic quantity, calendar, or timezone acceptance. They do not block docs-only conflict reconciliation.
 
 ### Acceptance gate vocabulary for future specialist integration
