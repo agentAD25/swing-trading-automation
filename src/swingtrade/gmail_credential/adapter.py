@@ -86,7 +86,12 @@ class GmailCredentialAdapter:
             if present:
                 self._fail("collision")
             status = self._port.create_holding_lock(material, persist)
-            self._finish_write(status, success_code="stored")
+            self._finish_write(
+                status,
+                success_code="stored",
+                material=material,
+                persist=persist,
+            )
 
     def retrieve(
         self,
@@ -121,7 +126,12 @@ class GmailCredentialAdapter:
             if not self._port.contains_holding_lock():
                 self._fail("missing")
             status = self._port.replace_holding_lock(material, persist)
-            self._finish_write(status, success_code="replaced")
+            self._finish_write(
+                status,
+                success_code="replaced",
+                material=material,
+                persist=persist,
+            )
 
     def delete(
         self,
@@ -134,9 +144,11 @@ class GmailCredentialAdapter:
         with self._port.hold():
             self._require_session()
             status = self._port.delete_holding_lock()
-            if status == "deleted":
+            if status == "deleted" and not self._port.contains_holding_lock():
                 self._log("deleted")
                 return
+            if status == "deleted":
+                self._fail("fail_closed")
             self._fail(status)
 
     def _boundary(
@@ -180,10 +192,24 @@ class GmailCredentialAdapter:
         if fault is not None:
             self._fail(fault)
 
-    def _finish_write(self, status: str, *, success_code: str) -> None:
-        if status == success_code:
+    def _finish_write(
+        self,
+        status: str,
+        *,
+        success_code: str,
+        material: bytes,
+        persist: int,
+    ) -> None:
+        """Report success only when the mock row matches this write.
+
+        Ambiguous and interrupted results stay failures. The reconcile read
+        does not issue another write.
+        """
+        if status == success_code and self._stored_matches(material, persist):
             self._log(success_code)
             return
+        if status == success_code:
+            self._fail("fail_closed")
         if status in {"ambiguous_write", "interrupted_write"}:
             self._reconcile()
             self._fail(status)
@@ -191,12 +217,27 @@ class GmailCredentialAdapter:
             self._fail("fail_closed")
         self._fail(status)
 
+    def _stored_matches(self, material: bytes, persist: int) -> bool:
+        allocation_id: int | None = None
+        try:
+            outcome = self._port.read_holding_lock()
+            if type(outcome) is not tuple or len(outcome) != 3:
+                return False
+            raw_id, stored, stored_persist = outcome
+            if type(raw_id) is int:
+                allocation_id = raw_id
+            if type(stored) is not bytes:
+                return False
+            return stored == material and stored_persist == persist
+        finally:
+            self._port.release(allocation_id)
+
     def _reconcile(self) -> None:
         """Read mock state after an uncertain write. Do not retry the write."""
         allocation_id: int | None = None
         try:
             outcome = self._port.read_holding_lock()
-            if type(outcome) is tuple:
+            if type(outcome) is tuple and len(outcome) >= 1 and type(outcome[0]) is int:
                 allocation_id = outcome[0]
         finally:
             self._port.release(allocation_id)
@@ -207,10 +248,21 @@ class GmailCredentialAdapter:
             outcome = self._port.read_holding_lock()
             if isinstance(outcome, str):
                 self._fail(outcome)
-            allocation_id, material = outcome
+            if type(outcome) is not tuple or len(outcome) != 3:
+                self._fail("fail_closed")
+            raw_id, material, persist = outcome
+            if type(raw_id) is int:
+                allocation_id = raw_id
             if self._port.raise_after_read:
                 self._fail("read_consumer_failed")
-            return OfflineCredentialView(material, CRED_PERSIST_LOCAL_MACHINE)
+            persist_error = persistence_code(persist)
+            if persist_error is not None:
+                self._fail(persist_error)
+            if type(material) is not bytes or len(material) == 0:
+                self._fail("fail_closed")
+            if type(persist) is not int:
+                self._fail("fail_closed")
+            return OfflineCredentialView(material, persist)
         finally:
             self._port.release(allocation_id)
 

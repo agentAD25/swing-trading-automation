@@ -15,10 +15,13 @@ _SESSION_FAULTS = frozenset(
 _CASE_VARIANT = "Swing-Trading/Lane3/Gmail/Dev/Refresh-Token"
 
 
+_SUCCESS_RESULTS = frozenset({"stored", "replaced", "deleted"})
+
+
 class _Row:
     __slots__ = ("material", "persist", "spelling")
 
-    def __init__(self, spelling: str, material: bytes, persist: int) -> None:
+    def __init__(self, spelling: str, material: object, persist: object) -> None:
         self.spelling = spelling
         self.material = material
         self.persist = persist
@@ -82,6 +85,15 @@ class MockCredentialPort:
         with self._lock:
             self._rows[key] = _Row(_CASE_VARIANT, _material_of(secret), persist)
 
+    def plant_metadata(self, material: object, persist: object) -> None:
+        """Install one canonical-key row with caller-supplied metadata.
+
+        Test hook for corrupted mock state. It does not call Windows.
+        """
+        key = (CANONICAL_TARGET.casefold(), CRED_TYPE_GENERIC)
+        with self._lock:
+            self._rows[key] = _Row(CANONICAL_TARGET, material, persist)
+
     def live_allocation_count(self) -> int:
         with self._lock:
             return len(self._live)
@@ -135,11 +147,12 @@ class MockCredentialPort:
         del self._rows[key]
         return "deleted"
 
-    def read_holding_lock(self) -> tuple[int, bytes] | str:
-        """Return ``(allocation id, material)`` or an error code.
+    def read_holding_lock(self) -> tuple[int, object, object] | str:
+        """Return ``(allocation id, material, persist)`` or an error code.
 
-        The caller must :meth:`release` that id on every path. Releasing the
-        id is mock cleanup only and does not certify native ``CredFree``.
+        Material and persist are the stored record, including corrupted test
+        metadata. The caller must :meth:`release` that id on every path.
+        Releasing the id is mock cleanup only and does not certify ``CredFree``.
         """
         self.read_attempts += 1
         fault = self._take_operation_fault()
@@ -153,7 +166,10 @@ class MockCredentialPort:
         self._next_alloc += 1
         self._live[alloc_id] = 1
         self.alloc_count += 1
-        return (alloc_id, bytes(row.material))
+        material = row.material
+        if type(material) is bytes:
+            material = bytes(material)
+        return (alloc_id, material, row.persist)
 
     def release(self, allocation_id: int | None) -> None:
         """Drop one mock allocation id. Not a native ``CredFree`` call."""
@@ -163,6 +179,9 @@ class MockCredentialPort:
         self.release_count += 1
 
     def _take_operation_fault(self) -> str | None:
+        """Return a one-shot fault. Success tokens cannot be injected."""
         fault = self.operation_fault
         self.operation_fault = None
+        if fault in _SUCCESS_RESULTS:
+            return "fail_closed"
         return fault

@@ -530,3 +530,104 @@ def test_secret_export_rejected() -> None:
         secret.__reduce__()
     assert caught.value.code == "secret_export_rejected"
     assert _leaks(f"{caught.value!r} {caught.value}") is False
+
+
+def _released(port: MockCredentialPort) -> bool:
+    return port.alloc_count == port.release_count and port.live_allocation_count() == 0
+
+
+def test_injected_stored_fault_is_not_success(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.INFO, logger="swingtrade.gmail_credential")
+    adapter, port = _adapter()
+    secret = _secret(MARKER)
+    port.operation_fault = "stored"
+    with pytest.raises(CredentialOperationError) as caught:
+        adapter.store(secret)
+    assert caught.value.code == "fail_closed"
+    assert port.entry_count() == 0
+    assert port.create_attempts == 1
+    assert _leaks(f"{caplog.text} {caught.value!r} {caught.value}") is False
+    adapter.store(secret)
+    assert port.entry_count() == 1
+    assert port.create_attempts == 2
+    assert _code(lambda: adapter.store(secret)) == "collision"
+    assert port.create_attempts == 2
+    assert adapter.retrieve().matches(secret) is True
+    assert adapter.retrieve().persist == CRED_PERSIST_LOCAL_MACHINE
+
+
+def test_injected_replaced_fault_is_not_success(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.INFO, logger="swingtrade.gmail_credential")
+    adapter, port = _adapter()
+    original = _secret(b"synthetic-fixture-original")
+    replacement = _secret(MARKER)
+    adapter.store(original)
+    port.operation_fault = "replaced"
+    with pytest.raises(CredentialOperationError) as caught:
+        adapter.replace(replacement)
+    assert caught.value.code == "fail_closed"
+    assert port.replace_attempts == 1
+    assert port.entry_count() == 1
+    assert adapter.retrieve().matches(original) is True
+    assert adapter.retrieve().matches(replacement) is False
+    port.operation_fault = "replaced"
+    assert _code(lambda: adapter.replace(original)) == "fail_closed"
+    assert adapter.retrieve().matches(original) is True
+    assert _leaks(f"{caplog.text} {caught.value!r} {caught.value}") is False
+
+
+def test_injected_deleted_fault_does_not_remove(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.INFO, logger="swingtrade.gmail_credential")
+    adapter, port = _adapter()
+    secret = _secret(MARKER)
+    adapter.store(secret)
+    port.operation_fault = "deleted"
+    with pytest.raises(CredentialOperationError) as caught:
+        adapter.delete()
+    assert caught.value.code == "fail_closed"
+    assert port.entry_count() == 1
+    assert adapter.retrieve().matches(secret) is True
+    assert _leaks(f"{caplog.text} {caught.value!r} {caught.value}") is False
+
+
+def test_seeded_enterprise_persistence_fails_closed(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.INFO, logger="swingtrade.gmail_credential")
+    adapter, port = _adapter()
+    seeded = _secret(MARKER)
+    port.seed_case_variant(seeded, CRED_PERSIST_ENTERPRISE)
+    with pytest.raises(CredentialOperationError) as caught:
+        adapter.retrieve()
+    assert caught.value.code == "enterprise_persistence_rejected"
+    rendered = f"{caplog.text} {caught.value!r} {caught.value}"
+    assert _leaks(rendered) is False
+    assert _released(port) is True
+    assert port.entry_count() == 1
+    assert _code(lambda: adapter.store(_secret(b"synthetic-fixture-challenger"))) == "collision"
+    assert port.entry_count() == 1
+    assert _code(adapter.retrieve) == "enterprise_persistence_rejected"
+    assert _released(port) is True
+    fresh, fresh_port = _adapter()
+    fresh_port.seed_case_variant(seeded, CRED_PERSIST_SESSION)
+    assert _code(fresh.retrieve) == "unsupported_persistence"
+    assert _released(fresh_port) is True
+    assert _leaks(caplog.text) is False
+
+
+def test_malformed_persisted_metadata_fails_closed(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.INFO, logger="swingtrade.gmail_credential")
+    cases: tuple[tuple[object, object, str], ...] = (
+        (MARKER, None, "unsupported_persistence"),
+        (MARKER, "not-persistence", "unsupported_persistence"),
+        (None, CRED_PERSIST_LOCAL_MACHINE, "fail_closed"),
+        (b"", CRED_PERSIST_LOCAL_MACHINE, "fail_closed"),
+        (MARKER, CRED_PERSIST_ENTERPRISE, "enterprise_persistence_rejected"),
+    )
+    for material, persist, expected in cases:
+        adapter, port = _adapter()
+        port.plant_metadata(material, persist)
+        with pytest.raises(CredentialOperationError) as caught:
+            adapter.retrieve()
+        assert caught.value.code == expected
+        assert _leaks(f"{caplog.text} {caught.value!r} {caught.value}") is False
+        assert _released(port) is True
+        assert port.entry_count() == 1
