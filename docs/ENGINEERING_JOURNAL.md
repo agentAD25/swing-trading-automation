@@ -3000,10 +3000,11 @@ after that sentence is effective.
 PR #34 fast-forwarded `7fe37e8` onto canonical `main`. Item 16 both
 withheld implementation and conditionally granted it. The workstream
 row said the sentence was not in effect and that Lane 4 must not
-code `create_or_get`. Lane 4 independently returned
-`LANE4_ADR0007_SECURITY_IMPLEMENTATION_BLOCKED`. Under
-`docs/AGENT_AUTHORITY.md`, that conflict fails closed. The earlier
-integration token did not remove the prohibition.
+code `create_or_get`. Lane 4 independently stopped and reported
+the implementation blocked because that canonical text still
+prohibited coding. Under `docs/AGENT_AUTHORITY.md`, that conflict
+fails closed. The earlier integration decision did not remove the
+prohibition.
 
 ### Operator decision for this correction
 
