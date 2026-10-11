@@ -2898,3 +2898,42 @@ The runtime reproduction cited in the ADR is prior evidence from
 Persistence and broker blobs on canonical main
 `8a17bec501df94238fe7588f84f7f1f51fee8baf` match that inspection.
 This entry does not embed its own commit hash.
+
+## 2026-10-11 — Lane 1 records Operator acceptance of ADR-0007
+
+Coordinator documentation only. No `src/` or `tests/` change. PR #31
+and PR #24 were not merged. Lane 4's specialist branch was not edited.
+
+### Operator decision
+
+The Operator accepted ADR-0007 Option A:
+`IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")`. The scope is
+architectural acceptance only. It is not implementation, merge,
+provisioning, or integration authorization.
+
+### Provenance
+
+Lane 4 authored the Proposed ADR at
+`38534bc4416adbaec37983e00e4736ece80acc25`, tree
+`00ef85ac23841d41d71716daea3045a5ea8d7bc9`, blob
+`25621163ca06d9532b7641fd6a58eb3d76fa1bbb`. Reported verifier
+`bc-53ed5be3-37a2-5973-a69c-3807d96d37ec` covers that Proposed tree.
+The merge commit on this branch keeps that blob. This acceptance
+commit changes Status to Accepted and fills Decision, so the Accepted
+blob is different and is not covered by that verifier. Lane 1 does
+not author the design.
+
+The historical proposal entry above remains the pre-acceptance
+record. Its sentence that the Operator has not accepted the proposal
+is that earlier record.
+
+### Withheld authority
+
+`DEP-DB-001` and `DEP-DB-002` stay OPEN. Supabase Free stays preferred
+and **NOT_ACCEPTED**. Lane 4 stays `READY_FOR_VERIFICATION`.
+`DRY_RUN` remains the only authorized execution mode. TradeStation
+`SIM` and `LIVE` stay unauthorized. No implementation sentence is in
+effect. `from None` does not erase traceback frame locals or driver
+and pool DEBUG logs.
+
+This entry does not embed its own commit hash.

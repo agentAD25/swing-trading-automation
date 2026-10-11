@@ -146,9 +146,9 @@ certification.
 | Last attested SHA | `d491c3434872fac88b1c5be28281dce94ea11a8b` (parents `5e748ad9b5738c5fe8b1ea02f96cde2d677c102f` and attested main `8cef3d7`) |
 | Last attested tree | `ac228e7342c8f75868cc0a683920e26d75cea31f` |
 | Canonical main baseline | `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829` / `fc97582f22ebf2d24f132c9afe2720430b197f9f` (PR tip contains this attested main) |
-| Current objective | Preserve zero-cost research and independent local TokenStore PostgreSQL evidence; no provider acceptance and no integration |
-| Current blocker | `DEP-DB-001` OPEN (Supabase/Neon Free **NOT_ACCEPTED**). `DEP-DB-002` has independent local PASS but stays OPEN until coordinator certification review and Operator acceptance of any certification claim. |
-| Next permitted action | Lane 4 owner merges later coordinator main updates without force-push; Operator host-selection path remains separate |
+| Current objective | Preserve zero-cost research and independent local TokenStore PostgreSQL evidence. ADR-0007 Option A is Accepted as design on this coordinator draft only. No provider acceptance and no integration. |
+| Current blocker | `DEP-DB-001` OPEN (Supabase/Neon Free **NOT_ACCEPTED**). `DEP-DB-002` stays OPEN. The Accepted ADR is not on canonical main. No current-state implementation sentence is in effect. |
+| Next permitted action | Wait for a separate Operator authorization to integrate this ADR-0007 acceptance candidate. Do not code `create_or_get`. Do not merge PR #24 from this record. |
 | Next prohibited action | Set `READY_FOR_INTEGRATION`; close `DEP-DB-002` from verifier PASS alone; Supabase/Neon connection; paid provisioning; self-integration; LIVE |
 | Contract dependencies | `DEP-DB-001`, `DEP-DB-002` |
 | Certification status | Independent verifier PASS for twelve local nodes applies only to executable `src/` and `tests/` bytes of `d949ce0197bc51ceef0b627eea325e9c4d13aaaf`. Those paths, plus `migrations/`, `pyproject.toml`, and `docker-compose.yml`, are identical at PR #24 tip `d491c34`. Docs commits `5e748ad` and `d491c34` are outside that PASS. Not Operator-accepted certification. Not integration approval. |

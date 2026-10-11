@@ -1,6 +1,6 @@
 # ADR-0007: Sanitized PostgreSQL intent-repository failure
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-11
 - Sole Phase 1 decider: Human Operator
 - Scope: Caller-visible driver-failure classification for `PostgresIntentRepository.create_or_get`
@@ -199,6 +199,50 @@ classification.
 
 ## Decision
 
+Accepted: Option A, as architectural acceptance only. The human Operator
+accepts `IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")`. Lane 4
+authored the Proposed text at commit
+`38534bc4416adbaec37983e00e4736ece80acc25`, tree
+`00ef85ac23841d41d71716daea3045a5ea8d7bc9`, ADR blob
+`25621163ca06d9532b7641fd6a58eb3d76fa1bbb`. The reported verification of
+that Proposed tree is `bc-53ed5be3-37a2-5973-a69c-3807d96d37ec`. That
+verification does not cover this Accepted file, because changing Status
+and this Decision changes the blob. Lane 1 records the acceptance and
+does not author the design.
+
+The accepted classification is Option A only. A later implementation,
+if separately authorized, may catch `psycopg.Error` and
+`sqlalchemy.exc.SQLAlchemyError` inside
+`PostgresIntentRepository.create_or_get` and raise
+`IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")` with `from None`.
+The caller-visible message and arguments are that stable string.
+Driver text, credentials, database URLs, and connection parameters stay
+out of that message and those arguments. `from None` suppresses normal
+chaining. It does not erase traceback frame locals or driver and pool
+DEBUG logs. Those residuals remain unresolved.
+
+Preserved as they are: `AuthorizationDenied`, `IntentIdentityConflict`,
+`NonCanonicalIntentKey`, `DurableObservationError`,
+`DurableRepositoryRequired`, the existing non-`DRY_RUN` guard, a
+successful `OrderObservation`, canonical intent identity, idempotency,
+compare-and-swap, and the `begin()` transaction boundary. There is no
+retry, replay, resubmit, or in-memory fallback. An ambiguous
+transaction outcome is unknown, not proof of rollback.
+`DryRunAdapter.dispatch` stays unchanged unless a separate
+shared-contract decision authorizes an edit.
+
+This acceptance does not authorize implementation, a repository edit, a
+test edit, a migration, a TokenStore change, a Gmail change, a
+broker-adapter edit, a merge of PR #31 or PR #24, Supabase or other
+remote PostgreSQL provisioning, a database connection, credentials,
+TradeStation `SIM`, `LIVE`, or any economic action. `DEP-DB-001` and
+`DEP-DB-002` stay OPEN. Supabase Free stays preferred and
+**NOT_ACCEPTED**. ADR-0002, ADR-0003, and ADR-0006 stay Accepted.
+ADR-0004 and ADR-0005 stay Proposed. A later explicit implementation
+sentence in `docs/CURRENT_STATE.md` on canonical `main` is still
+required before any code, and that sentence's commit must add no
+application source.
+
 ## Consequences
 
 If the Operator later accepts this exact proposal, the accepted
@@ -296,8 +340,12 @@ classification.
 
 ## Unresolved questions
 
-- Whether the Operator accepts Option A. Owner: human Operator. The
-  Decision section stays blank until that acceptance.
+- The Operator has accepted Option A in the Decision. The authoring
+  lane did not accept it. Implementation authorization remains a
+  separate decision and is not made here. The reported verifier
+  `bc-53ed5be3-37a2-5973-a69c-3807d96d37ec` attests blob
+  `25621163ca06d9532b7641fd6a58eb3d76fa1bbb` only. The Accepted text
+  needs its own independent verification.
 - Whether a later `CURRENT_STATE` sentence authorizes implementation.
   Owner: human Operator. This ADR does not.
 - Whether DEBUG logging and traceback-local capture need a separate

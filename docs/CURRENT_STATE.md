@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-10-10 (offline Gmail credential-adapter implementation authorized; real credentials, OAuth, and Gmail access remain unauthorized). Governance PR #23 and checkpoint PR #25 remain integrated.
+- Last updated: 2026-10-11 (ADR-0007 Option A design acceptance recorded; implementation permission not effective; not on canonical main). Governance PR #23 and checkpoint PR #25 remain integrated.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
   offline Group 4A email contract is on canonical `main` by exact
@@ -404,6 +404,36 @@ a prohibition on later additive coordination roles.
     integration eligibility, merge authorization, credential
     onboarding, SIM access, or LIVE access. `DRY_RUN` remains the only
     authorized execution mode.
+15. Operator acceptance of ADR-0007, architectural design only,
+    recorded 2026-10-11. The accepted artifact is the Proposed file at
+    commit `38534bc4416adbaec37983e00e4736ece80acc25`, tree
+    `00ef85ac23841d41d71716daea3045a5ea8d7bc9`, blob
+    `25621163ca06d9532b7641fd6a58eb3d76fa1bbb`. Lane 4 authored that
+    proposal. Lane 1 records the Operator's acceptance and does not
+    author the design. The accepted classification is Option A only:
+    `IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")`. A later
+    implementation, if separately authorized, may catch `psycopg.Error`
+    and `sqlalchemy.exc.SQLAlchemyError` inside
+    `PostgresIntentRepository.create_or_get` and raise that exception
+    with `from None`. `from None` suppresses normal chaining and does
+    not erase traceback frame locals or driver and pool DEBUG logs.
+    `DryRunAdapter.dispatch` stays unchanged unless a separate
+    shared-contract decision authorizes an edit.
+    This acceptance does not authorize implementation, tests,
+    migrations, TokenStore changes, Gmail changes, broker-adapter
+    edits, a merge of PR #31 or PR #24, Supabase or other remote
+    PostgreSQL provisioning, a database connection, credentials,
+    TradeStation `SIM`, `LIVE`, or any economic action. `DEP-DB-001`
+    and `DEP-DB-002` stay OPEN. Supabase Free stays preferred and
+    **NOT_ACCEPTED**. ADR-0002, ADR-0003, and ADR-0006 stay Accepted.
+    ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
+    authorized execution mode. The Accepted ADR text is a new blob and
+    is not certified by the Proposed-tree verifier
+    `bc-53ed5be3-37a2-5973-a69c-3807d96d37ec`. This item is on the
+    coordinator draft, not on canonical `main`, until a separate
+    integration authorization. Implementation permission still requires
+    that integration and a later current-state sentence whose commit
+    adds no application source. That sentence is not in effect.
 
 ## Evidence
 
