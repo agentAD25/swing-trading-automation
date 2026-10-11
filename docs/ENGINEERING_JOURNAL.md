@@ -2822,3 +2822,29 @@ access fails closed. The adapter stays separate from TradeStation
 TokenStore and broker execution. Lane 3 must not self-merge the result.
 
 This entry does not embed its own commit hash.
+
+## 2026-10-11 — Lane 4 Proposed ADR-0007
+
+Lane 4 proposes ADR-0007,
+`docs/adr/0007-intent-repository-unavailable.md`, status Proposed.
+The Decision section is blank. The human Operator has not accepted it.
+The proposal classifies a future sanitized driver failure from
+`PostgresIntentRepository.create_or_get` as
+`IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")`, propagating
+through the existing uncaught call in `DryRunAdapter.dispatch`.
+
+This entry does not authorize implementation, a repository edit, a
+test edit, a migration, a TokenStore change, a Gmail change, or a
+broker-adapter edit. `docs/CURRENT_STATE.md` is unchanged so this
+proposal cannot be read as a coding authorization.
+`DEP-DB-001` and `DEP-DB-002` stay OPEN. Supabase Free stays preferred
+and **NOT_ACCEPTED**. Lane 4 stays `READY_FOR_VERIFICATION`.
+Integration stays `not_eligible`. `DRY_RUN` remains the only
+authorized execution mode. TradeStation `SIM` and `LIVE` stay
+unauthorized. Draft PR #24 is not the carrier of this ADR.
+
+The runtime reproduction cited in the ADR is prior evidence from
+2026-10-10. It was not re-executed for this documentation commit.
+Persistence and broker blobs on canonical main
+`8a17bec501df94238fe7588f84f7f1f51fee8baf` match that inspection.
+This entry does not embed its own commit hash.
