@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-10-11 (history-preserving merge of canonical main `93070a0b739287f70ed4c61269a21a7092445ac4`, tree `f2e643c31a9fed6b1b32c0f4adfca45ac05add8e`). That main registers `DEP-TS-001` through `DEP-TS-004` as OPEN and authorizes only the offline synthetic Gmail credential-adapter implementation under Accepted ADR-0006. Real credentials, OAuth, Gmail access, TradeStation SIM, and LIVE remain unauthorized. Governance PR #23 and checkpoint PR #25 remain integrated. The verified parser source remains `227db721944dc0a470046fdec4b60f581ff28d38`, tree `980ec01635c5e4eb0abec297fe8bbf37f12d18fa`.
+- Last updated: 2026-10-11 (history-preserving merge of canonical main `7fe37e8e4b89a303856662b9a6333e64fe6df640`, tree `0d090d0cd82d92e37ae6ceef7959d88214b30767`). That main accepts ADR-0007 as architectural design and carries current-state item 16 as a prepared implementation sentence that is not in effect until an Operator-authorized integration onto canonical main. Item 16 is not a TradeStation authorization. `DEP-TS-001` through `DEP-TS-004` stay OPEN. Real credentials, OAuth, Gmail access, TradeStation SIM, and LIVE remain unauthorized. Governance PR #23 and checkpoint PR #25 remain integrated. The verified parser source remains `227db721944dc0a470046fdec4b60f581ff28d38`, tree `980ec01635c5e4eb0abec297fe8bbf37f12d18fa`.
 - This branch also records the 2026-10-08 Lane 2 provider-evidence intake and the 2026-10-09 Operator preference `OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`. That preference is not ADR acceptance.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
@@ -430,6 +430,81 @@ a prohibition on later additive coordination roles.
     integration eligibility, merge authorization, credential
     onboarding, SIM access, or LIVE access. `DRY_RUN` remains the only
     authorized execution mode.
+15. Operator acceptance of ADR-0007, architectural design only,
+    recorded 2026-10-11. The accepted artifact is the Proposed file at
+    commit `38534bc4416adbaec37983e00e4736ece80acc25`, tree
+    `00ef85ac23841d41d71716daea3045a5ea8d7bc9`, blob
+    `25621163ca06d9532b7641fd6a58eb3d76fa1bbb`. Lane 4 authored that
+    proposal. Lane 1 records the Operator's acceptance and does not
+    author the design. The accepted classification is Option A only:
+    `IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")`. A later
+    implementation, if separately authorized, may catch `psycopg.Error`
+    and `sqlalchemy.exc.SQLAlchemyError` inside
+    `PostgresIntentRepository.create_or_get` and raise that exception
+    with `from None`. `from None` suppresses normal chaining and does
+    not erase traceback frame locals or driver and pool DEBUG logs.
+    `DryRunAdapter.dispatch` stays unchanged unless a separate
+    shared-contract decision authorizes an edit.
+    This acceptance does not authorize implementation, tests,
+    migrations, TokenStore changes, Gmail changes, broker-adapter
+    edits, a merge of PR #31 or PR #24, Supabase or other remote
+    PostgreSQL provisioning, a database connection, credentials,
+    TradeStation `SIM`, `LIVE`, or any economic action. `DEP-DB-001`
+    and `DEP-DB-002` stay OPEN. Supabase Free stays preferred and
+    **NOT_ACCEPTED**. ADR-0002, ADR-0003, and ADR-0006 stay Accepted.
+    ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
+    authorized execution mode. The Accepted ADR text is a new blob and
+    is not certified by the Proposed-tree verifier
+    `bc-53ed5be3-37a2-5973-a69c-3807d96d37ec`. This item is on the
+    coordinator draft, not on canonical `main`, until a separate
+    integration authorization. Implementation permission still requires
+    that integration and a later current-state sentence whose commit
+    adds no application source. That sentence is not in effect.
+16. Offline implementation authorization for Accepted ADR-0007 Option A,
+    prepared 2026-10-11 and not in effect. The Accepted ADR is on
+    canonical main `557d9b1a7afe30e98cacb9ef1f6f47fe8a7922d0`, tree
+    `7b8eddf2a6118d2c3c7a51610a5d53439f5ec899`, blob
+    `c210976233f7bdba97cb12b5c7e1a1b599e2036d`. The fast-forward that
+    placed item 15 on main did not authorize coding. The sentence in
+    item 15 that calls the acceptance record a coordinator draft is
+    the pre-integration record.
+    Once an Operator-authorized fast-forward places this item on
+    canonical main, and not before, Lane 4 may implement and test only
+    the Option A boundary in `PostgresIntentRepository.create_or_get`
+    inside `src/swingtrade/persistence.py`, plus new or existing
+    persistence-focused tests. This commit adds no application source.
+    The permitted behavior is: catch `psycopg.Error` and
+    `sqlalchemy.exc.SQLAlchemyError` at that driver boundary; raise
+    `IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")` with
+    `from None`; keep driver text, credentials, database URLs, and
+    connection parameters out of the new exception's message, `args`,
+    and `repr`. `from None` suppresses normal chaining. It does not
+    erase `__context__`, traceback frame locals, or driver and pool
+    DEBUG logs. Preserve `AuthorizationDenied`,
+    `IntentIdentityConflict`, `NonCanonicalIntentKey`,
+    `DurableObservationError`, `DurableRepositoryRequired`, the
+    existing non-`DRY_RUN` guard, successful `OrderObservation`
+    results, canonical identity, idempotency, compare-and-swap, and
+    the `begin()` transaction boundary. Do not retry, replay,
+    resubmit, or fall back to memory. An ambiguous transaction outcome
+    stays unknown, not proof of rollback. Leave
+    `DryRunAdapter.dispatch` and shared broker interfaces unchanged.
+    Tests may use synthetic database URLs and injected SQLAlchemy or
+    psycopg exceptions only. They must not open a real PostgreSQL
+    connection, use a real credential, or contact a remote host.
+    This sentence does not authorize TokenStore changes, Gmail
+    changes, broker-adapter edits, schema migrations, Supabase or
+    other remote provisioning, PR #24 integration, automatic merge of
+    a later implementation pull request, TradeStation `SIM`, `LIVE`,
+    order submission, or any economic action. `DEP-DB-001` and
+    `DEP-DB-002` stay OPEN. Supabase Free stays preferred and
+    **NOT_ACCEPTED**. ADR-0007 stays Accepted as Option A. ADR-0002,
+    ADR-0003, and ADR-0006 stay Accepted. ADR-0004 and ADR-0005 stay
+    Proposed. `DRY_RUN` remains the only authorized execution mode.
+    Lane 4 must not start this work from the draft. A later
+    integration gate is required before the sentence is effective,
+    and a further integration gate is required before any resulting
+    implementation commit may enter canonical `main`.
 
 ## Evidence
 

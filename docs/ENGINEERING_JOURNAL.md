@@ -3248,3 +3248,133 @@ unchanged versus verified implementation
 `980ec01635c5e4eb0abec297fe8bbf37f12d18fa`. This merge does not embed
 its own hash, does not merge PR #22, and does not authorize a
 credential, OAuth, SIM, LIVE, or an order.
+
+## 2026-10-11 — Lane 4 Proposed ADR-0007
+
+Lane 4 proposes ADR-0007,
+`docs/adr/0007-intent-repository-unavailable.md`, status Proposed.
+The Decision section is blank. The human Operator has not accepted it.
+The proposal classifies a future sanitized driver failure from
+`PostgresIntentRepository.create_or_get` as
+`IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")`, propagating
+through the existing uncaught call in `DryRunAdapter.dispatch`.
+
+This entry does not authorize implementation, a repository edit, a
+test edit, a migration, a TokenStore change, a Gmail change, or a
+broker-adapter edit. `docs/CURRENT_STATE.md` is unchanged so this
+proposal cannot be read as a coding authorization.
+`DEP-DB-001` and `DEP-DB-002` stay OPEN. Supabase Free stays preferred
+and **NOT_ACCEPTED**. Lane 4 stays `READY_FOR_VERIFICATION`.
+Integration stays `not_eligible`. `DRY_RUN` remains the only
+authorized execution mode. TradeStation `SIM` and `LIVE` stay
+unauthorized. Draft PR #24 is not the carrier of this ADR.
+
+The runtime reproduction cited in the ADR is prior evidence from
+2026-10-10. It was not re-executed for this documentation commit.
+Persistence and broker blobs on canonical main
+`8a17bec501df94238fe7588f84f7f1f51fee8baf` match that inspection.
+This entry does not embed its own commit hash.
+
+## 2026-10-11 — Lane 1 records Operator acceptance of ADR-0007
+
+Coordinator documentation only. No `src/` or `tests/` change. PR #31
+and PR #24 were not merged. Lane 4's specialist branch was not edited.
+
+### Operator decision
+
+The Operator accepted ADR-0007 Option A:
+`IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")`. The scope is
+architectural acceptance only. It is not implementation, merge,
+provisioning, or integration authorization.
+
+### Provenance
+
+Lane 4 authored the Proposed ADR at
+`38534bc4416adbaec37983e00e4736ece80acc25`, tree
+`00ef85ac23841d41d71716daea3045a5ea8d7bc9`, blob
+`25621163ca06d9532b7641fd6a58eb3d76fa1bbb`. Reported verifier
+`bc-53ed5be3-37a2-5973-a69c-3807d96d37ec` covers that Proposed tree.
+The merge commit on this branch keeps that blob. This acceptance
+commit changes Status to Accepted and fills Decision, so the Accepted
+blob is different and is not covered by that verifier. Lane 1 does
+not author the design.
+
+The historical proposal entry above remains the pre-acceptance
+record. Its sentence that the Operator has not accepted the proposal
+is that earlier record.
+
+### Withheld authority
+
+`DEP-DB-001` and `DEP-DB-002` stay OPEN. Supabase Free stays preferred
+and **NOT_ACCEPTED**. Lane 4 stays `READY_FOR_VERIFICATION`.
+`DRY_RUN` remains the only authorized execution mode. TradeStation
+`SIM` and `LIVE` stay unauthorized. No implementation sentence is in
+effect. `from None` does not erase traceback frame locals or driver
+and pool DEBUG logs.
+
+This entry does not embed its own commit hash.
+
+## 2026-10-11 — Lane 1 prepares the ADR-0007 implementation sentence
+
+Coordinator documentation only. No `src/` or `tests/` change. The
+Accepted ADR blob stays
+`c210976233f7bdba97cb12b5c7e1a1b599e2036d`. PR #24 was not edited.
+This entry does not direct Lane 4 to code.
+
+### Parent main
+
+Canonical main at the start of this draft:
+`557d9b1a7afe30e98cacb9ef1f6f47fe8a7922d0`, tree
+`7b8eddf2a6118d2c3c7a51610a5d53439f5ec899`. That commit already
+contains Accepted ADR-0007. Its fast-forward did not authorize
+implementation. The sentence in item 15 that the acceptance record
+is not on canonical main is the pre-integration record.
+
+### Prepared sentence
+
+Current-state item 16 names the only future scope: catch
+`psycopg.Error` and `sqlalchemy.exc.SQLAlchemyError` inside
+`PostgresIntentRepository.create_or_get`, raise
+`IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")` with
+`from None`, and keep driver text, credentials, URLs, and connection
+parameters out of that exception's message, `args`, and `repr`.
+`from None` does not erase `__context__`, traceback frame locals, or
+driver and pool DEBUG logs. Domain exceptions, successful
+`OrderObservation` results, identity, idempotency, compare-and-swap,
+and the transaction boundary stay as they are. There is no retry,
+replay, resubmit, or memory fallback. An ambiguous outcome stays
+unknown. `DryRunAdapter.dispatch` stays unchanged. Tests, after the
+sentence is effective, may use synthetic URLs and injected exceptions
+only.
+
+### Not in effect
+
+Item 16 is ineffective until an Operator-authorized fast-forward
+places this candidate on canonical main. This commit adds no
+application source. `DEP-DB-001` and `DEP-DB-002` stay OPEN.
+Supabase Free stays preferred and **NOT_ACCEPTED**. `DRY_RUN`
+remains the only authorized execution mode. TradeStation `SIM` and
+`LIVE` stay unauthorized. A later implementation commit still needs
+its own integration gate.
+
+This entry does not embed its own commit hash.
+
+## 2026-10-11 — History-preserving merge of ADR-0007 main
+
+Lane 2 merged canonical main
+`7fe37e8e4b89a303856662b9a6333e64fe6df640`, tree
+`0d090d0cd82d92e37ae6ceef7959d88214b30767`, into
+`cursor/p2-ts-provider-evidence-99c1` at
+`dfeb21412dadd463e45d2ca538faf49f82496b25`. Conflicts were only in
+`docs/CURRENT_STATE.md` and this journal. Both histories were kept.
+`docs/adr/0007-intent-repository-unavailable.md` and
+`docs/WORKSTREAM_STATUS.md` match that main. ADR-0007 stays Accepted
+as architectural design. Current-state item 16 stays the prepared
+implementation sentence and is not in effect on this branch. It is
+not a TradeStation authorization. `DEP-TS-001` through `DEP-TS-004`
+stay OPEN. ADR-0005 stays Proposed with a blank Decision. ADR-0006
+stays Accepted. `src/` and `tests/` are unchanged versus verified
+implementation `227db721944dc0a470046fdec4b60f581ff28d38`, tree
+`980ec01635c5e4eb0abec297fe8bbf37f12d18fa`. This merge does not embed
+its own hash, does not merge PR #22, and does not authorize a
+credential, OAuth, SIM, LIVE, or an order.
