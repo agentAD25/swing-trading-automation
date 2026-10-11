@@ -3137,3 +3137,114 @@ are unchanged versus the independently verified parser commit
 `227db721944dc0a470046fdec4b60f581ff28d38`, tree
 `980ec01635c5e4eb0abec297fe8bbf37f12d18fa`. This merge commit does not
 embed its own hash and is not a new verification of that parser tree.
+
+## 2026-10-10 — Offline Gmail adapter implementation sentence
+
+Coordinator documentation only. No adapter source, no Windows credential
+API call, no OAuth, and no Gmail call.
+
+### Operator decision
+
+The Operator authorized Lane 3 to proceed with offline-only development
+of the Windows Credential Manager adapter, without real credential
+access, and without an extra approval cycle beyond accepted repository
+gates. Independent verification of the exact authorization tree is still
+required. Real credentials, OAuth, Gmail access, broker activity, `SIM`,
+and `LIVE` stay unauthorized.
+
+### Effective sentence
+
+Current-state item 13 states: Lane 3 may implement and test the
+Gmail-specific Windows Credential Manager adapter using only synthetic
+values and mocked Windows native API responses, in a strictly offline
+development environment, under Accepted ADR-0006. The parent main is
+`5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d`, tree
+`38c29d18be5930bda628bc32947d484fccb860dc`, ADR-0006 blob
+`ebdb79e3fac0299582e2555d5cd63c460328bb01`. This entry does not embed
+its own commit hash. The historical paragraph above that called the
+same sentence "not in effect" is the pre-decision record.
+
+`DEP-GMAIL-001` stays OPEN. It blocks Google OAuth setup, not this
+offline mocked scope. ADR-0004 stays Proposed. ADR-0002 and ADR-0003
+stay Accepted. `DRY_RUN` remains the only authorized execution mode.
+
+### Lane 3 constraints
+
+Real native API execution stays disabled by default. Tests use
+injectable mocks. They must not read or write a production credential,
+must not use a genuine token, and must fail on an unmocked `CredWriteW`,
+`CredReadW`, or `CredDeleteW` or on any external network call. Errors,
+logs, and tracebacks must omit credential material. Unexpected native
+access fails closed. The adapter stays separate from TradeStation
+TokenStore and broker execution. Lane 3 must not self-merge the result.
+
+This entry does not embed its own commit hash.
+
+## 2026-10-11 — Lane 1 TradeStation dependency registration
+
+Coordinator documentation only. No `src/` or `tests/` change. PR #22 was
+not edited and was not merged. ADR-0005 was not accepted.
+
+### Attestation
+
+Canonical main at the start of this edit:
+`8a17bec501df94238fe7588f84f7f1f51fee8baf`, tree
+`03d48c9ae453bdfc6a1cdf9cdc43a359e76efb1b`.
+
+Draft PR #22 (`cursor/p2-ts-provider-evidence-99c1`):
+`330c47c40249fdf4e1f2a1bf3fa61e36e05ae4fc`, tree
+`864f0c16891af03bce27b40a4d52b843bb444b5f`. Parents
+`3124ace419c1cd1ac3dc6ddf93334a5bc5b4b6e6` and
+`5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d`. Merge-base with current main
+is `5a04c5e`. The PR does not contain `8a17bec`. `git merge-tree`
+reports content conflicts in `docs/CURRENT_STATE.md` and
+`docs/ENGINEERING_JOURNAL.md`. GitHub state: OPEN, draft, `CONFLICTING`.
+
+### Implementation inheritance
+
+Verified implementation `227db721944dc0a470046fdec4b60f581ff28d38`, tree
+`980ec01635c5e4eb0abec297fe8bbf37f12d18fa`, is an ancestor of the PR
+head. Its `src/` tree `4005e26d3744030efdefd61262b096a0f12de6fd` and
+`tests/` tree `d15d674a5f55e9e45bf4f41d4f6d162727a89274` are identical
+at `330c47c`. Independent verifier
+`bc-0a306c68-0d69-5aee-a999-736cff1a54d8` covers that implementation
+tree. Lane 1 did not rerun the parser suites. Later commits on the PR
+change documentation and merge main `5a04c5e`; they do not change
+`src/` or `tests/`.
+
+### Dependencies
+
+`DEP-TS-001` stays `OPEN`. Recommended narrative only:
+`SUPERSEDED_BY_OPTION_A_PENDING_ARCHITECTURE_ACCEPTANCE`. Not
+provider-confirmed. Supersession waits on ADR-0005 acceptance.
+`DEP-TS-002`, `DEP-TS-003`, and `DEP-TS-004` are new `OPEN` rows for
+the issued key's application type, `openid ReadAccount`, and one later
+HTTPS callback. The unsent 2026-10-09 draft does not close them.
+
+### Runtime
+
+`DRY_RUN` remains the only authorized execution mode. This entry does
+not authorize TradeStation OAuth, SIM, LIVE, orders, or credential
+onboarding. ADR-0005 stays Proposed. ADR-0006 stays Accepted as the
+Gmail design only.
+
+This entry does not embed its own commit hash.
+
+## 2026-10-11 — History-preserving merge of PR #32 main
+
+Lane 2 merged canonical main
+`93070a0b739287f70ed4c61269a21a7092445ac4`, tree
+`f2e643c31a9fed6b1b32c0f4adfca45ac05add8e`, into
+`cursor/p2-ts-provider-evidence-99c1` at
+`330c47c40249fdf4e1f2a1bf3fa61e36e05ae4fc`. Conflicts were only in
+`docs/CURRENT_STATE.md` and this journal. Both histories were kept.
+`docs/WORKSTREAM_DEPENDENCIES.md`, `docs/WORKSTREAM_STATUS.md`, and
+`docs/INTEGRATION_PROTOCOL.md` match that main. `DEP-TS-001` through
+`DEP-TS-004` stay OPEN. ADR-0005 stays Proposed with a blank Decision.
+ADR-0006 stays Accepted at blob
+`ebdb79e3fac0299582e2555d5cd63c460328bb01`. `src/` and `tests/` are
+unchanged versus verified implementation
+`227db721944dc0a470046fdec4b60f581ff28d38`, tree
+`980ec01635c5e4eb0abec297fe8bbf37f12d18fa`. This merge does not embed
+its own hash, does not merge PR #22, and does not authorize a
+credential, OAuth, SIM, LIVE, or an order.

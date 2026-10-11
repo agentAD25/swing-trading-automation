@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-10-10 (Lane 2 read-only parser compatibility). Governance PR #23 and checkpoint PR #25 remain integrated. This branch contains a history-preserving merge of canonical main `5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d`, tree `38c29d18be5930bda628bc32947d484fccb860dc`. That main records ADR-0006 design acceptance. That acceptance is not implementation permission and is not a TradeStation authorization. The merge does not change the verified parser source `227db721944dc0a470046fdec4b60f581ff28d38`, tree `980ec01635c5e4eb0abec297fe8bbf37f12d18fa`.
+- Last updated: 2026-10-11 (history-preserving merge of canonical main `93070a0b739287f70ed4c61269a21a7092445ac4`, tree `f2e643c31a9fed6b1b32c0f4adfca45ac05add8e`). That main registers `DEP-TS-001` through `DEP-TS-004` as OPEN and authorizes only the offline synthetic Gmail credential-adapter implementation under Accepted ADR-0006. Real credentials, OAuth, Gmail access, TradeStation SIM, and LIVE remain unauthorized. Governance PR #23 and checkpoint PR #25 remain integrated. The verified parser source remains `227db721944dc0a470046fdec4b60f581ff28d38`, tree `980ec01635c5e4eb0abec297fe8bbf37f12d18fa`.
 - This branch also records the 2026-10-08 Lane 2 provider-evidence intake and the 2026-10-09 Operator preference `OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`. That preference is not ADR acceptance.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
@@ -383,11 +383,53 @@ a prohibition on later additive coordination roles.
     action. ADR-0004 stays Proposed. ADR-0003 stays Accepted.
     `DEP-GMAIL-001` stays OPEN. `DRY_RUN` remains the only authorized
     execution mode. The Accepted ADR text is a new blob and is not
-    certified by `LANE3_ADR0006_REVERIFIED_PASS`. This item is on the
-    coordinator draft, not on canonical `main`, until a separate
-    integration authorization. Implementation permission still requires
-    that integration and a later current-state sentence whose commit
-    adds no application source. That sentence is not in effect.
+    certified by `LANE3_ADR0006_REVERIFIED_PASS`. Fast-forward of
+    `5a04c5e` placed this design acceptance on canonical `main`. That
+    fast-forward did not authorize implementation.
+13. Offline Gmail credential-adapter implementation, authorized
+    2026-10-10. Lane 3 may implement and test the Gmail-specific
+    Windows Credential Manager adapter using only synthetic values and
+    mocked Windows native API responses, in a strictly offline
+    development environment, under Accepted ADR-0006. This commit adds
+    no application source. The authorization is the Gmail-only scope in
+    ADR-0006: `CRED_TYPE_GENERIC` = 1, `CRED_PERSIST_LOCAL_MACHINE` = 2,
+    the current operator-controlled Windows user, and target identifier
+    `swing-trading/lane3/gmail/dev/refresh-token`. Tests must keep real
+    native API execution disabled and must fail if an unmocked Windows
+    credential call or any external network call is attempted.
+    Credential Manager is not hardware-backed isolation.
+    This sentence does not authorize real Credential Manager calls,
+    unmocked `CredWriteW`, `CredReadW`, or `CredDeleteW`, real token
+    generation, storage, retrieval, or deletion, OAuth consent,
+    redirects, callbacks, or token exchange, Gmail API or mailbox
+    access, TradeStation or TokenStore changes, remote database
+    activity, operational deployment, `SIM` or `LIVE` trading, broker
+    orders, or Gmail Gate B. ADR-0006 stays Accepted as that design.
+    ADR-0004 stays Proposed. ADR-0002 and ADR-0003 stay Accepted.
+    `DEP-GMAIL-001` stays OPEN. `DRY_RUN` remains the only authorized
+    execution mode. A later integration gate is required before any
+    resulting adapter commit may enter canonical `main`. Lane 3 must
+    not self-merge that work.
+14. TradeStation dependency registration, recorded 2026-10-11, against
+    canonical main `8a17bec501df94238fe7588f84f7f1f51fee8baf` / tree
+    `03d48c9ae453bdfc6a1cdf9cdc43a359e76efb1b`. Draft PR #22 head
+    `330c47c40249fdf4e1f2a1bf3fa61e36e05ae4fc` / tree
+    `864f0c16891af03bce27b40a4d52b843bb444b5f` is not merged.
+    `DEP-TS-001` stays `OPEN`. Its recommended narrative is
+    `SUPERSEDED_BY_OPTION_A_PENDING_ARCHITECTURE_ACCEPTANCE`. The
+    provider did not confirm the native PKCE callback, and the
+    controlled state `SUPERSEDED` is not applied. `DEP-TS-002`,
+    `DEP-TS-003`, and `DEP-TS-004` are registered `OPEN` for the issued
+    key's application type, the `openid ReadAccount` grant, and one
+    later HTTPS callback. Public documentation and the Operator
+    preference `OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`
+    do not close them. ADR-0005 stays Proposed on PR #22 with a blank
+    Decision and is not on this main. Offline parser `src/` and `tests/`
+    trees at that PR head match verified implementation
+    `227db721944dc0a470046fdec4b60f581ff28d38`. That match is not
+    integration eligibility, merge authorization, credential
+    onboarding, SIM access, or LIVE access. `DRY_RUN` remains the only
+    authorized execution mode.
 
 ## Evidence
 
