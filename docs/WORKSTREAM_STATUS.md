@@ -11,7 +11,8 @@ Canonical main tree at the start of this edit (attested): `03d48c9ae453bdfc6a1cd
 Attestation method: `git fetch` of `main` and draft PR #22 on 2026-10-11. This descendant commit cannot embed its own hash.
 Classification: PR #22 remains OPEN, draft, and `CONFLICTING`. Its Lane 2 row below is re-attested. Lane 3 and Lane 4 rows are not re-certified by this edit.
 Historical 2026-10-10 authorization baseline, now an ancestor: `5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d` / `38c29d18be5930bda628bc32947d484fccb860dc`.
-ADR-0007 implementation-authorization preparation, 2026-10-11: Accepted ADR-0007 is on canonical main `557d9b1a7afe30e98cacb9ef1f6f47fe8a7922d0` / `7b8eddf2a6118d2c3c7a51610a5d53439f5ec899`. This descendant cannot embed its own hash. Current-state item 16 is not in effect until an Operator-authorized fast-forward places it on canonical main. Lane 4 stays `READY_FOR_VERIFICATION`. PR #24 is not re-certified here.
+Historical pre-correction record from `7fe37e8e4b89a303856662b9a6333e64fe6df640`: ADR-0007 implementation-authorization preparation, 2026-10-11, said item 16 was not in effect and that Lane 4 must not code yet. That sentence is not operative authority once current-state item 17 is effective.
+Operative status: item 17 is the sole ADR-0007 implementation authority when this correction commit is canonical `main` after an Operator decision authorizing integration of this independently verified candidate. Lane 4 stays `READY_FOR_VERIFICATION`. PR #24 is not re-certified here. This descendant cannot embed its own hash.
 
 ## Controlled states
 
@@ -147,9 +148,9 @@ certification.
 | Last attested SHA | `d491c3434872fac88b1c5be28281dce94ea11a8b` (parents `5e748ad9b5738c5fe8b1ea02f96cde2d677c102f` and attested main `8cef3d7`) |
 | Last attested tree | `ac228e7342c8f75868cc0a683920e26d75cea31f` |
 | Canonical main baseline | `8cef3d7fe3fa57ec5138e64fc96ee2dbeb0f3829` / `fc97582f22ebf2d24f132c9afe2720430b197f9f` (PR tip contains this attested main) |
-| Current objective | Preserve zero-cost research and independent local TokenStore PostgreSQL evidence. Accepted ADR-0007 is on canonical main. The implementation sentence is prepared on this draft and is not in effect. |
-| Current blocker | `DEP-DB-001` OPEN (Supabase/Neon Free **NOT_ACCEPTED**). `DEP-DB-002` stays OPEN. No current-state implementation sentence is in effect on canonical main. |
-| Next permitted action | Wait for a separate Operator authorization to integrate this implementation-authorization candidate. Do not code `create_or_get`. Do not merge PR #24. |
+| Current objective | Preserve zero-cost research and independent local TokenStore PostgreSQL evidence. When current-state item 17 is effective, Lane 4 may implement only the bounded `PostgresIntentRepository.create_or_get` change and synthetic persistence tests. PR #24 is not certified. |
+| Current blocker | `DEP-DB-001` OPEN (Supabase/Neon Free **NOT_ACCEPTED**). `DEP-DB-002` stays OPEN. Those open dependencies do not prohibit the item 17 implementation. |
+| Next permitted action | When item 17 is effective, implement only that boundary with synthetic URLs and injected failures. Do not merge PR #24. Do not open a real database connection. |
 | Next prohibited action | Set `READY_FOR_INTEGRATION`; close `DEP-DB-002` from verifier PASS alone; Supabase/Neon connection; paid provisioning; self-integration; LIVE |
 | Contract dependencies | `DEP-DB-001`, `DEP-DB-002` |
 | Certification status | Independent verifier PASS for twelve local nodes applies only to executable `src/` and `tests/` bytes of `d949ce0197bc51ceef0b627eea325e9c4d13aaaf`. Those paths, plus `migrations/`, `pyproject.toml`, and `docker-compose.yml`, are identical at PR #24 tip `d491c34`. Docs commits `5e748ad` and `d491c34` are outside that PASS. Not Operator-accepted certification. Not integration approval. |

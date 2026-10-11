@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-10-11 (history-preserving merge of canonical main `7fe37e8e4b89a303856662b9a6333e64fe6df640`, tree `0d090d0cd82d92e37ae6ceef7959d88214b30767`). That main accepts ADR-0007 as architectural design and carries current-state item 16 as a prepared implementation sentence that is not in effect until an Operator-authorized integration onto canonical main. Item 16 is not a TradeStation authorization. `DEP-TS-001` through `DEP-TS-004` stay OPEN. Real credentials, OAuth, Gmail access, TradeStation SIM, and LIVE remain unauthorized. Governance PR #23 and checkpoint PR #25 remain integrated. The verified parser source remains `227db721944dc0a470046fdec4b60f581ff28d38`, tree `980ec01635c5e4eb0abec297fe8bbf37f12d18fa`.
+- Last updated: 2026-10-11 (history-preserving merge of canonical main `d7f9db93058392735f8664f91f209248a0ea1f16`, tree `eee32f9e6c3bb15573e251e0ee1b0225f946125f`). Item 17 on that main is the sole operative implementation authority for Accepted ADR-0007. Items 15 and 16 are the historical pre-correction record and do not prohibit that bounded implementation. Item 17 is Lane 4 persistence authority and is not a TradeStation authorization. `DEP-TS-001` through `DEP-TS-004` stay OPEN. Real credentials, OAuth, Gmail access, TradeStation SIM, and LIVE remain unauthorized. Governance PR #23 and checkpoint PR #25 remain integrated. The verified parser source remains `227db721944dc0a470046fdec4b60f581ff28d38`, tree `980ec01635c5e4eb0abec297fe8bbf37f12d18fa`.
 - This branch also records the 2026-10-08 Lane 2 provider-evidence intake and the 2026-10-09 Operator preference `OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`. That preference is not ADR acceptance.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
@@ -431,7 +431,11 @@ a prohibition on later additive coordination roles.
     onboarding, SIM access, or LIVE access. `DRY_RUN` remains the only
     authorized execution mode.
 15. Operator acceptance of ADR-0007, architectural design only,
-    recorded 2026-10-11. The accepted artifact is the Proposed file at
+    recorded 2026-10-11. When item 17 is effective, every
+    implementation-withholding sentence in this item is historical.
+    That includes the statement that a later implementation sentence
+    is not in effect. Those sentences do not prohibit the bounded
+    implementation in item 17. The accepted artifact is the Proposed file at
     commit `38534bc4416adbaec37983e00e4736ece80acc25`, tree
     `00ef85ac23841d41d71716daea3045a5ea8d7bc9`, blob
     `25621163ca06d9532b7641fd6a58eb3d76fa1bbb`. Lane 4 authored that
@@ -460,8 +464,13 @@ a prohibition on later additive coordination roles.
     integration authorization. Implementation permission still requires
     that integration and a later current-state sentence whose commit
     adds no application source. That sentence is not in effect.
-16. Offline implementation authorization for Accepted ADR-0007 Option A,
-    prepared 2026-10-11 and not in effect. The Accepted ADR is on
+16. Historical pre-correction record of the offline implementation
+    authorization for Accepted ADR-0007 Option A. When item 17 is
+    effective, this item neither authorizes nor prohibits the bounded
+    implementation. The original contradictory text follows and is
+    not operative: its conditional grant, its statement that it is
+    not in effect, and its statement that Lane 4 must not start from
+    the draft. Original text: prepared 2026-10-11 and not in effect. The Accepted ADR is on
     canonical main `557d9b1a7afe30e98cacb9ef1f6f47fe8a7922d0`, tree
     `7b8eddf2a6118d2c3c7a51610a5d53439f5ec899`, blob
     `c210976233f7bdba97cb12b5c7e1a1b599e2036d`. The fast-forward that
@@ -505,6 +514,76 @@ a prohibition on later additive coordination roles.
     integration gate is required before the sentence is effective,
     and a further integration gate is required before any resulting
     implementation commit may enter canonical `main`.
+17. Operative ADR-0007 implementation authority. This item becomes
+    effective only when both of these are true: an Operator decision
+    has authorized integration of this independently verified
+    correction candidate, and this exact commit is canonical `main`.
+    No further activation step is required after that incorporation.
+    While either condition is unmet, this item does not authorize
+    coding. The prohibitions on the prior canonical commit stay
+    there; they are not restated here as authority over this commit
+    once this item is effective.
+    When this item is effective, Lane 4 is authorized to implement
+    only `IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")`, a
+    `RuntimeError`, inside `PostgresIntentRepository.create_or_get`
+    in `src/swingtrade/persistence.py`, together with new or existing
+    persistence-focused tests that use synthetic URLs and injected
+    `psycopg` or SQLAlchemy failures. This commit adds no application
+    source. The implementation may catch `psycopg.Error` and
+    `sqlalchemy.exc.SQLAlchemyError` at that boundary and raise
+    `IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")` with
+    `from None`. The new exception's message, `args`, and `repr`
+    must not contain driver text, connection URLs, credentials, or
+    connection parameters. `from None` suppresses normal chaining.
+    It does not erase `__context__`, traceback frame locals, or
+    driver and pool DEBUG logs. Preserve `AuthorizationDenied`,
+    `IntentIdentityConflict`, `NonCanonicalIntentKey`,
+    `DurableObservationError`, `DurableRepositoryRequired`, the
+    existing non-`DRY_RUN` guard, successful `OrderObservation`
+    results, canonical identity, idempotency, compare-and-swap, and
+    the `begin()` transaction boundary. Do not retry, replay,
+    resubmit, or fall back to memory. An ambiguous transaction
+    outcome stays unknown, not proof of rollback. Leave
+    `DryRunAdapter.dispatch` and shared broker interfaces unchanged.
+    Do not redesign logging or make any other shared-contract change.
+    When this item is effective, it does not authorize real
+    PostgreSQL credentials, a real or remote database connection,
+    Supabase provisioning or provider acceptance, schema migrations,
+    TokenStore changes, broker changes, Gmail changes, `SIM`,
+    `LIVE`, order submission, economic execution, integration of
+    PR #24, or automatic integration of a later implementation
+    pull request. `DEP-DB-001` and `DEP-DB-002` stay OPEN. Supabase
+    Free stays preferred and **NOT_ACCEPTED**. ADR-0007 stays
+    Accepted as Option A. `DRY_RUN` remains the only authorized
+    execution mode. Lane 4 stays `READY_FOR_VERIFICATION`.
+    Authorization to implement is not authorization to merge the
+    implementation.
+    Accepted ADR-0007 already requires one later explicit
+    implementation sentence in this file on canonical `main` before
+    code, and requires that sentence's commit to add no application
+    source. This item is that sentence when it is effective. The ADR
+    statements that acceptance itself does not authorize coding, and
+    that Lane 4 must not change `create_or_get` until that sentence
+    is on canonical `main`, are satisfied by this item. They are not
+    a further prohibition after this item is effective. The ADR is
+    unchanged.
+    Once this item is effective, these are historical pre-correction
+    records. They are not a second grant and they are not operative
+    prohibitions of that bounded implementation: the 2026-10-11
+    last-updated line on
+    `7fe37e8e4b89a303856662b9a6333e64fe6df640` that said the
+    authorization was not in effect; item 15's statement that the
+    implementation sentence is not in effect; the whole of item 16,
+    including its conditional grant and its statements that it is not
+    in effect, that Lane 4 must not start from the draft, and that a
+    later gate is required before that sentence is effective; and the
+    workstream and journal sentences from that same commit. Those
+    include the acceptance entry's sentence that no implementation
+    sentence is in effect, the preparation entry's sentence that
+    item 16 is ineffective until a fast-forward, and the instruction
+    that Lane 4 must not code `create_or_get`. Those sentences
+    document why implementation was blocked. Item 17 is the only
+    operative implementation grant after it is effective.
 
 ## Evidence
 

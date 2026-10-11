@@ -3378,3 +3378,71 @@ implementation `227db721944dc0a470046fdec4b60f581ff28d38`, tree
 `980ec01635c5e4eb0abec297fe8bbf37f12d18fa`. This merge does not embed
 its own hash, does not merge PR #22, and does not authorize a
 credential, OAuth, SIM, LIVE, or an order.
+
+## 2026-10-11 — Lane 1 corrects the ADR-0007 implementation authority
+
+This entry appends. It does not rewrite the preparation entry above
+or the acceptance entry that says no implementation sentence is in
+effect. Those entries, and current-state items 15 and 16 on
+`7fe37e8e4b89a303856662b9a6333e64fe6df640`, are the historical
+pre-correction record. They are not operative policy once item 17
+is effective. Accepted ADR-0007 is unchanged. Its requirement for a
+later implementation sentence on canonical `main` is what item 17
+supplies. The ADR's "until then" prohibition is not a further ban
+after that sentence is effective.
+
+### Contradiction
+
+PR #34 fast-forwarded `7fe37e8` onto canonical `main`. Item 16 both
+withheld implementation and conditionally granted it. The workstream
+row said the sentence was not in effect and that Lane 4 must not
+code `create_or_get`. Lane 4 independently stopped and reported
+the implementation blocked because that canonical text still
+prohibited coding. Under `docs/AGENT_AUTHORITY.md`, that conflict
+fails closed. The earlier integration decision did not remove the
+prohibition.
+
+### Operator decision for this correction
+
+The Operator authorized Lane 1 to prepare this documentation-only
+correction. It may describe a future Lane 4 permission to implement
+only `IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")` in
+`PostgresIntentRepository.create_or_get` and synthetic
+persistence-focused tests. The permission becomes effective only
+after a distinct Operator decision authorizes integration of this
+independently verified candidate and that exact commit is canonical
+`main`. This preparation does not merge the correction, does not
+change application source, and does not direct Lane 4 to code now.
+
+### Boundaries preserved
+
+`DEP-DB-001` and `DEP-DB-002` stay OPEN. Supabase Free stays
+preferred and **NOT_ACCEPTED**. ADR-0007 stays Accepted and its blob
+is unchanged. `DRY_RUN` remains the only authorized execution mode.
+TradeStation `SIM` and `LIVE` stay unauthorized. PR #24 stays
+unmerged. A later implementation pull request still needs its own
+integration gate.
+
+This entry does not embed its own commit hash.
+
+## 2026-10-11 — History-preserving merge of the ADR-0007 correction
+
+Lane 2 merged canonical main
+`d7f9db93058392735f8664f91f209248a0ea1f16`, tree
+`eee32f9e6c3bb15573e251e0ee1b0225f946125f`, into
+`cursor/p2-ts-provider-evidence-99c1` at
+`26f08471c9dc86d34d4cfe354a27148abd53f940`. Conflicts were only in
+`docs/CURRENT_STATE.md` and this journal. Both histories were kept.
+The correction entry above is unchanged. Item 17 on that main is the
+operative Lane 4 implementation grant. Item 16, and the sentence in
+the earlier `7fe37e8` merge record that item 16 was not in effect, are
+historical. They are not a current barrier to that grant. The grant
+is not TradeStation authority. `docs/WORKSTREAM_STATUS.md` matches
+that main. `DEP-TS-001` through `DEP-TS-004` stay OPEN. ADR-0005
+stays Proposed with a blank Decision. ADR-0006 and ADR-0007 stay
+Accepted at the canonical blobs. `src/` and `tests/` are unchanged
+versus verified implementation
+`227db721944dc0a470046fdec4b60f581ff28d38`, tree
+`980ec01635c5e4eb0abec297fe8bbf37f12d18fa`. This merge does not embed
+its own hash, does not merge PR #22, and does not authorize a
+credential, OAuth, SIM, LIVE, or an order.
