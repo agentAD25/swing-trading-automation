@@ -2982,3 +2982,48 @@ remains the only authorized execution mode. TradeStation `SIM` and
 its own integration gate.
 
 This entry does not embed its own commit hash.
+
+## 2026-10-11 — Lane 1 corrects the ADR-0007 implementation authority
+
+This entry appends. It does not rewrite the preparation entry above
+or the acceptance entry that says no implementation sentence is in
+effect. Those entries, and current-state items 15 and 16 on
+`7fe37e8e4b89a303856662b9a6333e64fe6df640`, are the historical
+pre-correction record. They are not operative policy once item 17
+is effective. Accepted ADR-0007 is unchanged. Its requirement for a
+later implementation sentence on canonical `main` is what item 17
+supplies. The ADR's "until then" prohibition is not a further ban
+after that sentence is effective.
+
+### Contradiction
+
+PR #34 fast-forwarded `7fe37e8` onto canonical `main`. Item 16 both
+withheld implementation and conditionally granted it. The workstream
+row said the sentence was not in effect and that Lane 4 must not
+code `create_or_get`. Lane 4 independently returned
+`LANE4_ADR0007_SECURITY_IMPLEMENTATION_BLOCKED`. Under
+`docs/AGENT_AUTHORITY.md`, that conflict fails closed. The earlier
+integration token did not remove the prohibition.
+
+### Operator decision for this correction
+
+The Operator authorized Lane 1 to prepare this documentation-only
+correction. It may describe a future Lane 4 permission to implement
+only `IntentRepositoryUnavailable("DATABASE_UNAVAILABLE")` in
+`PostgresIntentRepository.create_or_get` and synthetic
+persistence-focused tests. The permission becomes effective only
+after a distinct Operator decision authorizes integration of this
+independently verified candidate and that exact commit is canonical
+`main`. This preparation does not merge the correction, does not
+change application source, and does not direct Lane 4 to code now.
+
+### Boundaries preserved
+
+`DEP-DB-001` and `DEP-DB-002` stay OPEN. Supabase Free stays
+preferred and **NOT_ACCEPTED**. ADR-0007 stays Accepted and its blob
+is unchanged. `DRY_RUN` remains the only authorized execution mode.
+TradeStation `SIM` and `LIVE` stay unauthorized. PR #24 stays
+unmerged. A later implementation pull request still needs its own
+integration gate.
+
+This entry does not embed its own commit hash.
