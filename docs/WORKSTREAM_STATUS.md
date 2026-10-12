@@ -10,6 +10,7 @@ Canonical main baseline at the start of this TradeStation registry edit (atteste
 Canonical main tree at the start of this edit (attested): `03d48c9ae453bdfc6a1cdf9cdc43a359e76efb1b`
 Attestation method: `git fetch` of `main` and draft PR #22 on 2026-10-11. This descendant commit cannot embed its own hash.
 Classification: PR #22 remains OPEN, draft, and `CONFLICTING`. Its Lane 2 row below is re-attested. Lane 3 and Lane 4 rows are not re-certified by this edit.
+Historical classification, retained from 2026-10-11: the sentence above that PR #22 remains OPEN, draft, and `CONFLICTING`. Current correction: PR #22 is MERGED and is an ancestor of canonical main `9703efa9d7842e22337c85f7b616bbe21f0c1e2b`, tree `eb23947a05988e8334bda555aa4840a90853543b`. The Lane 2 table below remains the 2026-10-11 attestation. Its next-permitted-action sentence is historical and is not an instruction to merge PR #22 again. Lane 3 and Lane 4 rows are not rewritten by this correction.
 Historical 2026-10-10 authorization baseline, now an ancestor: `5a04c5eadd5b61dcf7153cc46fdf363c6ff8029d` / `38c29d18be5930bda628bc32947d484fccb860dc`.
 Historical pre-correction record from `7fe37e8e4b89a303856662b9a6333e64fe6df640`: ADR-0007 implementation-authorization preparation, 2026-10-11, said item 16 was not in effect and that Lane 4 must not code yet. That sentence is not operative authority once current-state item 17 is effective.
 Operative status: item 17 is the sole ADR-0007 implementation authority when this correction commit is canonical `main` after an Operator decision authorizing integration of this independently verified candidate. Lane 4 stays `READY_FOR_VERIFICATION`. PR #24 is not re-certified here. This descendant cannot embed its own hash.
@@ -69,6 +70,10 @@ certification.
 | Integration eligibility | Not eligible. Shared-doc conflict with main `8a17bec`. ADR-0005 remains Proposed. Key-specific dependencies stay `OPEN`. No Operator merge authorization. |
 | Last verification date | 2026-10-11 tree comparison of `src/` and `tests/` against `227db72`. Parser test execution remains the prior verifier's, not a new Lane 1 run. |
 | Evidence references | https://github.com/agentAD25/swing-trading-automation/pull/22 ; verifier `bc-0a306c68-0d69-5aee-a999-736cff1a54d8`; ADR-0005 Proposed; PR #19 `SUPERSEDED` |
+
+### Lane 2 status correction (2026-10-12)
+
+The table above stays the 2026-10-11 attestation, including its historical next action to merge PR #22. Operative correction: the offline parser from merged PR #22 and the synthetic classifier from merged PR #38 are on canonical main. `DEP-TS-001` through `DEP-TS-004` stay `OPEN`. ADR-0005 stays Proposed with a blank Decision. This correction does not itself authorize a new module. When current-state item 19 is effective, its Lane 2 grant is the only additional Lane 2 implementation. Until that activation, Lane 2 must not add `order_report_sequence.py`.
 
 ### Historical TradeStation PR #19 (not an active lane tip)
 

@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-10-12 (item 19 proposal, three further non-economic `DRY_RUN` implementation grants). Item 19 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 19 does not authorize coding. Item 18 stays the operative grant for the three modules already named there. Its activation sentence in the next bullet is the historical record of integrated commit `d4e7aeb1f7cd7c16c81b1f026295ad91319041cc`, which is an ancestor of canonical main. This proposal does not reopen, revise, or expand item 18. It does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, authorize an acquisition-to-receipt orchestrator, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-12 (item 18, three non-economic `DRY_RUN` implementation grants). Item 18 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. No further activation step is required after that incorporation. While any of those conditions is unmet, item 18 does not authorize coding. When all three are met, item 18 is the operative grant for the three bounded modules named in that item. Item 17 remains the operative ADR-0007 persistence-exception grant. Item 13 remains the offline Gmail credential-adapter grant. This record does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - This branch adds the item 18 Lane 2 classifier in `src/swingtrade/group3_auth/order_report.py`. Its labels are local synthetic report evidence and are not order instructions. `src/swingtrade/group3_auth/brokerage_read.py` is unchanged. The branch is not merged. ADR-0005 stays Proposed. `DEP-TS-001` through `DEP-TS-004` stay OPEN.
 - Prior canonical header, retained as the PR #22 integration record: 2026-10-12 (history-preserving merge of canonical main `b35b301bdb582d8c537c1f511f1e3c30de98920b`, tree `a209fb5f0fd9d770d5e6142ee31e4fce2b30a5fd`). That main integrates PR #24 documentation, the offline Gmail credential adapter, and the ADR-0007 persistence remediation. Item 17 remains the sole operative Lane 4 implementation authority for Accepted ADR-0007. Items 15 and 16 remain the historical pre-correction record and do not prohibit that bounded implementation. Item 17 is not a TradeStation authorization. `DEP-TS-001` through `DEP-TS-004` stay OPEN. Real credentials, OAuth, Gmail access, TradeStation SIM, and LIVE remain unauthorized. Governance PR #23 and checkpoint PR #25 remain integrated. The verified parser blobs remain those of `227db721944dc0a470046fdec4b60f581ff28d38`.
@@ -704,6 +705,238 @@ a prohibition on later additive coordination roles.
     three modules after the activation condition is met. Unrelated
     deny states, including credentials, network access, `SIM`, and
     `LIVE`, remain in force.
+
+19. Three further non-economic `DRY_RUN` implementation grants,
+    proposed 2026-10-12. This item becomes effective only when all
+    three of these are true: an independent verifier has passed this
+    exact commit, an Operator decision has authorized integration of
+    this exact commit, and this exact commit is canonical `main`. No
+    further activation step is required after that incorporation.
+    While any condition is unmet, this item does not authorize
+    coding. When all three are met, the three grants below are
+    operative for their named paths only. Authorization to implement
+    is not authorization to merge a later specialist pull request.
+    Each specialist implementation still needs its own offline tests,
+    a distinct independent exact-tree verification, and a separate
+    Operator decision on that exact candidate before Lane 1 may
+    integrate it. No specialist may self-merge. This item does not
+    revise item 18. Item 18 remains the grant for
+    `src/swingtrade/group4_email/disposition.py`,
+    `src/swingtrade/instruction_receipt.py`, and
+    `src/swingtrade/group3_auth/order_report.py`. This commit adds no
+    application source. The parent main is
+    `9703efa9d7842e22337c85f7b616bbe21f0c1e2b`, tree
+    `eb23947a05988e8334bda555aa4840a90853543b`. Certified blobs that
+    this item requires to stay unchanged are
+    `src/swingtrade/group3_auth/order_report.py`
+    `7ddf267e707d0c7aabe7106eebfc24d090ed6648`,
+    `src/swingtrade/group4_email/disposition.py`
+    `e6a089244300489374e21ef2b7188c16ac44966c`,
+    `src/swingtrade/instruction_receipt.py`
+    `537991932d216baa58b076b22acdcbef2f73595f`, and
+    `src/swingtrade/group3_auth/brokerage_read.py`
+    `ecbf5a0d06c6db3c839407df341ee407eac05dcf`.
+    When this item is effective, Lane 2 may add one pure function,
+    `evaluate_report_sequence(reports: object) -> SequenceEvidence`,
+    in a new module
+    `src/swingtrade/group3_auth/order_report_sequence.py`, with
+    focused tests in
+    `tests/group3_auth/test_order_report_sequence.py`. Lane 2 owns
+    that function. `SequenceEvidence` is local. Its classifications
+    are `CONSISTENT`, `DUPLICATE`, `OUT_OF_ORDER`, `CONFLICT`,
+    `MISSING`, and `UNKNOWN`. They are synthetic evidence-quality
+    labels. They are not `OutcomeCode`, not `ReportLabel`, and not
+    execution, cancellation, retry, resubmission, or settlement
+    states. No accepted contract defines a legal transition among
+    acknowledgment, partial fill, fill, rejection, and cancellation.
+    Different supported labels for one identity are `CONFLICT` with
+    reason `INCONSISTENT_EVIDENCE`, not a lifecycle progression. A
+    shared lifecycle contract is not decided here and stays
+    `BLOCKED`.
+    Each element may contain only `facts`, `order_id`, and optional
+    `sequence`. `facts` and `order_id` use the existing classifier
+    rules. The new function may call `classify_report` only with
+    those two keys. It must not change `classify_report`,
+    `ReportEvidence`, `ReportLabel`, `OutcomeCode`, or
+    `AuthDecision`. `sequence` is local synthetic metadata, not a
+    TradeStation wire field. When present it is an `int`, not a
+    `bool`, and is greater than or equal to zero. Its absence is not
+    zero and is not a fabricated number. Dictionary insertion order
+    and object identity do not affect equivalence. Equivalence uses
+    the validated `order_id`, the fact strings as a multiset, and
+    the sequence value when that key is present on both elements.
+    One present sequence and one absent sequence are not equivalent.
+    If any element has `sequence` and another does not, the primary
+    classification is `UNKNOWN` and the reasons include
+    `PARTIAL_SEQUENCE`.
+    The primary classification is the first match below. `reasons`
+    retains every defect that was actually established, so a primary
+    label does not drop another established identity conflict,
+    inconsistency, duplicate, gap, or ordering defect. Malformed
+    input stops evaluation: its reasons are only the malformation
+    codes.
+    1. `UNKNOWN` for a non-list, a non-dict element, a key outside
+       the allowlist, a malformed identity, a malformed sequence, or
+       partial sequence metadata.
+    2. `CONFLICT` for differing validated order identifiers
+       (`CONFLICTING_IDENTITY`), contradictory facts inside one
+       element, unequal fact multisets for one identity
+       (`INCONSISTENT_EVIDENCE`), or the same sequence number on
+       unequal canonical bodies.
+    3. `DUPLICATE` when at least two elements are exactly equivalent
+       and no conflict was established.
+    4. `OUT_OF_ORDER` when every element has a sequence and those
+       numbers are not strictly increasing in caller order.
+    5. `MISSING` for an empty list (`NO_REPORTS`), a missing order
+       identifier, facts that are only insufficient or missing, or a
+       sequence gap in an otherwise strictly increasing series.
+    6. `CONSISTENT` only when the elements share one validated order
+       identifier and one supported fact multiset, and their
+       sequences are either all absent on a single element or
+       strictly increasing without a gap or an exact duplicate.
+    `safe_to_retry`, `resubmit_permitted`, `submit_permitted`,
+    `cancel_permitted`, `network_permitted`, and `connect_allowed`
+    stay false. The function does not mutate its input. Its `repr`
+    omits order identifiers and report bodies. Tests must cover each
+    label, the precedence above, equivalence despite dictionary
+    order and object identity, a missing sequence versus zero,
+    deterministic replay, immutability, and the absence of network,
+    credential, and persistence imports.
+    When this item is effective, Lane 3 may add
+    `deliver_synthetic_fixtures` in a new module
+    `src/swingtrade/group4_email/synthetic_acquisition.py`, with
+    focused tests in
+    `tests/group4_email/test_synthetic_acquisition.py`. Lane 3 owns
+    that function. The frozen types `SyntheticFixture` and
+    `SyntheticDelivery` live in that module. A fixture carries
+    `delivery_ref: str` and `mime: bytes`. A delivery carries those
+    two fields plus `content_digest: str`. The input is a tuple of
+    `SyntheticFixture`. The function validates the whole tuple before
+    returning. Failure raises one stable code and returns no partial
+    delivery. The stable codes are `INVALID_FIXTURE`,
+    `DUPLICATE_DELIVERY_REF`, and `INVALID_DELIVERY_REF`. The
+    exception text is that code only. It does not include MIME bytes
+    or the rejected reference.
+    `delivery_ref` must match `^syn-delivery-[1-9][0-9]{0,5}$`. Any
+    other reference, including a mailbox-shaped reference, is
+    `INVALID_DELIVERY_REF`. Duplicate references in one tuple are
+    `DUPLICATE_DELIVERY_REF`. A value that is not a
+    `SyntheticFixture`, or whose `mime` is not `bytes`, is
+    `INVALID_FIXTURE`. An empty tuple returns an empty tuple. A
+    non-tuple fails closed. Caller order is preserved. MIME bytes are
+    copied unchanged. `content_digest` is the accepted
+    `content_digest` raw-byte SHA-256 function. `delivery_ref` is
+    non-authoritative transport metadata. It is not a Message-ID, not
+    a receipt key, and not a second identity authority. This function
+    does not parse, rewrite, or sanitize MIME headers. Real mailbox
+    identities inside preserved bytes remain subject to the existing
+    parser, which this grant does not change. Tests may compose the
+    existing parser, disposition view, and in-memory receipt. Those
+    tests do not authorize a production orchestrator. The function
+    must not modify the Group 4A parser, `ParseOutcome`, disposition,
+    receipt identity, or retention policy, and it must not read
+    Gmail, use OAuth or Credential Manager, open a socket, or write
+    persistence.
+    When this item is effective, Lane 4 may add one pure function,
+    `evaluate_receipt_commit(events: object) -> CommitEvidence`, in a
+    new module `src/swingtrade/receipt_commit.py`, with focused tests
+    in `tests/unit/test_receipt_commit.py`. Lane 4 owns that
+    function. This is the offline synthetic transaction-decision
+    model for a future receipt commit. It is not a database adapter.
+    Option B, a real PostgreSQL adapter, and disposable database
+    certification remain separately gated. The function reads
+    allowlisted synthetic events. It does not modify
+    `InstructionReceipt`, `admit_instruction_receipt`,
+    `PostgresIntentRepository`, `IntentRepositoryUnavailable`, or
+    TokenStore. An event dict may contain only `event`,
+    `receipt_key`, `content_digest`, and optional `detail`. `detail`
+    is discarded and is never copied into the result or the
+    exception. `event` is one of `insert_ok`, `commit_confirmed`,
+    `insert_returning_empty`, `authoritative_read`, `lost_ack`,
+    `missing_row`, `timeout`, `serialization_uncertain`, `read_only`,
+    and `unavailable`. A non-list, an unknown key, an unknown event,
+    or an empty list raises `ReceiptCommitRejected` with message
+    `RECEIPT_COMMIT_INVALID` and no other text.
+    The function folds events in caller order. The first digest
+    recorded for a key is the first writer and is never replaced.
+    `CommitEvidence.classification` is the first match below.
+    `reasons` retains every recognized condition that was present so
+    a primary label does not hide another established uncertainty or
+    conflict. No success label is primary while a higher uncertainty
+    is present. `INSERTED` and `COMMITTED` are not `ReceiptKind.NEW`.
+    An unconfirmed commit is never reported as a successful new
+    receipt.
+    1. `UNAVAILABLE` when an `unavailable` event is present.
+    2. `READ_ONLY` when a `read_only` event is present.
+    3. `TIMEOUT` when a `timeout` event is present.
+    4. `SERIALIZATION_UNCERTAIN` when a `serialization_uncertain`
+       event is present.
+    5. `CONFLICT` when one key is paired with two digests. The result
+       keeps the first digest.
+    6. `MISSING_ROW` when a `lost_ack` for a key is followed by
+       `missing_row` for that key and no later `authoritative_read`
+       of that key and its first digest.
+    7. `AUTHORITATIVE_READ` when a `lost_ack` is followed by an
+       `authoritative_read` of that key and its first digest. That
+       read is not `INSERTED`, `COMMITTED`, or `REPLAY`.
+    8. `LOST_ACK` when a `lost_ack` has no later `missing_row` and no
+       later `authoritative_read` of that key and its first digest.
+    9. `REPLAY` when the same key and its first digest are observed
+       more than once by `insert_ok`, `commit_confirmed`, or
+       `authoritative_read`, and no `lost_ack` applies.
+    10. `AUTHORITATIVE_READ` when one `authoritative_read` is the
+        establishing observation.
+    11. `EMPTY_RETURNING` when `insert_returning_empty` is present and
+        no confirmed row was established.
+    12. `COMMITTED` when `commit_confirmed` is present for one key and
+        its first digest and no earlier match applied.
+    13. `INSERTED` when `insert_ok` is present and `commit_confirmed`
+        is not.
+    There is no automatic retry and no fallback into
+    `InMemoryReceiptStore` after an ambiguous event. The function
+    does not open a database connection, execute SQL, import a
+    database driver, run Alembic, create a schema, or provision
+    Supabase. Synthetic results are not evidence of PostgreSQL
+    durability, isolation, or cross-process atomicity. Tests must
+    cover each label, first-writer preservation, lost
+    acknowledgment, missing row, sanitized `detail`, and the absence
+    of a retry or a memory fallback.
+    Lane 1 coordinates shared-contract conflicts and every material
+    integration. No grant in this item authorizes a production
+    function that chains acquisition, disposition, and receipt
+    admission. The three grants do not add a shared identity
+    authority, a shared disposition enum, a broker execution state,
+    a parser-grammar change, a persistence-contract change, an
+    `OrderIntent`, or a database authority.
+    This item does not close `DEP-TS-001`, `DEP-TS-002`,
+    `DEP-TS-003`, `DEP-TS-004`, `DEP-GMAIL-001`, `DEP-DB-001`,
+    `DEP-DB-002`, `DEP-CORE-001`, or `DEP-CORE-002`. All nine stay
+    `OPEN`. ADR-0002, ADR-0003, ADR-0006, and ADR-0007 stay Accepted.
+    ADR-0004 and ADR-0005 stay Proposed. ADR-0005's Decision stays
+    blank. Supabase Free stays preferred and **NOT_ACCEPTED**.
+    `DRY_RUN` remains the only authorized execution mode. `SIM` and
+    `LIVE` remain unauthorized. Credentials, OAuth, Gmail, native
+    Credential Manager, TradeStation connectivity, operational
+    PostgreSQL, migrations, quantity derivation, and orders remain
+    unauthorized.
+    Once this item is effective, the following standing sentences do
+    not prohibit the three new paths named above. Item 18's statement
+    that its four standing groups remain in force for every capability
+    item 18 does not grant does not prohibit these three paths. Item
+    17 remains the only ADR-0007 grant, and the sentence that item 17
+    is the only operative implementation grant does not prohibit
+    `src/swingtrade/receipt_commit.py`. The Lane 2 historical
+    next-action sentence that tells Lane 2 to merge PR #22 is not an
+    instruction to implement or to merge that PR again. The Lane 3
+    status sentence that Lane 3 may implement only the offline
+    credential adapter, and the Lane 4 status sentences that Lane 4
+    may implement only the bounded `create_or_get` change, do not
+    prohibit the three new paths. The current-state sentences that
+    the Operator authorizes the offline Group 2 foundation only, and
+    the Evidence sentence that no Phase 2 authority follows the Phase
+    1 closure, do not prohibit these three paths. Those sentences
+    remain in force for every capability this item does not grant.
+    This item does not edit the Lane 3 or Lane 4 status rows.
 
 ## Evidence
 

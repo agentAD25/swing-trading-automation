@@ -3710,3 +3710,26 @@ No credential, OAuth, socket, SIM call, LIVE call, or order method was
 added. ADR-0005 stays Proposed. `DEP-TS-001` through `DEP-TS-004` stay
 OPEN. `DRY_RUN` remains the only authorized execution mode. This entry
 does not embed its own hash and does not merge the branch.
+
+## 2026-10-12 — Item 19 three-grant authority proposal
+
+Canonical main at authoring is
+`9703efa9d7842e22337c85f7b616bbe21f0c1e2b`, tree
+`eb23947a05988e8334bda555aa4840a90853543b`. Item 18 remains the
+operative grant for the disposition view, the instruction receipt,
+and the broker-report classifier. This entry proposes item 19 and
+does not revise item 18. Item 19 does not authorize coding unless an
+independent verifier has passed this exact commit, an Operator
+decision has authorized integration of this exact commit, and this
+exact commit is canonical `main`. The proposal names three future
+modules: a Lane 2 report-sequence evaluator, a Lane 3 synthetic
+fixture delivery function, and a Lane 4 synthetic receipt-commit
+decision function. It adds no application source. It does not close a
+dependency, accept ADR-0004 or ADR-0005, or authorize an
+acquisition-to-receipt orchestrator. Credentials, OAuth, provider
+access, operational PostgreSQL, `SIM`, and `LIVE` stay unauthorized.
+`DRY_RUN` remains the only authorized execution mode. The Lane 2
+status correction records that PR #22 is merged and that the old
+merge instruction is historical. Lane 3 and Lane 4 status rows are
+not rewritten. This entry does not embed its own hash and does not
+merge the branch.
