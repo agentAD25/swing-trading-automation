@@ -3668,9 +3668,10 @@ Lane 3 owns the view. Lane 4 consumes existing parser fields. Lane 2
 is independent of Gmail. Lane 1 coordinates later shared-contract
 changes. Item 13 and item 17 remain their own grants. The retained
 header sentence that item 17 is the sole operative Lane 4 authority
-for Accepted ADR-0007 limits that exception. After item 18 is
-effective, that sentence and the earlier grants do not prohibit the
-three modules named above.
+for Accepted ADR-0007 limits that exception. The historical evidence
+sentence that no broker authority follows the Phase 1 closure remains
+that closure record. After item 18 is effective, neither sentence
+prohibits the three modules named above.
 
 ### Non-claims
 

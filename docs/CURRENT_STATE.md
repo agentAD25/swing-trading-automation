@@ -678,10 +678,14 @@ a prohibition on later additive coordination roles.
     persistence work limit those earlier grants. The retained prior
     header's statement that item 17 is the sole operative Lane 4
     implementation authority for Accepted ADR-0007 limits that
-    exception. Once item 18 is effective, neither that header nor
+    exception.     Once item 18 is effective, neither that header nor
     those earlier grants prohibit
     `src/swingtrade/group4_email/disposition.py`,
     `src/swingtrade/instruction_receipt.py`, or
+    `src/swingtrade/group3_auth/order_report.py`. The historical
+    evidence sentence that no Phase 2 or broker authority follows the
+    Phase 1 closure remains that closure record. After item 18 is
+    effective, it does not prohibit the offline classifier in
     `src/swingtrade/group3_auth/order_report.py`. No sentence in this
     item prohibits these three modules after the activation condition
     is met. Unrelated deny states, including credentials, network
