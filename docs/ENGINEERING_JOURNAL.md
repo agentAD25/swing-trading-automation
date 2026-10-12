@@ -3666,19 +3666,22 @@ identifier may not.
 
 Lane 3 owns the view. Lane 4 consumes existing parser fields. Lane 2
 is independent of Gmail. Lane 1 coordinates later shared-contract
-changes. Item 13 and item 17 remain their own grants. The retained
-header sentence that item 17 is the sole operative Lane 4 authority
-for Accepted ADR-0007 limits that exception. Once item 18 is
-effective, that header, the Evidence sentence that no Phase 2 or
-broker authority follows the Phase 1 closure, unresolved item 6, and
-the Lane 3 and Lane 4 `docs/WORKSTREAM_STATUS.md` sentences that say
-those lanes may implement only the credential adapter or only
-`create_or_get` do not prohibit
+changes. Item 13 and item 17 remain their own grants. Once item 18
+is effective, four groups of standing sentences do not prohibit
 `src/swingtrade/group4_email/disposition.py`,
 `src/swingtrade/instruction_receipt.py`, or
-`src/swingtrade/group3_auth/order_report.py`. Those sentences remain
-in force for every capability item 18 does not grant. This commit
-does not edit `docs/WORKSTREAM_STATUS.md`.
+`src/swingtrade/group3_auth/order_report.py`. Group one is item 17's
+only-operative-grant sentence and the retained header sentence that
+item 17 is the sole operative Lane 4 authority for Accepted ADR-0007.
+Group two is every current-state occurrence of the statement that the
+Operator authorizes the offline Group 2 foundation only. Group three
+is the Evidence sentence that no Phase 2, broker, TradeStation `SIM`,
+credential, account, order, deployment, real-capital, or `LIVE`
+authority follows the Phase 1 closure. Group four is the Lane 3 and
+Lane 4 rows in `docs/WORKSTREAM_STATUS.md` that limit those lanes to
+the credential adapter or to `create_or_get`. Those four groups
+remain in force for every capability item 18 does not grant. This
+commit does not edit `docs/WORKSTREAM_STATUS.md`.
 
 ### Non-claims
 

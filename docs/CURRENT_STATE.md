@@ -679,23 +679,27 @@ a prohibition on later additive coordination roles.
     header's statement that item 17 is the sole operative Lane 4
     implementation authority for Accepted ADR-0007 limits that
     exception.
-    Once item 18 is effective, the following standing sentences do not
-    prohibit `src/swingtrade/group4_email/disposition.py`,
+    Once item 18 is effective, four groups of standing sentences do
+    not prohibit `src/swingtrade/group4_email/disposition.py`,
     `src/swingtrade/instruction_receipt.py`, or
-    `src/swingtrade/group3_auth/order_report.py`. They remain in force
-    for every capability this item does not grant: the Evidence
-    sentence that no Phase 2, broker, TradeStation `SIM`, credential,
-    account, order, deployment, real-capital, or `LIVE` authority
-    follows the Phase 1 closure; unresolved item 6, including its
-    statements that Phase 2 is not generally authorized and that the
-    Operator authorizes the offline Group 2 foundation only; and the
-    Lane 3 and Lane 4 rows in `docs/WORKSTREAM_STATUS.md` that say
-    Lane 3 may implement only the offline credential adapter and that
-    Lane 4 may implement only the bounded `create_or_get` change.
-    Those rows are not edited by this commit. No sentence in this item
-    prohibits these three modules after the activation condition is
-    met. Unrelated deny states, including credentials, network access,
-    `SIM`, and `LIVE`, remain in force.
+    `src/swingtrade/group3_auth/order_report.py`. Group one is item
+    17's sentence that item 17 is the only operative implementation
+    grant after it is effective, and the retained header's sentence
+    that item 17 is the sole operative Lane 4 implementation authority
+    for Accepted ADR-0007. Group two is every current-state occurrence
+    of the statement that the Operator authorizes the offline Group 2
+    foundation only. Group three is the Evidence sentence that no
+    Phase 2, broker, TradeStation `SIM`, credential, account, order,
+    deployment, real-capital, or `LIVE` authority follows the Phase 1
+    closure. Group four is the Lane 3 and Lane 4 rows in
+    `docs/WORKSTREAM_STATUS.md` that say Lane 3 may implement only the
+    offline credential adapter and that Lane 4 may implement only the
+    bounded `create_or_get` change. This commit does not edit those
+    rows. Those four groups remain in force for every capability this
+    item does not grant. No sentence in this item prohibits these
+    three modules after the activation condition is met. Unrelated
+    deny states, including credentials, network access, `SIM`, and
+    `LIVE`, remain in force.
 
 ## Evidence
 
