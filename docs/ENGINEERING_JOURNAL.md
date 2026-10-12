@@ -3694,3 +3694,19 @@ ADR-0003, ADR-0006, and ADR-0007 stay Accepted. Supabase Free stays
 preferred and **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized
 execution mode. Credentials, OAuth, provider access, `SIM`, and `LIVE`
 stay unauthorized. This entry does not embed its own commit hash.
+
+## 2026-10-12 — Lane 2 synthetic broker-report classifier
+
+Item 18 is effective because canonical main is
+`d4e7aeb1f7cd7c16c81b1f026295ad91319041cc`, the merged PR #37 commit,
+and Lane 1 recorded `LANE1_PR37_AUTHORITY_INTEGRATED_EFFECTIVE`. This
+entry adds `src/swingtrade/group3_auth/order_report.py` and focused
+synthetic tests. The input is a fixture record, not a TradeStation
+wire response. Labels are local evidence and do not replace
+`OutcomeCode`. `UNKNOWN` does not request a retry or a new submission.
+A supplied synthetic order identifier may be retained and is not
+invented. `src/swingtrade/group3_auth/brokerage_read.py` is unchanged.
+No credential, OAuth, socket, SIM call, LIVE call, or order method was
+added. ADR-0005 stays Proposed. `DEP-TS-001` through `DEP-TS-004` stay
+OPEN. `DRY_RUN` remains the only authorized execution mode. This entry
+does not embed its own hash and does not merge the branch.
