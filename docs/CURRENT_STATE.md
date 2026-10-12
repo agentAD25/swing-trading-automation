@@ -678,18 +678,24 @@ a prohibition on later additive coordination roles.
     persistence work limit those earlier grants. The retained prior
     header's statement that item 17 is the sole operative Lane 4
     implementation authority for Accepted ADR-0007 limits that
-    exception.     Once item 18 is effective, neither that header nor
-    those earlier grants prohibit
-    `src/swingtrade/group4_email/disposition.py`,
+    exception.
+    Once item 18 is effective, the following standing sentences do not
+    prohibit `src/swingtrade/group4_email/disposition.py`,
     `src/swingtrade/instruction_receipt.py`, or
-    `src/swingtrade/group3_auth/order_report.py`. The historical
-    evidence sentence that no Phase 2 or broker authority follows the
-    Phase 1 closure remains that closure record. After item 18 is
-    effective, it does not prohibit the offline classifier in
-    `src/swingtrade/group3_auth/order_report.py`. No sentence in this
-    item prohibits these three modules after the activation condition
-    is met. Unrelated deny states, including credentials, network
-    access, `SIM`, and `LIVE`, remain in force.
+    `src/swingtrade/group3_auth/order_report.py`. They remain in force
+    for every capability this item does not grant: the Evidence
+    sentence that no Phase 2, broker, TradeStation `SIM`, credential,
+    account, order, deployment, real-capital, or `LIVE` authority
+    follows the Phase 1 closure; unresolved item 6, including its
+    statements that Phase 2 is not generally authorized and that the
+    Operator authorizes the offline Group 2 foundation only; and the
+    Lane 3 and Lane 4 rows in `docs/WORKSTREAM_STATUS.md` that say
+    Lane 3 may implement only the offline credential adapter and that
+    Lane 4 may implement only the bounded `create_or_get` change.
+    Those rows are not edited by this commit. No sentence in this item
+    prohibits these three modules after the activation condition is
+    met. Unrelated deny states, including credentials, network access,
+    `SIM`, and `LIVE`, remain in force.
 
 ## Evidence
 

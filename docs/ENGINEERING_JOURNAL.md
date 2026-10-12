@@ -3668,10 +3668,17 @@ Lane 3 owns the view. Lane 4 consumes existing parser fields. Lane 2
 is independent of Gmail. Lane 1 coordinates later shared-contract
 changes. Item 13 and item 17 remain their own grants. The retained
 header sentence that item 17 is the sole operative Lane 4 authority
-for Accepted ADR-0007 limits that exception. The historical evidence
-sentence that no broker authority follows the Phase 1 closure remains
-that closure record. After item 18 is effective, neither sentence
-prohibits the three modules named above.
+for Accepted ADR-0007 limits that exception. Once item 18 is
+effective, that header, the Evidence sentence that no Phase 2 or
+broker authority follows the Phase 1 closure, unresolved item 6, and
+the Lane 3 and Lane 4 `docs/WORKSTREAM_STATUS.md` sentences that say
+those lanes may implement only the credential adapter or only
+`create_or_get` do not prohibit
+`src/swingtrade/group4_email/disposition.py`,
+`src/swingtrade/instruction_receipt.py`, or
+`src/swingtrade/group3_auth/order_report.py`. Those sentences remain
+in force for every capability item 18 does not grant. This commit
+does not edit `docs/WORKSTREAM_STATUS.md`.
 
 ### Non-claims
 
