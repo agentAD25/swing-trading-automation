@@ -198,6 +198,18 @@ def test_lost_ack_followed_by_missing_row_is_not_a_commit() -> None:
     assert _SUCCESS.isdisjoint(evidence.reasons)
 
 
+def test_missing_row_after_a_read_is_the_later_resolution() -> None:
+    evidence = _evaluate("lost_ack", "authoritative_read", "missing_row")
+
+    assert evidence.classification is CommitClassification.MISSING_ROW
+    assert evidence.reasons == (
+        CommitClassification.MISSING_ROW,
+        CommitClassification.AUTHORITATIVE_READ,
+    )
+    assert _SUCCESS.isdisjoint(evidence.reasons)
+    assert evidence.content_digest == DIGEST_A
+
+
 def test_later_matching_read_overrides_an_intermediate_missing_row() -> None:
     evidence = _evaluate("lost_ack", "missing_row", "authoritative_read")
 

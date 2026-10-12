@@ -104,6 +104,7 @@ class _Facts:
     lost_ack: bool = False
     missing_after_lost_ack: bool = False
     read_after_lost_ack: bool = False
+    last_resolution: str | None = None
 
 
 def evaluate_receipt_commit(events: object) -> CommitEvidence:
@@ -188,8 +189,10 @@ def _observe(facts: _Facts, event: _Event) -> None:
         facts.lost_ack = True
     if event.kind == "missing_row" and facts.lost_ack:
         facts.missing_after_lost_ack = True
+        facts.last_resolution = "missing"
     if event.kind == "authoritative_read" and facts.lost_ack and matches_first:
         facts.read_after_lost_ack = True
+        facts.last_resolution = "read"
     if event.kind == "insert_returning_empty":
         facts.insert_returning_empty = True
     if not matches_first:
@@ -227,7 +230,7 @@ def _reasons(facts: _Facts) -> tuple[CommitClassification, ...]:
         recognized.append(CommitClassification.SERIALIZATION_UNCERTAIN)
     if facts.conflict:
         recognized.append(CommitClassification.CONFLICT)
-    if facts.lost_ack and facts.missing_after_lost_ack and not facts.read_after_lost_ack:
+    if facts.lost_ack and facts.missing_after_lost_ack and facts.last_resolution == "missing":
         recognized.append(CommitClassification.MISSING_ROW)
     if facts.lost_ack and facts.read_after_lost_ack:
         recognized.append(CommitClassification.AUTHORITATIVE_READ)
