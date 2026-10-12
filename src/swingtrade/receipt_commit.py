@@ -236,6 +236,8 @@ def _reasons(facts: _Facts) -> tuple[CommitClassification, ...]:
         recognized.append(CommitClassification.AUTHORITATIVE_READ)
     if facts.lost_ack and not facts.missing_after_lost_ack and not facts.read_after_lost_ack:
         recognized.append(CommitClassification.LOST_ACK)
+    if _replay(facts):
+        recognized.append(CommitClassification.REPLAY)
     if _establishing_read(facts):
         recognized.append(CommitClassification.AUTHORITATIVE_READ)
     if facts.insert_returning_empty and not _confirmed_row(facts):
@@ -278,8 +280,7 @@ def _replay(facts: _Facts) -> bool:
 
 
 def _success(facts: _Facts) -> CommitClassification | None:
-    if _replay(facts):
-        return CommitClassification.REPLAY
+    """Rules 12 and 13. Replay is recorded earlier and is not a fallback."""
     if facts.commit_confirmed > 0:
         return CommitClassification.COMMITTED
     if facts.insert_ok > 0:

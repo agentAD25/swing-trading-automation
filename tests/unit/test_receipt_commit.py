@@ -170,6 +170,19 @@ def test_conflict_preserves_the_first_digest() -> None:
     assert _SUCCESS.isdisjoint(evidence.reasons)
 
 
+def test_repeated_insert_outranks_an_unconfirmed_empty_return() -> None:
+    evidence = _evaluate("insert_ok", "insert_ok", "insert_returning_empty")
+
+    assert evidence.classification is CommitClassification.REPLAY
+    assert evidence.reasons == (
+        CommitClassification.REPLAY,
+        CommitClassification.EMPTY_RETURNING,
+    )
+    assert CommitClassification.INSERTED not in evidence.reasons
+    assert CommitClassification.COMMITTED not in evidence.reasons
+    assert evidence.content_digest == DIGEST_A
+
+
 def test_same_digest_twice_is_replay_of_the_first_writer() -> None:
     evidence = _evaluate("insert_ok", "insert_ok")
 
