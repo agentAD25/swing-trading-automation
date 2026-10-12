@@ -693,9 +693,12 @@ a prohibition on later additive coordination roles.
     deployment, real-capital, or `LIVE` authority follows the Phase 1
     closure. Group four is the Lane 3 and Lane 4 rows in
     `docs/WORKSTREAM_STATUS.md` that say Lane 3 may implement only the
-    offline credential adapter and that Lane 4 may implement only the
-    bounded `create_or_get` change. This commit does not edit those
-    rows. Those four groups remain in force for every capability this
+    offline credential adapter, that Lane 4 may implement only the
+    bounded `create_or_get` change, and that Lane 4's next permitted
+    action is: when item 17 is effective, implement only that boundary
+    with synthetic URLs and injected failures. This commit does not
+    edit those rows. Those four groups remain in force for every
+    capability this
     item does not grant. No sentence in this item prohibits these
     three modules after the activation condition is met. Unrelated
     deny states, including credentials, network access, `SIM`, and
