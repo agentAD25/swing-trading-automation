@@ -3608,3 +3608,75 @@ ADR-0005 stay Proposed. ADR-0006 and ADR-0007 stay Accepted.
 `DRY_RUN` remains the only authorized execution mode. This merge
 does not embed its own hash, does not merge PR #22, and does not
 authorize a credential, OAuth, SIM, LIVE, or an order.
+
+## 2026-10-12 — Lane 1 records three non-economic DRY_RUN grants
+
+Coordinator documentation only. This commit adds no application source,
+test, migration, or configuration.
+
+### Operator decision
+
+The Operator authorized three bounded non-economic `DRY_RUN`
+implementation milestones and required the grant to be recorded on
+canonical `main` before coding. Item 18 of `docs/CURRENT_STATE.md` is
+that record. This entry does not integrate this commit and does not
+authorize a specialist pull request to merge.
+
+Parent main is `9f4cab32361c39d88c75eaf53866e0e60df3a680`, tree
+`07f2eb71988e28e32d48a7a9dd18904623d9081f`.
+
+### Activation
+
+Item 18 is effective only when an independent verifier has passed this
+exact commit, an Operator decision has authorized integration of this
+exact commit, and this exact commit is canonical `main`. While any
+condition is unmet, the item does not authorize coding. When all three
+are met, the three grants are operative and no further
+implementation-approval cycle applies to this same scope. A later
+specialist commit still needs its own exact-tree verification and a
+separate Operator integration decision. No specialist may self-merge.
+
+### Grants
+
+Lane 3 may add `src/swingtrade/group4_email/disposition.py`, a pure
+view over the existing `ParseOutcome`. `RECORDED_NOT_EXECUTABLE` is
+`ACCEPT` plus `NEW_TRADE` plus at least one envelope. `DEFERRED` is
+`QUARANTINE` with `PARSER_DEFERRED` or `CANCEL_FORMAT_UNSPECIFIED`.
+`QUARANTINED` is every other `QUARANTINE`, including
+`CONFLICTING_DUPLICATE`. `DUPLICATE` is a replay view and is not a
+stored disposition. `REJECT` stays `REJECT`. Informational `ACCEPT`
+stays informational. Unknown combinations fail closed. The labels do
+not replace `Disposition`.
+
+Lane 4 may add `src/swingtrade/instruction_receipt.py`. The identity
+key is the validated fixture message identifier when present, and
+otherwise the raw-byte digest. The same key and digest return the
+original receipt. A conflicting digest does not replace it. Durable
+storage does not copy the in-memory registry poison replacement. No
+Alembic migration, real database connection, raw message, field
+evidence, quantity, price, account identifier, or `OrderIntent` is
+authorized.
+
+Lane 2 may add `src/swingtrade/group3_auth/order_report.py`. Local
+outputs are `ACKNOWLEDGMENT`, `PARTIAL_FILL`, `FILL`, `REJECTION`,
+`CANCELLATION`, and `UNKNOWN`. They do not replace `OutcomeCode`.
+`brokerage_read.py` stays unchanged. `UNKNOWN` does not request a
+retry. A supplied synthetic `OrderID` may be retained. An account
+identifier may not.
+
+Lane 3 owns the view. Lane 4 consumes existing parser fields. Lane 2
+is independent of Gmail. Lane 1 coordinates later shared-contract
+changes. Item 13 and item 17 remain their own grants. The retained
+header sentence that item 17 is the sole operative Lane 4 authority
+for Accepted ADR-0007 limits that exception. After item 18 is
+effective, that sentence and the earlier grants do not prohibit the
+three modules named above.
+
+### Non-claims
+
+All nine dependencies stay `OPEN`. `DEP-CORE-001` and `DEP-CORE-002`
+stay unresolved. ADR-0004 and ADR-0005 stay Proposed. ADR-0002,
+ADR-0003, ADR-0006, and ADR-0007 stay Accepted. Supabase Free stays
+preferred and **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized
+execution mode. Credentials, OAuth, provider access, `SIM`, and `LIVE`
+stay unauthorized. This entry does not embed its own commit hash.

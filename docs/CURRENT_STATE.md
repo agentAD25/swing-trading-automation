@@ -1,6 +1,7 @@
 # Current State
 
-- Last updated: 2026-10-12 (history-preserving merge of canonical main `b35b301bdb582d8c537c1f511f1e3c30de98920b`, tree `a209fb5f0fd9d770d5e6142ee31e4fce2b30a5fd`). That main integrates PR #24 documentation, the offline Gmail credential adapter, and the ADR-0007 persistence remediation. Item 17 remains the sole operative Lane 4 implementation authority for Accepted ADR-0007. Items 15 and 16 remain the historical pre-correction record and do not prohibit that bounded implementation. Item 17 is not a TradeStation authorization. `DEP-TS-001` through `DEP-TS-004` stay OPEN. Real credentials, OAuth, Gmail access, TradeStation SIM, and LIVE remain unauthorized. Governance PR #23 and checkpoint PR #25 remain integrated. The verified parser blobs remain those of `227db721944dc0a470046fdec4b60f581ff28d38`.
+- Last updated: 2026-10-12 (item 18, three non-economic `DRY_RUN` implementation grants). Item 18 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. No further activation step is required after that incorporation. While any of those conditions is unmet, item 18 does not authorize coding. When all three are met, item 18 is the operative grant for the three bounded modules named in that item. Item 17 remains the operative ADR-0007 persistence-exception grant. Item 13 remains the offline Gmail credential-adapter grant. This record does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
+- Prior canonical header, retained as the PR #22 integration record: 2026-10-12 (history-preserving merge of canonical main `b35b301bdb582d8c537c1f511f1e3c30de98920b`, tree `a209fb5f0fd9d770d5e6142ee31e4fce2b30a5fd`). That main integrates PR #24 documentation, the offline Gmail credential adapter, and the ADR-0007 persistence remediation. Item 17 remains the sole operative Lane 4 implementation authority for Accepted ADR-0007. Items 15 and 16 remain the historical pre-correction record and do not prohibit that bounded implementation. Item 17 is not a TradeStation authorization. `DEP-TS-001` through `DEP-TS-004` stay OPEN. Real credentials, OAuth, Gmail access, TradeStation SIM, and LIVE remain unauthorized. Governance PR #23 and checkpoint PR #25 remain integrated. The verified parser blobs remain those of `227db721944dc0a470046fdec4b60f581ff28d38`.
 - This branch also records the 2026-10-08 Lane 2 provider-evidence intake and the 2026-10-09 Operator preference `OPERATOR_PREFERENCE_OPTION_A_REGULAR_WEB_CONFIDENTIAL_CLIENT`. That preference is not ADR acceptance.
 - Current phase: Phase 1 closed (Gate B closure audit); offline Group 2
   foundation implemented on this branch and not merged; C1/U-10 resolved;
@@ -584,6 +585,107 @@ a prohibition on later additive coordination roles.
     that Lane 4 must not code `create_or_get`. Those sentences
     document why implementation was blocked. Item 17 is the only
     operative implementation grant after it is effective.
+
+18. Three non-economic `DRY_RUN` implementation grants, recorded
+    2026-10-12. This item becomes effective only when all three of
+    these are true: an independent verifier has passed this exact
+    commit, an Operator decision has authorized integration of this
+    exact commit, and this exact commit is canonical `main`. No
+    further activation step is required after that incorporation.
+    While any condition is unmet, this item does not authorize
+    coding. When all three are met, the three grants below are
+    operative. No second implementation-approval cycle applies to
+    this same scope. Authorization to implement is not authorization
+    to merge a later specialist pull request. Each specialist
+    implementation still needs its own offline tests and a distinct
+    independent exact-tree verification, and a separate Operator
+    decision on that exact candidate, before Lane 1 may integrate it.
+    No specialist may self-merge.
+    This commit adds no application source. The parent main is
+    `9f4cab32361c39d88c75eaf53866e0e60df3a680`, tree
+    `07f2eb71988e28e32d48a7a9dd18904623d9081f`.
+    When this item is effective, Lane 3 may add one pure view
+    function over an existing `ParseOutcome` in a new module
+    `src/swingtrade/group4_email/disposition.py`, with focused
+    synthetic tests. The function reuses `Disposition`, `MessageType`,
+    reason strings, `instruction_id`, `content_digest`, fixture
+    `message_id`, and `ParseProvenance`. Its view labels are:
+    `RECORDED_NOT_EXECUTABLE` for `ACCEPT` plus `NEW_TRADE` plus at
+    least one instruction envelope; `DEFERRED` for `QUARANTINE` whose
+    reason is `PARSER_DEFERRED` or `CANCEL_FORMAT_UNSPECIFIED`;
+    `QUARANTINED` for every other `QUARANTINE`, including
+    `CONFLICTING_DUPLICATE`; and `DUPLICATE` only as a replay view,
+    not as a stored parser disposition. `REJECT` stays `REJECT`.
+    `ACCEPT` plus `INFORMATIONAL` stays informational and carries no
+    instruction envelope. An unrecognized disposition or message type
+    fails closed. These labels do not replace `Disposition` and are
+    not a new shared economic enum. The function must not read a
+    mailbox, touch credentials, derive a quantity, construct an
+    `OrderIntent`, call `authorize_dispatch` or
+    `DryRunAdapter.dispatch`, mutate persistence, or use the network.
+    When this item is effective, Lane 4 may add one synthetic receipt
+    boundary in a new module `src/swingtrade/instruction_receipt.py`,
+    with tests that use synthetic inputs and injected failures only.
+    The receipt may store the identity key, raw-byte content digest,
+    existing parser disposition, message type, reason codes,
+    instruction identifiers, fixture message identifier, provider type
+    `FIXTURE`, parser version, schema version, and the accepted
+    non-secret provenance references already on `ParseProvenance`.
+    The identity key is the validated fixture message identifier when
+    present, and otherwise the raw-byte digest. The same key and the
+    same digest return the original receipt unchanged. A conflicting
+    digest returns a fail-closed conflict result and does not replace
+    the stored receipt. Durable storage must not copy the in-memory
+    `MessageIdentityRegistry` poison replacement. The receipt must not
+    store a raw message, a normalized body, field-evidence text, order
+    quantity, price, equity, session date, account identifier, token,
+    or credential, and must not construct an `OrderIntent`. This grant
+    does not authorize an Alembic migration, a real or local
+    operational PostgreSQL connection, or a new shared public enum.
+    If a migration or a new shared type is required, that portion
+    stops and returns to Lane 1.
+    When this item is effective, Lane 2 may add one pure classifier
+    in a new module `src/swingtrade/group3_auth/order_report.py`, with
+    synthetic tests. It maps in-memory fixture evidence to
+    `ACKNOWLEDGMENT`, `PARTIAL_FILL`, `FILL`, `REJECTION`,
+    `CANCELLATION`, or `UNKNOWN`. Those names are local outputs. They
+    do not replace `OutcomeCode`. A report may retain a supplied
+    synthetic `OrderID` and must not invent one or disclose an account
+    identifier. Missing, conflicting, or unsupported evidence yields
+    `UNKNOWN` or fails closed. `UNKNOWN` does not request a retry or a
+    new submission. The classifier must not create an order request,
+    promote an intent, open a socket, or use a credential. The
+    certified file `src/swingtrade/group3_auth/brokerage_read.py`
+    stays unchanged.
+    Lane 3 owns the view function. Lane 4 consumes the existing
+    `ParseOutcome` fields and does not invent a disposition enum.
+    Lane 2's classifier is independent of Gmail processing. Lane 1
+    coordinates any later shared-contract change and every material
+    integration. Lane 3 and Lane 4 do not edit the same shared type.
+    This item does not authorize an `OrderIntent` projection, quantity
+    rounding or promotion, `DryRunAdapter.dispatch` changes, broker
+    submission, Gmail or TradeStation access, OAuth, credentials, a
+    real database connection, infrastructure provisioning, acceptance
+    of ADR-0004 or ADR-0005, closure of any dependency, `SIM`, or
+    `LIVE`. `DEP-CORE-001` and `DEP-CORE-002` stay `OPEN`. All nine
+    dependencies stay `OPEN`. `DRY_RUN` remains the only authorized
+    execution mode. Supabase Free stays preferred and
+    **NOT_ACCEPTED**. ADR-0002, ADR-0003, ADR-0006, and ADR-0007 stay
+    Accepted. ADR-0004 and ADR-0005 stay Proposed.
+    Item 13 remains the credential-adapter grant. Item 17 remains the
+    ADR-0007 persistence-exception grant. Their statements that those
+    grants do not themselves authorize further Gmail, broker, or
+    persistence work limit those earlier grants. The retained prior
+    header's statement that item 17 is the sole operative Lane 4
+    implementation authority for Accepted ADR-0007 limits that
+    exception. Once item 18 is effective, neither that header nor
+    those earlier grants prohibit
+    `src/swingtrade/group4_email/disposition.py`,
+    `src/swingtrade/instruction_receipt.py`, or
+    `src/swingtrade/group3_auth/order_report.py`. No sentence in this
+    item prohibits these three modules after the activation condition
+    is met. Unrelated deny states, including credentials, network
+    access, `SIM`, and `LIVE`, remain in force.
 
 ## Evidence
 
