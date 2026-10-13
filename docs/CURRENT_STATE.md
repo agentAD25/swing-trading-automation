@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-10-13 (item 20 proposal, one synthetic ingestion composition). Item 20 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 20 does not authorize coding. Item 19 stays the operative grant for the three modules already integrated under that item. This proposal does not reopen, revise, or expand item 18 or item 19. It does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, authorize a Gmail API call, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-12 (item 19 proposal, three further non-economic `DRY_RUN` implementation grants). Item 19 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 19 does not authorize coding. Item 18 stays the operative grant for the three modules already named there. Its activation sentence in the next bullet is the historical record of integrated commit `d4e7aeb1f7cd7c16c81b1f026295ad91319041cc`, which is an ancestor of canonical main. This proposal does not reopen, revise, or expand item 18. It does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, authorize an acquisition-to-receipt orchestrator, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-12 (item 18, three non-economic `DRY_RUN` implementation grants). Item 18 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. No further activation step is required after that incorporation. While any of those conditions is unmet, item 18 does not authorize coding. When all three are met, item 18 is the operative grant for the three bounded modules named in that item. Item 17 remains the operative ADR-0007 persistence-exception grant. Item 13 remains the offline Gmail credential-adapter grant. This record does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - This branch adds the item 18 Lane 2 classifier in `src/swingtrade/group3_auth/order_report.py`. Its labels are local synthetic report evidence and are not order instructions. `src/swingtrade/group3_auth/brokerage_read.py` is unchanged. The branch is not merged. ADR-0005 stays Proposed. `DEP-TS-001` through `DEP-TS-004` stay OPEN.
@@ -937,6 +938,156 @@ a prohibition on later additive coordination roles.
     1 closure, do not prohibit these three paths. Those sentences
     remain in force for every capability this item does not grant.
     This item does not edit the Lane 3 or Lane 4 status rows.
+
+20. One synthetic ingestion composition, proposed 2026-10-13.
+    This item becomes effective only when all three of these are
+    true: an independent verifier has passed this exact commit, an
+    Operator decision has authorized integration of this exact
+    commit, and this exact commit is canonical `main`. No further
+    activation step is required after that incorporation. While any
+    condition is unmet, this item does not authorize coding. When
+    all three are met, Lane 3 may add one function,
+    `record_synthetic_ingestion(fixtures: object, store: ReceiptStore, registry: MessageIdentityRegistry | None = None) -> tuple[SyntheticIngestionRecord, ...]`,
+    in a new module
+    `src/swingtrade/group4_email/synthetic_ingestion.py`, with
+    focused tests in
+    `tests/group4_email/test_synthetic_ingestion.py`. Lane 3 owns
+    those two paths. No other new implementation path is granted.
+    Authorization to implement is not authorization to merge the
+    later implementation pull request. That pull request still needs
+    its own offline tests, a distinct independent exact-tree
+    verification by an agent other than the implementer, and a
+    separate Operator decision on that exact candidate before Lane 1
+    may integrate it by a history-preserving fast-forward. No
+    specialist may self-merge. This item does not revise item 18 or
+    item 19. This commit adds no application source. The parent main
+    is `a1ce02e33b7cfaeaa9f96968e7ee940a4cb1a01e`, tree
+    `f3bc56ca66bd972db84d9e670313a205b3eca117`.
+    The function reuses, without modification,
+    `deliver_synthetic_fixtures`, `parse_email`,
+    `derive_disposition_view`, and `admit_instruction_receipt`.
+    Blobs that stay unchanged are
+    `src/swingtrade/group4_email/synthetic_acquisition.py`
+    `6fd37978a839b5b4d5e4ce046d4feeba067764b6`,
+    `src/swingtrade/group4_email/parse.py`
+    `4119ffe03758380e0a284cc3514721201fac34c9`,
+    `src/swingtrade/group4_email/disposition.py`
+    `e6a089244300489374e21ef2b7188c16ac44966c`,
+    `src/swingtrade/instruction_receipt.py`
+    `537991932d216baa58b076b22acdcbef2f73595f`,
+    `src/swingtrade/receipt_commit.py`
+    `f8093ae3d6ac874b898a037b234692a7881e9473`, and
+    `src/swingtrade/group3_auth/order_report_sequence.py`
+    `e9169cb2704e9cfac4504be727c50a35e090bcf7`.
+    `SyntheticIngestionRecord` is frozen and exposes exactly these
+    nine fields: `delivery_ref: str`, `content_digest: str`,
+    `parser_disposition: Disposition`,
+    `parser_message_type: MessageType`,
+    `parser_reasons: tuple[str, ...]`,
+    `view_label: DispositionViewLabel`, `receipt_kind: ReceiptKind`,
+    `receipt_key: str`, and `conflict_reason: str | None`. Those
+    names are the accepted types from the existing modules.
+    `content_digest` is the current `SyntheticDelivery` digest, even
+    when a receipt conflict preserves an earlier stored digest. The
+    record does not include MIME, an instruction envelope, a
+    provenance object, an economic quantity, an `OrderIntent`, or an
+    execution permission. Ordinary `repr` and `str` omit
+    `receipt_key` and raw MIME. Public errors and any log line this
+    function emits omit them as well. The function adds no
+    general-purpose serializer and no raw-payload log.
+    The order is fixed. First, accept `registry` only when it is
+    `None` or its exact type is `MessageIdentityRegistry`. Any other
+    value raises `SyntheticIngestionRejected("INGESTION_INVALID")`
+    before acquisition and before any store call. Second, call
+    `deliver_synthetic_fixtures` unchanged. Its
+    `INVALID_FIXTURE`, `INVALID_DELIVERY_REF`, and
+    `DUPLICATE_DELIVERY_REF` errors propagate as that adapter raises
+    them. Third, create a new `MessageIdentityRegistry` for this
+    call when none was supplied, and reuse the injected registry
+    when one was supplied. Fourth, for each delivery in caller
+    order, call `parse_email`, then `derive_disposition_view`, then
+    `admit_instruction_receipt`, then build one frozen record.
+    Return the tuple only when every delivery finishes. On a
+    downstream exception, stop immediately, do not process later
+    items, do not retry, do not roll back earlier receipt
+    admissions, and do not return a partial or complete result
+    tuple. Propagate the accepted public exception. Do not add raw
+    MIME, a delivery reference, or the store's private text to that
+    surface. This item does not claim that Python's implicit
+    exception context is erased.
+    Parser disposition is taken from the current `ParseOutcome`.
+    The view label is taken from the current `DispositionView`.
+    Receipt kind and `conflict_reason` are taken from the current
+    `ReceiptDecision`. The current parser result is not replaced by
+    a previously stored receipt disposition. A conflicting message
+    does not replace the original stored receipt. `QUARANTINED`,
+    `CONFLICT`, and `REPLAY` stay distinct. Receipt `NEW` is not
+    evidence of parser acceptance or of trading authorization.
+    `delivery_ref` stays transport metadata. Receipt identity stays
+    the existing rule: the fixture Message-ID when that id is
+    present, and the accepted raw-content digest when it is absent.
+    A shared in-memory store can distinguish `NEW`, `REPLAY`, and
+    `CONFLICT`. A new process-local store may admit previously
+    observed MIME as `NEW`. No durable restart guarantee is
+    established. The parser registry may already have recorded the
+    current item before that item's receipt-store call fails. The
+    function does not roll back that registry mutation and does not
+    describe the registry and the store as one transaction. The
+    receipt store is not batch-atomic.
+    The function does not call `evaluate_receipt_commit` or
+    `evaluate_report_sequence`. An `INSERTED` or `COMMITTED` label
+    from that separate model is not evidence of PostgreSQL
+    durability. This grant does not add an HTTP endpoint, a
+    scheduler, a queue, a Gmail adapter, a persistence
+    implementation, or a production orchestration framework.
+    Focused tests must cover: a valid `NEW_TRADE` with the three
+    statuses kept distinct; identical MIME under another
+    `delivery_ref`; the same Message-ID with a changed digest;
+    deferred amendment, exit, and cancellation; a quarantined
+    non-fixture Message-ID; malformed MIME with parser `REJECT` and
+    the accepted receipt result; an empty batch; a wrong fixture
+    input type; an invalid `delivery_ref` on a later member; a
+    duplicate `delivery_ref`; a second-item store failure that keeps
+    the first receipt and does not touch a third item; frozen
+    records, unchanged caller input, and `repr` privacy; reversed
+    caller order; a fresh in-memory store after a simulated restart;
+    the absence of forbidden imports, provider connectivity, and
+    executable economic output; rejection of an invalid registry
+    type before acquisition or store use; registry advancement when
+    receipt admission fails, without rollback; current parser
+    evidence kept separate from first-writer receipt evidence; no
+    completed result tuple when a later item fails; and a sanitized
+    public exception surface that does not claim Python's internal
+    exception context was erased.
+    Lane 2 outcome A, recorded with this proposal, is that existing
+    offline broker-report evidence is sufficient and that no new
+    Lane 2 component is authorized. Lane 3 handoff
+    `LANE3_ITEM20_COMPOSITION_CONTRACT_READY` and Lane 4 handoff
+    `LANE4_ITEM20_RECEIPT_CONTRACT_READY` say the certified
+    interfaces accept this call sequence without modifying
+    `ReceiptStore` or `InstructionReceipt`. Those handoffs are
+    contract-readiness records. They are not independent
+    verification of an implementation. Lane 2 handoff
+    `LANE2_PHASE3_BROKER_EVIDENCE_SCOPE_READY` is the same kind of
+    record.
+    Item 19's statement that item 19 itself authorizes no function
+    chaining acquisition, disposition, and receipt admission does
+    not prohibit the two paths named in this item once this item is
+    effective. Until then, that statement remains in force. The
+    Lane 3 status sentence that Lane 3 may implement only the
+    offline credential adapter does not prohibit these two paths
+    once this item is effective. This item does not edit the Lane 3
+    or Lane 4 status tables. It does not close `DEP-TS-001`,
+    `DEP-TS-002`, `DEP-TS-003`, `DEP-TS-004`, `DEP-GMAIL-001`,
+    `DEP-DB-001`, `DEP-DB-002`, `DEP-CORE-001`, or `DEP-CORE-002`.
+    All nine stay `OPEN`. ADR-0002, ADR-0003, ADR-0006, and
+    ADR-0007 stay Accepted. ADR-0004 and ADR-0005 stay Proposed.
+    ADR-0005's Decision stays blank. Supabase Free stays preferred
+    and **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized
+    execution mode. `SIM` and `LIVE` remain unauthorized.
+    Credentials, OAuth, Gmail, native Credential Manager,
+    TradeStation connectivity, operational PostgreSQL, migrations,
+    quantity derivation, and orders remain unauthorized.
 
 ## Evidence
 

@@ -3733,3 +3733,50 @@ status correction records that PR #22 is merged and that the old
 merge instruction is historical. Lane 3 and Lane 4 status rows are
 not rewritten. This entry does not embed its own hash and does not
 merge the branch.
+
+## 2026-10-13 — Item 20 synthetic ingestion authority proposal
+
+Canonical main at authoring is
+`a1ce02e33b7cfaeaa9f96968e7ee940a4cb1a01e`, tree
+`f3bc56ca66bd972db84d9e670313a205b3eca117`. Item 19 is complete on
+that main. This entry proposes item 20 and does not revise item 18
+or item 19. Item 20 does not authorize coding unless an independent
+verifier has passed this exact commit, an Operator decision has
+authorized integration of this exact commit, and this exact commit
+is canonical `main`. The proposal names one future Lane 3 function,
+`record_synthetic_ingestion`, and exactly two new files. It reuses
+`deliver_synthetic_fixtures`, `parse_email`,
+`derive_disposition_view`, and `admit_instruction_receipt` without
+modifying them. It adds no application source.
+
+Lane 2 outcome A says existing offline broker-report evidence is
+sufficient and requests no new Lane 2 component. Lane 3 reports that
+the composition is compatible with the certified acquisition, parser,
+disposition, and receipt interfaces. Lane 4 reports that
+`ReceiptStore` and `InstructionReceipt` need no modification and that
+sequential admission, first-writer preservation, and fail-closed
+storage behavior are compatible. Those handoffs are
+`LANE2_PHASE3_BROKER_EVIDENCE_SCOPE_READY`,
+`LANE3_ITEM20_COMPOSITION_CONTRACT_READY`, and
+`LANE4_ITEM20_RECEIPT_CONTRACT_READY`. They are not an independent
+implementation PASS.
+
+The record keeps nine fields. Its `content_digest` is the current
+delivery digest, including when the stored receipt keeps an earlier
+digest. Parser disposition, view label, and receipt kind stay
+separate. `QUARANTINED`, `CONFLICT`, and `REPLAY` are not
+interchangeable. Receipt `NEW` is not trading authorization. A later
+store failure leaves earlier admissions in place and does not roll
+back a registry update already made for the failing item. The store
+is not batch-atomic. `delivery_ref` is transport metadata. A new
+process-local store may admit previously seen MIME as `NEW`. The
+function does not call `evaluate_receipt_commit` or
+`evaluate_report_sequence`, and neither label is a PostgreSQL
+durability claim.
+
+All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay
+Proposed. ADR-0005's Decision stays blank. ADR-0002, ADR-0003,
+ADR-0006, and ADR-0007 stay Accepted. Supabase Free stays preferred
+and **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized execution
+mode. `SIM` and `LIVE` stay unauthorized. This entry does not embed
+its own hash and does not merge the branch.
