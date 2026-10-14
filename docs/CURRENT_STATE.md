@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-10-14 (item 21 proposal, local Windows Gmail OAuth connectivity governance). Item 21 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 21 does not authorize coding. When all three are met, the only new authority is offline implementation of the two paths named in item 21. That authority is not a live OAuth login, a Gmail API call, native Credential Manager access, or the corpus connection described by Proposed ADR-0004. Items 18, 19, and 20 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-13 (item 20 proposal, one synthetic ingestion composition). Item 20 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 20 does not authorize coding. Item 19 stays the operative grant for the three modules already integrated under that item. This proposal does not reopen, revise, or expand item 18 or item 19. It does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, authorize a Gmail API call, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-12 (item 19 proposal, three further non-economic `DRY_RUN` implementation grants). Item 19 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 19 does not authorize coding. Item 18 stays the operative grant for the three modules already named there. Its activation sentence in the next bullet is the historical record of integrated commit `d4e7aeb1f7cd7c16c81b1f026295ad91319041cc`, which is an ancestor of canonical main. This proposal does not reopen, revise, or expand item 18. It does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, authorize an acquisition-to-receipt orchestrator, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-12 (item 18, three non-economic `DRY_RUN` implementation grants). Item 18 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. No further activation step is required after that incorporation. While any of those conditions is unmet, item 18 does not authorize coding. When all three are met, item 18 is the operative grant for the three bounded modules named in that item. Item 17 remains the operative ADR-0007 persistence-exception grant. Item 13 remains the offline Gmail credential-adapter grant. This record does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
@@ -1088,6 +1089,214 @@ a prohibition on later additive coordination roles.
     Credentials, OAuth, Gmail, native Credential Manager,
     TradeStation connectivity, operational PostgreSQL, migrations,
     quantity derivation, and orders remain unauthorized.
+
+21. Local Windows Gmail OAuth connectivity governance, proposed
+    2026-10-14. This item becomes effective only when all three of
+    these are true: an independent verifier has passed this exact
+    commit, an Operator decision has authorized integration of this
+    exact commit, and this exact commit is canonical `main`. No
+    further activation step is required after that incorporation.
+    While any condition is unmet, this item does not authorize
+    coding. When all three are met, the only new authority is Gate B
+    below: Lane 3 may add one offline module,
+    `src/swingtrade/group4_email/local_oauth_probe.py`, and focused
+    tests in `tests/group4_email/test_local_oauth_probe.py`. Lane 3
+    owns those two paths. No other new implementation path is
+    granted. Authorization to implement is not authorization to merge
+    the later implementation pull request. That pull request still
+    needs its own offline tests, a distinct independent exact-tree
+    verification by an agent other than the implementer, and a
+    separate Operator decision on that exact candidate before Lane 1
+    may integrate it by a history-preserving fast-forward. No
+    specialist may self-merge. This commit adds no application
+    source. The parent main is
+    `1614cbb7060b31bacc59f1687a0c68d91474ed67`, tree
+    `725bc9e78a0d530c6c91163cffda8a83fae57a82`.
+    The adopted planning record is
+    `LANE3_GMAIL_LOCAL_OAUTH_CONNECTIVITY_GATE_READY` together with
+    `LANE3_GMAIL_LOCAL_OAUTH_DISCOVERY_ADOPTED`. Those records are
+    contract readiness for this governance text. They are not an
+    implementation PASS and they are not a live connectivity PASS.
+    This item separates four gates. Gate A is this governance text.
+    Gate B is the offline module and tests named above, followed by
+    independent exact-tree verification and a separate Operator
+    integration decision. Gate C is a later explicit Operator
+    decision that identifies the local Windows runtime, the Desktop
+    OAuth client type, the single scope, the one Gmail API
+    operation, one attended execution, the approved redacted evidence
+    fields, and the prohibition on persistent token storage and on
+    any further API request. Gate D is a later assessment of
+    sanitized evidence from that one execution. Gate A does not
+    approve Gate B's merge. Gate B does not approve Gate C. Gate C
+    does not close a dependency by itself.
+    The future runtime is the Operator's local Windows computer.
+    Cursor cloud agents are not the OAuth callback host, token
+    custodian, or mailbox reader. The OAuth client type is a Google
+    Desktop application. The flow is Authorization Code with PKCE
+    S256. The callback is an ephemeral listener bound to `127.0.0.1`
+    on a port assigned by the operating system. The redirect URI is
+    exactly `http://127.0.0.1:{port}/` for that bound port. The
+    module rejects `localhost`, `::1`, `0.0.0.0`, any non-loopback
+    host, a public listener, a cloud callback, and the deprecated
+    out-of-band flow. Required protections are a cryptographic
+    random `state`, a cryptographic random per-request PKCE verifier
+    of 43 to 128 unreserved characters, an S256 challenge, state
+    validation before any code exchange, exact redirect validation,
+    and a callback timeout of at most 120 seconds. Missing,
+    duplicate, mismatched, and malformed callback parameters are
+    rejected before token exchange. `code_challenge_method=plain` is
+    rejected. RFC 7636 appendix B remains the deterministic S256
+    vector: verifier
+    `dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk` and challenge
+    `E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM`.
+    The only permitted scope is
+    `https://www.googleapis.com/auth/gmail.metadata`. The only
+    permitted Gmail API request is `GET
+    https://gmail.googleapis.com/gmail/v1/users/me/profile` with an
+    empty body. The authorization endpoint is only
+    `https://accounts.google.com/o/oauth2/v2/auth`. The token
+    endpoint is only `https://oauth2.googleapis.com/token`. No other
+    host or path is permitted. The authorization request uses
+    `response_type=code`, that exact scope, S256, and `state`. It
+    omits `access_type`, an offline-access prompt, and any parameter
+    that widens scope. The token form sends `grant_type`, `code`,
+    `code_verifier`, `client_id`, and `redirect_uri`. It omits
+    `client_secret`, `refresh_token`, and `access_type`. A granted
+    scope other than that exact metadata scope is rejected,
+    including `gmail.readonly`, `gmail.labels`, `gmail.modify`, and
+    any additional scope. No message, thread, attachment, label, or
+    history API request is permitted. Mailbox listing and message
+    content reads are outside this item.
+    A successful profile response is HTTP 200 and a JSON object that
+    contains `emailAddress` as a string, `messagesTotal` as an
+    integer, `threadsTotal` as an integer, and `historyId` as a
+    string. Boolean values are not integers. The module checks that
+    shape and then discards the values. The returned evidence is a
+    frozen `LocalOAuthProbeEvidence` with exactly these fields:
+    `callback_result: str`, `scope_result: str`,
+    `token_exchange_result: str`, `profile_result: str`, and
+    `content_retained: bool`. `content_retained` is false. Ordinary
+    `repr` and `str` of the evidence, errors, and logs omit the
+    profile values, the authorization code, the PKCE verifier, the
+    access token, any refresh token, the callback query, and
+    `Authorization` headers. `profile_result` on that success path
+    is `GMAIL_OAUTH_PROFILE_SHAPE_PASS`. That code is an offline
+    shape result. It is not `GMAIL_CONNECTIVITY_PASS`. Failures
+    raise `LocalOAuthProbeRejected` with one of these codes and do
+    not return a success evidence object: `GMAIL_OAUTH_STATE_REJECTED`,
+    `GMAIL_OAUTH_PKCE_REJECTED`, `GMAIL_OAUTH_CALLBACK_REJECTED`,
+    `GMAIL_OAUTH_REDIRECT_REJECTED`, `GMAIL_OAUTH_SCOPE_REJECTED`,
+    `GMAIL_OAUTH_TOKEN_REJECTED`, `GMAIL_OAUTH_PROFILE_REJECTED`,
+    `GMAIL_OAUTH_ENDPOINT_REJECTED`, and
+    `GMAIL_OAUTH_LIVE_UNAUTHORIZED`. Public `repr` is the code.
+    The module imports no network implementation. It does not open a
+    socket, launch a browser, or read the environment on import or
+    during test discovery. HTTP, the loopback listener, the clock,
+    and the browser launcher are injected by the caller.
+    `orchestrate_profile_probe` performs the sequence only through
+    those injected objects and enforces the endpoint and scope
+    allowlists before each call. `run_attended_profile_probe` takes
+    no arguments and raises
+    `LocalOAuthProbeRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")`
+    before binding a socket, opening a browser, exchanging a code,
+    or calling Gmail. No environment variable, command flag, file,
+    or test fixture disables that refusal. Gate B therefore ships no
+    live transport. A network-capable tree remains inert toward the
+    real provider. Gate C, even after a later Operator decision,
+    still requires a separate explicit change before any live call.
+    This item does not define that change.
+    For the first attended proof, Desktop client JSON stays on the
+    Operator's Windows system, outside the repository and outside
+    Cursor cloud. Gate B tests use fixture client identifiers only.
+    They do not read a downloaded client file. Authorization codes,
+    PKCE verifiers, access tokens, and refresh tokens are not
+    printed or persisted. Offline access and persistent
+    refresh-token issuance are not requested. If a token response
+    contains `refresh_token`, the module drops that field before
+    logging or returning and does not send a refresh grant. Access
+    material used inside `orchestrate_profile_probe` stays in
+    process memory and is discarded before the function returns.
+    Provider response content is not persisted. The Operator
+    revocation instruction for any later attended execution is to
+    remove the app at `https://myaccount.google.com/permissions` and
+    delete the local client JSON. This module does not call a token
+    revoke endpoint. Provider credentials are never copied into Git,
+    pull-request text, Cursor chats, screenshots, or verification
+    artifacts. Desktop client JSON is not uploaded to an independent
+    verifier. An OAuth library whose defaults persist tokens, widen
+    scope, or open a network connection on import is not adopted
+    under this item. That incompatibility requires a design change
+    and a separate review.
+    Gate B does not implement native Windows Credential Manager and
+    does not modify the synthetic credential adapter. These blobs
+    stay unchanged:
+    `src/swingtrade/gmail_credential/__init__.py`
+    `0e8eed5244e6966740f5b0d9af877f8193a6f2b1`,
+    `src/swingtrade/gmail_credential/adapter.py`
+    `984b7781d88f28b4fd2888ba3f8a9e12475448c0`,
+    `src/swingtrade/gmail_credential/errors.py`
+    `32a446eb059635bcd2f44db34f6ac1385ef4df85`,
+    `src/swingtrade/gmail_credential/identity.py`
+    `30c7dd8056e195dc98d02dfc1057662c170f0811`,
+    `src/swingtrade/gmail_credential/mock_port.py`
+    `9a76189be5cdc7cb9e4652e276f58ec86abfcd74`,
+    `src/swingtrade/gmail_credential/secret.py`
+    `0acc491ee29e1133f73e451636da9d9747726230`,
+    `src/swingtrade/group4_email/__init__.py`
+    `44d73a8b92f05fbf941eb6c6b1383e52a2913104`,
+    `src/swingtrade/group4_email/synthetic_acquisition.py`
+    `6fd37978a839b5b4d5e4ce046d4feeba067764b6`,
+    `src/swingtrade/group4_email/parse.py`
+    `4119ffe03758380e0a284cc3514721201fac34c9`, and
+    `src/swingtrade/group4_email/synthetic_ingestion.py`
+    `73165d7ccaecc94dd930943f820436af3940168b`.
+    The new module is not imported by `group4_email/__init__.py`.
+    It does not call `record_synthetic_ingestion`, `parse_email`,
+    `deliver_synthetic_fixtures`, `admit_instruction_receipt`,
+    `evaluate_receipt_commit`, or `evaluate_report_sequence`. It
+    constructs no `OrderIntent`. It adds no HTTP service, scheduler,
+    queue, webhook, or refresh worker. It does not connect Item 20
+    to a provider.
+    Focused tests must cover: no network on import; the forbidden
+    imports and the absence of a live client; the hard
+    `GMAIL_OAUTH_LIVE_UNAUTHORIZED` refusal with zero socket and
+    browser calls; the RFC 7636 S256 vector and rejection of
+    `plain`; absence of verifier and state from ordinary `repr`;
+    state mismatch before token exchange; missing, duplicate, and
+    malformed callback parameters; a non-loopback redirect; callback
+    timeout before token exchange; a wrong or extra scope, including
+    `gmail.readonly`; a non-allowlisted token or profile endpoint;
+    a profile fixture whose four fields validate and then disappear
+    from the evidence object; a non-200 profile response whose body
+    is absent from the error; a `refresh_token` field that is absent
+    from evidence and logs; an authorization request without
+    `access_type=offline`; and no import of Item 20, the parser, the
+    receipt modules, or the credential adapter. Tests use fixtures
+    only.
+    The historical Lane 3 status row that prohibits Gate B remains
+    the 2026-10-09 corpus-connection attestation. This item does not
+    rewrite that row and does not start that corpus Gate B. The
+    sentence in `docs/GMAIL_READONLY_CORPUS_GATE.md` that names
+    Cursor environment secrets is historical research. The
+    clarification added beside it keeps that sentence and states the
+    present custody rule: provider tokens are not placed in Cursor
+    Cloud environment secrets. Current state prevails over that
+    historical setup list. ADR-0004 is not edited. Its Decision
+    stays blank. Its `gmail.readonly` corpus option is a separate
+    later decision. A metadata profile probe does not satisfy it.
+    This item does not revise items 18, 19, or 20. It does not close
+    `DEP-TS-001`, `DEP-TS-002`, `DEP-TS-003`, `DEP-TS-004`,
+    `DEP-GMAIL-001`, `DEP-DB-001`, `DEP-DB-002`, `DEP-CORE-001`, or
+    `DEP-CORE-002`. All nine stay `OPEN`. `DEP-GMAIL-001` remains
+    the corpus-setup question under Proposed ADR-0004. ADR-0002,
+    ADR-0003, ADR-0006, and ADR-0007 stay Accepted. ADR-0004 and
+    ADR-0005 stay Proposed. ADR-0005's Decision stays blank.
+    Supabase Free stays preferred and **NOT_ACCEPTED**. `DRY_RUN`
+    remains the only authorized execution mode. `SIM` and `LIVE`
+    remain unauthorized. Credentials, live OAuth, Gmail API
+    execution, native Credential Manager, TradeStation connectivity,
+    operational PostgreSQL, migrations, and orders remain
+    unauthorized.
 
 ## Evidence
 

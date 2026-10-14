@@ -141,3 +141,24 @@ Never supply:
 After that report, the next gate is read-only inventory, classification,
 clustering, sanitization, and shadow parsing. It still must not send or
 modify mail, connect Supabase or TradeStation, or change parser grammar.
+
+## Present authorization clarification (2026-10-14)
+
+The Operator setup list above is historical research for the
+Proposed ADR-0004 corpus gate. Step 6, including its reference to
+Cursor environment secrets, remains part of that historical record.
+It is not present authorization. `docs/CURRENT_STATE.md` and the
+credential rules prevail where they differ from this file.
+
+The local connectivity milestone proposed as current-state item 21,
+while that item is ineffective, targets a future attended flow on
+the Operator's Windows computer. Actual provider tokens, Desktop
+client JSON, authorization codes, and refresh material are not
+placed in Cursor Cloud environment secrets, Git, chat, screenshots,
+or verification artifacts. This clarification does not accept
+ADR-0004, does not close `DEP-GMAIL-001`, and does not authorize
+OAuth consent, token exchange, or a Gmail API call. The historical
+scope in this file remains `gmail.readonly` for a separate corpus
+decision. Item 21 names a different and narrower scope,
+`gmail.metadata`, for one profile read, and only after its own
+later gates.

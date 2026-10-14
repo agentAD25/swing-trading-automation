@@ -3780,3 +3780,45 @@ ADR-0006, and ADR-0007 stay Accepted. Supabase Free stays preferred
 and **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized execution
 mode. `SIM` and `LIVE` stay unauthorized. This entry does not embed
 its own hash and does not merge the branch.
+
+## 2026-10-14 — Item 21 local Gmail OAuth connectivity governance
+
+Canonical main at authoring is
+`1614cbb7060b31bacc59f1687a0c68d91474ed67`, tree
+`725bc9e78a0d530c6c91163cffda8a83fae57a82`. Items 18, 19, and 20
+remain effective. This entry proposes item 21 and does not revise
+those items. Item 21 does not authorize coding unless an independent
+verifier has passed this exact commit, an Operator decision has
+authorized integration of this exact commit, and this exact commit
+is canonical `main`. When those three are met, Lane 3 may add only
+`src/swingtrade/group4_email/local_oauth_probe.py` and
+`tests/group4_email/test_local_oauth_probe.py`. That is Gate B, an
+offline injected-transport client for one future attended Windows
+Desktop flow. Gate C, the one real login and one
+`users.getProfile` call, remains a separate Operator decision. This
+commit adds no application source and performs no provider call.
+
+The contract is Authorization Code with PKCE S256, a `127.0.0.1`
+loopback listener, scope
+`https://www.googleapis.com/auth/gmail.metadata`, and
+`GET https://gmail.googleapis.com/gmail/v1/users/me/profile` with an
+empty body. Profile values are checked and discarded. The attended
+entry point refuses with `GMAIL_OAUTH_LIVE_UNAUTHORIZED` before any
+socket or browser call. No environment switch disables that refusal.
+Native Credential Manager and the synthetic credential adapter are
+unchanged. Cursor Cloud environment secrets are not a token store.
+The historical sentence in `docs/GMAIL_READONLY_CORPUS_GATE.md` that
+names those secrets stays in place, with an additive clarification
+that current state prevails.
+
+The planning inputs
+`LANE3_GMAIL_LOCAL_OAUTH_CONNECTIVITY_GATE_READY` and
+`LANE3_GMAIL_LOCAL_OAUTH_DISCOVERY_ADOPTED` are not an
+implementation PASS. ADR-0004 stays Proposed and is not edited.
+`DEP-GMAIL-001` stays OPEN. All nine dependencies stay OPEN.
+ADR-0002, ADR-0003, ADR-0006, and ADR-0007 stay Accepted. ADR-0005
+stays Proposed and its Decision stays blank. Supabase Free stays
+preferred and **NOT_ACCEPTED**. `DRY_RUN` remains the only
+authorized execution mode. `SIM` and `LIVE` stay unauthorized.
+This entry does not embed its own hash and does not merge the
+branch.
