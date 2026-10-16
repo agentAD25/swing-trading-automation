@@ -3860,3 +3860,39 @@ ADR-0006, and ADR-0007 stay Accepted. Supabase Free stays preferred
 and **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized
 execution mode. `SIM` and `LIVE` stay unauthorized. This entry does
 not embed its own hash and does not merge the branch.
+
+## 2026-10-16 — Item 23 local Windows Gmail Gate C
+
+Canonical main at authoring is
+`fcafaded6dc06d56af256afe244e604b150fcf81`, tree
+`9653ad4535346d30bfe5a4f07a2d07e77bb6687a`. Items 18 through 22
+remain effective. Gate B is integrated at that parent. This entry
+proposes item 23 and does not revise those items. Item 23 does not
+authorize coding unless an independent verifier has passed this
+exact commit, an Operator decision has authorized integration of
+this exact commit, and this exact commit is canonical `main`.
+
+When those three are met, Lane 3 may add only
+`src/swingtrade/gmail_local_connect.py` and
+`tests/unit/test_gmail_local_connect.py`. The module reuses
+`orchestrate_profile_probe` and does not edit
+`local_oauth_probe.py`, its tests, or `test_attacks.py`.
+`run_attended_profile_probe` stays an unconditional
+`GMAIL_OAUTH_LIVE_UNAUTHORIZED` refusal. The new Windows command is
+a separate `__main__` entry, is inert on import, and refuses before
+any socket unless the platform is Windows. No environment variable
+or `network_permitted` flag turns the old refusal into a live call.
+
+Decision A is that offline implementation. Decision B is a later
+Operator integration of an independently verified implementation
+SHA. Decision C is Item 21 Gate C, a still later one-shot Windows
+execution approval. This commit grants none of B or C.
+`GMAIL_OAUTH_PROFILE_SHAPE_PASS` stays a shape result.
+`GMAIL_GATE_C_REAL_CONNECTIVITY_PASS` can be printed only by the
+future real Windows command and is not claimed here. All nine
+dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
+ADR-0005's Decision stays blank. ADR-0002, ADR-0003, ADR-0006, and
+ADR-0007 stay Accepted. Supabase Free stays preferred and
+**NOT_ACCEPTED**. `DRY_RUN` remains the only authorized trading
+execution mode. `SIM` and `LIVE` stay unauthorized. This entry does
+not embed its own hash and does not merge the branch.

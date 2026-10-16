@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-10-16 (item 23 proposal, local Windows Gmail Gate C one-shot connectivity). Item 23 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 23 does not authorize coding or a provider call. When all three are met, the only new authority is Lane 3's offline implementation of the two paths named in item 23. That authority is not integration of the implementation, a live OAuth login, a Gmail API call, Google Cloud provisioning, or a change to the Gate B refusal. Items 18, 19, 20, 21, and 22 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-16 (item 22 proposal, parser security-scan scope for the authorized OAuth module). Item 22 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 22 does not authorize editing `tests/group4_email/test_attacks.py` or any other path. When all three are met, the only new authority is the one-file test-scope correction named in item 22. That authority is not a change to the OAuth module, a live OAuth login, a Gmail API call, or integration of PR #48. Items 18, 19, 20, and 21 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-14 (item 21 proposal, local Windows Gmail OAuth connectivity governance). Item 21 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 21 does not authorize coding. When all three are met, the only new authority is offline implementation of the two paths named in item 21. That authority is not a live OAuth login, a Gmail API call, native Credential Manager access, or the corpus connection described by Proposed ADR-0004. Items 18, 19, and 20 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-13 (item 20 proposal, one synthetic ingestion composition). Item 20 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 20 does not authorize coding. Item 19 stays the operative grant for the three modules already integrated under that item. This proposal does not reopen, revise, or expand item 18 or item 19. It does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, authorize a Gmail API call, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
@@ -1396,6 +1397,185 @@ a prohibition on later additive coordination roles.
     blank. Supabase Free stays preferred and **NOT_ACCEPTED**.
     `DRY_RUN` remains the only authorized execution mode. `SIM` and
     `LIVE` remain unauthorized.
+
+23. Local Windows Gmail Gate C one-shot connectivity, proposed
+    2026-10-16. This item becomes effective only when all three of
+    these are true: an independent verifier has passed this exact
+    commit, an Operator decision has authorized integration of this
+    exact commit, and this exact commit is canonical `main`. While
+    any condition is unmet, this item does not authorize coding, a
+    provider call, or Google Cloud provisioning. When all three are
+    met, the only new authority is Decision A below. Decision A is
+    not Decision B and is not Decision C. This commit adds no
+    application source and no test change. The parent main is
+    `fcafaded6dc06d56af256afe244e604b150fcf81`, tree
+    `9653ad4535346d30bfe5a4f07a2d07e77bb6687a`. Items 18, 19, 20,
+    21, and 22 stay effective and are not revised. Their sentences
+    that describe PR #48 as open are the record of those earlier
+    commits. Gate B is already canonical at the parent above. This
+    item does not reopen it and does not treat that integration as
+    Gate C.
+
+    Item 21 remains the Gate A and Gate B contract. Gate B's
+    certified source blob `777db628ebe0f55aa529b26c9ad5692799121090`
+    and certified test blob
+    `86d99b6269d1c14238c5b240b7998428a206d59f` stay unchanged. The
+    Item 22 security-test blob
+    `14b911ba29f16161f179c272c2e2f5e1be50922e` stays unchanged.
+    Independent verifier `bc-10b13d65-4063-5611-a775-a133d7579cf9`
+    returned `INDEPENDENT_EXACT_TREE_PASS` for the parent tree. That
+    PASS certifies the offline probe and the parser-scan correction.
+    It is not a real connectivity PASS. The earlier verifier
+    `bc-3cbfb445-befb-536c-8492-580e49eeb182` remains
+    `INDEPENDENT_EXACT_TREE_FAIL` for tree
+    `768b6144fa4c7233a171d0d717eaebf78753d764`. This item does not
+    relabel that FAIL.
+
+    The reusable Gate B surface is `orchestrate_profile_probe`
+    together with its PKCE S256, state, loopback, callback,
+    token-form, scope, and profile-shape helpers. Those helpers
+    already reject a non-metadata scope, a second conceptual profile
+    target, an offline-access parameter, and a retained profile
+    body. `DesktopClientConfig.network_permitted` must stay `False`;
+    `validate_desktop_client` rejects any other value with
+    `GMAIL_OAUTH_LIVE_UNAUTHORIZED`. `run_attended_profile_probe`
+    takes no arguments and raises that same code before any socket,
+    browser, token exchange, or Gmail call. No environment variable,
+    flag, file, or fixture disables it. The module imports no
+    socket, HTTP client, or browser launcher. Import and test
+    discovery do not connect. The orchestrator will call whatever
+    transport a caller injects, and this tree injects none.
+
+    The missing capability is one attended local mechanism that
+    constructs the real transports. It is not compatible with
+    editing `local_oauth_probe.py`. Adding a live client there would
+    change the certified Gate B contract, would give the refusal a
+    live path, and would put provider literals in a package whose
+    parser scan excludes only `local_oauth_probe.py`. A second file
+    inside `src/swingtrade/group4_email/` would be scanned for
+    `gmail`, `oauth`, and `import socket`. This item therefore does
+    not authorize that edit and does not authorize another exclusion
+    from `test_attacks.py`.
+
+    Decision A, and only after this item is effective, permits Lane
+    3 to add exactly two paths:
+    `src/swingtrade/gmail_local_connect.py` and
+    `tests/unit/test_gmail_local_connect.py`. Lane 3 owns those
+    paths. No other path is granted. The module lives outside
+    `group4_email` so the existing parser scan stays intact. It must
+    call the existing orchestrator and builders rather than
+    reimplement PKCE, state comparison, redirect matching, scope
+    checks, or profile-shape checks. It must pass
+    `network_permitted=False` into the existing client validator. It
+    must not change that validator, the refusal, the two certified
+    OAuth blobs, or the security-test blob. It must not modify
+    parser, acquisition, ingestion, receipt, credential-adapter,
+    broker, economic, database, ADR, dependency, or configuration
+    files. It adds no third-party OAuth or Gmail library and no
+    dependency entry.
+
+    The new module imports no socket, HTTP client, or browser
+    launcher at import time. Those imports occur only inside
+    `run_local_windows_profile_proof`. That function is reached only
+    from `if __name__ == "__main__"`, through `python -m
+    swingtrade.gmail_local_connect` and one explicit local path
+    argument to the Desktop client JSON. The path is not an
+    environment variable, not a repository file, and not a Cursor
+    Cloud secret. Import, pytest collection, a generic application
+    start, and any environment variable do not call it. Its first
+    action on a non-Windows platform is to raise
+    `GMAIL_OAUTH_LIVE_UNAUTHORIZED` before a socket, a browser, a
+    file read of client JSON, a token request, or a Gmail request.
+    Missing, unreadable, non-Desktop, or secret-bearing
+    configuration fails closed before those effects. `client_secret`
+    is never sent, logged, or retained. The token form stays the
+    existing five-field form.
+
+    On the authorized Windows command, the mechanism binds
+    `127.0.0.1` to an operating-system-assigned port, opens the
+    Operator's system browser, and waits at most 120 seconds. It
+    uses the existing cryptographic state and PKCE verifier. The
+    authorization endpoint, token endpoint, metadata scope, and one
+    empty-body profile GET stay exactly the Item 21 values. Each
+    HTTP call times out at most 30 seconds. The profile GET may
+    occur once. A second Gmail request, or any other Gmail path,
+    raises `GMAIL_OAUTH_ENDPOINT_REJECTED` and sends nothing
+    further. An unexpected `refresh_token` is discarded and is not
+    stored. The loopback socket closes on success, failure, timeout,
+    and cancellation. No background thread, scheduler, poller, or
+    refresh worker remains. No database and no Windows Credential
+    Manager are used.
+
+    `orchestrate_profile_probe` continues to return
+    `GMAIL_OAUTH_PROFILE_SHAPE_PASS` for a shape-valid profile. That
+    code remains an offline or in-process shape result. It is not
+    real connectivity. Only the Windows `__main__` path, after the
+    real transports have completed that shape result, may print
+    `GMAIL_GATE_C_REAL_CONNECTIVITY_PASS`. A local failure prints
+    `GMAIL_GATE_C_REAL_CONNECTIVITY_BLOCKED` or an existing
+    rejection code. Public output omits the account address, mailbox
+    counts, history ID, raw body, authorization code, verifier,
+    access token, refresh token, client JSON, and `Authorization`
+    header. Offline tests must not print the real-connectivity code.
+
+    Decision A requires the new tests to stay offline and to use
+    synthetic client identifiers and mocked transports. They cover
+    PKCE S256, fresh state and verifier, loopback URI construction,
+    callback state mismatch, duplicate or missing callback
+    parameters, timeout, OAuth error, redirect mismatch, token
+    rejection, malformed token response, insufficient and excessive
+    scope, discarded refresh token, the exact profile method and
+    endpoint, an empty profile body, prohibition of a second Gmail
+    request and of other Gmail endpoints, no provider call on
+    import, no background network, fail-closed local configuration,
+    absence of credential and token values from logs, errors, and
+    results, listener cleanup, profile-shape validation, no retained
+    profile values, cancellation, no Google contact, no Item 20 or
+    receipt coupling, no TradeStation or PostgreSQL import, no
+    broker or economic operation, and preservation of the existing
+    refusal and parser scan. An AST check shows the live call sits
+    under `__name__ == "__main__"` and that the non-Windows refusal
+    precedes any socket use. The tests do not call
+    `run_local_windows_profile_proof`. A green offline run is not
+    `GMAIL_GATE_C_REAL_CONNECTIVITY_PASS`.
+
+    Decision B is a later Operator integration decision. Lane 3
+    publishes one draft pull request containing only the two paths.
+    An independent verifier other than the implementer must return
+    `INDEPENDENT_EXACT_TREE_PASS` for that exact SHA and tree,
+    including the offline tests, Ruff, Mypy, the Phase 1 validator,
+    and `git diff --check`. Lane 1 may then fast-forward that exact
+    candidate only after a separate Operator decision names it. No
+    self-merge, rebase, squash, cherry-pick, amend, or force-push.
+    Decision B does not authorize executing the module.
+
+    Decision C remains Item 21 Gate C and stays unauthorized by this
+    item and by Decision B. It is a later Operator decision naming
+    the canonical implementation SHA, the Operator's local Windows
+    computer, one attended execution of `python -m
+    swingtrade.gmail_local_connect`, the metadata scope, the single
+    profile GET, the redacted evidence fields, and immediate discard
+    of tokens and profile content. One approval authorizes one
+    execution. An inconclusive or failed result does not authorize a
+    retry. Cursor cloud agents must not run the command, hold the
+    client JSON, or receive tokens, authorization codes, or profile
+    bodies. Google Cloud project setup, the Desktop client, and
+    revocation at `https://myaccount.google.com/permissions` are
+    Operator-local steps under Decision C, not steps under Decision
+    A. Gate D stays a later assessment of sanitized evidence and is
+    not opened here.
+
+    This item does not close `DEP-TS-001`, `DEP-TS-002`,
+    `DEP-TS-003`, `DEP-TS-004`, `DEP-GMAIL-001`, `DEP-DB-001`,
+    `DEP-DB-002`, `DEP-CORE-001`, or `DEP-CORE-002`. All nine stay
+    `OPEN`. A metadata profile proof does not satisfy Proposed
+    ADR-0004. ADR-0002, ADR-0003, ADR-0006, and ADR-0007 stay
+    Accepted. ADR-0004 and ADR-0005 stay Proposed. ADR-0005's
+    Decision stays blank. Supabase Free stays preferred and
+    **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized trading
+    execution mode. `SIM` and `LIVE` remain unauthorized. Lane 4
+    local PostgreSQL work stays independent. This item authorizes no
+    database connection and no Gmail token table.
 
 ## Evidence
 
