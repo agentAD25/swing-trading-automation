@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-10-16 (item 24 proposal, Alpaca Paper execution direction). Item 24 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 24 does not authorize coding or a provider call. When all three are met, the only new authority is Lane 2's offline synthetic contract in the two paths named in item 24. That authority is not an Alpaca credential, a paper order, a network call, or a change to TradeStation, Gmail, or PostgreSQL. Items 18 through 23 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-16 (item 23 proposal, local Windows Gmail Gate C one-shot connectivity). Item 23 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 23 does not authorize coding or a provider call. When all three are met, the only new authority is Lane 3's offline implementation of the two paths named in item 23. That authority is not integration of the implementation, a live OAuth login, a Gmail API call, Google Cloud provisioning, or a change to the Gate B refusal. Items 18, 19, 20, 21, and 22 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-16 (item 22 proposal, parser security-scan scope for the authorized OAuth module). Item 22 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 22 does not authorize editing `tests/group4_email/test_attacks.py` or any other path. When all three are met, the only new authority is the one-file test-scope correction named in item 22. That authority is not a change to the OAuth module, a live OAuth login, a Gmail API call, or integration of PR #48. Items 18, 19, 20, and 21 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-14 (item 21 proposal, local Windows Gmail OAuth connectivity governance). Item 21 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 21 does not authorize coding. When all three are met, the only new authority is offline implementation of the two paths named in item 21. That authority is not a live OAuth login, a Gmail API call, native Credential Manager access, or the corpus connection described by Proposed ADR-0004. Items 18, 19, and 20 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
@@ -1576,6 +1577,116 @@ a prohibition on later additive coordination roles.
     execution mode. `SIM` and `LIVE` remain unauthorized. Lane 4
     local PostgreSQL work stays independent. This item authorizes no
     database connection and no Gmail token table.
+
+24. Alpaca Paper execution direction, proposed 2026-10-16. This item
+    becomes effective only when all three of these are true: an
+    independent verifier has passed this exact commit, an Operator
+    decision has authorized integration of this exact commit, and
+    this exact commit is canonical `main`. While any condition is
+    unmet, this item does not authorize coding or a provider call.
+    When all three are met, the only new authority is Decision A
+    below. Decision A is not a later integration decision and is not
+    paper connectivity. This commit adds no application source and
+    no test change. The parent main is
+    `71ba48283af88fca9e553cca993c5b9c27a1d08e`, tree
+    `9d4e6f974a97c694987033d4bcd82c87b71222f1`. Items 18, 19, 20,
+    21, 22, and 23 stay effective and are not revised. Item 23
+    Decision A remains Lane 3's two Gmail paths and is not
+    redirected here.
+
+    The Operator preference recorded here is that Alpaca Paper is
+    the preferred initial execution destination for automated U.S.
+    stock swing trades. The preference is architecture direction. It
+    is not executable authority. It does not request, store, or use
+    an API key. It does not select a paper account, place an order,
+    or replace TradeStation. ADR-0005 stays Proposed with a blank
+    Decision. `DEP-TS-001`, `DEP-TS-002`, `DEP-TS-003`, and
+    `DEP-TS-004` stay `OPEN`. Existing TradeStation modules,
+    fixtures, tests, ADRs, branches, and verifier history stay
+    byte-unchanged by this commit and by Decision A. TradeStation
+    remains operationally disabled: its named SIM host still cannot
+    connect, and `SIM` and `LIVE` stay unauthorized.
+
+    Official Alpaca Trading API facts used for this direction,
+    accessed 2026-10-16, are these. Paper trading calls
+    `paper-api.alpaca.markets`. Live trading calls
+    `api.alpaca.markets`. Market data calls `data.alpaca.markets`. A
+    paper key cannot be used on the live host, and a live key cannot
+    be used on the paper host. Trading API authentication is the key
+    id and secret in `APCA-API-KEY-ID` and `APCA-API-SECRET-KEY`, or
+    HTTP Basic with those values. `GET /v2/account` is the account
+    read. `POST /v2/orders` creates an order. `client_order_id` is
+    optional, at most 128 characters, unique for the client, and
+    generated by Alpaca when omitted. The same id can later retrieve
+    the order. Alpaca rejects a duplicate `client_order_id`. Order
+    status values include `new`, `partially_filled`, `filled`,
+    `canceled`, `expired`, `rejected`, `pending_new`, and
+    `pending_cancel`. `filled_qty` and `filled_avg_price` are order
+    fields. Equity order classes include `simple`, `oco`, `oto`, and
+    `bracket`. Paper trading is a simulation: it does not route to a
+    live exchange, does not model market impact, queue position,
+    latency slippage, or dividends, and may partially fill a
+    marketable order for a random size. Sources:
+    https://docs.alpaca.markets/us/docs/paper-trading ,
+    https://docs.alpaca.markets/us/docs/authentication ,
+    https://docs.alpaca.markets/us/docs/account-plans ,
+    https://docs.alpaca.markets/us/reference/postorder ,
+    https://docs.alpaca.markets/us/reference/getorderbyclientorderid
+    , and https://docs.alpaca.markets/us/docs/alpacas-cli .
+
+    Decision A, only after this item is effective, permits Lane 2 to
+    add exactly `src/swingtrade/alpaca_paper.py` and
+    `tests/unit/test_alpaca_paper.py`. Lane 2 owns those paths. No
+    other path is granted. The module is additive. It does not edit
+    `src/swingtrade/group3_auth/`,
+    `src/swingtrade/offline/hosts.py`, `src/swingtrade/broker.py`,
+    `src/swingtrade/domain.py`, Group 4 email, the Gmail connector,
+    ADRs, or the dependency registry. It imports no socket, HTTP
+    client, or Alpaca SDK. Import and pytest discovery open no
+    network socket and read no environment variable. It does not
+    construct an `OrderIntent`, derive a quantity, choose an order
+    class, or apply a risk limit. Those decisions remain unmade.
+
+    The offline module may parse synthetic fixtures only. A fixture
+    order carries `client_order_id`, status, `qty` or `filled_qty`
+    as strings, and no account identifier. `client_order_id` longer
+    than 128 characters is rejected. A second fixture with the same
+    id is a local duplicate and is not a second submission. A
+    fixture marked submission-unknown must be classified
+    reconcile-before-resubmit and must not emit a second id. A
+    `partially_filled` fixture preserves filled and remaining
+    quantity as decimals and does not invent a fill. The strings
+    `paper-api.alpaca.markets` and `api.alpaca.markets` may appear
+    only as denied hosts. `connect_allowed` stays false. No function
+    in the module accepts a key, a secret, or a base-URL override
+    that enables a call. `DRY_RUN` remains the only authorized
+    trading mode.
+
+    A later Operator decision is required before Lane 1 integrates
+    an independently verified implementation of those two paths.
+    That integration still does not authorize credentials or network
+    access. A further, separate Operator decision is required before
+    any paper-only read of `GET /v2/account`, and another before any
+    paper order. This item does not ask the Operator to create or
+    paste an Alpaca key. Lane 4 may later design a durable
+    order-attempt record that distinguishes not-sent,
+    outcome-unknown, and acknowledged, keyed by the local
+    idempotency key and one `client_order_id`. This item does not
+    add that schema, connect PostgreSQL, or close `DEP-DB-001` or
+    `DEP-DB-002`. `DEP-CORE-001` and `DEP-CORE-002` stay `OPEN`
+    because quantity rounding, timezone, and calendar remain
+    unresolved. `DEP-GMAIL-001` stays `OPEN`.
+
+    This item does not close `DEP-TS-001`, `DEP-TS-002`,
+    `DEP-TS-003`, `DEP-TS-004`, `DEP-GMAIL-001`, `DEP-DB-001`,
+    `DEP-DB-002`, `DEP-CORE-001`, or `DEP-CORE-002`. All nine stay
+    `OPEN`. ADR-0002, ADR-0003, ADR-0006, and ADR-0007 stay
+    Accepted. ADR-0004 and ADR-0005 stay Proposed. ADR-0005's
+    Decision stays blank. Supabase Free stays preferred and
+    **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized trading
+    execution mode. `SIM` and `LIVE` remain unauthorized. No Alpaca,
+    TradeStation, Gmail, PostgreSQL, `OrderIntent`, or broker
+    operation is performed by this commit.
 
 ## Evidence
 

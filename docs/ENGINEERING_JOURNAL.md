@@ -3896,3 +3896,27 @@ ADR-0007 stay Accepted. Supabase Free stays preferred and
 **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized trading
 execution mode. `SIM` and `LIVE` stay unauthorized. This entry does
 not embed its own hash and does not merge the branch.
+
+## 2026-10-16 — Item 24 Alpaca Paper direction
+
+Canonical main at authoring is
+`71ba48283af88fca9e553cca993c5b9c27a1d08e`, tree
+`9d4e6f974a97c694987033d4bcd82c87b71222f1`. Items 18 through 23
+remain effective. This entry proposes item 24 and does not revise
+those items. The Operator preference for Alpaca Paper is direction
+only. Item 24 does not authorize coding unless an independent
+verifier has passed this exact commit, an Operator decision has
+authorized integration of this exact commit, and this exact commit
+is canonical `main`.
+
+When those three are met, Lane 2 may add only
+`src/swingtrade/alpaca_paper.py` and
+`tests/unit/test_alpaca_paper.py`. The module is an offline
+synthetic contract. It does not edit TradeStation code, the Gmail
+connector, or PostgreSQL. It opens no socket and reads no
+credential. A later integration decision and a later paper-read
+decision stay separate. No API key is requested. All nine
+dependencies stay `OPEN`. ADR-0005 stays Proposed with a blank
+Decision. `DRY_RUN` remains the only authorized trading mode. `SIM`
+and `LIVE` stay unauthorized. This entry does not embed its own hash
+and does not merge the branch.

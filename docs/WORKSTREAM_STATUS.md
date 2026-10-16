@@ -22,6 +22,8 @@ Item 22 proposal, 2026-10-16. Parent main `b313e581eca7fa2265aa10b53f15dc31d7e40
 
 Item 23 proposal, 2026-10-16. Parent main `fcafaded6dc06d56af256afe244e604b150fcf81`, tree `9653ad4535346d30bfe5a4f07a2d07e77bb6687a`. Item 23 is not effective on this branch. When current-state item 23 is effective, Lane 3 may add only `src/swingtrade/gmail_local_connect.py` and `tests/unit/test_gmail_local_connect.py`. Until that activation, those paths must not be added. The Lane 3 table below remains the historical attestation. Gate B stays the integrated offline probe. `run_attended_profile_probe` stays an unconditional refusal. This paragraph does not authorize a live provider call, Google Cloud provisioning, or integration of a future implementation pull request. `DEP-GMAIL-001` stays OPEN. ADR-0004 stays Proposed. This descendant cannot embed its own hash.
 
+Item 24 proposal, 2026-10-16. Parent main `71ba48283af88fca9e553cca993c5b9c27a1d08e`, tree `9d4e6f974a97c694987033d4bcd82c87b71222f1`. Item 24 is not effective on this branch. When current-state item 24 is effective, Lane 2 may add only `src/swingtrade/alpaca_paper.py` and `tests/unit/test_alpaca_paper.py`. Until that activation, those paths must not be added. The Lane 2 table below remains the historical TradeStation attestation and is not an instruction to connect Alpaca. Item 23 Decision A remains Lane 3's Gmail paths. This paragraph does not authorize an API key, a paper order, or a network call. `DEP-TS-001` through `DEP-TS-004` stay OPEN. ADR-0005 stays Proposed. This descendant cannot embed its own hash.
+
 ## Controlled states
 
 Only these values are permitted for `Current state`:
