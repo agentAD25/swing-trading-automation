@@ -3822,3 +3822,41 @@ preferred and **NOT_ACCEPTED**. `DRY_RUN` remains the only
 authorized execution mode. `SIM` and `LIVE` stay unauthorized.
 This entry does not embed its own hash and does not merge the
 branch.
+
+## 2026-10-16 — Item 22 parser security-scan scope
+
+Canonical main at authoring is
+`b313e581eca7fa2265aa10b53f15dc31d7e408be`, tree
+`356511fa933f953dd1f255946fd951be5158d1fa`. Items 18, 19, 20, and 21
+remain effective. This entry proposes item 22 and does not revise
+those items. Item 22 does not authorize the test edit unless an
+independent verifier has passed this exact commit, an Operator
+decision has authorized integration of this exact commit, and this
+exact commit is canonical `main`. When those three are met, Lane 1
+may change only `tests/group4_email/test_attacks.py`. The only
+permitted change is to exclude the top-level file
+`local_oauth_probe.py` from the concatenated source scanned by
+`test_parser_does_not_use_network_broker_or_credentials`. Every
+other top-level Group 4A Python file, including files added later,
+stays in that scan. The forbidden-pattern list and the
+socket-blocked parser assertion stay. This commit adds no
+application source and no test change.
+
+The exclusion is not a general OAuth exemption and does not
+authorize a change to the OAuth module, its tests, the parser, the
+credential adapter, or PR #48. PR #48 head
+`4911617684fc1dba726f8a383d4c3c9298a9cae1`, tree
+`768b6144fa4c7233a171d0d717eaebf78753d764`, remains an unmerged
+draft. Verifier `bc-3cbfb445-befb-536c-8492-580e49eeb182` returned
+`INDEPENDENT_EXACT_TREE_FAIL` for that tree. That result stays a
+FAIL. After this item is effective, Lane 1 uses an ordinary merge of
+that exact head, then one test-only commit, then a new exact-tree
+verification. No rebase, squash, cherry-pick, or force-push. A
+separate Operator decision is still required before integration.
+
+All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay
+Proposed. ADR-0005's Decision stays blank. ADR-0002, ADR-0003,
+ADR-0006, and ADR-0007 stay Accepted. Supabase Free stays preferred
+and **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized
+execution mode. `SIM` and `LIVE` stay unauthorized. This entry does
+not embed its own hash and does not merge the branch.

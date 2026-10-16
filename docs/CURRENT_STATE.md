@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-10-16 (item 22 proposal, parser security-scan scope for the authorized OAuth module). Item 22 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 22 does not authorize editing `tests/group4_email/test_attacks.py` or any other path. When all three are met, the only new authority is the one-file test-scope correction named in item 22. That authority is not a change to the OAuth module, a live OAuth login, a Gmail API call, or integration of PR #48. Items 18, 19, 20, and 21 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-14 (item 21 proposal, local Windows Gmail OAuth connectivity governance). Item 21 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 21 does not authorize coding. When all three are met, the only new authority is offline implementation of the two paths named in item 21. That authority is not a live OAuth login, a Gmail API call, native Credential Manager access, or the corpus connection described by Proposed ADR-0004. Items 18, 19, and 20 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-13 (item 20 proposal, one synthetic ingestion composition). Item 20 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 20 does not authorize coding. Item 19 stays the operative grant for the three modules already integrated under that item. This proposal does not reopen, revise, or expand item 18 or item 19. It does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, authorize a Gmail API call, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-12 (item 19 proposal, three further non-economic `DRY_RUN` implementation grants). Item 19 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 19 does not authorize coding. Item 18 stays the operative grant for the three modules already named there. Its activation sentence in the next bullet is the historical record of integrated commit `d4e7aeb1f7cd7c16c81b1f026295ad91319041cc`, which is an ancestor of canonical main. This proposal does not reopen, revise, or expand item 18. It does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, authorize an acquisition-to-receipt orchestrator, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
@@ -1297,6 +1298,104 @@ a prohibition on later additive coordination roles.
     execution, native Credential Manager, TradeStation connectivity,
     operational PostgreSQL, migrations, and orders remain
     unauthorized.
+
+22. Parser security-scan scope for the authorized OAuth module,
+    proposed 2026-10-16. This item becomes effective only when all
+    three of these are true: an independent verifier has passed this
+    exact commit, an Operator decision has authorized integration of
+    this exact commit, and this exact commit is canonical `main`.
+    While any condition is unmet, this item does not authorize the
+    test edit or any other coding. When all three are met, Lane 1
+    may change only `tests/group4_email/test_attacks.py`. Lane 1
+    owns that one future edit. No other path is granted.
+    Authorization to make that edit is not authorization to merge
+    PR #48 or any later implementation candidate. This commit adds
+    no application source and no test change. The parent main is
+    `b313e581eca7fa2265aa10b53f15dc31d7e408be`, tree
+    `356511fa933f953dd1f255946fd951be5158d1fa`.
+    The planning record is
+    `LANE1_ITEM21_SECURITY_TEST_REMEDIATION_SCOPE_READY`. It is not
+    an implementation PASS and it does not convert the historical
+    verifier result below into a PASS. Items 18, 19, 20, and 21 stay
+    effective. Item 21's Gate A, Gate B, Gate C, and Gate D stay as
+    item 21 states them. This item does not revise those gates and
+    does not authorize Gate C.
+    The only permitted behavioral change, after this item is
+    effective, is inside
+    `test_parser_does_not_use_network_broker_or_credentials`. When
+    that test builds the concatenated Group 4A package source for
+    its forbidden-substring scan, it excludes exactly the top-level
+    file named `local_oauth_probe.py`. The scan continues to read
+    top-level `src/swingtrade/group4_email/*.py` and then drops only
+    that filename. Every other top-level `.py` file remains in the
+    scan, including files added later. The existing forbidden-pattern
+    list stays unchanged and still applies to every file that remains
+    in the scan. The socket-blocked `parse_email` assertion stays.
+    The test must not switch to a shorter fixed file list, exclude
+    another filename or directory, or change any other security test.
+    This exclusion is only that parser-source assertion. It is not a
+    general exemption for the OAuth module.
+    This item does not authorize a change to
+    `src/swingtrade/group4_email/local_oauth_probe.py`,
+    `tests/group4_email/test_local_oauth_probe.py`, any other Group
+    4A source file, synthetic acquisition, synthetic ingestion, the
+    existing parser, the synthetic credential adapter,
+    `group4_email/__init__.py`, broker or economic contracts, runtime
+    settings, database schema, ADRs, or dependency state. It does not
+    authorize Google Cloud setup, OAuth consent, token exchange, a
+    Gmail API call, credential handling, mailbox access, Windows
+    Credential Manager access, PostgreSQL, TradeStation, an
+    `OrderIntent`, or a broker operation. It does not authorize
+    integration of PR #48.
+    The eventual test correction must show all of the following
+    before any integration decision. `local_oauth_probe.py` is absent
+    from only that substring scan. Every other current top-level
+    Group 4A Python file remains in the scan. A future top-level
+    Group 4A Python file would enter the scan automatically. The
+    prohibited substring list is unchanged. A forbidden substring
+    deliberately placed in a protected parser file still fails the
+    test. A forbidden substring deliberately placed in another
+    protected Group 4A file still fails the test. Those injections
+    happen only in a disposable worktree and are discarded, not
+    committed. The OAuth module's own security tests stay active.
+    `run_attended_profile_probe` still raises
+    `GMAIL_OAUTH_LIVE_UNAUTHORIZED` with no alternate live entry
+    point. `GMAIL_OAUTH_PROFILE_SHAPE_PASS` stays an offline shape
+    result and is not a real connectivity pass. The full repository
+    tests, Ruff, Mypy, the Phase 1 validator, and `git diff --check`
+    pass as applicable. A green result of the previously failing
+    test is not sufficient by itself.
+    PR #48, https://github.com/agentAD25/swing-trading-automation/pull/48,
+    branch `cursor/gmail-local-oauth-probe-9f45`, is unchanged by
+    this commit. Its recorded head is
+    `4911617684fc1dba726f8a383d4c3c9298a9cae1`, tree
+    `768b6144fa4c7233a171d0d717eaebf78753d764`, parent
+    `b313e581eca7fa2265aa10b53f15dc31d7e408be`. Independent verifier
+    `bc-3cbfb445-befb-536c-8492-580e49eeb182` returned
+    `INDEPENDENT_EXACT_TREE_FAIL` for that tree. That result remains
+    a FAIL. Lane 1 does not edit that specialist branch. After this
+    item is effective, the history-preserving sequence is an ordinary
+    merge, not a rebase, squash, cherry-pick, amend, or force-push.
+    First confirm that the PR #48 head is still the recorded SHA, and
+    stop if it has moved. Then merge that exact head into the
+    effective main with a normal merge commit that keeps both
+    parents. On that merge result, add one commit whose only changed
+    path is `tests/group4_email/test_attacks.py` and whose only
+    behavioral change is the exclusion named here. An independent
+    verifier who authored neither this governance commit nor that
+    test commit must pass that exact final SHA and tree. PR #48 stays
+    open until a separate Operator decision authorizes integration of
+    that verified tip. The tip must still contain the PR #48 commits
+    as ancestors. If the specialist head has moved, this sentence
+    does not authorize merging the old SHA.
+    This item does not close `DEP-TS-001`, `DEP-TS-002`,
+    `DEP-TS-003`, `DEP-TS-004`, `DEP-GMAIL-001`, `DEP-DB-001`,
+    `DEP-DB-002`, `DEP-CORE-001`, or `DEP-CORE-002`. All nine stay
+    `OPEN`. ADR-0002, ADR-0003, ADR-0006, and ADR-0007 stay Accepted.
+    ADR-0004 and ADR-0005 stay Proposed. ADR-0005's Decision stays
+    blank. Supabase Free stays preferred and **NOT_ACCEPTED**.
+    `DRY_RUN` remains the only authorized execution mode. `SIM` and
+    `LIVE` remain unauthorized.
 
 ## Evidence
 
