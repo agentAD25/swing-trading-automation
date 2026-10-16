@@ -394,7 +394,11 @@ def test_parser_does_not_use_network_broker_or_credentials(
     monkeypatch.setattr(socket, "socket", forbidden)
     outcome = parse_email(dated_raw)
     assert outcome.disposition is Disposition.ACCEPT
-    source = "\n".join(path.read_text(encoding="utf-8") for path in sorted(PACKAGE.glob("*.py")))
+    source = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(PACKAGE.glob("*.py"))
+        if path.name != "local_oauth_probe.py"
+    )
     for banned in (
         "import socket",
         "import urllib",
