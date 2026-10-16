@@ -3920,3 +3920,37 @@ dependencies stay `OPEN`. ADR-0005 stays Proposed with a blank
 Decision. `DRY_RUN` remains the only authorized trading mode. `SIM`
 and `LIVE` stay unauthorized. This entry does not embed its own hash
 and does not merge the branch.
+
+## 2026-10-16 — Item 25 fail-closed scan scope
+
+Canonical main at authoring is
+`ca146e67652bd45583d1472be370a989f451099f`, tree
+`ecc0b9421717e8ec0727fd1a7f0687898b4dd43d`. Item 24 is effective there.
+Items 18 through 23 remain effective. This entry proposes item 25 and
+does not revise those items. PR #52 remains
+`8ffe64c9a5b6814043ee15e5c85fbc3f10b7110f`, tree
+`9ab4a09a5fd8116083e4987c3b15f496a8515a8f`, parent
+`71ba48283af88fca9e553cca993c5b9c27a1d08e`. Verifier
+`bc-ab4c1ce5-c822-5c44-8de4-91f13a9b5cf0` remains
+`INDEPENDENT_EXACT_TREE_FAIL`.
+
+A disposable checkout reproduced the failure at
+`tests/failure_injection/test_fail_closed.py:31`. The only offending
+top-level module is `gmail_local_connect.py`, and the only forbidden
+token is `socket.`. The other two tests in that file passed. Disposable
+injections of `requests.` into `src/swingtrade/safety.py` and `socket.`
+into `src/swingtrade/domain.py` each failed at that same assertion and
+were discarded. The Item 23 unit file passed 32 tests locally without a
+provider call. This entry does not edit PR #52, source, or tests.
+
+Item 25 does not authorize the test edit unless an independent verifier
+has passed this exact commit, an Operator decision has authorized
+integration of this exact commit, and this exact commit is canonical
+`main`. When those three are met, Lane 1 may change only
+`tests/failure_injection/test_fail_closed.py`, and only to exclude the
+filename `gmail_local_connect.py` from that one scan. The glob and the
+forbidden tuple stay. Lane 3 is not granted that path. All nine
+dependencies stay `OPEN`. ADR-0005 stays Proposed with a blank Decision.
+`DRY_RUN` remains the only authorized trading mode. `SIM` and `LIVE`
+stay unauthorized. This entry does not embed its own hash and does not
+merge the branch.
