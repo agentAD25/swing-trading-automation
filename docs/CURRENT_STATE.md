@@ -1,5 +1,7 @@
 # Current State
 
+- Last updated: 2026-10-16 (item 25 proposal, runtime fail-closed scan scope for the authorized Windows Gmail connector). Item 25 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 25 does not authorize editing `tests/failure_injection/test_fail_closed.py` or any other path. When all three are met, the only new authority is Lane 1's exclusion of the top-level filename `gmail_local_connect.py` from the runtime-source prohibited-substring scan in `test_runtime_package_has_no_network_or_live_order_client`. That authority is not a change to the Gmail module, a live OAuth login, a Gmail API call, integration of PR #52, Alpaca implementation, or a revision of items 18 through 24. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
+- Last updated: 2026-10-16 (item 24 proposal, Alpaca Paper execution direction). Item 24 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 24 does not authorize coding or a provider call. When all three are met, the only new authority is Lane 2's offline synthetic contract in the two paths named in item 24. That authority is not an Alpaca credential, a paper order, a network call, or a change to TradeStation, Gmail, or PostgreSQL. Items 18 through 23 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-16 (item 23 proposal, local Windows Gmail Gate C one-shot connectivity). Item 23 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 23 does not authorize coding or a provider call. When all three are met, the only new authority is Lane 3's offline implementation of the two paths named in item 23. That authority is not integration of the implementation, a live OAuth login, a Gmail API call, Google Cloud provisioning, or a change to the Gate B refusal. Items 18, 19, 20, 21, and 22 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-16 (item 22 proposal, parser security-scan scope for the authorized OAuth module). Item 22 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 22 does not authorize editing `tests/group4_email/test_attacks.py` or any other path. When all three are met, the only new authority is the one-file test-scope correction named in item 22. That authority is not a change to the OAuth module, a live OAuth login, a Gmail API call, or integration of PR #48. Items 18, 19, 20, and 21 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-14 (item 21 proposal, local Windows Gmail OAuth connectivity governance). Item 21 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 21 does not authorize coding. When all three are met, the only new authority is offline implementation of the two paths named in item 21. That authority is not a live OAuth login, a Gmail API call, native Credential Manager access, or the corpus connection described by Proposed ADR-0004. Items 18, 19, and 20 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
@@ -1576,6 +1578,262 @@ a prohibition on later additive coordination roles.
     execution mode. `SIM` and `LIVE` remain unauthorized. Lane 4
     local PostgreSQL work stays independent. This item authorizes no
     database connection and no Gmail token table.
+
+24. Alpaca Paper execution direction, proposed 2026-10-16. This item
+    becomes effective only when all three of these are true: an
+    independent verifier has passed this exact commit, an Operator
+    decision has authorized integration of this exact commit, and
+    this exact commit is canonical `main`. While any condition is
+    unmet, this item does not authorize coding or a provider call.
+    When all three are met, the only new authority is Decision A
+    below. Decision A is not a later integration decision and is not
+    paper connectivity. This commit adds no application source and
+    no test change. The parent main is
+    `71ba48283af88fca9e553cca993c5b9c27a1d08e`, tree
+    `9d4e6f974a97c694987033d4bcd82c87b71222f1`. Items 18, 19, 20,
+    21, 22, and 23 stay effective and are not revised. Item 23
+    Decision A remains Lane 3's two Gmail paths and is not
+    redirected here.
+
+    The Operator preference recorded here is that Alpaca Paper is
+    the preferred initial execution destination for automated U.S.
+    stock swing trades. The preference is architecture direction. It
+    is not executable authority. It does not request, store, or use
+    an API key. It does not select a paper account, place an order,
+    or replace TradeStation. ADR-0005 stays Proposed with a blank
+    Decision. `DEP-TS-001`, `DEP-TS-002`, `DEP-TS-003`, and
+    `DEP-TS-004` stay `OPEN`. Existing TradeStation modules,
+    fixtures, tests, ADRs, branches, and verifier history stay
+    byte-unchanged by this commit and by Decision A. TradeStation
+    remains operationally disabled: its named SIM host still cannot
+    connect, and `SIM` and `LIVE` stay unauthorized.
+
+    Official Alpaca Trading API facts used for this direction,
+    accessed 2026-10-16, are these. Paper trading calls
+    `paper-api.alpaca.markets`. Live trading calls
+    `api.alpaca.markets`. Market data calls `data.alpaca.markets`. A
+    paper key cannot be used on the live host, and a live key cannot
+    be used on the paper host. Trading API authentication is the key
+    id and secret in `APCA-API-KEY-ID` and `APCA-API-SECRET-KEY`, or
+    HTTP Basic with those values. `GET /v2/account` is the account
+    read. `POST /v2/orders` creates an order. `client_order_id` is
+    optional, at most 128 characters, unique for the client, and
+    generated by Alpaca when omitted. The same id can later retrieve
+    the order. Alpaca rejects a duplicate `client_order_id`. Order
+    status values include `new`, `partially_filled`, `filled`,
+    `canceled`, `expired`, `rejected`, `pending_new`, and
+    `pending_cancel`. `filled_qty` and `filled_avg_price` are order
+    fields. Equity order classes include `simple`, `oco`, `oto`, and
+    `bracket`. Paper trading is a simulation: it does not route to a
+    live exchange, does not model market impact, queue position,
+    latency slippage, or dividends, and may partially fill a
+    marketable order for a random size. Sources:
+    https://docs.alpaca.markets/us/docs/paper-trading ,
+    https://docs.alpaca.markets/us/docs/authentication ,
+    https://docs.alpaca.markets/us/docs/account-plans ,
+    https://docs.alpaca.markets/us/reference/postorder ,
+    https://docs.alpaca.markets/us/reference/getorderbyclientorderid
+    , and https://docs.alpaca.markets/us/docs/alpacas-cli .
+
+    Decision A, only after this item is effective, permits Lane 2 to
+    add exactly `src/swingtrade/alpaca_paper.py` and
+    `tests/unit/test_alpaca_paper.py`. Lane 2 owns those paths. No
+    other path is granted. The module is additive. It does not edit
+    `src/swingtrade/group3_auth/`,
+    `src/swingtrade/offline/hosts.py`, `src/swingtrade/broker.py`,
+    `src/swingtrade/domain.py`, Group 4 email, the Gmail connector,
+    ADRs, or the dependency registry. It imports no socket, HTTP
+    client, or Alpaca SDK. Import and pytest discovery open no
+    network socket and read no environment variable. It does not
+    construct an `OrderIntent`, derive a quantity, choose an order
+    class, or apply a risk limit. Those decisions remain unmade.
+
+    The offline module may parse synthetic fixtures only. A fixture
+    order carries `client_order_id`, status, `qty` or `filled_qty`
+    as strings, and no account identifier. `client_order_id` longer
+    than 128 characters is rejected. A second fixture with the same
+    id is a local duplicate and is not a second submission. A
+    fixture marked submission-unknown must be classified
+    reconcile-before-resubmit and must not emit a second id. A
+    `partially_filled` fixture preserves filled and remaining
+    quantity as decimals and does not invent a fill. The strings
+    `paper-api.alpaca.markets` and `api.alpaca.markets` may appear
+    only as denied hosts. `connect_allowed` stays false. No function
+    in the module accepts a key, a secret, or a base-URL override
+    that enables a call. `DRY_RUN` remains the only authorized
+    trading mode.
+
+    A later Operator decision is required before Lane 1 integrates
+    an independently verified implementation of those two paths.
+    That integration still does not authorize credentials or network
+    access. A further, separate Operator decision is required before
+    any paper-only read of `GET /v2/account`, and another before any
+    paper order. This item does not ask the Operator to create or
+    paste an Alpaca key. Lane 4 may later design a durable
+    order-attempt record that distinguishes not-sent,
+    outcome-unknown, and acknowledged, keyed by the local
+    idempotency key and one `client_order_id`. This item does not
+    add that schema, connect PostgreSQL, or close `DEP-DB-001` or
+    `DEP-DB-002`. `DEP-CORE-001` and `DEP-CORE-002` stay `OPEN`
+    because quantity rounding, timezone, and calendar remain
+    unresolved. `DEP-GMAIL-001` stays `OPEN`.
+
+    This item does not close `DEP-TS-001`, `DEP-TS-002`,
+    `DEP-TS-003`, `DEP-TS-004`, `DEP-GMAIL-001`, `DEP-DB-001`,
+    `DEP-DB-002`, `DEP-CORE-001`, or `DEP-CORE-002`. All nine stay
+    `OPEN`. ADR-0002, ADR-0003, ADR-0006, and ADR-0007 stay
+    Accepted. ADR-0004 and ADR-0005 stay Proposed. ADR-0005's
+    Decision stays blank. Supabase Free stays preferred and
+    **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized trading
+    execution mode. `SIM` and `LIVE` remain unauthorized. No Alpaca,
+    TradeStation, Gmail, PostgreSQL, `OrderIntent`, or broker
+    operation is performed by this commit.
+
+25. Runtime fail-closed scan scope for the authorized Windows Gmail
+    connector, proposed 2026-10-16. This item becomes effective only
+    when all three of these are true: an independent verifier has passed
+    this exact commit, an Operator decision has authorized integration
+    of this exact commit, and this exact commit is canonical `main`.
+    While any condition is unmet, this item does not authorize the test
+    edit or any other coding. When all three are met, Lane 1 may change
+    only `tests/failure_injection/test_fail_closed.py`. Lane 1 owns that
+    one future edit. No other path is granted. Lane 3 is not granted
+    this path. This commit adds no application source and no test
+    change. The parent main is
+    `ca146e67652bd45583d1472be370a989f451099f`, tree
+    `ecc0b9421717e8ec0727fd1a7f0687898b4dd43d`. Items 18 through 24 stay
+    effective and are not revised. Item 24 is effective on that parent.
+    Its Lane 2 grant remains `src/swingtrade/alpaca_paper.py` and
+    `tests/unit/test_alpaca_paper.py`, and this commit does not add
+    those files. The planning record is
+    `LANE1_PR52_SECURITY_TEST_SCOPE_REVIEW_REQUIRED`. It is not an
+    implementation PASS and it does not convert the historical verifier
+    result below into a PASS.
+
+    The failing assertion is
+    `test_runtime_package_has_no_network_or_live_order_client` in
+    `tests/failure_injection/test_fail_closed.py`. It reads every
+    top-level `src/swingtrade/*.py` file through
+    `source_root.glob("*.py")`, joins the text, and requires that the
+    lowercased text contain none of `requests.`, `httpx.`, `socket.`,
+    `tradestation`, `place_order`, and `cancel_order`. The assertion is
+    line 31. The test was introduced with the Phase 1E offline
+    foundation and protects the provider-independent runtime package
+    from network-client and live-order text. It does not scan
+    subpackages. On unchanged PR #52 the only top-level module
+    containing a forbidden token is `gmail_local_connect.py`, and the
+    only token is `socket.`. The matches are the sentences "Bind the
+    socket." and "before any socket.", plus the loopback call
+    `socket.socket` inside `run_local_windows_profile_proof` after the
+    non-Windows refusal. `import socket` alone is not the failing token.
+    No other forbidden token is present in that module. The other two
+    tests in the file do not use this scan.
+
+    The only permitted behavioral change, after this item is effective,
+    is inside
+    `test_runtime_package_has_no_network_or_live_order_client`. When
+    that test builds the concatenated top-level runtime source, it
+    excludes exactly the filename `gmail_local_connect.py`. The scan
+    continues to use `source_root.glob("*.py")` and then drops only that
+    filename. Every other current top-level module remains in the scan.
+    A future top-level `src/swingtrade/*.py` file enters the scan
+    automatically. The forbidden tuple stays unchanged and still applies
+    to every file that remains in the scan.
+    `test_missing_mode_fails_closed` and
+    `test_corrupt_fixture_stops_before_evaluation` stay unchanged. The
+    test must not switch to a shorter fixed file list, exclude another
+    filename or directory, or change any other assertion. This exclusion
+    is only that one source-scan assertion. It is not permission to add
+    `requests.`, `httpx.`, `tradestation`, `place_order`, or
+    `cancel_order` inside the Gmail module, and it is not permission for
+    a socket use beyond the Windows loopback already authorized by item
+    23.
+
+    The Gmail module stays covered by
+    `tests/unit/test_gmail_local_connect.py`. Those tests remain
+    required. A disposable local run of that file on the unchanged PR
+    #52 tree passed 32 tests and did not call a provider. That local run
+    is not independent verification and does not relabel the historical
+    FAIL. The tests show import-time inertness, no suite call to
+    `run_local_windows_profile_proof`, a non-Windows refusal before a
+    socket import, the live call only under `__main__`, loopback
+    `127.0.0.1` with an ephemeral port, a 120-second cap, listener
+    close, one profile GET, rejection of a second profile call and of a
+    messages URL, no token persistence, no `os.environ` or `getenv`, and
+    no `OrderIntent`, `tradestation`, `psycopg`, or `postgres` text.
+    They do not execute the Windows command, so they are not Windows
+    runtime certification. They do not assert that `requests.`,
+    `httpx.`, `place_order`, and `cancel_order` are absent, and they do
+    not name label, attachment, or history endpoints. The module source
+    has no thread or scheduler import. Decision C remains unauthorized.
+    `GMAIL_OAUTH_PROFILE_SHAPE_PASS` stays an offline shape result.
+
+    This item does not authorize a change to
+    `src/swingtrade/gmail_local_connect.py`,
+    `tests/unit/test_gmail_local_connect.py`, Gate B source or tests,
+    the Group 4A parser, `tests/group4_email/test_attacks.py`,
+    credential adapters, broker or economic contracts, Alpaca source,
+    database schema, ADRs, or dependency state. It does not authorize
+    Google Cloud setup, OAuth consent, a Gmail API call, Alpaca,
+    TradeStation, PostgreSQL, an `OrderIntent`, or a broker operation.
+    It does not authorize integration of PR #52.
+
+    The eventual test correction must show all of the following before
+    any integration decision. `gmail_local_connect.py` is absent from
+    only that substring scan. Every other current top-level runtime
+    Python file remains in the scan. A future top-level runtime Python
+    file would enter the scan automatically. The prohibited tuple is
+    unchanged. A forbidden network token deliberately placed in one
+    protected top-level module still fails at the same assertion. The
+    same injection in a second, distinct protected top-level module
+    still fails at that assertion. Those injections happen only in a
+    disposable worktree and are discarded, not committed. The Item 23
+    tests stay active and still do not contact Gmail.
+    `run_attended_profile_probe` still raises
+    `GMAIL_OAUTH_LIVE_UNAUTHORIZED`. The full repository tests, Ruff,
+    Mypy, the Phase 1 validator, and `git diff --check` pass as
+    applicable. A green result of the previously failing test is not
+    sufficient by itself.
+
+    PR #52,
+    https://github.com/agentAD25/swing-trading-automation/pull/52,
+    branch `cursor/gmail-local-connect-9f45`, is unchanged by this
+    commit. Its recorded head is
+    `8ffe64c9a5b6814043ee15e5c85fbc3f10b7110f`, tree
+    `9ab4a09a5fd8116083e4987c3b15f496a8515a8f`, parent
+    `71ba48283af88fca9e553cca993c5b9c27a1d08e`. The implementation blob
+    is `5243adabd83e7902065be5b4d80b4975a37ae8eb`. The test blob is
+    `75104511e5e50548c1a3016b40bff681567933ab`. Independent verifier
+    `bc-ab4c1ce5-c822-5c44-8de4-91f13a9b5cf0` returned
+    `INDEPENDENT_EXACT_TREE_FAIL` for that tree. Recorded results on
+    that tree are Item 23 focused 32 PASS, Item 21 Gate B 44 PASS, Group
+    4A security 30 PASS, full repository 749 PASS, 1 FAIL, and 111
+    SKIPPED, Phase 1 validator PASS, Ruff PASS, and Mypy PASS on 57
+    source files. That FAIL remains a FAIL. This commit does not claim a
+    Windows provider execution. After this item is effective, the
+    history-preserving sequence uses the existing PR #52 branch. First
+    confirm that its head is still the recorded SHA, and stop if it has
+    moved. Merge the then-current main into that branch with a normal
+    merge commit whose first parent is the specialist head. On that
+    result, add one commit whose only changed path is
+    `tests/failure_injection/test_fail_closed.py` and whose only
+    behavioral change is the exclusion named here. Lane 3 does not
+    receive permission to edit that test. No rebase, squash,
+    cherry-pick, amend, or force-push. An independent verifier who
+    authored neither this governance commit nor that test commit must
+    pass that exact final SHA and tree. PR #52 stays open until a
+    separate Operator Decision B names that verified tip. If the
+    specialist head has moved, this sentence does not authorize merging
+    the old SHA.
+
+    This item does not close `DEP-TS-001`, `DEP-TS-002`, `DEP-TS-003`,
+    `DEP-TS-004`, `DEP-GMAIL-001`, `DEP-DB-001`, `DEP-DB-002`,
+    `DEP-CORE-001`, or `DEP-CORE-002`. All nine stay `OPEN`. ADR-0002,
+    ADR-0003, ADR-0006, and ADR-0007 stay Accepted. ADR-0004 and
+    ADR-0005 stay Proposed. ADR-0005's Decision stays blank. Supabase
+    Free stays preferred and **NOT_ACCEPTED**. `DRY_RUN` remains the
+    only authorized trading execution mode. `SIM` and `LIVE` remain
+    unauthorized.
 
 ## Evidence
 
