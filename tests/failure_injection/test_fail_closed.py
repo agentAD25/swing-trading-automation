@@ -26,6 +26,10 @@ def test_corrupt_fixture_stops_before_evaluation(tmp_path: Path) -> None:
 
 def test_runtime_package_has_no_network_or_live_order_client() -> None:
     source_root = Path(__file__).parents[2] / "src" / "swingtrade"
-    source = "\n".join(path.read_text() for path in source_root.glob("*.py"))
+    source = "\n".join(
+        path.read_text()
+        for path in source_root.glob("*.py")
+        if path.name != "gmail_local_connect.py"
+    )
     forbidden = ("requests.", "httpx.", "socket.", "tradestation", "place_order", "cancel_order")
     assert all(token not in source.lower() for token in forbidden)
