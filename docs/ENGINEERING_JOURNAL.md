@@ -3954,3 +3954,36 @@ dependencies stay `OPEN`. ADR-0005 stays Proposed with a blank Decision.
 `DRY_RUN` remains the only authorized trading mode. `SIM` and `LIVE`
 stay unauthorized. This entry does not embed its own hash and does not
 merge the branch.
+
+## 2026-10-26 — Item 26 Alpaca Paper offline security boundary
+
+Canonical main at authoring is
+`5e8d1628c472f420cc8f1ee7d18e6ffa2a1e7f8b`, tree
+`827fef7fe0b667ca4e0bcaca2cf4bf5a509f45e5`. PR #54 is merged at that
+commit. Item 24 is effective. Its blobs are
+`4342e4bcad80eb823aa8a377447205f43f6eda6f` and
+`d30bae879028b6683100d670b3a15f8f0f70a587`. Items 18 through 25 remain
+effective. This entry proposes item 26 and does not revise those items.
+The planning record `LANE1_ALPACA_GATE_C_ARCHITECTURE_READY` is not an
+implementation PASS.
+
+Item 26 stays proposed and inactive unless an independent verifier has
+passed this exact commit, an Operator decision has authorized
+integration of this exact commit, and this exact commit is canonical
+`main`. When those three are met, Lane 2 may add only
+`src/swingtrade/alpaca_paper_boundary.py` and
+`tests/unit/test_alpaca_paper_boundary.py`. The module is an offline
+policy classifier. `connect_allowed` stays false, and no classification
+label is a connection or order permission. Live, market-data, and Broker
+API hosts stay denied. Future paper reads and paper order operations
+named in the item are NOT AUTHORIZED. Gate H live trading stays outside
+authority. No paper credential target is created. ADR-0006 is not
+extended. Lane 4 order-attempt durability is not added and does not
+block this offline grant.
+
+All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
+ADR-0005's Decision stays blank. Supabase Free stays **NOT_ACCEPTED**.
+`DRY_RUN` remains the only authorized trading mode. `SIM`, paper-order
+execution, and `LIVE` stay unauthorized. This entry does not edit
+source, tests, schemas, ADRs, or the dependency registry. It does not
+embed its own hash and does not merge the branch.

@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-10-26 (item 26 proposal, Alpaca Paper offline security boundary). Item 26 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 26 is proposed and inactive and does not authorize coding. When all three are met, the only new authority is Lane 2's offline policy classifier in `src/swingtrade/alpaca_paper_boundary.py` and `tests/unit/test_alpaca_paper_boundary.py`. That authority is not a credential, a Windows credential call, an Alpaca request, a paper order, a live route, or a change to Item 24, TradeStation, Gmail, or PostgreSQL. Items 18 through 25 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, choose a database provider, or authorize credentials, network access, a real database, `SIM`, paper-order execution, or `LIVE`.
 - Last updated: 2026-10-16 (item 25 proposal, runtime fail-closed scan scope for the authorized Windows Gmail connector). Item 25 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 25 does not authorize editing `tests/failure_injection/test_fail_closed.py` or any other path. When all three are met, the only new authority is Lane 1's exclusion of the top-level filename `gmail_local_connect.py` from the runtime-source prohibited-substring scan in `test_runtime_package_has_no_network_or_live_order_client`. That authority is not a change to the Gmail module, a live OAuth login, a Gmail API call, integration of PR #52, Alpaca implementation, or a revision of items 18 through 24. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-16 (item 24 proposal, Alpaca Paper execution direction). Item 24 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 24 does not authorize coding or a provider call. When all three are met, the only new authority is Lane 2's offline synthetic contract in the two paths named in item 24. That authority is not an Alpaca credential, a paper order, a network call, or a change to TradeStation, Gmail, or PostgreSQL. Items 18 through 23 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-16 (item 23 proposal, local Windows Gmail Gate C one-shot connectivity). Item 23 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 23 does not authorize coding or a provider call. When all three are met, the only new authority is Lane 3's offline implementation of the two paths named in item 23. That authority is not integration of the implementation, a live OAuth login, a Gmail API call, Google Cloud provisioning, or a change to the Gate B refusal. Items 18, 19, 20, 21, and 22 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
@@ -1834,6 +1835,168 @@ a prohibition on later additive coordination roles.
     Free stays preferred and **NOT_ACCEPTED**. `DRY_RUN` remains the
     only authorized trading execution mode. `SIM` and `LIVE` remain
     unauthorized.
+
+    26. Alpaca Paper offline security boundary, proposed 2026-10-26. This
+    item becomes effective only when all three of these are true: an
+    independent verifier has passed this exact commit, an Operator decision
+    has authorized integration of this exact commit, and this exact commit
+    is canonical `main`. While any condition is unmet, this item is proposed
+    and inactive. It does not authorize coding, a credential, a provider
+    call, or paper-order execution. When all three are met, the only new
+    authority is the Lane 2 offline classifier named below. No other path is
+    granted. This commit adds no application source and no test change. The
+    parent main is `5e8d1628c472f420cc8f1ee7d18e6ffa2a1e7f8b`, tree
+    `827fef7fe0b667ca4e0bcaca2cf4bf5a509f45e5`. Items 18 through 25 stay
+    effective and are not revised. The planning record is
+    `LANE1_ALPACA_GATE_C_ARCHITECTURE_READY`. That record is not an
+    implementation PASS and does not activate this item.
+
+    Item 24 is effective on the parent. Its integrated module is
+    `src/swingtrade/alpaca_paper.py`, blob
+    `4342e4bcad80eb823aa8a377447205f43f6eda6f`. Its integrated tests are
+    `tests/unit/test_alpaca_paper.py`, blob
+    `d30bae879028b6683100d670b3a15f8f0f70a587`. Those bytes came from merged
+    PR #54, commit `5e8d1628c472f420cc8f1ee7d18e6ffa2a1e7f8b`. This item
+    does not modify them. Their synthetic fixture checks, decimal
+    quantities, client-order-id validation, in-memory duplicate
+    classification, partial-fill observation, submission-unknown
+    classification, reconcile-before-resubmit label, and offline host denial
+    stay as they are. That classifier is not a network transport and is not
+    durable submission idempotency. Item 25 stays the one-file runtime-scan
+    exclusion for `gmail_local_connect.py`. This item does not edit that
+    test.
+
+    After this item is effective, Lane 2 may add exactly
+    `src/swingtrade/alpaca_paper_boundary.py` and
+    `tests/unit/test_alpaca_paper_boundary.py`. Lane 2 owns those two future
+    paths. The module is a pure deterministic policy classifier. It does not
+    open a socket, import an HTTP client, import an Alpaca SDK, read an
+    environment variable, accept a key, secret, or token, store a secret,
+    start a browser, connect to a provider, construct an `OrderIntent`, or
+    submit, cancel, or replace an order. It does not edit
+    `src/swingtrade/alpaca_paper.py`, `tests/unit/test_alpaca_paper.py`,
+    `src/swingtrade/offline/hosts.py`, `src/swingtrade/broker.py`,
+    `src/swingtrade/domain.py`, Group 3, Group 4, the Gmail connector, ADRs,
+    or the dependency registry. `connect_allowed` stays false.
+    `network_permitted`, `submit_permitted`, `cancel_permitted`,
+    `replace_permitted`, `resubmit_permitted`, and `safe_to_retry` stay
+    false. A classification label is not permission to connect or to trade.
+
+    The classifier enforces all of the following. The scheme must be HTTPS.
+    The only paper host is the exact hostname `paper-api.alpaca.markets`.
+    The live host `api.alpaca.markets` is denied. The market-data host
+    `data.alpaca.markets` is denied. The Broker API hosts
+    `broker-api.alpaca.markets` and `broker-api.sandbox.alpaca.markets` are
+    denied. No parameter supplies an arbitrary hostname, base URL, proxy,
+    redirect-following switch, or TLS-validation switch. A destination with
+    userinfo, an address literal, or a non-default port is denied. The
+    function signature accepts no key, secret, token, or base URL. The
+    module does not retrieve `APCA_API_KEY_ID`, `APCA_API_SECRET_KEY`,
+    `APCA_API_BASE_URL`, `HTTP_PROXY`, or `HTTPS_PROXY`. No runtime mode or
+    environment flag in this module can send paper traffic to a live host.
+
+    Because the new module will be a top-level `src/swingtrade/*.py` file,
+    the effective Item 25 scan includes it. Its source must not contain the
+    substrings `requests.`, `httpx.`, `socket.`, `tradestation`,
+    `place_order`, or `cancel_order`. The tests must show denial of the
+    live, market-data, and both Broker API hosts; denial of a non-HTTPS
+    scheme, userinfo, an address literal, and a non-default port; absence of
+    credential, base-URL, proxy, redirect, and TLS-disable parameters;
+    permission flags remaining false on every result, including a paper-host
+    result; and no network call during import or test collection. A
+    paper-host GET whose path is `/v2/account`, `/v2/positions`,
+    `/v2/orders`, or `/v2/orders/` plus one segment, with no query and no
+    fragment, may receive only the non-authorizing label
+    `PAPER_POLICY_CANDIDATE`. Every other method and path is `DENIED`.
+    Neither label authorizes a call. Order submission, cancellation, and
+    replacement are `DENIED`.
+
+    Alpaca Paper is the Operator's intended initial simulated environment
+    for U.S. stock swing trading. The long-term target is Gmail signal,
+    signal validation, governed instruction, authorized order intent, risk
+    validation, durable order-attempt record, Alpaca Paper submission,
+    broker acknowledgment and fills, and reconciliation. That target is not
+    a claim that those stages exist or are authorized. The following future
+    paper capabilities are NOT AUTHORIZED by this item. Future read-only
+    capabilities, each requiring a later explicit grant, are paper account
+    identity, buying power and account status, paper positions, open paper
+    orders, individual paper order status, reconciliation by a stable
+    client-order identity, and sanitized paper account and order evidence.
+    Future paper economic capabilities, each requiring a later explicit
+    grant, are paper order submission, paper order status tracking,
+    partial-fill reconciliation, paper order cancellation, paper order
+    replacement, order-lifecycle recovery, restart-safe duplicate
+    suppression, and unattended paper execution after certification. Broader
+    paper permissions do not authorize unbounded quantity, unlimited
+    retries, or a bypass of accepted risk and reconciliation controls. A
+    simulated order is still a consequential account-state change. It is not
+    a live-money trade, and it is not permission to skip execution controls.
+
+    The staged authority, none of which this item activates except the
+    inactive Gate C2 description above, is as follows. Gate C2 is the
+    two-file offline classifier in this item, synthetic only, with
+    independent exact-tree verification and a separate Operator integration
+    decision. Gate C3 is later custody governance for paper-only credentials
+    in Windows-local storage, mocked tests first, and no native secret
+    access without another explicit approval. Gate D is a later attended
+    paper connection limited to an accepted read-only method and route
+    allowlist for account, position, and order queries, with paper-account
+    identity verification and no order submission. Gate E is later
+    end-to-end synthetic certification across Gmail parsing, authorization,
+    risk validation, durable persistence, and Alpaca synthetic evidence,
+    with no broker order. Gate F is a later paper-order lifecycle grant. It
+    requires durable idempotency, one stable client-order id,
+    reconcile-before-resubmit, duplicate-submission limits, explicit risk
+    configuration, a kill switch, paper-account attestation, independent
+    negative-security testing, and monitoring and audit evidence. Gate G is
+    later unattended paper qualification after repeatable operational
+    certification. Gate H, live trading, is outside current authority. Paper
+    permissions do not promote to live and are not shared with a live
+    account.
+
+    Paper and live remain separate. The Operator is using a separate
+    simulated brokerage environment. A future paper integration may have
+    broader provider permissions than today's `DRY_RUN` system, and those
+    permissions still require their own activation decision. Live endpoints
+    stay categorically denied. Paper credentials stay isolated from live
+    credentials. No flag may silently retarget paper traffic to live. Future
+    automated paper execution stays bounded by accepted risk and
+    reconciliation controls.
+
+    Credential custody is not granted. The preferred later candidate is
+    Windows Credential Manager for the current user, with two proposed
+    targets, `swing-trading/lane2/alpaca/paper/key-id` and
+    `swing-trading/lane2/alpaca/paper/secret`. This item does not create
+    those entries, read or install a credential, or call a Windows
+    credential API. It creates no live target. Accepted ADR-0006 remains the
+    Gmail-only offline adapter for
+    `swing-trading/lane3/gmail/dev/refresh-token` and is not extended to
+    Alpaca. A separate later Alpaca custody ADR is required before any
+    custody code.
+
+    Lane 4 durability is not granted and does not block this item or offline
+    Gate C2. Item 24 duplicate detection is in-memory for one call. Before
+    any Gate F paper order, a separately governed Lane 4 design must provide
+    stable instruction identity, atomic attempt reservation, one stable
+    client-order id, and the states not-sent, outcome-unknown, and
+    acknowledged, plus the broker-authored order id, partial-fill and
+    terminal evidence, a reconciliation checkpoint, restart recovery, and
+    duplicate suppression after a crash. This item adds no schema and does
+    not connect PostgreSQL.
+
+    This item does not remove, rename, deprecate, rewrite, or supersede
+    TradeStation Group 3, its fixtures or tests, its transport denial,
+    ADR-0005, or `DEP-TS-001` through `DEP-TS-004`. It does not revise Gmail
+    Decision B. It does not record a Gmail Decision C execution result and
+    does not authorize a Gmail call. It does not close `DEP-TS-001`,
+    `DEP-TS-002`, `DEP-TS-003`, `DEP-TS-004`, `DEP-GMAIL-001`, `DEP-DB-001`,
+    `DEP-DB-002`, `DEP-CORE-001`, or `DEP-CORE-002`. All nine stay `OPEN`.
+    ADR-0002, ADR-0003, ADR-0006, and ADR-0007 stay Accepted. ADR-0004 and
+    ADR-0005 stay Proposed. ADR-0005's Decision stays blank. Supabase Free
+    stays preferred and **NOT_ACCEPTED**. `DRY_RUN` remains the only
+    authorized trading execution mode. `SIM`, paper-order execution, and
+    `LIVE` remain unauthorized. No Alpaca, TradeStation, Gmail, PostgreSQL,
+    `OrderIntent`, or broker operation is performed by this commit.
 
 ## Evidence
 
