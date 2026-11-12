@@ -36,6 +36,8 @@ Item 29 proposal, 2026-11-12. Parent main `0016b89b31a2d05c80c66e67962cf9ac20bbd
 
 Item 30 proposal, 2026-11-12. Parent main `0016b89b31a2d05c80c66e67962cf9ac20bbd437`, tree `48d2e01be375588d0c54c576efe905a5e6725900`. Item 30 is not effective on this branch. When current-state item 30 is effective and item 29 Stage E and Stage F have passed for the new cluster, Lane 4 may add only `src/swingtrade/postgres_receipt_store.py`, `tests/integration/test_postgres_receipt_store.py`, and `migrations/versions/0004_instruction_receipts.py`. Until both of those gates are met, those paths must not be added. Sharing a commit with item 29 does not open them. This paragraph does not authorize a connection to port 5432 or integration of a future implementation pull request. All nine dependencies stay OPEN. ADR-0007 stays Accepted and is not widened. This descendant cannot embed its own hash.
 
+PR #61 integration record, 2026-11-12. The two paragraphs above are the historical proposal text. Operative record: commit `a9333b5c92628981eacdf6ae091780dcd27313f5`, tree `17c04894d2385bfae153de41febafc048e799cbf`, is canonical main. Verifier `bc-e583af06-ed8e-51e0-b0a7-cdeb35881ef2` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR61_ITEMS29_30_OPERATOR_INTEGRATION_AUTHORIZED` authorized the non-forced fast-forward. GitHub PR #61 is MERGED at `2026-11-12T21:43:06Z` with that merge commit. Item 29's attended Windows sequence is the effective infrastructure authority. Item 30 governance is effective and its three source paths stay closed until Stage E and Stage F are PASS. The Lane 4 table below remains the historical attestation. The Item 29 execution fields in the later correction are the step 19 status. All nine dependencies stay OPEN. This descendant cannot embed its own hash.
+
 ## Controlled states
 
 Only these values are permitted for `Current state`:
@@ -183,6 +185,26 @@ The table above stays the 2026-10-11 attestation, including its historical next 
 | Integration eligibility | Not eligible. Fresh independent verification of tip `d491c34` is `NOT_RUN`. |
 | Last verification date | 2026-10-09 identity reattestation. Executable-byte PASS remains 2026-10-08 (`bc-6040b738-314c-499a-96c2-7383ac84c385`). |
 | Evidence references | Draft PR #24; `docs/LANE4_DEP_DB_002_INDEPENDENT_VERIFICATION.md`; token `LANE4_DEP_DB_002_INDEPENDENT_PASS` for unchanged executable bytes; certification-packet docs are not closed evidence |
+
+### Lane 4 Item 29 execution status (2026-11-12)
+
+The table above stays the historical PR #24 attestation. This correction is Integration Protocol step 19 for merged PR #61. It does not certify infrastructure that has not run.
+
+| Field | Value |
+| --- | --- |
+| Governance authorization | PR #61 commit `a9333b5c92628981eacdf6ae091780dcd27313f5`, tree `17c04894d2385bfae153de41febafc048e799cbf`, is on canonical main. Verifier `bc-e583af06-ed8e-51e0-b0a7-cdeb35881ef2` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR61_ITEMS29_30_OPERATOR_INTEGRATION_AUTHORIZED` authorized the fast-forward. GitHub state `MERGED`, `mergedAt` `2026-11-12T21:43:06Z`. |
+| Infrastructure execution state | `NOT_STARTED`. No `postgresql-swingtrade-16` service is claimed to exist. |
+| Stage A protected baseline | `NOT_RUN` |
+| Stage B service identity | `NOT_RUN` |
+| Stage C cluster initialization | `NOT_RUN` |
+| Stage D roles and databases | `NOT_RUN` |
+| Stage E security certification | `NOT_RUN` |
+| Stage F isolated test certification | `NOT_RUN` |
+| Item 30 implementation eligibility | `CLOSED`. Governance text is effective. The three source paths stay closed until Stage E and Stage F are `PASS` for the same new cluster. |
+| Current state for this execution track | `READY` for the attended Item 29 Windows sequence after this record is the canonical text. The historical table value `READY_FOR_VERIFICATION` remains the PR #24 attestation. |
+| Certification status | Governance integration of PR #61 is recorded. Security and test certification are `NOT_RUN`. |
+| Next permitted action | After this record is on canonical main, an attended Cursor Local session may begin Item 29 Stage A. A local checkout behind main fast-forwards with a non-destructive fetch. |
+| Next prohibited action | Connecting to port 5432, changing `postgresql-x64-16`, applying revision 0004, creating the three Item 30 files, or recording Stage E or Stage F as `PASS` before those stages run. |
 
 ## Baseline difference classification
 

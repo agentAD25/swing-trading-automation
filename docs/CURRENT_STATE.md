@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-11-12 (PR #61 integration record). Commit `a9333b5c92628981eacdf6ae091780dcd27313f5`, tree `17c04894d2385bfae153de41febafc048e799cbf`, is canonical `main`. Verifier `bc-e583af06-ed8e-51e0-b0a7-cdeb35881ef2` returned `INDEPENDENT_EXACT_TREE_PASS` for that commit. Operator decision `LANE1_PR61_ITEMS29_30_OPERATOR_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward of that commit, and GitHub PR #61 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-12T21:43:06Z`. Those three facts meet the effectiveness conditions written in items 29 and 30. Item 29's effective authority is the attended Windows sequence already written in item 29. No PostgreSQL service, database, role, or connection was created by that integration. Stages A through F are `NOT_RUN`. Item 30 governance is effective on that same commit, and its three source paths stay closed until Stage E and Stage F are `PASS` for the new cluster. This record is not a second Item 29 grant. It does not embed its own hash.
 - Last updated: 2026-11-12 (item 30 proposal, three-file PostgreSQL ReceiptStore). Item 30 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 30 is proposed and inactive and does not authorize coding. When those three are met, item 30 still does not authorize editing its three paths until item 29 has a recorded security PASS and isolated-test prerequisite PASS for the new cluster. The only later authority is `src/swingtrade/postgres_receipt_store.py`, `tests/integration/test_postgres_receipt_store.py`, and `migrations/versions/0004_instruction_receipts.py`. Items 18 through 29 stay as governed by their own text. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, or authorize credentials in Git, a connection to port 5432, `SIM`, paper-order execution, or `LIVE`.
 - Last updated: 2026-11-12 (item 29 proposal, dedicated loopback PostgreSQL cluster). Item 29 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 29 is proposed and inactive and does not authorize provisioning. When all three are met, the only new authority is an attended Cursor Local Windows session that creates `postgresql-swingtrade-16` on `127.0.0.1` and a verified free port, using a new data directory, without changing `postgresql-x64-16` or port 5432. Items 18 through 28 stay effective and are not revised. This proposal does not select Path A, close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, or authorize `SIM`, paper-order execution, or `LIVE`.
 - Last updated: 2026-11-12 (item 28 proposal, accelerated offline Gmail workstream). Item 28 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 28 is proposed and inactive and does not authorize coding. When all three are met, the only new authority is Lane 3's offline work inside the twelve paths named in item 28. That authority does not change `gmail_local_connect.py`, add a Gmail network client, change a credential adapter, change `contract.py`, change `instruction_receipt.py` or `persistence.py`, change a database schema, change a broker or `OrderIntent` module, change governance files, change Gate B tests, or change the existing attack tests. Items 18 through 27 stay effective and are not revised. Canonical main at authoring is the integrated PR #58 commit `cb32938225783ce0677823cebb85943edfa88b36`, tree `d8ce6cea470243bb8eea1828ce03aad476cc692d`. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, or authorize credentials, network access, a real database, `SIM`, paper-order execution, or `LIVE`.
@@ -2450,6 +2451,59 @@ a prohibition on later additive coordination roles.
     execution, and `LIVE` remain unauthorized. No database connection,
     credential generation, or broker operation is performed by this
     commit.
+
+    PR #61 integration record, 2026-11-12. This is the Integration
+    Protocol steps 18 and 19 record for the already integrated commit.
+    It is not a new item and it does not replace items 29 or 30.
+
+    The proposal is commit `a9333b5c92628981eacdf6ae091780dcd27313f5`,
+    tree `17c04894d2385bfae153de41febafc048e799cbf`, sole parent
+    `0016b89b31a2d05c80c66e67962cf9ac20bbd437`. Independent verifier
+    `bc-e583af06-ed8e-51e0-b0a7-cdeb35881ef2` fetched that commit and
+    returned `INDEPENDENT_EXACT_TREE_PASS`. The record is
+    https://cursor.com/agents/bc-e583af06-ed8e-51e0-b0a7-cdeb35881ef2.
+    The verifier is distinct from the authoring run
+    `bc-9640b616-3f03-4e3d-b66a-80aadc598992`.
+
+    Operator decision
+    `LANE1_PR61_ITEMS29_30_OPERATOR_INTEGRATION_AUTHORIZED` authorized
+    one non-forced fast-forward of that exact SHA. The mechanism was
+    `git push origin a9333b5c92628981eacdf6ae091780dcd27313f5:refs/heads/main`,
+    from `0016b89b31a2d05c80c66e67962cf9ac20bbd437` to
+    `a9333b5c92628981eacdf6ae091780dcd27313f5`. GitHub PR #61 is
+    `MERGED`. Its `mergeCommit.oid` is that SHA. Its `mergedAt` is
+    `2026-11-12T21:43:06Z`. A second fetch showed the same SHA and tree.
+    A merged commit by itself is not the Operator decision. The named
+    decision is the authorization evidence.
+
+    Those facts meet the three effectiveness conditions written in
+    items 29 and 30. Item 29 therefore authorizes the attended Cursor
+    Local Windows sequence written in item 29, on
+    `PATH_B_SEPARATE_LOOPBACK_POSTGRES_CLUSTER`, without changing
+    `postgresql-x64-16` or port 5432. Path A is not a fallback. Every
+    stop condition in item 29 remains in force. This integration did
+    not create `postgresql-swingtrade-16`, did not initialize a data
+    directory, and did not connect to PostgreSQL. Stages A, B, C, D, E,
+    and F are `NOT_RUN`. Stage E is not `PASS`. Stage F is not `PASS`.
+
+    Item 30's governance text is effective because the same three
+    conditions are met. Permission to create
+    `src/swingtrade/postgres_receipt_store.py`,
+    `tests/integration/test_postgres_receipt_store.py`, and
+    `migrations/versions/0004_instruction_receipts.py` stays closed
+    until item 29 has a Stage E security `PASS` and a Stage F
+    isolated-test prerequisite `PASS` for the same new cluster system
+    identifier, port, and `swingtrade_receipt_test` database. This
+    record does not mark those prerequisites `PASS`.
+
+    The historical proposal sentences remain the proposal. This record
+    is the integration evidence. It adds no source, test, migration, or
+    ADR change. All nine dependencies stay `OPEN`. ADR-0002, ADR-0003,
+    ADR-0006, and ADR-0007 stay Accepted. ADR-0004 and ADR-0005 stay
+    Proposed. ADR-0006 is not extended. Supabase Free stays
+    **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized trading
+    execution mode. `SIM`, paper-order execution, and `LIVE` remain
+    unauthorized. This record does not embed its own hash.
 
 ## Evidence
 

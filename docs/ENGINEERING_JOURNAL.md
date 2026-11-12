@@ -4094,3 +4094,44 @@ stay Proposed. ADR-0006 is not extended. Supabase Free stays
 **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized trading mode.
 This entry does not embed its own hash, does not connect to
 PostgreSQL, and does not merge the branch.
+
+## 2026-11-12 — PR #61 integration record
+
+This entry is the missing Integration Protocol step 18 record. It does
+not rewrite the proposal entry above and it does not provision
+PostgreSQL.
+
+Proposal and integrated commit:
+`a9333b5c92628981eacdf6ae091780dcd27313f5`, tree
+`17c04894d2385bfae153de41febafc048e799cbf`, sole parent
+`0016b89b31a2d05c80c66e67962cf9ac20bbd437`. Pull request:
+https://github.com/agentAD25/swing-trading-automation/pull/61.
+Independent verifier `bc-e583af06-ed8e-51e0-b0a7-cdeb35881ef2` returned
+`INDEPENDENT_EXACT_TREE_PASS` for that commit. The verifier run is
+https://cursor.com/agents/bc-e583af06-ed8e-51e0-b0a7-cdeb35881ef2 and is
+distinct from authoring run `bc-9640b616-3f03-4e3d-b66a-80aadc598992`.
+
+Operator decision
+`LANE1_PR61_ITEMS29_30_OPERATOR_INTEGRATION_AUTHORIZED` authorized that
+exact fast-forward. The mechanism was one non-forced
+`git push origin a9333b5c92628981eacdf6ae091780dcd27313f5:refs/heads/main`.
+GitHub records PR #61 as `MERGED`, `mergeCommit.oid`
+`a9333b5c92628981eacdf6ae091780dcd27313f5`, `mergedAt`
+`2026-11-12T21:43:06Z`. A second fetch matched that SHA and tree. The
+merged state is the integration result. The named Operator decision is
+the authorization. One is not inferred from the other.
+
+The three effectiveness conditions in items 29 and 30 are met for that
+commit. Item 29's attended Windows sequence is the effective
+infrastructure authority. Stages A through F are `NOT_RUN`. No Windows
+service was registered and no database connection was opened. Item 30
+governance is effective on the same commit. Its three source paths stay
+closed until Stage E and Stage F are `PASS` for the new cluster. This
+entry does not mark either stage `PASS`.
+
+This follow-up supplies steps 18 and 19. It is not a second Item 29
+grant and it does not waive the protocol. All nine dependencies stay
+`OPEN`. ADR-0002, ADR-0003, ADR-0006, and ADR-0007 stay Accepted.
+ADR-0004 and ADR-0005 stay Proposed. Supabase Free stays
+**NOT_ACCEPTED**. `DRY_RUN` remains the only authorized trading mode.
+This entry does not embed its own hash.
