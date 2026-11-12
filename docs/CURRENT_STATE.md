@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-11-12 (item 28 proposal, accelerated offline Gmail workstream). Item 28 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 28 is proposed and inactive and does not authorize coding. When all three are met, the only new authority is Lane 3's offline work inside the twelve paths named in item 28. That authority does not change `gmail_local_connect.py`, add a Gmail network client, change a credential adapter, change `contract.py`, change `instruction_receipt.py` or `persistence.py`, change a database schema, change a broker or `OrderIntent` module, change governance files, change Gate B tests, or change the existing attack tests. Items 18 through 27 stay effective and are not revised. Canonical main at authoring is the integrated PR #58 commit `cb32938225783ce0677823cebb85943edfa88b36`, tree `d8ce6cea470243bb8eea1828ce03aad476cc692d`. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, or authorize credentials, network access, a real database, `SIM`, paper-order execution, or `LIVE`.
 - Last updated: 2026-11-12 (item 27 proposal, Gmail Desktop client JSON declaration compatibility). Item 27 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 27 is proposed and inactive and does not authorize coding. When all three are met, the only new authority is Lane 3's declaration-validation edit in `src/swingtrade/gmail_local_connect.py` and `tests/unit/test_gmail_local_connect.py`. That authority recognizes two exact Desktop JSON declarations and does not change the approved runtime request, rewrite a downloaded client file, create or rotate a Google credential, or authorize an OAuth or Gmail call. Items 18 through 26 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, or authorize credentials, network access, a real database, `SIM`, paper-order execution, or `LIVE`.
 - Last updated: 2026-10-26 (item 26 proposal, Alpaca Paper offline security boundary). Item 26 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 26 is proposed and inactive and does not authorize coding. When all three are met, the only new authority is Lane 2's offline policy classifier in `src/swingtrade/alpaca_paper_boundary.py` and `tests/unit/test_alpaca_paper_boundary.py`. That authority is not a credential, a Windows credential call, an Alpaca request, a paper order, a live route, or a change to Item 24, TradeStation, Gmail, or PostgreSQL. Items 18 through 25 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, choose a database provider, or authorize credentials, network access, a real database, `SIM`, paper-order execution, or `LIVE`.
 - Last updated: 2026-10-16 (item 25 proposal, runtime fail-closed scan scope for the authorized Windows Gmail connector). Item 25 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 25 does not authorize editing `tests/failure_injection/test_fail_closed.py` or any other path. When all three are met, the only new authority is Lane 1's exclusion of the top-level filename `gmail_local_connect.py` from the runtime-source prohibited-substring scan in `test_runtime_package_has_no_network_or_live_order_client`. That authority is not a change to the Gmail module, a live OAuth login, a Gmail API call, integration of PR #52, Alpaca implementation, or a revision of items 18 through 24. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
@@ -2113,6 +2114,137 @@ a prohibition on later additive coordination roles.
     stay Proposed. ADR-0005's Decision stays blank. Supabase Free stays
     preferred and **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized
     trading execution mode. `SIM`, paper-order execution, and `LIVE` remain
+    unauthorized. No Gmail, Google, Alpaca, TradeStation, PostgreSQL,
+    `OrderIntent`, or broker operation is performed by this commit.
+
+    28. Accelerated offline Gmail workstream, proposed 2026-11-12. This
+    item becomes effective only when all three of these are true: an
+    independent verifier has passed this exact commit, an Operator
+    decision has authorized integration of this exact commit, and this
+    exact commit is canonical `main`. While any condition is unmet, this
+    item is proposed and inactive. It does not authorize coding, a
+    credential change, or a provider call. When all three are met, the
+    only new authority is the Lane 3 edit surface named below. No other
+    path is granted, and no new file is granted. This commit adds no
+    application source and no test change. The parent main is
+    `cb32938225783ce0677823cebb85943edfa88b36`, tree
+    `d8ce6cea470243bb8eea1828ce03aad476cc692d`, sole parent
+    `0a52646113407a99397e4049945ac2714b948d47`. That parent is the
+    fast-forward integration of PR #58. GitHub records PR #58 as MERGED,
+    `mergeCommit.oid`
+    `cb32938225783ce0677823cebb85943edfa88b36`, `mergedAt`
+    `2026-11-12T21:05:20Z`. The integrated connector blob is
+    `0a6901a82512100aff41a0494fa185b154f55527`. The integrated connector
+    test blob is `fa37f96522b78750cf70cb9da57871ebe502c2e3`. The
+    controlling verifier for that tree is
+    `bc-d240303e-5036-5c87-a035-39a53c476abf`, verdict
+    `INDEPENDENT_EXACT_TREE_PASS`. The earlier identifier
+    `aaed36b8-a7f8-4738-8eb9-50ededb5c9a5` remains inaccessible and is not
+    controlling evidence. Items 18 through 27 stay effective and are not
+    revised. This item does not re-open or expand Item 27.
+
+    The Phase 1 classification recorded for that integration is
+    `PHASE1_ENCODING_BASELINE_ONLY`. The accepted command
+    `python tests/validate_phase1_contracts.py` passes under UTF-8 on
+    both the Item 27 governance parent and the integrated commit. A
+    cp1252 decode of the unchanged fixture fails both trees at the same
+    report-digest assertion. The validator blob on both trees is
+    `291dfeaec34e7ace462b4f24cbe44ab1630b596b`. The fixture
+    `tests/fixtures/wdc-reference/expected-report.json` blob on both
+    trees is `61976d9563351958fa38879ebd800042b10dc758`. No native
+    Windows pass is recorded. This item does not modify the validator or
+    the fixture and does not waive that baseline failure.
+
+    Existing offline capability on the parent, which a later
+    implementation must inspect and reuse, is:
+    `deliver_synthetic_fixtures` in `synthetic_acquisition.py`;
+    `extract_text`, `normalize_email`, and `parse_email`; the in-process
+    `MessageIdentityRegistry`; `derive_disposition_view`; and
+    `record_synthetic_ingestion`, which composes delivery, parse,
+    disposition, and the in-memory receipt from `instruction_receipt.py`.
+    That receipt store is in memory. Durable receipt storage is Lane 4.
+    Milestone F, operational recovery and monitoring, is the remaining
+    gap. Before each milestone, Lane 3 states the inspected capability
+    and the remaining gap. Completed modules are not rewritten because
+    this item exists.
+
+    After this item is effective, Lane 3 may change only these source
+    paths: `src/swingtrade/group4_email/synthetic_acquisition.py`,
+    `src/swingtrade/group4_email/synthetic_ingestion.py`,
+    `src/swingtrade/group4_email/parse.py`,
+    `src/swingtrade/group4_email/extract.py`,
+    `src/swingtrade/group4_email/normalize.py`, and
+    `src/swingtrade/group4_email/disposition.py`. Lane 3 may change only
+    these test paths:
+    `tests/group4_email/test_synthetic_acquisition.py`,
+    `tests/group4_email/test_synthetic_ingestion.py`,
+    `tests/group4_email/test_disposition_view.py`,
+    `tests/group4_email/test_exit_policy_negation.py`,
+    `tests/group4_email/test_remediation.py`, and
+    `tests/group4_email/test_tday.py`. There is no wildcard. Adding a
+    file, including a new test file, requires a separate governance
+    item. One effective item covers the milestones below, so a later
+    task inside this allowlist does not need a new governance item.
+    Each resulting implementation pull request still needs an exact
+    changed-path attestation, an immutable SHA and tree, negative-security
+    tests, `python -m pytest tests`, Ruff, `python -m mypy src`,
+    `python tests/validate_phase1_contracts.py`, `git diff --check`, an
+    independent exact-tree pass from an agent who did not write the
+    change, and a separate Operator integration decision. The pull
+    request stays draft until that decision. This item does not
+    authorize automatic merging and does not let Lane 3 enlarge the
+    allowlist.
+
+    The milestones are offline, non-economic, and disconnected from a
+    provider. Milestone A reuses synthetic acquisition and does not add
+    a second acquisition implementation. Milestone B preserves the
+    accepted instruction extraction, normalization, and parse behavior.
+    It does not invent an email signal format or an economic trading
+    rule. `contract.py` stays outside the allowlist, so the accepted
+    instruction contract is not edited under this item. Milestone C
+    extends in-memory message identity and duplicate classification only
+    where inspection shows a gap. Durable duplicate suppression stays
+    Lane 4. Milestone D defines and tests deterministic classifications
+    for malformed or conflicting synthetic acquisition evidence. It
+    performs no provider call and no database operation. Milestone E
+    certifies the existing `record_synthetic_ingestion` composition
+    across delivery, parsing, disposition, and in-memory receipt
+    outcomes. It does not construct an `OrderIntent` or call a broker.
+    Milestone F implements or documents deterministic recovery decisions
+    and monitoring evidence inside the authorized paths. It does not
+    claim crash-safe durable recovery. It does not start background
+    Gmail polling and does not add an external metrics client.
+
+    Excluded from the Lane 3 implementation grant: `gmail_local_connect.py`
+    and its tests; any real Gmail network client; credential adapters;
+    `contract.py`; `instruction_receipt.py`; `persistence.py`; PostgreSQL
+    schemas; broker modules; `OrderIntent` modules; governance documents;
+    `tests/group4_email/test_local_oauth_probe.py`; and
+    `tests/group4_email/test_attacks.py`. Those Gate B and attack tests
+    remain mandatory regression gates, as do
+    `tests/failure_injection/test_fail_closed.py` and
+    `tests/unit/test_gmail_local_connect.py`. The Item 25 scan exclusion
+    stays exactly `gmail_local_connect.py`.
+
+    This item does not authorize OAuth, a Gmail profile request, Gmail
+    message retrieval, token persistence, Windows Credential Manager
+    access, or background polling. The Decision C bound to the
+    pre-remediation connector does not transfer to
+    `cb32938225783ce0677823cebb85943edfa88b36`. A future attended
+    Windows-local proof requires a separate Operator execution decision
+    that names the exact canonical SHA and tree. This item does not make
+    that decision. A reusable capped attended-read model is not
+    activated by this item. Unattended polling requires a separate
+    credential-custody decision. ADR-0006 is not extended.
+
+    This item does not edit ADRs or the dependency registry. It does not
+    close `DEP-TS-001`, `DEP-TS-002`, `DEP-TS-003`, `DEP-TS-004`,
+    `DEP-GMAIL-001`, `DEP-DB-001`, `DEP-DB-002`, `DEP-CORE-001`, or
+    `DEP-CORE-002`. All nine stay `OPEN`. ADR-0002, ADR-0003, ADR-0006,
+    and ADR-0007 stay Accepted. ADR-0004 and ADR-0005 stay Proposed.
+    ADR-0005's Decision stays blank. Supabase Free stays preferred and
+    **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized trading
+    execution mode. `SIM`, paper-order execution, and `LIVE` remain
     unauthorized. No Gmail, Google, Alpaca, TradeStation, PostgreSQL,
     `OrderIntent`, or broker operation is performed by this commit.
 

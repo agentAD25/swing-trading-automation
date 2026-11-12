@@ -4018,3 +4018,42 @@ All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
 ADR-0006 is not extended. Supabase Free stays **NOT_ACCEPTED**.
 `DRY_RUN` remains the only authorized trading mode. This entry does not
 embed its own hash and does not merge the branch.
+
+## 2026-11-12 — PR #58 integrated; Item 28 accelerated offline Gmail governance
+
+PR #58 was fast-forwarded onto canonical main. The integrated SHA is
+`cb32938225783ce0677823cebb85943edfa88b36`, tree
+`d8ce6cea470243bb8eea1828ce03aad476cc692d`, sole parent
+`0a52646113407a99397e4049945ac2714b948d47`. The connector blob is
+`0a6901a82512100aff41a0494fa185b154f55527` and the connector test blob
+is `fa37f96522b78750cf70cb9da57871ebe502c2e3`. GitHub PR #58 is MERGED,
+`mergeCommit.oid` equals that SHA, and `mergedAt` is
+`2026-11-12T21:05:20Z` (4:05 PM EST). The controlling verifier is
+`bc-d240303e-5036-5c87-a035-39a53c476abf`,
+`INDEPENDENT_EXACT_TREE_PASS`. The inaccessible identifier
+`aaed36b8-a7f8-4738-8eb9-50ededb5c9a5` is not controlling evidence.
+`PHASE1_ENCODING_BASELINE_ONLY` stays the encoding disposition. The
+validator and fixture were not changed. No native Windows pass is
+claimed. This integration does not authorize an OAuth or Gmail call.
+
+This entry then proposes item 28 on that parent. Item 28 stays proposed
+and inactive unless an independent verifier has passed this exact
+commit, an Operator decision has authorized integration of this exact
+commit, and this exact commit is canonical `main`. When those three
+are met, Lane 3 may change only the six `group4_email` modules and six
+tests named in item 28. The milestones reuse synthetic acquisition,
+accepted extraction, in-process identity, and synthetic ingestion.
+Durable duplicate suppression and crash-safe recovery stay Lane 4.
+Milestone F is the remaining offline recovery and monitoring design.
+No new file is granted. Gate B tests, attack tests, `contract.py`,
+`instruction_receipt.py`, `persistence.py`, the connector, credential
+adapters, broker modules, and governance files stay outside the
+implementation grant. Each later implementation pull request still
+needs independent exact-tree verification and a separate Operator
+integration decision. No automatic merge is granted.
+
+All nine dependencies stay `OPEN`. ADR-0002, ADR-0003, ADR-0006, and
+ADR-0007 stay Accepted. ADR-0004 and ADR-0005 stay Proposed. ADR-0006
+is not extended. Supabase Free stays **NOT_ACCEPTED**. `DRY_RUN`
+remains the only authorized trading mode. This entry does not embed
+its own hash and does not merge the branch.
