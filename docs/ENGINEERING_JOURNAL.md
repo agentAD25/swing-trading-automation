@@ -3987,3 +3987,34 @@ ADR-0005's Decision stays blank. Supabase Free stays **NOT_ACCEPTED**.
 execution, and `LIVE` stay unauthorized. This entry does not edit
 source, tests, schemas, ADRs, or the dependency registry. It does not
 embed its own hash and does not merge the branch.
+
+## 2026-11-12 — Item 27 Gmail Desktop JSON declaration compatibility
+
+Canonical main at authoring is
+`0c3d3d6714407f27ae2e0ff130b6e2590883e43f`, tree
+`3aedc40346d1062700220be95961fe56682c15ee`. Items 18 through 26 remain
+effective. The connector blob is
+`5243adabd83e7902065be5b4d80b4975a37ae8eb` and the connector test blob
+is `75104511e5e50548c1a3016b40bff681567933ab`. This entry proposes item
+27 and does not revise those items. Open draft PR #56 is unrelated and
+is not edited.
+
+Item 27 stays proposed and inactive unless an independent verifier has
+passed this exact commit, an Operator decision has authorized
+integration of this exact commit, and this exact commit is canonical
+`main`. When those three are met, Lane 3 may change only the Desktop
+JSON declaration check in `src/swingtrade/gmail_local_connect.py` and
+`tests/unit/test_gmail_local_connect.py`. The only new accepted
+declarations are the exact strings `http://localhost`,
+`http://localhost/`, and `https://accounts.google.com/o/oauth2/auth`.
+The runtime redirect stays `127.0.0.1`, the authorization request stays
+on `https://accounts.google.com/o/oauth2/v2/auth`, and the token
+endpoint, metadata scope, PKCE S256, ephemeral port, and absence of
+token persistence stay unchanged. No downloaded client file is modified.
+No OAuth or Gmail call is authorized. A later remediated tree needs its
+own execution decision.
+
+All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
+ADR-0006 is not extended. Supabase Free stays **NOT_ACCEPTED**.
+`DRY_RUN` remains the only authorized trading mode. This entry does not
+embed its own hash and does not merge the branch.

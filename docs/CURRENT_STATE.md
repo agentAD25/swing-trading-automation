@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-11-12 (item 27 proposal, Gmail Desktop client JSON declaration compatibility). Item 27 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 27 is proposed and inactive and does not authorize coding. When all three are met, the only new authority is Lane 3's declaration-validation edit in `src/swingtrade/gmail_local_connect.py` and `tests/unit/test_gmail_local_connect.py`. That authority recognizes two exact Desktop JSON declarations and does not change the approved runtime request, rewrite a downloaded client file, create or rotate a Google credential, or authorize an OAuth or Gmail call. Items 18 through 26 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, or authorize credentials, network access, a real database, `SIM`, paper-order execution, or `LIVE`.
 - Last updated: 2026-10-26 (item 26 proposal, Alpaca Paper offline security boundary). Item 26 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 26 is proposed and inactive and does not authorize coding. When all three are met, the only new authority is Lane 2's offline policy classifier in `src/swingtrade/alpaca_paper_boundary.py` and `tests/unit/test_alpaca_paper_boundary.py`. That authority is not a credential, a Windows credential call, an Alpaca request, a paper order, a live route, or a change to Item 24, TradeStation, Gmail, or PostgreSQL. Items 18 through 25 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, choose a database provider, or authorize credentials, network access, a real database, `SIM`, paper-order execution, or `LIVE`.
 - Last updated: 2026-10-16 (item 25 proposal, runtime fail-closed scan scope for the authorized Windows Gmail connector). Item 25 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 25 does not authorize editing `tests/failure_injection/test_fail_closed.py` or any other path. When all three are met, the only new authority is Lane 1's exclusion of the top-level filename `gmail_local_connect.py` from the runtime-source prohibited-substring scan in `test_runtime_package_has_no_network_or_live_order_client`. That authority is not a change to the Gmail module, a live OAuth login, a Gmail API call, integration of PR #52, Alpaca implementation, or a revision of items 18 through 24. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
 - Last updated: 2026-10-16 (item 24 proposal, Alpaca Paper execution direction). Item 24 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 24 does not authorize coding or a provider call. When all three are met, the only new authority is Lane 2's offline synthetic contract in the two paths named in item 24. That authority is not an Alpaca credential, a paper order, a network call, or a change to TradeStation, Gmail, or PostgreSQL. Items 18 through 23 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, choose a database provider, or authorize credentials, network access, a real database, `SIM`, or `LIVE`.
@@ -1996,6 +1997,123 @@ a prohibition on later additive coordination roles.
     stays preferred and **NOT_ACCEPTED**. `DRY_RUN` remains the only
     authorized trading execution mode. `SIM`, paper-order execution, and
     `LIVE` remain unauthorized. No Alpaca, TradeStation, Gmail, PostgreSQL,
+    `OrderIntent`, or broker operation is performed by this commit.
+
+    27. Gmail Desktop client JSON declaration compatibility, proposed
+    2026-11-12. This item becomes effective only when all three of these are
+    true: an independent verifier has passed this exact commit, an Operator
+    decision has authorized integration of this exact commit, and this exact
+    commit is canonical `main`. While any condition is unmet, this item is
+    proposed and inactive. It does not authorize coding, a credential
+    change, or a provider call. When all three are met, the only new
+    authority is the Lane 3 edit named below. No other path is granted. This
+    commit adds no application source and no test change. The parent main is
+    `0c3d3d6714407f27ae2e0ff130b6e2590883e43f`, tree
+    `3aedc40346d1062700220be95961fe56682c15ee`. Items 18 through 26 stay
+    effective and are not revised. Open draft PR #56 is a separate Lane 2
+    Alpaca boundary candidate and is not part of this item.
+
+    The integrated connector is `src/swingtrade/gmail_local_connect.py`,
+    blob `5243adabd83e7902065be5b4d80b4975a37ae8eb`. Its tests are
+    `tests/unit/test_gmail_local_connect.py`, blob
+    `75104511e5e50548c1a3016b40bff681567933ab`.
+    `desktop_client_from_document` rejects a `redirect_uris` entry that is
+    not an exact `http://127.0.0.1` loopback form, and it rejects a declared
+    `auth_uri` other than `https://accounts.google.com/o/oauth2/v2/auth`. A
+    standard Google Desktop download can contain the declaration
+    `http://localhost` and the legacy authorization declaration
+    `https://accounts.google.com/o/oauth2/auth`. Those two declarations are
+    the only incompatibility this item addresses. Google's installed-app
+    documentation, accessed 2026-11-12, requires the authorization request
+    to use `https://accounts.google.com/o/oauth2/v2/auth`, the token
+    exchange to use `https://oauth2.googleapis.com/token`, and a loopback
+    redirect of `http://127.0.0.1:port` or `http://[::1]:port`. It also says
+    `localhost` may replace the loopback address. The source is
+    https://developers.google.com/identity/protocols/oauth2/native-app. This
+    item does not adopt the IPv6 form.
+
+    After this item is effective, Lane 3 may change only
+    `src/swingtrade/gmail_local_connect.py` and
+    `tests/unit/test_gmail_local_connect.py`. The production change is
+    confined to the Desktop JSON declaration check used by
+    `desktop_client_from_document`. The resulting `DesktopClientConfig`
+    stays `client_type` `installed`, `redirect_host` `127.0.0.1`,
+    `redirect_path` `/`, scope exactly
+    `https://www.googleapis.com/auth/gmail.metadata`, and
+    `network_permitted` false. The authorization request endpoint stays
+    `https://accounts.google.com/o/oauth2/v2/auth`. The token endpoint stays
+    `https://oauth2.googleapis.com/token`. The profile request stays the
+    existing single metadata profile GET. PKCE remains S256 through the
+    existing helper. The listener still binds `127.0.0.1` with an
+    operating-system-assigned port. No token, refresh token, or client
+    secret is persisted. `client_secret` stays out of the authorization
+    parameters and the token form. The Windows command still refuses on any
+    other platform before a socket import. The Item 25 scan exclusion stays
+    exactly `gmail_local_connect.py` and is not widened.
+
+    The declaration check may accept, in addition to the declarations it
+    already accepts, only these exact strings. Redirect declarations:
+    `http://localhost` and `http://localhost/`. Authorization declaration:
+    `https://accounts.google.com/o/oauth2/auth`. A list is accepted only
+    when every entry is one of those localhost strings or an already
+    accepted `127.0.0.1` form. Acceptance of a declaration does not copy it
+    into the runtime redirect or the request URL. The legacy authorization
+    string must not be passed to the browser or compared as the request
+    endpoint. `token_uri`, when present, must still be exactly
+    `https://oauth2.googleapis.com/token`.
+
+    The same check must still reject every other declaration, including
+    `http://localhost` with a port, userinfo, path, query, or fragment;
+    `https://localhost` and `https://localhost/`; a host that merely begins
+    with `localhost`; `urn:ietf:wg:oauth:2.0:oob`; any public redirect; any
+    `auth_uri` other than the v2 endpoint or the one legacy string; any
+    other `token_uri`; a non-string `client_secret`; a web client document;
+    custody fields; `access_type` and `prompt`; and `network_permitted`. The
+    existing rejection of a callback path other than `/` stays in the
+    listener. No downloaded Google client file is added to the repository,
+    read from a real path in tests, rewritten, or used to create, rotate,
+    disable, or delete a credential. Tests use synthetic values only and
+    make no network call.
+
+    The required tests are offline. They show that a synthetic installed
+    document containing `http://localhost`, `http://localhost/`, and the
+    legacy authorization declaration, including together with a synthetic
+    `client_secret` string and the ordinary non-secret download fields
+    `project_id` and `auth_provider_x509_cert_url`, produces the unchanged
+    loopback metadata configuration. They show that the offline orchestrator
+    still opens the v2 authorization endpoint when the document declared the
+    legacy URI. They show the negative cases above, and that the synthetic
+    secret is absent from the configuration representation, the
+    authorization parameters, and the token form.
+    `test_wrong_callback_uri_is_rejected` may stop treating the two exact
+    localhost declarations as failures. It must still reject a public
+    redirect and a non-root callback path. The future implementation branch
+    is created from the main that contains this item, changes only the two
+    paths, runs the focused tests, `python -m pytest tests`, Ruff, `python
+    -m mypy src`, the Phase 1 validator, and `git diff --check`, and obtains
+    an independent exact-tree pass from an agent who did not write the
+    change. Its pull request stays draft. This item does not authorize
+    integrating that pull request.
+
+    No execution authorization carries from the pre-remediation connector
+    blob `5243adabd83e7902065be5b4d80b4975a37ae8eb` to a changed tree. After
+    a future Operator integration of a verified remediation commit, a real
+    OAuth or Gmail call still requires a new Operator execution decision
+    that names that commit's exact SHA and tree. This item does not make
+    that decision and does not run the Windows command.
+
+    This item does not edit
+    `src/swingtrade/group4_email/local_oauth_probe.py`, the Gmail credential
+    adapter, Group 3, Alpaca source,
+    `tests/failure_injection/test_fail_closed.py`, ADRs, or the dependency
+    registry. It does not close `DEP-TS-001`, `DEP-TS-002`, `DEP-TS-003`,
+    `DEP-TS-004`, `DEP-GMAIL-001`, `DEP-DB-001`, `DEP-DB-002`,
+    `DEP-CORE-001`, or `DEP-CORE-002`. All nine stay `OPEN`. ADR-0002,
+    ADR-0003, ADR-0006, and ADR-0007 stay Accepted. ADR-0004 and ADR-0005
+    stay Proposed. ADR-0005's Decision stays blank. Supabase Free stays
+    preferred and **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized
+    trading execution mode. `SIM`, paper-order execution, and `LIVE` remain
+    unauthorized. No Gmail, Google, Alpaca, TradeStation, PostgreSQL,
     `OrderIntent`, or broker operation is performed by this commit.
 
 ## Evidence
