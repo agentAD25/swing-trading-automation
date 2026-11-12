@@ -9,7 +9,14 @@ from pathlib import Path
 import pytest
 
 from swingtrade.group4_email.contract import Disposition, MessageType
-from swingtrade.group4_email.disposition import DispositionViewLabel
+from swingtrade.group4_email.disposition import (
+    DispositionViewError,
+    DispositionViewLabel,
+    OfflineRecoveryEvidence,
+    RecoveryDecision,
+    classify_ingestion_stop,
+    classify_synthetic_record,
+)
 from swingtrade.group4_email.parse import MessageIdentityRegistry, parse_email
 from swingtrade.group4_email.synthetic_acquisition import (
     SyntheticAcquisitionError,
@@ -23,6 +30,7 @@ from swingtrade.group4_email.synthetic_ingestion import (
 from swingtrade.instruction_receipt import (
     InMemoryReceiptStore,
     InstructionReceipt,
+    ReceiptEvidenceRejected,
     ReceiptKind,
     ReceiptStoreUnavailable,
     admit_instruction_receipt,
@@ -527,3 +535,174 @@ def test_module_has_no_forbidden_imports_or_economic_logic() -> None:
     names = set(record_synthetic_ingestion.__code__.co_names)
     for token in ("open", "print", "socket", "system"):
         assert token not in names
+
+
+def _one(raw: bytes, store: InMemoryReceiptStore | None = None) -> SyntheticIngestionRecord:
+    (record,) = record_synthetic_ingestion(
+        (SyntheticFixture("syn-delivery-1", raw),),
+        store or InMemoryReceiptStore(),
+    )
+    return record
+
+
+def test_recovery_classifies_accepted_and_informational_inputs() -> None:
+    accepted = classify_synthetic_record(_one(_trade("<recover-trade@example.invalid>")))
+    notice = _one(
+        plain_message(
+            "14 more swing orders remain behind the member notice.\n",
+            "<recover-info@example.invalid>",
+        )
+    )
+    informational = classify_synthetic_record(notice)
+    repeated = classify_synthetic_record(notice)
+
+    assert accepted.recovery is RecoveryDecision.PROCESSED_SYNTHETIC
+    assert accepted.reason == "RECORDED_NOT_EXECUTABLE"
+    assert accepted.operator_review is False
+    assert accepted.processing_result == "RECORDED_NOT_EXECUTABLE:NEW"
+    assert informational.recovery is RecoveryDecision.PROCESSED_SYNTHETIC
+    assert informational.reason == "INFORMATIONAL"
+    assert informational.view_label == "INFORMATIONAL"
+    assert repeated == informational
+    assert accepted.economic_dispatch is False
+    assert accepted.durable_state == "UNAVAILABLE"
+
+
+def test_recovery_classifies_reject_quarantine_defer_and_conflict() -> None:
+    malformed = classify_synthetic_record(_one(MALFORMED))
+    missing = classify_synthetic_record(
+        _one(
+            b"From: signals@example.invalid\r\n"
+            b"Subject: fixture\r\n"
+            b"Content-Type: text/plain; charset=utf-8\r\n"
+            b"\r\n"
+            b"Informational notice without an identifier.\r\n"
+        )
+    )
+    deferred = classify_synthetic_record(
+        _one(plain_message("Trade cancel: TDAY\n", "<recover-cancel@example.invalid>"))
+    )
+    quarantined = classify_synthetic_record(_one(plain_message(DATED, "<user@gmail.com>")))
+    original = _trade("<recover-conflict@example.invalid>")
+    changed = plain_message(DATED + "\nUnrelated tail.\n", "<recover-conflict@example.invalid>")
+    first, second = record_synthetic_ingestion(
+        (
+            SyntheticFixture("syn-delivery-1", original),
+            SyntheticFixture("syn-delivery-2", changed),
+        ),
+        InMemoryReceiptStore(),
+    )
+    conflict = classify_synthetic_record(second)
+    replay = classify_synthetic_record(
+        record_synthetic_ingestion(
+            (
+                SyntheticFixture("syn-delivery-1", original),
+                SyntheticFixture("syn-delivery-2", original),
+            ),
+            InMemoryReceiptStore(),
+        )[1]
+    )
+
+    assert malformed.recovery is RecoveryDecision.TERMINAL_REJECT
+    assert malformed.reason == "MALFORMED_MIME"
+    assert malformed.operator_review is False
+    assert missing.recovery is RecoveryDecision.QUARANTINE
+    assert missing.reason == "MISSING_MESSAGE_ID"
+    assert missing.operator_review is True
+    assert deferred.recovery is RecoveryDecision.DEFERRED_REVIEW
+    assert deferred.reason == "CANCEL_FORMAT_UNSPECIFIED"
+    assert deferred.operator_review is True
+    assert quarantined.recovery is RecoveryDecision.QUARANTINE
+    assert quarantined.reason == "NON_FIXTURE_MESSAGE_ID"
+    assert first.receipt_kind is ReceiptKind.NEW
+    assert conflict.recovery is RecoveryDecision.CONFLICT_REVIEW
+    assert conflict.reason == "CONFLICTING_DUPLICATE"
+    assert conflict.operator_review is True
+    assert replay.recovery is RecoveryDecision.REPLAY_OBSERVED
+    assert replay.reason == "REPLAY"
+    assert replay.operator_review is False
+    assert replay == classify_synthetic_record(
+        record_synthetic_ingestion(
+            (
+                SyntheticFixture("syn-delivery-1", original),
+                SyntheticFixture("syn-delivery-2", original),
+            ),
+            InMemoryReceiptStore(),
+        )[1]
+    )
+
+
+def test_restart_and_lost_memory_do_not_claim_durable_suppression() -> None:
+    raw = _trade("<recover-restart@example.invalid>")
+    fixtures = (SyntheticFixture("syn-delivery-1", raw),)
+    first = record_synthetic_ingestion(fixtures, InMemoryReceiptStore())[0]
+    restarted = record_synthetic_ingestion(fixtures, InMemoryReceiptStore())[0]
+    first_decision = classify_synthetic_record(first)
+    restarted_decision = classify_synthetic_record(restarted)
+
+    assert first.receipt_kind is ReceiptKind.NEW
+    assert restarted.receipt_kind is ReceiptKind.NEW
+    assert first_decision.recovery is RecoveryDecision.PROCESSED_SYNTHETIC
+    assert restarted_decision.recovery is RecoveryDecision.PROCESSED_SYNTHETIC
+    assert first_decision.durable_state == "UNAVAILABLE"
+    assert restarted_decision.durable_state == "UNAVAILABLE"
+    assert restarted_decision.economic_dispatch is False
+
+
+def test_stops_halt_without_leaking_unknown_text() -> None:
+    unavailable = classify_ingestion_stop(ReceiptStoreUnavailable())
+    invalid = classify_ingestion_stop(SyntheticAcquisitionError("INVALID_FIXTURE"))
+    duplicate_ref = classify_ingestion_stop(SyntheticAcquisitionError("DUPLICATE_DELIVERY_REF"))
+    evidence = classify_ingestion_stop(ReceiptEvidenceRejected())
+    view = classify_ingestion_stop(DispositionViewError("unsupported_combination"))
+    rejected = classify_ingestion_stop(SyntheticIngestionRejected("INGESTION_INVALID"))
+    secret = classify_ingestion_stop(RuntimeError("token-body-secret"))
+    unknown_record = classify_synthetic_record(object())
+
+    assert unavailable.recovery is RecoveryDecision.OPERATOR_HALT
+    assert unavailable.reason == "RECEIPT_STORE_UNAVAILABLE"
+    assert unavailable.operator_review is True
+    assert unavailable.stage == "receipt"
+    assert invalid.recovery is RecoveryDecision.TERMINAL_REJECT
+    assert invalid.reason == "INVALID_FIXTURE"
+    assert duplicate_ref.reason == "DUPLICATE_DELIVERY_REF"
+    assert evidence.reason == "RECEIPT_EVIDENCE_INVALID"
+    assert view.reason == "UNSUPPORTED_COMBINATION"
+    assert rejected.reason == "INGESTION_INVALID"
+    assert secret.recovery is RecoveryDecision.OPERATOR_HALT
+    assert secret.reason == "UNKNOWN_PROCESSING_RESULT"
+    assert "token-body-secret" not in f"{secret} {secret!r}"
+    assert unknown_record.reason == "UNKNOWN_PROCESSING_RESULT"
+    assert unknown_record.economic_dispatch is False
+    with pytest.raises(DispositionViewError):
+        OfflineRecoveryEvidence(
+            stage="receipt",
+            processing_result="STOPPED",
+            recovery=RecoveryDecision.OPERATOR_HALT,
+            operator_review=False,
+            reason="RECEIPT_STORE_UNAVAILABLE",
+            durable_state="DURABLE",
+            economic_dispatch=False,
+        )
+
+
+def test_partial_store_failure_is_a_halt_and_not_a_rollback() -> None:
+    first_raw = _trade("<recover-partial@example.invalid>")
+    store = SecondCallFails()
+    with pytest.raises(ReceiptStoreUnavailable) as caught:
+        record_synthetic_ingestion(
+            (
+                SyntheticFixture("syn-delivery-1", first_raw),
+                SyntheticFixture("syn-delivery-2", _trade("<recover-partial-2@example.invalid>")),
+            ),
+            store,
+        )
+    decision = classify_ingestion_stop(caught.value)
+
+    assert decision.recovery is RecoveryDecision.OPERATOR_HALT
+    assert decision.reason == "RECEIPT_STORE_UNAVAILABLE"
+    assert len(store.inner) == 1
+    assert decision.economic_dispatch is False
+    rendered = f"{decision} {decision!r}"
+    assert "recover-partial" not in rendered
+    assert "Message-ID" not in rendered
