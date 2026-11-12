@@ -1,5 +1,7 @@
 # Current State
 
+- Last updated: 2026-11-12 (item 30 proposal, three-file PostgreSQL ReceiptStore). Item 30 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 30 is proposed and inactive and does not authorize coding. When those three are met, item 30 still does not authorize editing its three paths until item 29 has a recorded security PASS and isolated-test prerequisite PASS for the new cluster. The only later authority is `src/swingtrade/postgres_receipt_store.py`, `tests/integration/test_postgres_receipt_store.py`, and `migrations/versions/0004_instruction_receipts.py`. Items 18 through 29 stay as governed by their own text. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, or authorize credentials in Git, a connection to port 5432, `SIM`, paper-order execution, or `LIVE`.
+- Last updated: 2026-11-12 (item 29 proposal, dedicated loopback PostgreSQL cluster). Item 29 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 29 is proposed and inactive and does not authorize provisioning. When all three are met, the only new authority is an attended Cursor Local Windows session that creates `postgresql-swingtrade-16` on `127.0.0.1` and a verified free port, using a new data directory, without changing `postgresql-x64-16` or port 5432. Items 18 through 28 stay effective and are not revised. This proposal does not select Path A, close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, or authorize `SIM`, paper-order execution, or `LIVE`.
 - Last updated: 2026-11-12 (item 28 proposal, accelerated offline Gmail workstream). Item 28 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 28 is proposed and inactive and does not authorize coding. When all three are met, the only new authority is Lane 3's offline work inside the twelve paths named in item 28. That authority does not change `gmail_local_connect.py`, add a Gmail network client, change a credential adapter, change `contract.py`, change `instruction_receipt.py` or `persistence.py`, change a database schema, change a broker or `OrderIntent` module, change governance files, change Gate B tests, or change the existing attack tests. Items 18 through 27 stay effective and are not revised. Canonical main at authoring is the integrated PR #58 commit `cb32938225783ce0677823cebb85943edfa88b36`, tree `d8ce6cea470243bb8eea1828ce03aad476cc692d`. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, or authorize credentials, network access, a real database, `SIM`, paper-order execution, or `LIVE`.
 - Last updated: 2026-11-12 (item 27 proposal, Gmail Desktop client JSON declaration compatibility). Item 27 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 27 is proposed and inactive and does not authorize coding. When all three are met, the only new authority is Lane 3's declaration-validation edit in `src/swingtrade/gmail_local_connect.py` and `tests/unit/test_gmail_local_connect.py`. That authority recognizes two exact Desktop JSON declarations and does not change the approved runtime request, rewrite a downloaded client file, create or rotate a Google credential, or authorize an OAuth or Gmail call. Items 18 through 26 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, or authorize credentials, network access, a real database, `SIM`, paper-order execution, or `LIVE`.
 - Last updated: 2026-10-26 (item 26 proposal, Alpaca Paper offline security boundary). Item 26 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 26 is proposed and inactive and does not authorize coding. When all three are met, the only new authority is Lane 2's offline policy classifier in `src/swingtrade/alpaca_paper_boundary.py` and `tests/unit/test_alpaca_paper_boundary.py`. That authority is not a credential, a Windows credential call, an Alpaca request, a paper order, a live route, or a change to Item 24, TradeStation, Gmail, or PostgreSQL. Items 18 through 25 stay effective and are not revised. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, choose a database provider, or authorize credentials, network access, a real database, `SIM`, paper-order execution, or `LIVE`.
@@ -2247,6 +2249,207 @@ a prohibition on later additive coordination roles.
     execution mode. `SIM`, paper-order execution, and `LIVE` remain
     unauthorized. No Gmail, Google, Alpaca, TradeStation, PostgreSQL,
     `OrderIntent`, or broker operation is performed by this commit.
+
+    29. Dedicated loopback PostgreSQL cluster, proposed 2026-11-12.
+    This item becomes effective only when all three of these are true:
+    an independent verifier has passed this exact commit, an Operator
+    decision has authorized integration of this exact commit, and this
+    exact commit is canonical `main`. While any condition is unmet, this
+    item is proposed and inactive. It does not authorize provisioning,
+    a connection, a credential, or a source edit. When all three are
+    met, the only new authority is the attended Cursor Local Windows
+    sequence below. No other path is granted. This commit adds no
+    application source, test, or migration. The parent main is
+    `0016b89b31a2d05c80c66e67962cf9ac20bbd437`, tree
+    `48d2e01be375588d0c54c576efe905a5e6725900`. Items 18 through 28 stay
+    effective and are not revised. The selected architecture is
+    `PATH_B_SEPARATE_LOOPBACK_POSTGRES_CLUSTER`. Path A is not a
+    fallback. If this path cannot leave `postgresql-x64-16` unchanged,
+    the session stops.
+
+    The protected instance is Windows service `postgresql-x64-16`, port
+    5432, data directory `C:\Program Files\PostgreSQL\16\data`. The
+    session must not stop, restart, reconfigure, upgrade, or otherwise
+    change that service, its executable, startup arguments, service
+    account, `listen_addresses`, `postgresql.conf`, `pg_hba.conf`,
+    passwords, roles, grants, schemas, tables, records, migrations,
+    connection strings, backup schedules, firewall rules, or application
+    dependencies. Existing SwingTrade-named objects on that cluster stay
+    untouched. The reported wildcard listener and broad trust
+    authentication on port 5432 remain open findings. This item does not
+    remediate them. PostgreSQL 16 binaries may be invoked by absolute
+    path. The installer must not be run. The system `PATH` must not be
+    changed. A future binary upgrade that would affect both services
+    requires a separate maintenance decision.
+
+    The new service name is `postgresql-swingtrade-16`. The provisional
+    port is 5433. The listener is `127.0.0.1` only. The provisional data
+    directory is `D:\SwingTrade\PostgreSQL16\data`. Databases, only
+    inside the new cluster, are `swingtrade_receipt_dev` and disposable
+    `swingtrade_receipt_test`. No cloud database and no Supabase
+    database is selected. `DEP-DB-001` stays `OPEN`.
+
+    Stage A is read-only. Before any new resource exists, the session
+    confirms Administrator and service permissions, the protected
+    service identity and that port 5432 is listening, the protected
+    executable path, the protected data-directory identity, hashes of
+    the protected configuration files, the names of existing PostgreSQL
+    services, whether port 5433 is free, filesystem type and free space,
+    that the new directory is absent or empty, that the new service name
+    is unused, and the installed binary version. It records observable
+    health of existing applications. It does not request or display
+    existing database passwords. A catalog listing of the protected
+    instance is `NOT_RUN` unless a separate read-only permission is
+    already available. Observations are sanitized metadata.
+
+    Stage B verifies the service identity
+    `NT SERVICE\postgresql-swingtrade-16` against the installed
+    `pg_ctl register` help and Windows service rules. The checks are
+    registration compatibility, logon rights, service permissions, data
+    and log directory access, and the ability to initialize and run
+    without a credential from `postgresql-x64-16`. This name is not
+    certified by this text. The session must not pass a service-account
+    password on a command line. If the identity is unsupported, the
+    session stops before creating a service and reports an alternative
+    for a separate Operator decision. It must not substitute LocalSystem
+    or another broad identity.
+
+    Stage C runs only after Stages A and B pass. `initdb` uses the empty
+    new directory, a strong bootstrap password entered locally by the
+    Operator, and `scram-sha-256`. Trust authentication is prohibited.
+    Before the first start, the new directory's `postgresql.conf` sets
+    `listen_addresses = '127.0.0.1'` and the verified port, and its
+    `pg_hba.conf` allows only `127.0.0.1/32` with `scram-sha-256`. The
+    default port 5432 and the default `localhost` listen value must not
+    be left in place. NTFS ACLs limit the directory to the new service
+    identity and the Operator. The directory must be outside
+    `D:\swing-trading-automation`, outside the protected data directory,
+    not a sync folder, and not a drive root. Credentials stay out of
+    Git, chat, and persistent logs.
+
+    Stage D registers only `postgresql-swingtrade-16`. Roles are
+    `swingtrade_cluster_admin` for bootstrap administration,
+    `swingtrade_owner` as `NOLOGIN` where the migration model allows it,
+    `swingtrade_migrator` for the approved schema operations,
+    `swingtrade_app` for runtime data changes, and
+    `swingtrade_test_runner` for the disposable test database. The
+    application and test roles do not receive `SUPERUSER`, `CREATEDB`,
+    `CREATEROLE`, `REPLICATION`, or `BYPASSRLS`. Existing fixtures in
+    `tests/integration/test_postgres_intent_identity.py` and
+    `tests/broker_sim/test_dry_run_adapter.py` execute
+    `TRUNCATE TABLE order_intents` and then insert, update, select, and
+    delete. `CONNECT` alone is not enough. After revisions
+    `0001_offline_foundation`, `0002_canonical_order_intents`, and
+    `0003_durable_dry_run_observation`, the test role may receive, only
+    in `swingtrade_receipt_test`, `CONNECT`, schema `USAGE`, and
+    `SELECT`, `INSERT`, `UPDATE`, `DELETE`, and `TRUNCATE` on the tables
+    those revisions create. Token-store tests that need a table those
+    revisions do not create stay `NOT_RUN` under this item.
+
+    Stage E records `PASS`, `FAIL`, or `NOT_RUN` for cluster system
+    identifier, service and data-directory association, loopback-only
+    listener, port, absence of an IPv6 or external bind, SCRAM
+    acceptance, rejection of a wrong password, absence of trust rules,
+    restricted roles, test-database restriction, no path from the new
+    cluster to unrelated databases, no credential exposure, an unchanged
+    protected service, and existing application health. A missing health
+    observation is `NOT_RUN`, not a complete zero-disruption pass.
+
+    Stage F runs only after Stage E passes. The session connects only to
+    the new cluster after the URL host is `127.0.0.1` and the port is
+    the attested new port. A URL that names port 5432 is not opened.
+    `inet_server_port()` and the system identifier must match before
+    Alembic runs. Revisions 0001 through 0003 may then run on
+    `swingtrade_receipt_test` only. Revision 0004 is outside this item.
+    Destructive tests use that disposable database, never
+    `swingtrade_receipt_dev` and never port 5432.
+    `SWINGTRADE_TEST_POSTGRES_URL` is process-scoped, is not printed, and
+    is not committed. The session then runs the authorized PostgreSQL
+    tests and `python -m pytest tests`. Skips remain skips. A mock pass
+    is not durability certification.
+
+    The session stops, without repairing the protected instance, if the
+    protected service is down, its configuration or health changes, the
+    new service name collides, port 5433 is occupied and no replacement
+    port has a separate Operator approval, the data directory is
+    unverified or already contains files, filesystem permissions are
+    insufficient, the service identity is unsupported, a credential
+    reaches a log, trust authentication is present, the listener binds
+    an unintended interface, the database identity is wrong, a
+    connection would use port 5432, the migration target is unknown, or
+    Stage E fails. Rollback may stop or remove only a new resource whose
+    system identifier and directory match the record made at
+    initialization. A name match alone is not enough. The protected
+    installation and its binaries are not removed.
+
+    This item does not edit source, tests, migrations, ADRs, or the
+    dependency registry. It does not close `DEP-TS-001`, `DEP-TS-002`,
+    `DEP-TS-003`, `DEP-TS-004`, `DEP-GMAIL-001`, `DEP-DB-001`,
+    `DEP-DB-002`, `DEP-CORE-001`, or `DEP-CORE-002`. All nine stay
+    `OPEN`. ADR-0002, ADR-0003, ADR-0006, and ADR-0007 stay Accepted.
+    ADR-0004 and ADR-0005 stay Proposed. ADR-0005's Decision stays
+    blank. ADR-0006 is not extended. Supabase Free stays preferred and
+    **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized trading
+    execution mode. `SIM`, paper-order execution, and `LIVE` remain
+    unauthorized. No Gmail, Google, Alpaca, TradeStation, PostgreSQL,
+    `OrderIntent`, or broker operation is performed by this commit.
+
+    30. Three-file PostgreSQL ReceiptStore, proposed 2026-11-12. This
+    item becomes effective only when all three of these are true: an
+    independent verifier has passed this exact commit, an Operator
+    decision has authorized integration of this exact commit, and this
+    exact commit is canonical `main`. While any condition is unmet, this
+    item is proposed and inactive and does not authorize coding.
+    Appearance in the same commit or pull request as item 29 does not
+    activate this item. When the three conditions are met, permission to
+    create or edit the three paths below stays closed until item 29 has
+    recorded a Stage E security `PASS` and a Stage F isolated-test
+    prerequisite `PASS` for the same new cluster system identifier,
+    port, and `swingtrade_receipt_test` database. No further governance
+    item is required for local iterations inside those three paths after
+    that gate. Integrating the resulting pull request remains a separate
+    Operator decision.
+
+    The only paths are `src/swingtrade/postgres_receipt_store.py`,
+    `tests/integration/test_postgres_receipt_store.py`, and
+    `migrations/versions/0004_instruction_receipts.py`. No other source,
+    test, contract, migration, configuration, or governance file is
+    granted. The store implements the existing `ReceiptStore` and
+    `InstructionReceipt` contracts and `admit_instruction_receipt`. It
+    reuses SQLAlchemy, psycopg, Alembic, and the accepted ADR-0007 rule
+    that driver failures are sanitized. It does not add a second
+    persistence framework. `NEW` is one confirmed first insert.
+    `REPLAY` returns the stored original for the same identity and
+    digest. `CONFLICT` leaves that original in place. An unavailable or
+    ambiguous commit raises the existing unavailable failure and does
+    not retry the insert. An in-memory map is not reported as durable
+    storage. No `OrderIntent` is dispatched.
+
+    Durability evidence must come from the isolated test database, not
+    from mocks. The tests cover two-connection races, atomic uniqueness,
+    replay, conflicting digest, first-writer immutability, commit
+    acknowledgement, unknown commit, connection loss, reconciliation,
+    process restart, database unavailability, a read-only database, the
+    restricted application role, the restricted migration role, schema
+    isolation, and sanitized receipt fields. Mocked results stay labeled
+    as mocked. Skipped database tests are not certification. This item
+    does not close `DEP-DB-002`. The resulting pull request stays draft
+    until a distinct exact-tree verifier has passed its SHA and tree and
+    a separate Operator decision authorizes one non-forced fast-forward,
+    followed by a GitHub MERGED check and a second fetch.
+
+    This item does not authorize OAuth, a Gmail call, an Alpaca or
+    TradeStation call, a connection to port 5432, or a change to the
+    protected PostgreSQL service. It does not close `DEP-TS-001`,
+    `DEP-TS-002`, `DEP-TS-003`, `DEP-TS-004`, `DEP-GMAIL-001`,
+    `DEP-DB-001`, `DEP-DB-002`, `DEP-CORE-001`, or `DEP-CORE-002`. All
+    nine stay `OPEN`. ADR-0002, ADR-0003, ADR-0006, and ADR-0007 stay
+    Accepted. ADR-0004 and ADR-0005 stay Proposed. ADR-0006 is not
+    extended. Supabase Free stays **NOT_ACCEPTED**. `DRY_RUN` remains
+    the only authorized trading execution mode. `SIM`, paper-order
+    execution, and `LIVE` remain unauthorized. No database connection,
+    credential generation, or broker operation is performed by this
+    commit.
 
 ## Evidence
 
