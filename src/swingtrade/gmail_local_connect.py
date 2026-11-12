@@ -27,6 +27,8 @@ from swingtrade.group4_email.local_oauth_probe import (
 
 _METADATA_SCOPE = "https://www.googleapis.com/auth/gmail.metadata"
 _AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth"
+_LEGACY_AUTH_DECLARATION = "https://accounts.google.com/o/oauth2/auth"
+_LOCALHOST_DECLARATIONS = frozenset({"http://localhost", "http://localhost/"})
 _TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
 _PROFILE_ENDPOINT = "https://gmail.googleapis.com/gmail/v1/users/me/profile"
 _MAX_CALLBACK_WAIT = 120
@@ -124,7 +126,7 @@ def desktop_client_from_document(document: object) -> DesktopClientConfig:
     if "scopes" in installed and not _scope_declaration(installed.get("scopes")):
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_SCOPE_REJECTED")
     _reject_redirects(installed.get("redirect_uris"))
-    _reject_declared_endpoint(installed, "auth_uri", _AUTH_ENDPOINT)
+    _reject_auth_declaration(installed)
     _reject_declared_endpoint(installed, "token_uri", _TOKEN_ENDPOINT)
     client_id = installed.get("client_id")
     client = DesktopClientConfig(
@@ -436,11 +438,23 @@ def _scope_declaration(value: object) -> bool:
     return type(value) is list and value == [_METADATA_SCOPE]
 
 
+def _accepted_redirect_declaration(item: object) -> bool:
+    return _declared_loopback(item) or (type(item) is str and item in _LOCALHOST_DECLARATIONS)
+
+
 def _reject_redirects(value: object) -> None:
     if value is None:
         return
-    if type(value) is not list or any(not _declared_loopback(item) for item in value):
+    if type(value) is not list or any(not _accepted_redirect_declaration(item) for item in value):
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_REDIRECT_REJECTED")
+
+
+def _reject_auth_declaration(installed: Mapping[str, object]) -> None:
+    if "auth_uri" not in installed:
+        return
+    declared = installed["auth_uri"]
+    if declared != _AUTH_ENDPOINT and declared != _LEGACY_AUTH_DECLARATION:
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_ENDPOINT_REJECTED")
 
 
 def _declared_loopback(item: object) -> bool:

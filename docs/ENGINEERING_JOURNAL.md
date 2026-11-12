@@ -3987,3 +3987,110 @@ ADR-0005's Decision stays blank. Supabase Free stays **NOT_ACCEPTED**.
 execution, and `LIVE` stay unauthorized. This entry does not edit
 source, tests, schemas, ADRs, or the dependency registry. It does not
 embed its own hash and does not merge the branch.
+
+## 2026-11-12 — Item 27 Gmail Desktop JSON declaration compatibility
+
+Canonical main at authoring is
+`0c3d3d6714407f27ae2e0ff130b6e2590883e43f`, tree
+`3aedc40346d1062700220be95961fe56682c15ee`. Items 18 through 26 remain
+effective. The connector blob is
+`5243adabd83e7902065be5b4d80b4975a37ae8eb` and the connector test blob
+is `75104511e5e50548c1a3016b40bff681567933ab`. This entry proposes item
+27 and does not revise those items. Open draft PR #56 is unrelated and
+is not edited.
+
+Item 27 stays proposed and inactive unless an independent verifier has
+passed this exact commit, an Operator decision has authorized
+integration of this exact commit, and this exact commit is canonical
+`main`. When those three are met, Lane 3 may change only the Desktop
+JSON declaration check in `src/swingtrade/gmail_local_connect.py` and
+`tests/unit/test_gmail_local_connect.py`. The only new accepted
+declarations are the exact strings `http://localhost`,
+`http://localhost/`, and `https://accounts.google.com/o/oauth2/auth`.
+The runtime redirect stays `127.0.0.1`, the authorization request stays
+on `https://accounts.google.com/o/oauth2/v2/auth`, and the token
+endpoint, metadata scope, PKCE S256, ephemeral port, and absence of
+token persistence stay unchanged. No downloaded client file is modified.
+No OAuth or Gmail call is authorized. A later remediated tree needs its
+own execution decision.
+
+All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
+ADR-0006 is not extended. Supabase Free stays **NOT_ACCEPTED**.
+`DRY_RUN` remains the only authorized trading mode. This entry does not
+embed its own hash and does not merge the branch.
+
+## 2026-11-12 — PR #58 integrated; Item 28 accelerated offline Gmail governance
+
+PR #58 was fast-forwarded onto canonical main. The integrated SHA is
+`cb32938225783ce0677823cebb85943edfa88b36`, tree
+`d8ce6cea470243bb8eea1828ce03aad476cc692d`, sole parent
+`0a52646113407a99397e4049945ac2714b948d47`. The connector blob is
+`0a6901a82512100aff41a0494fa185b154f55527` and the connector test blob
+is `fa37f96522b78750cf70cb9da57871ebe502c2e3`. GitHub PR #58 is MERGED,
+`mergeCommit.oid` equals that SHA, and `mergedAt` is
+`2026-11-12T21:05:20Z` (4:05 PM EST). The controlling verifier is
+`bc-d240303e-5036-5c87-a035-39a53c476abf`,
+`INDEPENDENT_EXACT_TREE_PASS`. The inaccessible identifier
+`aaed36b8-a7f8-4738-8eb9-50ededb5c9a5` is not controlling evidence.
+`PHASE1_ENCODING_BASELINE_ONLY` stays the encoding disposition. The
+validator and fixture were not changed. No native Windows pass is
+claimed. This integration does not authorize an OAuth or Gmail call.
+
+This entry then proposes item 28 on that parent. Item 28 stays proposed
+and inactive unless an independent verifier has passed this exact
+commit, an Operator decision has authorized integration of this exact
+commit, and this exact commit is canonical `main`. When those three
+are met, Lane 3 may change only the six `group4_email` modules and six
+tests named in item 28. The milestones reuse synthetic acquisition,
+accepted extraction, in-process identity, and synthetic ingestion.
+Durable duplicate suppression and crash-safe recovery stay Lane 4.
+Milestone F is the remaining offline recovery and monitoring design.
+No new file is granted. Gate B tests, attack tests, `contract.py`,
+`instruction_receipt.py`, `persistence.py`, the connector, credential
+adapters, broker modules, and governance files stay outside the
+implementation grant. Each later implementation pull request still
+needs independent exact-tree verification and a separate Operator
+integration decision. No automatic merge is granted.
+
+All nine dependencies stay `OPEN`. ADR-0002, ADR-0003, ADR-0006, and
+ADR-0007 stay Accepted. ADR-0004 and ADR-0005 stay Proposed. ADR-0006
+is not extended. Supabase Free stays **NOT_ACCEPTED**. `DRY_RUN`
+remains the only authorized trading mode. This entry does not embed
+its own hash and does not merge the branch.
+
+## 2026-11-12 — Items 29 and 30 dedicated loopback PostgreSQL governance
+
+Canonical main at authoring is
+`0016b89b31a2d05c80c66e67962cf9ac20bbd437`, tree
+`48d2e01be375588d0c54c576efe905a5e6725900`. Items 18 through 28 remain
+effective. This entry proposes items 29 and 30 in one documentation
+commit. They are separately gated. Neither is effective on this branch.
+Path B is the selected architecture. Path A is not a fallback.
+
+Item 29, once effective, authorizes one attended Cursor Local Windows
+sequence for service `postgresql-swingtrade-16`, listener `127.0.0.1`,
+provisional port 5433, and a new data directory. It does not change
+`postgresql-x64-16`, port 5432, or
+`C:\Program Files\PostgreSQL\16\data`. The virtual account
+`NT SERVICE\postgresql-swingtrade-16` must be verified locally and is
+not certified here. LocalSystem is not a substitute. Existing
+integration tests need `TRUNCATE` plus data changes on `order_intents`,
+so `CONNECT` alone is not the test-role grant. Alembic revisions 0001
+through 0003 may run only on `swingtrade_receipt_test` in the new
+cluster. Revision 0004 is outside item 29.
+
+Item 30 names only `src/swingtrade/postgres_receipt_store.py`,
+`tests/integration/test_postgres_receipt_store.py`, and
+`migrations/versions/0004_instruction_receipts.py`. Sharing this commit
+with item 29 does not open those paths. They stay closed until item 29
+Stage E and Stage F have passed for the new cluster and item 30 itself
+is effective. The resulting implementation pull request still needs its
+own exact-tree verifier and a separate Operator integration decision.
+
+All nine dependencies stay `OPEN`. `DEP-DB-001` is not closed by a
+local cluster. `DEP-DB-002` is not closed by receipt tests. ADR-0002,
+ADR-0003, ADR-0006, and ADR-0007 stay Accepted. ADR-0004 and ADR-0005
+stay Proposed. ADR-0006 is not extended. Supabase Free stays
+**NOT_ACCEPTED**. `DRY_RUN` remains the only authorized trading mode.
+This entry does not embed its own hash, does not connect to
+PostgreSQL, and does not merge the branch.

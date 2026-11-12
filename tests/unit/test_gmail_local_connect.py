@@ -31,6 +31,7 @@ from swingtrade.group4_email.local_oauth_probe import (
 
 METADATA = "https://www.googleapis.com/auth/gmail.metadata"
 AUTH = "https://accounts.google.com/o/oauth2/v2/auth"
+LEGACY_AUTH = "https://accounts.google.com/o/oauth2/auth"
 TOKEN = "https://oauth2.googleapis.com/token"
 PROFILE = "https://gmail.googleapis.com/gmail/v1/users/me/profile"
 CLIENT_ID = "synthetic-desktop-client"
@@ -407,7 +408,7 @@ def test_callback_failures_stop_before_token_exchange(mode: str, code: str) -> N
 
 
 def test_wrong_callback_uri_is_rejected() -> None:
-    localhost = _reject(lambda: _client(redirect_uris=["http://localhost/"]))
+    accepted = _client(redirect_uris=["http://localhost/"])
     public = _reject(lambda: _client(redirect_uris=["https://example.invalid/callback"]))
     sock = _Sock()
     listener = LoopbackListener(lambda: sock)
@@ -416,10 +417,188 @@ def test_wrong_callback_uri_is_rejected() -> None:
     sock.accept_result = (connection, ("127.0.0.1", 9))
     path_error = _reject(lambda: listener.wait(120))
 
-    assert localhost.code == "GMAIL_OAUTH_REDIRECT_REJECTED"
+    assert accepted.redirect_host == "127.0.0.1"
+    assert accepted.redirect_path == "/"
     assert public.code == "GMAIL_OAUTH_REDIRECT_REJECTED"
     assert path_error.code == "GMAIL_OAUTH_REDIRECT_REJECTED"
     assert b"synthetic" not in connection.sent
+
+
+@pytest.mark.parametrize(
+    "redirect",
+    [
+        "http://127.0.0.1",
+        "http://127.0.0.1/",
+        "http://127.0.0.1:43123/",
+        "http://localhost",
+        "http://localhost/",
+    ],
+)
+def test_approved_redirect_declarations_stay_on_loopback(redirect: str) -> None:
+    client = _client(redirect_uris=[redirect])
+
+    assert client.redirect_host == "127.0.0.1"
+    assert client.redirect_path == "/"
+    assert client.network_permitted is False
+
+
+@pytest.mark.parametrize("auth_uri", [AUTH, LEGACY_AUTH])
+def test_approved_auth_declarations_do_not_change_runtime_endpoint(auth_uri: str) -> None:
+    boundary = Boundary()
+    evidence = _run(boundary, auth_uri=auth_uri, redirect_uris=["http://127.0.0.1/"])
+    opened = boundary.opens[0]
+    parameters = dict(opened.parameters)  # type: ignore[attr-defined]
+
+    assert evidence.profile_result == "GMAIL_OAUTH_PROFILE_SHAPE_PASS"
+    assert opened.endpoint == AUTH
+    assert parameters["redirect_uri"] == "http://127.0.0.1:43123/"
+    assert parameters["scope"] == METADATA
+    assert boundary.posts[0][0] == TOKEN
+    assert boundary.gets == [(PROFILE, b"")]
+    assert auth_uri == LEGACY_AUTH or opened.endpoint == auth_uri
+    assert LEGACY_AUTH not in opened.endpoint
+
+
+def test_google_desktop_declarations_remain_metadata_loopback() -> None:
+    boundary = Boundary()
+    client = _client(
+        client_secret=SECRET,
+        project_id="synthetic-project",
+        auth_provider_x509_cert_url="https://www.googleapis.com/oauth2/v1/certs",
+        auth_uri=LEGACY_AUTH,
+        token_uri=TOKEN,
+        redirect_uris=["http://localhost", "http://localhost/", "http://127.0.0.1/"],
+    )
+    evidence = run_offline_profile_shape(client, boundary, boundary, boundary, boundary)
+    opened = boundary.opens[0]
+    parameters = dict(opened.parameters)  # type: ignore[attr-defined]
+    form = boundary.posts[0][1]
+
+    assert client.client_type == "installed"
+    assert client.redirect_host == "127.0.0.1"
+    assert client.redirect_path == "/"
+    assert client.scopes == (METADATA,)
+    assert client.network_permitted is False
+    assert evidence.profile_result == "GMAIL_OAUTH_PROFILE_SHAPE_PASS"
+    assert evidence.content_retained is False
+    assert opened.endpoint == AUTH
+    assert parameters["redirect_uri"] == "http://127.0.0.1:43123/"
+    assert parameters["scope"] == METADATA
+    assert "client_secret" not in parameters
+    assert boundary.posts[0][0] == TOKEN
+    assert set(form) == {"grant_type", "code", "code_verifier", "client_id", "redirect_uri"}
+    assert "client_secret" not in form
+    assert "refresh_token" not in form
+    assert "access_token" not in form
+    assert SECRET not in repr(client)
+    assert SECRET not in repr(opened)
+    assert SECRET not in repr(evidence)
+    assert boundary.gets == [(PROFILE, b"")]
+
+
+@pytest.mark.parametrize(
+    "redirect",
+    [
+        "http://localhost:80",
+        "http://localhost:80/",
+        "http://localhost/callback",
+        "http://localhost/callback/",
+        "https://localhost",
+        "https://localhost/",
+        "http://localhost.example/",
+        "http://localhost.example",
+        "http://evil.localhost/",
+        "http://userinfo@localhost/",
+        "http://localhost/?query=1",
+        "http://localhost?query=1",
+        "http://localhost/#fragment",
+        "http://localhost#fragment",
+        "http://127.0.0.1/callback",
+        "http://127.0.0.1:80/extra",
+        "https://example.invalid/callback",
+        "urn:ietf:wg:oauth:2.0:oob",
+        "http://0.0.0.0/",
+        "http://[::1]/",
+        "not a uri",
+    ],
+)
+def test_unapproved_redirect_declarations_are_rejected(redirect: str) -> None:
+    error = _reject(lambda: _client(redirect_uris=[redirect]))
+
+    assert error.code == "GMAIL_OAUTH_REDIRECT_REJECTED"
+    assert redirect not in f"{error} {error!r}"
+
+
+def test_mixed_redirect_list_rejects_one_unapproved_entry() -> None:
+    error = _reject(lambda: _client(redirect_uris=["http://localhost", "http://localhost:1/"]))
+
+    assert error.code == "GMAIL_OAUTH_REDIRECT_REJECTED"
+
+
+@pytest.mark.parametrize(
+    "auth_uri",
+    [
+        "https://accounts.google.com/o/oauth2/authorize",
+        "https://accounts.google.com/o/oauth2/v2/authorize",
+        "https://accounts.google.com/o/oauth2/v3/auth",
+        "https://accounts.google.com/o/oauth2/auth/",
+        "https://accounts.google.com/o/oauth2/v2/auth/",
+        "https://accounts.google.com/o/oauth2/auth?query=1",
+        "https://accounts.google.com/o/oauth2/v2/auth?query=1",
+        "https://accounts.google.com/o/oauth2/auth#fragment",
+        "https://accounts.google.com/o/oauth2/v2/auth#fragment",
+        "http://accounts.google.com/o/oauth2/auth",
+        "https://evil.example/o/oauth2/auth",
+        "https://accounts.google.com/o/oauth2/auth.invalid",
+    ],
+)
+def test_unapproved_auth_declarations_are_rejected(auth_uri: str) -> None:
+    error = _reject(lambda: _client(auth_uri=auth_uri))
+
+    assert error.code == "GMAIL_OAUTH_ENDPOINT_REJECTED"
+    assert auth_uri not in f"{error} {error!r}"
+
+
+@pytest.mark.parametrize(
+    "token_uri",
+    [
+        "https://oauth2.googleapis.com/token/extra",
+        "https://oauth2.googleapis.com/token?query=1",
+        "https://www.googleapis.com/oauth2/v4/token",
+        "https://example.invalid/token",
+    ],
+)
+def test_unapproved_token_declarations_are_rejected(token_uri: str) -> None:
+    error = _reject(lambda: _client(token_uri=token_uri, auth_uri=LEGACY_AUTH))
+
+    assert error.code == "GMAIL_OAUTH_ENDPOINT_REJECTED"
+    assert token_uri not in f"{error} {error!r}"
+
+
+def test_declaration_compat_preserves_fail_closed_client_rules() -> None:
+    web = _reject(lambda: desktop_client_from_document({"web": {"client_id": CLIENT_ID}}))
+    missing = _reject(lambda: desktop_client_from_document({"installed": {}}))
+    broken = _reject(lambda: desktop_client_from_json_text("{"))
+    secret_type = _reject(lambda: _client(client_secret=1, redirect_uris=["http://localhost"]))
+    custody = _reject(
+        lambda: _client(
+            refresh_token=REFRESH,
+            auth_uri=LEGACY_AUTH,
+            redirect_uris=["http://localhost"],
+        )
+    )
+    offline = _reject(lambda: _client(access_type="offline", prompt="consent"))
+    enabled = _reject(lambda: _client(network_permitted=True))
+
+    assert web.code == "GMAIL_OAUTH_TOKEN_REJECTED"
+    assert missing.code == "GMAIL_OAUTH_TOKEN_REJECTED"
+    assert broken.code == "GMAIL_OAUTH_TOKEN_REJECTED"
+    assert secret_type.code == "GMAIL_OAUTH_TOKEN_REJECTED"
+    assert custody.code == "GMAIL_OAUTH_TOKEN_REJECTED"
+    assert offline.code == "GMAIL_OAUTH_SCOPE_REJECTED"
+    assert enabled.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
+    assert SECRET not in f"{custody} {custody!r}"
+    assert REFRESH not in f"{custody} {custody!r}"
 
 
 def test_token_exchange_rejection_and_malformed_response() -> None:
