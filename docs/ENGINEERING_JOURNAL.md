@@ -4359,3 +4359,29 @@ It is not a Windows OAuth authorization. Item 33 is not amended. All
 nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
 `DRY_RUN` remains the only authorized trading mode. This entry does not
 embed its own hash and does not call a provider.
+
+## 2026-11-13 — PR #69 Item 35 integration record
+
+Commit `182884702b419484c40348124e1b67f17d06b1eb`, tree
+`bf82dd4fa556a24fcf5883ae136c445a37368f87`, first parent
+`f4d1638cbb401de4a85e00d7d53b3f70d231e1aa`, second parent
+`b0ce11e4fd0eaf37f84a8b2a9291fec9c76ee298`, is canonical main. Verifier
+`bc-929dbcb3-9c2f-54f4-901c-57beab99a00d` returned
+`INDEPENDENT_EXACT_TREE_PASS`. The pass of
+`f4d1638cbb401de4a85e00d7d53b3f70d231e1aa` does not certify this merge.
+Operator decision `LANE1_PR69_ITEM35_EXACT_INTEGRATION_AUTHORIZED`
+authorized the non-forced fast-forward. The push was
+`git push origin 182884702b419484c40348124e1b67f17d06b1eb:refs/heads/main`.
+GitHub PR #69 is MERGED at `2026-11-13T17:08:58Z` with that merge commit.
+The net diff is the three governance files. No source or test changed.
+Implementation pytest was `NOT_RUN`. Sentences in the integrated commit
+that call Item 35 inactive are historical. The Item 34 record sentence
+that says Gate C3 stays closed is the state before this record. The
+implementation grant is effective for
+`src/swingtrade/alpaca_paper_custody.py` and
+`tests/unit/test_alpaca_paper_custody.py`. It is an offline synthetic
+mock. It is not a provider call, a native Windows credential call, or
+Gate D. Item 34 stays effective. Item 33 is not amended. All nine
+dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
+`DRY_RUN` remains the only authorized trading mode. This entry does not
+embed its own hash and does not call a provider.
