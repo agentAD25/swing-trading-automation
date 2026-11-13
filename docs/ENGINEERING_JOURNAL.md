@@ -4172,3 +4172,31 @@ All nine dependencies stay `OPEN`. ADR-0002, ADR-0003, ADR-0006, and
 ADR-0007 stay Accepted. ADR-0004 and ADR-0005 stay Proposed. Supabase
 Free stays **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized
 trading mode. This entry does not embed its own hash.
+
+## 2026-11-13 — Items 31 and 32 attended Gmail proof and read-only pilot
+
+Canonical main at authoring is
+`f4fda11c6132da4101698e04f980612bd6d8efd6`, tree
+`fabb5727eb513b9af8dc04750ff8c590c405fe68`. Items 31 and 32 are proposed
+and inactive on this branch. They are separately gated.
+
+Item 31, once effective, authorizes one attended Windows run of
+existing `run_local_windows_profile_proof` at blob
+`0a6901a82512100aff41a0494fa185b154f55527`. The scope is
+`gmail.metadata`. The only Gmail request is one profile GET. Earlier
+Decision C does not cover this blob. Official Gmail documentation read
+on 2026-11-13 says that scope does not return the message body and
+cannot use `format=full` or `format=raw`.
+
+Item 32, once effective, authorizes only
+`src/swingtrade/group4_email/gmail_readonly_pilot.py` and
+`tests/group4_email/test_gmail_readonly_pilot.py`. A live read of at
+most 10 messages requires a later integrated implementation commit and
+a separate Operator runtime decision. Real provider ids do not enter
+the synthetic ingestion functions. `gmail.readonly` is the only added
+scope, and it is restricted. Unattended ingestion stays unauthorized.
+`DEP-GMAIL-001` stays `OPEN`. Item 29 stages stay `NOT_RUN`. Item 30
+source paths stay closed. All nine dependencies stay `OPEN`. ADR-0004
+stays Proposed. ADR-0006 is not extended. `DRY_RUN` remains the only
+authorized trading mode. This entry does not embed its own hash and
+does not call Gmail.

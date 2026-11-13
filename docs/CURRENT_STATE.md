@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-11-13 (items 31 and 32 proposal, attended Gmail proof and read-only pilot). Items 31 and 32 become effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, both items are proposed and inactive. When item 31 is effective, the only new authority is one attended Windows run of the existing `run_local_windows_profile_proof` at blob `0a6901a82512100aff41a0494fa185b154f55527`, scope `gmail.metadata`, and one profile GET. When item 32 is effective, the only new source authority is `src/swingtrade/group4_email/gmail_readonly_pilot.py` and `tests/group4_email/test_gmail_readonly_pilot.py`. Sharing this commit does not authorize a live message read. No Gmail write scope, durable-ingestion claim, or economic dispatch is granted. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (PR #60 integration record). Commit `dde81ba402a285b6d48e2f08b5e01bfb361f7f5b`, tree `6c9d108e02a5a94c8279cd844c39d15d9da13859`, is canonical `main`. Its parents are `af08da047bc7a04b66c04d93e5c86fd9886f5933` and `4e1d7266c8d33bef64f039d66c74d3115a1659b9`. Verifier `bc-468d0867-1059-507d-a3dd-457148b23433` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR60_CONDITIONAL_EXACT_COMMIT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward of that commit. GitHub PR #60 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T13:31:30Z`. The integrated change is offline Milestone F recovery classification in `src/swingtrade/group4_email/disposition.py` and `tests/group4_email/test_synthetic_ingestion.py`. It does not authorize a Gmail call, OAuth, a credential, durable receipt storage, or an economic dispatch. This record does not embed its own hash.
 - Last updated: 2026-11-12 (PR #61 integration record). Commit `a9333b5c92628981eacdf6ae091780dcd27313f5`, tree `17c04894d2385bfae153de41febafc048e799cbf`, is canonical `main`. Verifier `bc-e583af06-ed8e-51e0-b0a7-cdeb35881ef2` returned `INDEPENDENT_EXACT_TREE_PASS` for that commit. Operator decision `LANE1_PR61_ITEMS29_30_OPERATOR_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward of that commit, and GitHub PR #61 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-12T21:43:06Z`. Those three facts meet the effectiveness conditions written in items 29 and 30. Item 29's effective authority is the attended Windows sequence already written in item 29. No PostgreSQL service, database, role, or connection was created by that integration. Stages A through F are `NOT_RUN`. Item 30 governance is effective on that same commit, and its three source paths stay closed until Stage E and Stage F are `PASS` for the new cluster. This record is not a second Item 29 grant. It does not embed its own hash.
 - Last updated: 2026-11-12 (item 30 proposal, three-file PostgreSQL ReceiptStore). Item 30 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 30 is proposed and inactive and does not authorize coding. When those three are met, item 30 still does not authorize editing its three paths until item 29 has a recorded security PASS and isolated-test prerequisite PASS for the new cluster. The only later authority is `src/swingtrade/postgres_receipt_store.py`, `tests/integration/test_postgres_receipt_store.py`, and `migrations/versions/0004_instruction_receipts.py`. Items 18 through 29 stay as governed by their own text. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, or authorize credentials in Git, a connection to port 5432, `SIM`, paper-order execution, or `LIVE`.
@@ -2554,6 +2555,103 @@ a prohibition on later additive coordination roles.
     stays **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized
     trading execution mode. `SIM`, paper-order execution, and `LIVE`
     remain unauthorized. This record does not embed its own hash.
+
+    31. Attended Gmail metadata connection proof, proposed 2026-11-13.
+    This item becomes effective only when all three of these are true:
+    an independent verifier has passed this exact commit, an Operator
+    decision has authorized integration of this exact commit, and this
+    exact commit is canonical `main`. While any condition is unmet, this
+    item is proposed and inactive. It does not authorize a provider call
+    on this branch. When all three are met, the only new authority is
+    one attended Cursor Local Windows execution of the existing function
+    `run_local_windows_profile_proof` in
+    `src/swingtrade/gmail_local_connect.py`, blob
+    `0a6901a82512100aff41a0494fa185b154f55527`. No source edit is
+    granted. The parent main is
+    `f4fda11c6132da4101698e04f980612bd6d8efd6`, tree
+    `fabb5727eb513b9af8dc04750ff8c590c405fe68`. If that path's blob
+    differs, the session stops. Item 21 Gate C and any earlier Decision
+    C do not authorize this blob. Item 28 does not authorize a Gmail
+    call.
+
+    The session runs on the Operator's Windows computer. The Operator
+    is present. The Desktop client JSON stays outside the repository
+    and is passed only as a local path. The process prints only the
+    existing result code. It does not print the client file, an
+    authorization code, a token, an email address, or a profile field.
+    The only scope is
+    `https://www.googleapis.com/auth/gmail.metadata`. The authorization
+    endpoint is `https://accounts.google.com/o/oauth2/v2/auth`. The
+    token endpoint is `https://oauth2.googleapis.com/token`. The only
+    Gmail request is `GET
+    https://gmail.googleapis.com/gmail/v1/users/me/profile` with an
+    empty body. PKCE is S256. State is validated. The callback is
+    `127.0.0.1` on an operating-system-selected port. A non-Windows
+    process refuses before a socket. Tokens are not written to disk.
+    There is no retry after an ambiguous exchange. There is no second
+    Gmail request. Message, label, history, and attachment routes are
+    outside this item. A profile success is
+    `GMAIL_OAUTH_CONNECTED` only when the command returns
+    `GMAIL_GATE_C_REAL_CONNECTIVITY_PASS` and the evidence retains no
+    content. That result is not message-fetch verification and does not
+    close `DEP-GMAIL-001`.
+
+    Official Gmail scope documentation, read 2026-11-13, states that
+    `gmail.metadata` views labels and headers and not the message body,
+    and that `format=full` and `format=raw` cannot be used with that
+    scope. Source:
+    https://developers.google.com/workspace/gmail/api/auth/scopes and
+    https://developers.google.com/workspace/gmail/api/reference/rest/v1/Format.
+    This item does not request `gmail.readonly`.
+
+    32. Read-only Gmail message pilot, proposed 2026-11-13. This item
+    becomes effective only when all three of these are true: an
+    independent verifier has passed this exact commit, an Operator
+    decision has authorized integration of this exact commit, and this
+    exact commit is canonical `main`. While any condition is unmet, this
+    item is proposed and inactive. Sharing this commit with item 31
+    does not open a live mailbox read. When the three conditions are
+    met, Lane 3 may add only
+    `src/swingtrade/group4_email/gmail_readonly_pilot.py` and
+    `tests/group4_email/test_gmail_readonly_pilot.py`. No other path is
+    granted. The module does not edit `gmail_local_connect.py`,
+    `synthetic_ingestion.py`, `contract.py`, `instruction_receipt.py`,
+    or `disposition.py`. It does not pass a provider message id into
+    `deliver_synthetic_fixtures` or `record_synthetic_ingestion`.
+
+    The live pilot stays closed until that two-file implementation is
+    independently verified, an Operator decision has integrated that
+    exact implementation commit, and a further Operator runtime
+    decision names that commit. The pilot is one attended Windows run,
+    at most 10 messages, scope
+    `https://www.googleapis.com/auth/gmail.readonly` only. Allowed
+    requests are `GET /gmail/v1/users/me/profile`, `GET
+    /gmail/v1/users/me/labels`, `GET /gmail/v1/users/me/messages` with
+    `maxResults` at most 10, and `GET
+    /gmail/v1/users/me/messages/{id}` with `format=full`. A list query
+    may contain only local `from:` and `label:` allowlist terms. No
+    address or label value is committed. Attachment parts are not
+    fetched. No other method, host, or route is allowed. No send,
+    modify, delete, draft, history, or watch call is allowed. Results
+    are quarantined acquisition evidence. `durable_state` stays
+    `UNAVAILABLE`. `economic_dispatch` stays false. Restart-safe
+    consumption is not claimed. Unattended ingestion is not authorized.
+    Google documents `gmail.readonly` as a restricted scope. A consent
+    screen in Testing, or an unverified restricted scope, can block the
+    grant. The session does not switch to a broader scope to bypass
+    that block.
+
+    This pair of items does not edit ADRs or the dependency registry.
+    It does not close `DEP-TS-001`, `DEP-TS-002`, `DEP-TS-003`,
+    `DEP-TS-004`, `DEP-GMAIL-001`, `DEP-DB-001`, `DEP-DB-002`,
+    `DEP-CORE-001`, or `DEP-CORE-002`. All nine stay `OPEN`. ADR-0002,
+    ADR-0003, ADR-0006, and ADR-0007 stay Accepted. ADR-0004 and
+    ADR-0005 stay Proposed. ADR-0004's Decision stays blank. ADR-0006
+    is not extended. Supabase Free stays **NOT_ACCEPTED**. `DRY_RUN`
+    remains the only authorized trading execution mode. `SIM`,
+    paper-order execution, and `LIVE` remain unauthorized. No Gmail
+    call is performed by this commit. This proposal does not embed its
+    own hash.
 
 ## Evidence
 
