@@ -42,9 +42,9 @@ SECRET = "synthetic-client-secret-value"
 MODULE = Path("src/swingtrade/gmail_local_connect.py")
 _BLOBS = {
     "src/swingtrade/group4_email/local_oauth_probe.py": (
-        "777db628ebe0f55aa529b26c9ad5692799121090"
+        "0337e979b9328ab7cb079b2e7aa06a15e6cd2080"
     ),
-    "tests/group4_email/test_local_oauth_probe.py": ("86d99b6269d1c14238c5b240b7998428a206d59f"),
+    "tests/group4_email/test_local_oauth_probe.py": ("4f405e88a840c63e7e84f3b34e803fc4a13a3a2b"),
     "tests/group4_email/test_attacks.py": "14b911ba29f16161f179c272c2e2f5e1be50922e",
 }
 
