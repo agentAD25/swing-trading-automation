@@ -4524,3 +4524,33 @@ and PR #66 are not amended. All nine dependencies stay `OPEN`.
 ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
 authorized trading mode. This entry does not embed its own hash and
 does not call a provider.
+
+## 2026-11-13 — PR #78 Option A and Gate D grant integration record
+
+Commit `0890546d63eaa0e0e5b917675071bc662b1e2d50`, tree
+`0b17e98773a544a3fb11937fa2e2b7301a331161`, sole parent
+`9b18eaece2e16f44151da0d1afb0bbb4d654d519`, is canonical main. Verifier
+`bc-01d43b1b-f0ba-5297-bf15-2283bccc895a` returned
+`INDEPENDENT_EXACT_TREE_PASS` for that commit. The evidence is the
+retrievable run at
+`https://cursor.com/agents/bc-01d43b1b-f0ba-5297-bf15-2283bccc895a`.
+Operator decision
+`LANE1_PR78_OPTION_A_AND_GATE_D_GRANT_EXACT_INTEGRATION_AUTHORIZED`
+authorized the non-forced fast-forward. The push was
+`git push origin 0890546d63eaa0e0e5b917675071bc662b1e2d50:refs/heads/main`.
+A second fetch returned the same SHA and tree. GitHub PR #78 is MERGED
+at `2026-11-13T19:21:28Z` with `mergeCommit.oid` equal to that SHA.
+ADR-0008 blob `1b68f90002663751e5febc1dd9e44717aec46b96` is Accepted and
+selects Option A. The separate grant for
+`src/swingtrade/alpaca_paper_account_probe.py` and
+`tests/unit/test_alpaca_paper_account_probe.py` is effective because
+that commit was independently verified, its integration was authorized,
+and it is canonical. The grant is offline synthetic work only. It does
+not authorize a credential read, Windows Credential Manager, or a
+provider call. The seven Gate C2 flags stay false. Gmail connector
+`0a6901a82512100aff41a0494fa185b154f55527` and probe
+`0337e979b9328ab7cb079b2e7aa06a15e6cd2080` stay unchanged. Item 29 and
+Item 30 are not amended. Item 33 and PR #66 are not amended. All nine
+dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
+`DRY_RUN` remains the only authorized trading mode. This entry does
+not embed its own hash and does not call a provider.
