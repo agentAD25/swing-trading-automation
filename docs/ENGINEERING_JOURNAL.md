@@ -4625,3 +4625,39 @@ call. Item 32's live read stays closed. Item 33 and PR #66 are not
 amended. All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay
 Proposed. `DRY_RUN` remains the only authorized trading mode. This
 entry does not embed its own hash and does not call Gmail.
+
+## 2026-11-13 — Item 38 Gmail token-diagnostic grant draft
+
+Canonical main at authoring is
+`0d571dec1d60e9e1c50ac2fb6593d100edc6e42c`, tree
+`ab33d9172c7c4ed2583b7de9afc2499dbaa30abb`. Operator decision
+`LANE1_GMAIL_TOKEN_DIAGNOSTIC_GOVERNANCE_PREPARATION_AUTHORIZED`
+authorizes this docs-only draft. Item 38 is not effective. It does
+not issue
+`LANE1_GMAIL_TOKEN_DIAGNOSTIC_GRANT_EXACT_INTEGRATION_AUTHORIZED`.
+
+Campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped. Attempt 1
+is consumed. Attempts 2 and 3 are unused and are not exercisable. The
+reported result remains `GMAIL_OAUTH_TOKEN_REJECTED`. No profile GET
+is recorded. This draft does not rerun OAuth.
+
+On CPython 3.12.3, a synthetic POST `Request` had no headers at
+construction. `AbstractHTTPHandler.do_request_` then added
+`Content-type: application/x-www-form-urlencoded` and
+`Content-length` without `urlopen`. Historical provider headers were
+not captured. The missing-Content-Type theory is unsupported. No
+Content-Type or token-form change is authorized.
+
+`LocalOAuthProbeRejected` rewrites codes outside `_CODES` to
+`fail_closed`. The connector currently collapses distinct token-stage
+failures into `GMAIL_OAUTH_TOKEN_REJECTED`. That is an observability
+gap, not an identified provider cause. The later source grant, after
+verification, integration, and a steps 18 and 19 record, is limited
+to `src/swingtrade/gmail_local_connect.py`,
+`tests/unit/test_gmail_local_connect.py`, and new `_CODES` entries in
+`src/swingtrade/group4_email/local_oauth_probe.py`. Item 36 stays the
+campaign grant. Item 37 stays the open Stage E proposal. Item 32,
+Item 33, PR #66, Gate D, PostgreSQL, and TradeStation are not
+amended. All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005
+stay Proposed. `DRY_RUN` remains the only authorized trading mode.
+This entry does not embed its own hash and does not call Gmail.
