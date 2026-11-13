@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-11-13 (Item 40 Alpaca PAPER account-read source grant, draft). Parent main is `213acc52bfb79bb5b60ceab75fb106aa209a1fbe`, tree `9692c3593c0d348d3bcd875cb9804d22302c985c`. Item 40 is not effective. It names only `src/swingtrade/alpaca_paper_account_read.py` and `tests/unit/test_alpaca_paper_account_read.py`. Lane 2 must not create those files before effectiveness. This draft does not authorize a credential read, an HTTPS request, an order, or a database migration. Item 37 is effective because its own recorded conditions are met by that canonical main; this draft does not recertify Stage E. SE-B-06 and Dimension C stay `NOT_RUN`. Stage F is not authorized. Item 30 stays closed. PR #80 stays a separate pending implementation and is not altered. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (Item 37 reconciliation with effective Item 39). Item 37 remains proposed and inactive. It becomes effective only when an independent verifier has passed the commit that contains this sentence, an Operator decision has authorized integration of that commit, and that commit is canonical `main`. The passes of `f44be4a2e75de2123e48506a6fd985e41c4eb64c`, `c98812dc6c88fd7fefe1efc610e1b1598c4d3568`, `cf00ab378cb7c0d2667521cdb484282b3cd80737`, and `7a269749d1b04af4d8940550d811190d3c4a702e` do not certify that commit. SE-B-06 stays `NOT_RUN` and supplementary. Dimension C stays `NOT_RUN`. Stage E is not `PASS`. Stage F is not authorized. Item 30 stays closed. Items 36 and 38 stay effective. Item 39 is effective: verifier `bc-5a71318b-51be-512a-ae34-3638d620d2e2` passed `e52ad5e6e40e228ffba20199707a6c39d7fd4f5e`, Operator decision `LANE1_ITEM39_ALEMBIC_GUARD_GRANT_EXACT_INTEGRATION_AUTHORIZED` authorized it, and that commit is on canonical `main`. This reconciliation does not authorize a migration. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (Item 39 Alembic target-guard grant, draft). Parent main is `bfcdec0c2a28a57bbbf373eb3b9bc854f9ae7744`, tree `459f72955cbe1114a9bba121836fa4c4386e5345`. Item 39 is not effective. It names only `alembic.ini`, `migrations/env.py`, and `tests/unit/test_alembic_target_guard.py`. It does not authorize a migration, a connection to port 5432, Stage F, or Item 30. Open PR #81 remains the separate Item 37 candidate and is not amended. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (PR #78 Option A and Gate D grant integration record). Commit `0890546d63eaa0e0e5b917675071bc662b1e2d50`, tree `0b17e98773a544a3fb11937fa2e2b7301a331161`, sole parent `9b18eaece2e16f44151da0d1afb0bbb4d654d519`, is an ancestor of canonical `main`. Verifier `bc-01d43b1b-f0ba-5297-bf15-2283bccc895a` returned `INDEPENDENT_EXACT_TREE_PASS` for that commit. Operator decision `LANE1_PR78_OPTION_A_AND_GATE_D_GRANT_EXACT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward. GitHub PR #78 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T19:21:28Z`. ADR-0008 is Accepted and Option A is selected. The separate two-file grant is effective for offline synthetic work on `src/swingtrade/alpaca_paper_account_probe.py` and `tests/unit/test_alpaca_paper_account_probe.py`. The grant does not authorize a credential read or a provider call. The seven Gate C2 flags stay false. Gmail blobs stay unchanged. Item 29 and Item 30 are not amended. PR #66 is not amended. This reconciliation keeps Item 36 and Item 38. Item 38 stays effective. It does not authorize a provider call. This record does not embed its own hash.
@@ -3615,6 +3616,126 @@ a prohibition on later additive coordination roles.
     authorized trading mode. All nine dependencies stay `OPEN`.
     ADR-0004 and ADR-0005 stay Proposed. This proposal does not embed
     its own hash.
+
+    40. Alpaca PAPER account-read source grant, proposed 2026-11-13.
+    This draft is not effective. It becomes effective only when an
+    independent verifier has passed the commit that contains this
+    sentence, an Operator decision has authorized integration of that
+    commit, and that commit is canonical `main`. Until then Lane 2
+    must not create `src/swingtrade/alpaca_paper_account_read.py` or
+    `tests/unit/test_alpaca_paper_account_read.py`. No third source
+    path is granted. Parent main is
+    `213acc52bfb79bb5b60ceab75fb106aa209a1fbe`, tree
+    `9692c3593c0d348d3bcd875cb9804d22302c985c`.
+
+    ADR-0008 stays Accepted with Option A. The only future provider
+    operation is `GET https://paper-api.alpaca.markets/v2/account`.
+    The paper credential targets remain
+    `swing-trading/lane2/alpaca/paper/key-id` and
+    `swing-trading/lane2/alpaca/paper/secret`. Every target under
+    `swing-trading/lane2/alpaca/live/` stays prohibited. PR #80 at
+    `8032f0edb97d0285219d3a884d18814f44ce9bb8` remains a separate
+    pending probe implementation. Its blobs
+    `77c4d3ccbb41cbbb693071720fb6862398077106` and
+    `e9ec90359de4977fcedda74f15ebdd53214089be` are not changed here.
+    This item does not modify the boundary, the custody mock, the
+    Gate D probe, an order adapter, shared economic models, database
+    schema, dependency manifests, or the Item 25 scanner.
+
+    When effective, the two files may be created for offline
+    development and mocked tests only. The module may contain native
+    Windows credential custody, one PAPER account GET, response
+    validation, sanitized classification, explicit runtime-capability
+    checks, and terminal fail-closed behavior. It must not expose a
+    general order client. Tests use synthetic credentials, a fake
+    custody boundary, and an injected HTTP transport. A synthetic
+    pass is not an Alpaca connection. Actual credential reads and
+    network access remain a later attended authorization.
+
+    Item 25's `test_runtime_package_has_no_network_or_live_order_client`
+    scans top-level `src/swingtrade/*.py` except
+    `gmail_local_connect.py` for `requests.`, `httpx.`, `socket.`,
+    `tradestation`, `place_order`, and `cancel_order`. The new module
+    will be scanned. `ctypes` and `urllib.request` are absent from
+    that token list. Absence is not a security proof. This grant
+    explicitly allows `ctypes` only inside
+    `load_paper_credential_material` and `urllib.request` only inside
+    `perform_paper_account_get`. No other function may import or call
+    those capabilities. Neither function runs at import. Ordinary
+    construction must not read credentials or open a network
+    connection. Unit tests must not call the native credential
+    function or a real HTTP transport. The source must contain none
+    of the six Item 25 tokens, so the scanner stays unchanged. If a
+    later test blocks an approved import, that is a separate
+    authorization. This grant does not edit the scanner.
+
+    First-party Alpaca Trading API Get Account, consulted 2026-11-13
+    at `https://docs.alpaca.markets/us/reference/getaccount-1`,
+    documents an Account object. Officially required properties in
+    that schema are `id` (string, uuid) and `status`. Documented
+    types used by this contract are `account_number` (string or
+    null), `currency` (string), `trading_blocked` (boolean),
+    `account_blocked` (boolean), and `trade_suspended_by_user`
+    (boolean). The documented `status` enum is `INACTIVE`,
+    `PAPER_ONLY`, `ONBOARDING`, `SUBMISSION_FAILED`, `SUBMITTED`,
+    `ACCOUNT_UPDATED`, `APPROVAL_PENDING`, `ACTIVE`, `REJECTED`,
+    `ACCOUNT_CLOSED`, `APPROVED`, `ACCOUNT_CLOSED_PENDING`,
+    `ACTION_REQUIRED`, and `LIMITED`. That enum is not shortened.
+    The example status `ACTIVE` is not the only documented status.
+    No documented account field proves PAPER mode. The PAPER host
+    and the paper credential namespace select the request
+    environment and do not prove that the observed account is the
+    Operator's intended account.
+
+    Local parsing is fail-closed and is narrower than the provider
+    document. Duplicate keys among validated fields are rejected.
+    Additional provider fields are ignored for classification and
+    are not printed. A missing named field, a wrong JSON type, or a
+    status outside the documented enum is not a verified account and
+    is not trade-ready. A documented status other than `ACTIVE`,
+    including `PAPER_ONLY`, may be classified and is not trade-ready.
+    Trade-ready classification requires a non-empty string `id`,
+    status `ACTIVE`, currency `USD`, and all three boolean flags
+    false. That classification still is not confirmation of the
+    intended account unless the caller supplied an expected account
+    id and it matches `id`. An unknown id is not verified. A blocked,
+    suspended, non-USD, or malformed account is not trade-ready.
+    Raw account ids, account numbers, bodies, and credentials are
+    not printed.
+
+    The future attended runtime decision is not this grant. It will
+    require the integrated source SHA and tree, attended Windows-local
+    execution, a separate Operator approval, the two paper targets,
+    that exact host and GET path, TLS certificate and hostname
+    verification, no redirects including library defaults, no
+    retries, no proxy or alternate host, a bounded timeout, a bounded
+    response, and at most one network attempt. An ambiguous or failed
+    attempt does not get a second request. Output stays sanitized.
+    The seven Gate C2 flags stay false:
+    `connect_allowed`, `network_permitted`, `submit_permitted`,
+    `cancel_permitted`, `replace_permitted`, `resubmit_permitted`,
+    and `safe_to_retry`. No LIVE host and no order route.
+
+    Runtime authorization must be consumed in memory before the
+    request. This repository has no durable single-use record for
+    that consumption. A crash or restart can lose the in-memory
+    mark, so this grant does not claim a durable single-use
+    guarantee. Durable consumption would need a separate persistence
+    path, which is not granted here and is not implemented here.
+    No real account read is authorized until that gap is accepted or
+    explicitly waived by a later Operator decision.
+
+    Required offline tests are the custody, host, method, path,
+    redirect, timeout, ambiguous transport, HTTP 4xx and 5xx,
+    malformed JSON, duplicate keys, missing and mistyped fields,
+    non-active and unknown status, non-USD, blocked, and suspended
+    cases, unknown identity, no second request, no secret or body
+    leakage, no order or streaming route, the seven false Gate C2
+    flags, and the Item 25 and AST checks above. They also cover
+    missing, ambiguous, and LIVE custody targets, non-Windows
+    rejection, and missing runtime authorization. `DRY_RUN` stays
+    the only trading mode. Stage F and Item 30 stay closed. This
+    proposal does not embed its own hash.
 
 ## Evidence
 
