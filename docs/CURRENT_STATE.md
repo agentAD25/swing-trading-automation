@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-11-13 (Item 39 Alembic target-guard grant, draft). Parent main is `bfcdec0c2a28a57bbbf373eb3b9bc854f9ae7744`, tree `459f72955cbe1114a9bba121836fa4c4386e5345`. Item 39 is not effective. It names only `alembic.ini`, `migrations/env.py`, and `tests/unit/test_alembic_target_guard.py`. It does not authorize a migration, a connection to port 5432, Stage F, or Item 30. Open PR #81 remains the separate Item 37 candidate and is not amended. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (PR #78 Option A and Gate D grant integration record). Commit `0890546d63eaa0e0e5b917675071bc662b1e2d50`, tree `0b17e98773a544a3fb11937fa2e2b7301a331161`, sole parent `9b18eaece2e16f44151da0d1afb0bbb4d654d519`, is an ancestor of canonical `main`. Verifier `bc-01d43b1b-f0ba-5297-bf15-2283bccc895a` returned `INDEPENDENT_EXACT_TREE_PASS` for that commit. Operator decision `LANE1_PR78_OPTION_A_AND_GATE_D_GRANT_EXACT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward. GitHub PR #78 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T19:21:28Z`. ADR-0008 is Accepted and Option A is selected. The separate two-file grant is effective for offline synthetic work on `src/swingtrade/alpaca_paper_account_probe.py` and `tests/unit/test_alpaca_paper_account_probe.py`. The grant does not authorize a credential read or a provider call. The seven Gate C2 flags stay false. Gmail blobs stay unchanged. Item 29 and Item 30 are not amended. PR #66 is not amended. This reconciliation keeps Item 36 and Item 38. Item 38 stays effective. It does not authorize a provider call. This record does not embed its own hash.
 - Last updated: 2026-11-13 (PR #84 Item 38 integration record). Commit `77b2e64f0ad83307758be138aa2d748accf2f7cf`, tree `18e7fa89524c72b9d3a475f0ecee76c7df4d96a4`, sole parent `0d571dec1d60e9e1c50ac2fb6593d100edc6e42c`, is canonical `main`. Verifier `bc-c6651348-cac2-507d-8bdb-84866d0a4690` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_GMAIL_TOKEN_DIAGNOSTIC_GRANT_EXACT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward. GitHub PR #84 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T20:27:22Z`. The integrated blobs are `docs/CURRENT_STATE.md` `ae06ebf60c00473dc9efad4295dda37faf75233c`, `docs/ENGINEERING_JOURNAL.md` `16a2bba7ee3d7c4137ebb4e1d3a8147c3cdfad4e`, and `docs/WORKSTREAM_STATUS.md` `f700af4ac3dbde7e0d5aedbbba1385ef3e7227f1`. Item 38 is `INTEGRATED`. Sentences in that commit that call it a draft are historical. Item 38 is not `EFFECTIVE` until this steps 18 and 19 record is canonical `main`. Until then Lane 3 must not edit `src/swingtrade/gmail_local_connect.py`, `tests/unit/test_gmail_local_connect.py`, or `src/swingtrade/group4_email/local_oauth_probe.py`. Campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped. Attempt 1 is consumed. Attempts 2 and 3 are unused and are not exercisable. Profile GET count stays 0. This record does not resume OAuth, does not add `client_secret`, and does not authorize a Content-Type change. This record does not embed its own hash.
 - Last updated: 2026-11-13 (Item 38 Gmail token-diagnostic grant, draft). Operator decision `LANE1_GMAIL_TOKEN_DIAGNOSTIC_GOVERNANCE_PREPARATION_AUTHORIZED` authorizes this draft only. Item 38 is not effective. It does not authorize a Gmail call, a Content-Type change, a `client_secret`, or resumption of campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC`. Canonical main at authoring is `0d571dec1d60e9e1c50ac2fb6593d100edc6e42c`, tree `ab33d9172c7c4ed2583b7de9afc2499dbaa30abb`. Item 36 remains the metadata campaign grant. Item 37 remains the open Stage E proposal. This proposal does not embed its own hash.
@@ -3474,6 +3475,92 @@ a prohibition on later additive coordination roles.
     dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
     `DRY_RUN` remains the only authorized trading mode. This proposal
     does not embed its own hash.
+
+    39. Alembic dedicated-cluster target guard, proposed 2026-11-13.
+    This draft prepares the source grant only. It is not effective.
+    It becomes effective only when an independent verifier has passed
+    the commit that contains this sentence, an Operator decision has
+    authorized integration of that commit, and that commit is canonical
+    `main`. Until then Lane 4 must not edit `alembic.ini`,
+    `migrations/env.py`, or `tests/unit/test_alembic_target_guard.py`.
+    Parent main at authoring is
+    `bfcdec0c2a28a57bbbf373eb3b9bc854f9ae7744`, tree
+    `459f72955cbe1114a9bba121836fa4c4386e5345`. Open PR #81 is the
+    separate Item 37 candidate. This draft does not integrate it and
+    does not certify Stage E.
+
+    When effective, the grant allows offline changes to only those
+    three paths. `tests/unit/test_alembic_target_guard.py` may be
+    created. Migration revisions `0001`, `0002`, and `0003` are not
+    modified. Item 30's three paths are not included. No second
+    migration framework is added.
+
+    The committed `alembic.ini` URL names port 5432 and database
+    `swingtrade`. `migrations/env.py` uses that URL for both offline
+    and online runs. The effective implementation removes every
+    operationally usable port 5432 default and does not fall back to
+    a committed URL. The migration entry point refuses every target
+    except host `127.0.0.1`, port `5433`, database
+    `swingtrade_receipt_test`, role `swingtrade_migrator`, and cluster
+    system identifier `7707684291752896980`. It rejects a missing URL,
+    port 5432, the `localhost` alias, a non-loopback host, the
+    development database, an unexpected role, bootstrap-superuser use,
+    a malformed URL, and unexpected URL attributes. It reads any
+    credential only from the process environment, holds it in memory,
+    and does not log, commit, or place it in an exception. It opens
+    one authenticated connection, checks `current_user`,
+    `current_database()`, `inet_server_addr()`, and
+    `inet_server_port()` on that connection, and stops before
+    `run_migrations` if any check fails. It does not open a second
+    connection.
+
+    `pg_control_system()` is not assumed to be available to
+    `swingtrade_migrator`. If the same-connection identity proof
+    cannot be obtained, the guard fails closed. Host `pg_controldata`
+    does not prove which cluster that connection reached. This item
+    does not grant `pg_monitor`, superuser, server-file access, or
+    function `EXECUTE`. A privilege change, if one is later required,
+    is a separate Operator decision.
+
+    The guard rejects an unexpected Alembic revision and revision
+    `0004`. A future Stage F command, which this item does not
+    authorize, may use only `0001_offline_foundation`,
+    `0002_canonical_order_intents`, and
+    `0003_durable_dry_run_observation`. This item does not authorize a
+    migration, a connection to port 5432, or a change to the protected
+    PostgreSQL service.
+
+    The offline tests cover a missing target, port 5432, the
+    `localhost` alias, a remote host, the wrong database, the wrong
+    port, the wrong role, a malformed URL, unexpected connection
+    attributes, credential redaction, default-URL fallback, the wrong
+    system identifier, an unsupported revision, revision `0004`, a
+    failed identity check, replacement of the verified connection, one
+    mocked valid path, no real database SQL, no secret in an
+    exception, and no protected-environment modification. They also
+    cover offline mode, a wrong credential, a timeout, an unexpected
+    Alembic entry point, and an unsafe retry. A synthetic pass is not
+    a migration pass. The tests do not connect to PostgreSQL.
+
+    Lane 4 reported a Windows run of canonical main at 703 passed, 11
+    failed, 15 errors, and 111 skipped, on Python 3.13.0 with
+    `core.autocrlf=true`. Lane 1 has not re-run that suite. The 111
+    skips require `SWINGTRADE_TEST_POSTGRES_URL` and are not passes.
+    The 11 failures were classified as LF/CRLF working-tree differences
+    against correct Git blobs. Fixture hashes are not changed to fit
+    CRLF. The 15 errors were classified as nine oversized pytest node
+    identifiers exceeding the Windows environment limit. This item does
+    not authorize a pytest-id repair, does not shorten payloads, and
+    does not weaken Decimal checks. That repair remains a separate
+    future source grant. The suite is not `PASS`. Those defects do not
+    by themselves block this offline guard.
+
+    This item does not authorize implementation before effectiveness
+    and does not authorize Lane 4 to merge. Stage F remains
+    unauthorized. Item 30 stays closed. `DRY_RUN` remains the only
+    authorized trading mode. All nine dependencies stay `OPEN`.
+    ADR-0004 and ADR-0005 stay Proposed. This proposal does not embed
+    its own hash.
 
 ## Evidence
 
