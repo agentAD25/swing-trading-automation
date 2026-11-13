@@ -4385,3 +4385,45 @@ Gate D. Item 34 stays effective. Item 33 is not amended. All nine
 dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
 `DRY_RUN` remains the only authorized trading mode. This entry does not
 embed its own hash and does not call a provider.
+
+## 2026-11-13 — PR #71 Item 34 callback implementation record
+
+Commit `142c07dfac520e84e1bb6ffcc7468256cce17b0e`, tree
+`8bd10be2ce286783e9956d2c2407f8b644b97907`, first parent
+`7a3ed977a1661ec8fb5218afd5adb944701f6e3f`, second parent
+`8efb264165fd992d62e68365784b1ed70eb6d48c`, is canonical main. Verifier
+`bc-f03012d9-881d-506c-b537-81b04be77878` returned
+`INDEPENDENT_EXACT_TREE_PASS` for that commit. The evidence is the
+retrievable run at
+`https://cursor.com/agents/bc-f03012d9-881d-506c-b537-81b04be77878`.
+The inaccessible identifier `026cb805-f912-41c5-8b75-d0087ddb9acc` is
+not controlling evidence. Operator decision
+`LANE1_PR71_FRESH_INDEPENDENT_EXACT_TREE_VERIFICATION_AUTHORIZED`
+commissioned the replacement verifier. Operator decision
+`LANE1_ITEM34_PR71_EXACT_INTEGRATION_AUTHORIZED` authorized the
+non-forced fast-forward while canonical main was the second parent.
+The push was
+`git push origin 142c07dfac520e84e1bb6ffcc7468256cce17b0e:refs/heads/main`.
+A second fetch returned the same SHA and tree. GitHub PR #71 is MERGED
+at `2026-11-13T17:48:43Z` with `mergeCommit.oid` equal to that SHA.
+The integrated blobs are
+`src/swingtrade/group4_email/local_oauth_probe.py`
+`0337e979b9328ab7cb079b2e7aa06a15e6cd2080`,
+`tests/group4_email/test_local_oauth_probe.py`
+`4f405e88a840c63e7e84f3b34e803fc4a13a3a2b`, and
+`tests/unit/test_gmail_local_connect.py`
+`8ce471bdf2233be34cc57782e8a0fddf6626ba3e`. Connector blob
+`0a6901a82512100aff41a0494fa185b154f55527` and attack-test blob
+`14b911ba29f16161f179c272c2e2f5e1be50922e` stay unchanged. The
+verifier's Linux full suite on that tree was 877 passed, 111 skipped,
+exit 0. Those skips require `SWINGTRADE_TEST_POSTGRES_URL` and are not
+passes. Focused callback, connector, attack, and fail-closed tests
+passed. Ruff, source Mypy, the Phase 1 validator, and `git diff --check`
+exited 0 on that tree. This documentation commit does not rerun that
+suite. The corrected callback source is integrated. It is not a Windows
+OAuth authorization, a Gmail message read, or a new profile attempt.
+Item 34's governance grant stays effective. Item 35 stays effective for
+its two offline mock files. Gate D stays closed. Item 33 and PR #66 are
+not amended. All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005
+stay Proposed. `DRY_RUN` remains the only authorized trading mode. This
+entry does not embed its own hash and does not call a provider.
