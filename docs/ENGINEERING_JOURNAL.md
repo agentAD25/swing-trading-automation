@@ -4784,3 +4784,20 @@ authorized that fast-forward. GitHub PR #87 is `MERGED` at
 `7a269749d1b04af4d8940550d811190d3c4a702e` does not certify this
 merge. Stage E is not `PASS`. No migration is authorized. This
 paragraph does not embed its own hash.
+
+## 2026-11-13 — PR #89 Item 39 Alembic guard integration record
+
+Commit `3066d25f9eaa9d9430faa2e0955e05c3a0186019`, tree
+`d498aed76d9d3863f0d17e57f469708912731008`, parents
+`f977053c5c094ee6c59daa2e296ff1c4fe7a1158` and
+`213acc52bfb79bb5b60ceab75fb106aa209a1fbe`, is canonical `main`.
+Verifier `bc-9a56f2a3-16a5-53a5-a609-025fa3b42001` returned
+`INDEPENDENT_EXACT_TREE_PASS`. Operator decision
+`LANE1_PR89_ITEM39_ALEMBIC_GUARD_EXACT_INTEGRATION_AUTHORIZED`
+authorized the non-forced fast-forward. GitHub PR #89 is `MERGED` at
+`2026-11-13T21:48:14Z`. The 30 unit-test passes are not a migration
+pass. `pg_control_system()` permission for `swingtrade_migrator` is
+not established. No privilege is granted. Stage E is not certified.
+Stage F and Item 30 stay closed. `DRY_RUN` remains the only
+authorized trading mode. This entry does not embed its own hash and
+does not connect to PostgreSQL.
