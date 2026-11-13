@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-11-13 (item 35 proposal, Alpaca Gate C3 paper-credential custody governance). Item 35 is `DRAFT` on this branch. It is `INDEPENDENTLY_VERIFIED` only after `INDEPENDENT_EXACT_TREE_PASS` for this exact commit. It is `INTEGRATION_AUTHORIZED` only after an Operator decision names this exact commit. It is `INTEGRATED` only when that commit is canonical `main`. It is `POST_MERGE_ATTESTED` only when a later canonical steps 18 and 19 record names that verifier, that decision, and this commit and labels these proposal sentences historical. It is `EFFECTIVE` only when the same commit is `INDEPENDENTLY_VERIFIED`, `INTEGRATED`, and `POST_MERGE_ATTESTED`. Until then, Lane 2 must not add `src/swingtrade/alpaca_paper_custody.py` or `tests/unit/test_alpaca_paper_custody.py`. Gate C2 remains the integrated offline classifier. This proposal grants no credential, provider call, or paper order. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (PR #56 integration record). Commit `4d519730bb56ddf255fdda406caf014a66d558ca`, tree `63157384d1e0742c82e26cd8d22739c71b269478`, parents `c6c5ad000c874c9f192986470e2e301bc83bf5be` and `3d49dbcdbb25ad1d39688323ea9b5f7948cf6ace`, is canonical `main`. Verifier `bc-60651ea8-7488-59cb-8926-fe421d0a4bf0` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR56_4D519730_CONDITIONAL_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward. GitHub PR #56 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T16:12:06Z`. The net change is `src/swingtrade/alpaca_paper_boundary.py` blob `854e6adb5c1c2d20370f724d3a7e6d4f32970509` and `tests/unit/test_alpaca_paper_boundary.py` blob `8e5d89ac0a3f33463d518e62ccaefdadcdf2cdd1`. All seven boundary permissions stay false. This record does not authorize a provider call or Gate C3. This record does not embed its own hash.
 - Last updated: 2026-11-13 (PR #64 integration record). Commit `885d0b405109285a4f44b2f48247b9e7c4ad7348`, tree `20e1d540b48234970ec60f1dc9a2de3fc7ca5c00`, sole parent `f4fda11c6132da4101698e04f980612bd6d8efd6`, is canonical `main`. Verifier `bc-82336778-602d-53dd-87a5-97e4efc1ff38` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR64_ITEMS31_32_CONDITIONAL_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward of that commit. GitHub PR #64 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T14:03:34Z`. Those three facts meet the effectiveness conditions written in items 31 and 32. Item 31's effective authority is one attended Windows run of `run_local_windows_profile_proof` at blob `0a6901a82512100aff41a0494fa185b154f55527`. Item 32's effective authority is the two named source files, and its live message read stays closed. Sentences in that commit that say the items are inactive on this branch are the proposal text. This record does not embed its own hash.
 - Last updated: 2026-11-13 (items 31 and 32 proposal, attended Gmail proof and read-only pilot). Items 31 and 32 become effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, both items are proposed and inactive. When item 31 is effective, the only new authority is one attended Windows run of the existing `run_local_windows_profile_proof` at blob `0a6901a82512100aff41a0494fa185b154f55527`, scope `gmail.metadata`, and one profile GET. When item 32 is effective, the only new source authority is `src/swingtrade/group4_email/gmail_readonly_pilot.py` and `tests/group4_email/test_gmail_readonly_pilot.py`. Sharing this commit does not authorize a live message read. No Gmail write scope, durable-ingestion claim, or economic dispatch is granted. This proposal does not embed its own hash.
@@ -2740,6 +2741,158 @@ a prohibition on later additive coordination roles.
     execution, and `LIVE` remain unauthorized. This record does not
     authorize Gate C3, Gate D, or a provider connection. This record
     does not embed its own hash.
+
+    35. Alpaca Gate C3 paper-credential custody governance, proposed
+    2026-11-13. This item is drafted under Operator decision
+    `LANE1_LANE2_GATE_C3_GOVERNANCE_PREPARATION_AUTHORIZED`. Drafting is
+    not effectiveness. Parent main is
+    `fb9ab787464bd05131c5ead2be8c5ef5bf552b53`, tree
+    `8c079b9c81c325bebbe0dead8aa6fee1f85e685b`. No earlier Item 35 or
+    Gate C3 governance candidate exists on that main. Items 33 and 34
+    remain separate open Gmail drafts and are not amended here.
+
+    Status words in this item have these meanings. `DRAFT` is this
+    proposal before an exact-tree pass. `INDEPENDENTLY_VERIFIED` means
+    an independent verifier returned `INDEPENDENT_EXACT_TREE_PASS` for
+    this exact commit. `INTEGRATION_AUTHORIZED` means a later Operator
+    decision names this exact commit for one non-forced fast-forward.
+    `INTEGRATED` means that commit is canonical `main`.
+    `POST_MERGE_ATTESTED` means a later canonical Integration Protocol
+    steps 18 and 19 record names that verifier, that decision, and this
+    governance commit and labels the proposal sentences in this commit
+    as historical. `EFFECTIVE` means the same commit is
+    `INDEPENDENTLY_VERIFIED`, `INTEGRATED`, and `POST_MERGE_ATTESTED`.
+    `INTEGRATION_AUTHORIZED` does not skip the record. The fast-forward
+    of this governance commit does not by itself make the item
+    effective. The later record does not require a record of itself.
+    If main advances before an Operator integrates this commit, the
+    candidate is reconciled by one normal merge that keeps both parents
+    and is independently verified again. No automatic reconciliation
+    loop is created.
+
+    Gate C2 is complete on the parent. Its implementation is
+    `src/swingtrade/alpaca_paper_boundary.py`, blob
+    `854e6adb5c1c2d20370f724d3a7e6d4f32970509`, and
+    `tests/unit/test_alpaca_paper_boundary.py`, blob
+    `8e5d89ac0a3f33463d518e62ccaefdadcdf2cdd1`, integrated at
+    `4d519730bb56ddf255fdda406caf014a66d558ca` and recorded by PR #68.
+    Verifier `bc-60651ea8-7488-59cb-8926-fe421d0a4bf0` returned
+    `INDEPENDENT_EXACT_TREE_PASS`. The seven boundary permissions stay
+    false. Sentences in Item 26 that call that item inactive are the
+    authoring text. The PR #56 record is the operative Gate C2 status:
+    implementation complete, independently verified, integrated, and
+    post-merge attested. That status does not grant Gate C3. This item
+    does not edit either Gate C2 file or
+    `src/swingtrade/alpaca_paper.py`.
+
+    The capability class is offline custody policy for two Alpaca paper
+    API secrets. It is not authentication, not a network client, and not
+    an order capability. Lane 2 owns the future files named below. No
+    other lane receives them. Until this item is `EFFECTIVE`, those
+    files must not be added and no other source or test path is granted.
+    When it is `EFFECTIVE`, the only new authority is
+    `src/swingtrade/alpaca_paper_custody.py` and
+    `tests/unit/test_alpaca_paper_custody.py`. A later implementation
+    still needs its own exact-tree pass and a separate Operator
+    integration decision. This governance commit does not authorize
+    that later integration in advance.
+
+    Official Alpaca documentation, accessed 2026-11-13, is the custody
+    evidence. `https://docs.alpaca.markets/us/docs/authentication` says
+    each account has separate credentials and that live-account
+    credentials cannot be used with the paper API, or the reverse. The
+    Trading API legacy flow sends a key id and a secret key, either as
+    HTTP Basic credentials or as the headers `APCA-API-KEY-ID` and
+    `APCA-API-SECRET-KEY`. The same page says the client-credentials
+    flow is not yet available for the Trading API. Broker-partner token
+    exchange on `authx.alpaca.markets` and
+    `authx.sandbox.alpaca.markets` is a different product and is not
+    adopted. `https://docs.alpaca.markets/us/docs/paper-trading` says a
+    paper account has a different API key from the live account, the
+    API specification is the same, and the paper base URL shown there
+    is `https://paper-api.alpaca.markets`. That page also says paper
+    trading simulates fills and can change the simulated account. It
+    does not describe a read-only Trading API key. This item therefore
+    treats a paper key as capable of paper account changes. It does not
+    treat a paper key as live-money authority, and it does not treat
+    possession of either secret as permission to call the API.
+
+    The future module, once this item is effective, is an offline mock.
+    It uses synthetic values only. It does not read or write Windows
+    Credential Manager, `advapi32`, the process environment, a file, or
+    PostgreSQL. Accepted ADR-0002 remains the provider-neutral
+    compare-and-swap store for runtime token state. It is not the store
+    for these bootstrap API secrets, and this item does not put them in
+    that store. Accepted ADR-0006 remains the Gmail-only offline
+    adapter and is not extended. Item 26's requirement for a separate
+    Alpaca custody ADR remains in force for any native credential call,
+    any real secret, and any non-mock store. This item does not accept
+    that ADR and does not author one. The PostgreSQL receipt store is
+    not a credential vault. Cursor, ChatGPT, GitHub, and ordinary logs
+    are not secret stores.
+
+    The only storable target names are exactly
+    `swing-trading/lane2/alpaca/paper/key-id` and
+    `swing-trading/lane2/alpaca/paper/secret`. No live target is
+    defined. A name that is missing, ambiguous, differently cased, or
+    contains `live` is rejected. Store fails when the target already
+    exists. Replace and delete are separate explicit operations and
+    fail when the target is absent. An unavailable or corrupt mock
+    fails closed. No operation retries after an ambiguous result.
+    `repr`, `str`, and exception text must not contain secret bytes.
+    The tests must show that redaction with synthetic material only.
+
+    The only host that the mock may associate with those two targets is
+    the exact hostname `paper-api.alpaca.markets`. The hosts
+    `api.alpaca.markets`, `data.alpaca.markets`,
+    `broker-api.alpaca.markets`, `broker-api.sandbox.alpaca.markets`,
+    `authx.alpaca.markets`, `authx.sandbox.alpaca.markets`, and
+    `data.sandbox.alpaca.markets` are rejected. A paper target paired
+    with any other host is rejected. A live-named target paired with
+    the paper host is rejected. The module may import the existing
+    paper-host constant. It must not reimplement the Gate C2 path
+    classifier and must not edit it. `connect_allowed`,
+    `network_permitted`, `submit_permitted`, `cancel_permitted`,
+    `replace_permitted`, `resubmit_permitted`, and `safe_to_retry` stay
+    false. Holding a synthetic secret does not change those flags.
+    The module accepts no base-URL override, proxy, redirect switch, or
+    TLS-disable switch. It does not assemble an HTTP request.
+
+    Because the source file will be a top-level `src/swingtrade/*.py`
+    file, the effective Item 25 scan includes it. Its source must not
+    contain `requests.`, `httpx.`, `socket.`, `tradestation`,
+    `place_order`, or `cancel_order`. The tests must cover live-host
+    rejection, live-target rejection, host mismatch, a missing mock,
+    secret redaction, no environment read, no native credential call,
+    and no permission flag becoming true. They use synthetic values
+    only. No real key is committed, logged, or requested.
+
+    Gate D remains closed. A future attended read-only paper connection
+    requires a separate grant naming an accepted method and route
+    allowlist, paper-account identity verification, and no order
+    submission. This item does not authorize `GET /v2/account`,
+    positions, orders, or any other request. Gate E, Gate F, Gate G,
+    and Gate H are not opened. No paper order, cancellation,
+    replacement, resubmission, `SIM` order, or `LIVE` route is granted.
+    No flag may retarget a paper target to a live host.
+
+    Open draft PR #67 and PR #66 are not modified. If either is
+    integrated before this commit, this candidate must be reconciled
+    once onto that main and verified again before any integration
+    decision. This item does not authorize that reconciliation's
+    integration in advance.
+
+    This item does not close `DEP-TS-001`, `DEP-TS-002`, `DEP-TS-003`,
+    `DEP-TS-004`, `DEP-GMAIL-001`, `DEP-DB-001`, `DEP-DB-002`,
+    `DEP-CORE-001`, or `DEP-CORE-002`. All nine stay `OPEN`. ADR-0002,
+    ADR-0003, ADR-0006, and ADR-0007 stay Accepted. ADR-0004 and
+    ADR-0005 stay Proposed. ADR-0005's Decision stays blank. ADR-0006
+    is not extended. Supabase Free stays **NOT_ACCEPTED**. `DRY_RUN`
+    remains the only authorized trading execution mode. `SIM`,
+    paper-order execution, and `LIVE` remain unauthorized. No Alpaca,
+    TradeStation, Gmail, PostgreSQL, `OrderIntent`, or broker operation
+    is performed by this commit. This proposal does not embed its own
+    hash.
 
 ## Evidence
 
