@@ -4661,3 +4661,28 @@ Item 33, PR #66, Gate D, PostgreSQL, and TradeStation are not
 amended. All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005
 stay Proposed. `DRY_RUN` remains the only authorized trading mode.
 This entry does not embed its own hash and does not call Gmail.
+
+## 2026-11-13 — PR #84 Item 38 integration record
+
+Commit `77b2e64f0ad83307758be138aa2d748accf2f7cf`, tree
+`18e7fa89524c72b9d3a475f0ecee76c7df4d96a4`, sole parent
+`0d571dec1d60e9e1c50ac2fb6593d100edc6e42c`, is canonical `main`.
+Verifier `bc-c6651348-cac2-507d-8bdb-84866d0a4690` returned
+`INDEPENDENT_EXACT_TREE_PASS`. Operator decision
+`LANE1_GMAIL_TOKEN_DIAGNOSTIC_GRANT_EXACT_INTEGRATION_AUTHORIZED`
+authorized one non-forced fast-forward. GitHub PR #84 is `MERGED`
+with `mergeCommit.oid` equal to that SHA at `2026-11-13T20:27:22Z`.
+
+Item 38 is `INTEGRATED`. Sentences in that commit that call the grant
+a draft are historical. Item 38 is not `EFFECTIVE` until this record
+is canonical `main`. Lane 3 must not edit the connector, its unit
+test, or the probe allowlist before then. Campaign
+`GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped. Attempt 1 is
+consumed. Attempts 2 and 3 are unused and are not exercisable. Profile
+GET count stays 0. No OAuth resume, `client_secret`, or Content-Type
+change is authorized. Item 36 stays the campaign grant. Item 37 stays
+the open Stage E proposal. PR #79, PR #80, and PR #81 are not
+integrated by this record. All nine dependencies stay `OPEN`.
+ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
+authorized trading mode. This entry does not embed its own hash and
+does not call Gmail.
