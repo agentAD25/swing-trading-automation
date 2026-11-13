@@ -4221,3 +4221,48 @@ stages stay `NOT_RUN`. Item 30 source paths stay closed. All nine
 dependencies stay `OPEN`. ADR-0004 stays Proposed. `DRY_RUN` remains
 the only authorized trading mode. This entry does not embed its own
 hash and does not call Gmail.
+
+## 2026-11-13 — Item 34 OAuth callback validation proposal
+
+Canonical main at authoring is
+`3d49dbcdbb25ad1d39688323ea9b5f7948cf6ace`, tree
+`6f6de3380403cd6bcf430846d697520b1f804798`. Operator decision
+`LANE1_ITEM34_CALLBACK_VALIDATION_GRANT_DRAFT_AUTHORIZED` authorizes
+this docs-only draft. Item 34 is proposed and inactive on this branch.
+The connector blob is
+`0a6901a82512100aff41a0494fa185b154f55527`. The Gate B source blob is
+`777db628ebe0f55aa529b26c9ad5692799121090`. The Gate B test blob is
+`86d99b6269d1c14238c5b240b7998428a206d59f`. The Item 22 attack-test
+blob is `14b911ba29f16161f179c272c2e2f5e1be50922e`.
+
+`validate_callback` on that Gate B blob rejects every callback key
+other than `code` and `state`. RFC 6749 section 4.1.2, read
+2026-11-13 at `https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2`,
+says the client must ignore unrecognized authorization-response
+parameters. RFC 6749 section 4.1.2.1 still requires an error response
+to stop before token exchange. RFC 9207 section 2.4, read the same
+day at `https://www.rfc-editor.org/rfc/rfc9207#section-2.4`, requires
+an exact issuer comparison when `iss` is supplied and permits a local
+policy that accepts a response which omits `iss`. The expected issuer
+in this grant is exactly `https://accounts.google.com`.
+
+The implementation grant is not effective until this governance commit
+has an independent exact-tree pass, an Operator integration decision,
+canonical presence on `main`, and a later steps 18 and 19 record that
+names those facts. Lane 3 may then change only `validate_callback`,
+`tests/group4_email/test_local_oauth_probe.py`, and the two probe blob
+constants in `tests/unit/test_gmail_local_connect.py`. The assertions
+stay. The attack-test constant is not in this allowlist. The connector
+source stays the blob above. No third Windows attempt is granted.
+
+Item 33 remains the separate open draft PR #66 at
+`14d3852ad54113765d1be53484a27fe660cec2d7`. This entry does not amend
+it. Its drafted future path is only
+`tests/group4_email/test_attacks.py`, not
+`tests/failure_injection/test_attacks.py`. That attack-test edit would
+change the blob pinned by the connector test, and Item 33 does not
+grant the constant replacement. PR #56 is a separate Lane 2 draft and
+is not integrated by this entry. All nine dependencies stay `OPEN`.
+ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
+authorized trading mode. This entry does not embed its own hash and
+does not call Gmail.
