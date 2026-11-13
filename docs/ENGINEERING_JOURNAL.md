@@ -4493,3 +4493,34 @@ are not amended. All nine dependencies stay `OPEN`. ADR-0004 and
 ADR-0005 stay Proposed. `DRY_RUN` remains the only authorized trading
 mode. This entry does not embed its own hash and does not call a
 provider.
+
+## 2026-11-13 — ADR-0008 Option A acceptance and Gate D grant
+
+Operator decision `LANE1_ADR0008_OPTION_A_ACCEPTANCE_AUTHORIZED` selects
+Option A. ADR-0008 status is Accepted. The Decision names
+`swing-trading/lane2/alpaca/paper/key-id` and
+`swing-trading/lane2/alpaca/paper/secret` and rejects every live target.
+Custody is Windows-local and Operator-controlled. There is no
+environment-secret fallback, PostgreSQL credential vault, cloud secret
+custody, host fallback, redirect, automatic retry, or economic
+operation. Secrets stay out of Git, command-line arguments, logs,
+agent transcripts, and chat. The seven Gate C2 flags stay false.
+Operator decision `LANE1_ALPACA_GATE_D_TWO_FILE_PROBE_GRANT_AUTHORIZED`
+is a separate decision. It names only
+`src/swingtrade/alpaca_paper_account_probe.py` and
+`tests/unit/test_alpaca_paper_account_probe.py`. Acceptance does not
+imply that grant. The grant becomes effective only when an independent
+verifier has passed this exact commit, an Operator decision has
+authorized integration of this exact commit, and this exact commit is
+canonical main. Until then Lane 2 must not edit those files. When
+effective, the work is offline synthetic development of one future
+`GET https://paper-api.alpaca.markets/v2/account`. It rejects live
+hosts and credentials, unsupported endpoints, redirects, retries,
+positions, order queries, streaming, order creation, cancellation, and
+replacement, and missing or ambiguous custody identity. It does not
+authorize a credential read or a provider call. PR #77 remains the
+canonical record that ADR-0008 was integrated while Proposed. Item 33
+and PR #66 are not amended. All nine dependencies stay `OPEN`.
+ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
+authorized trading mode. This entry does not embed its own hash and
+does not call a provider.

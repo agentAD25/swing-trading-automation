@@ -1,6 +1,6 @@
 # ADR-0008: Alpaca PAPER Windows-Local Credential Custody and Bounded Account-Read Boundary
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-13
 - Sole Phase 1 decider: Human Operator
 - Scope: Future Windows-local custody of two Alpaca paper credential targets and one paper account read
@@ -11,11 +11,11 @@
 
 Gate C2 and the Item 35 offline mock are canonical. The mock stores synthetic bytes and returns seven false execution flags. Alpaca paper and live keys are different credentials. A paper key is not documented as read-only. ADR-0006 covers the Lane 3 Gmail adapter and does not cover Alpaca. No accepted ADR authorizes a Windows credential read or a call to `paper-api.alpaca.markets`.
 
-This record is a proposal. Publishing it does not accept it and does not authorize a credential read or a provider call.
+The Operator has selected Option A. That selection does not authorize a credential read or a provider call.
 
 ## Safety impact
 
-`DRY_RUN` stays the only authorized trading mode. This proposal puts no secret in Git, logs, command-line arguments, or chat. It does not change the seven Gate C2 flags. A denied capability stays unauthorized. Acceptance of this ADR, if later recorded by the Operator, still would not by itself authorize implementation, a credential read, or a provider call.
+`DRY_RUN` stays the only authorized trading mode. This decision puts no secret in Git, logs, command-line arguments, or chat. It does not change the seven Gate C2 flags. A denied capability stays unauthorized. Acceptance does not by itself authorize implementation, a credential read, or a provider call.
 
 ## Options considered
 
@@ -30,7 +30,7 @@ Disallow every target under `swing-trading/lane2/alpaca/live/`.
 
 A later Operator-local probe may be authorized only for `GET https://paper-api.alpaca.markets/v2/account`. That future probe would require a Windows-local runtime, paper-only credentials, no host fallback, no redirects, no automatic retries, exactly one authorized account GET, no raw account-body disclosure, and no positions, orders, or streaming requests. It would not submit or modify a paper order and would not use a live host. The seven existing Gate C2 flags stay unchanged. Reported output is a reason code, not the key or the raw account body.
 
-This is the recommended minimum scope. It is not selected while this ADR is Proposed.
+This is the scope selected by the Operator.
 
 ### Option B
 
@@ -38,7 +38,7 @@ Widen `connect_allowed` or `network_permitted` on the existing Gate C2 classifie
 
 ## Decision
 
-Blank while status is Proposed.
+The Operator selected Option A on 2026-11-13 by decision `LANE1_ADR0008_OPTION_A_ACCEPTANCE_AUTHORIZED`. Custody is Windows-local and Operator-controlled. The only credential targets are `swing-trading/lane2/alpaca/paper/key-id` and `swing-trading/lane2/alpaca/paper/secret`. Every target under `swing-trading/lane2/alpaca/live/` is rejected. There is no environment-secret fallback, PostgreSQL credential vault, cloud secret custody, host fallback, redirect, automatic retry, or economic operation. Secrets stay out of Git, command-line arguments, logs, agent transcripts, and chat. The seven Gate C2 execution flags stay false. This acceptance does not retrieve a credential or call a provider. The separate decision `LANE1_ALPACA_GATE_D_TWO_FILE_PROBE_GRANT_AUTHORIZED` is recorded in current state and is not implied by this acceptance.
 
 ## Consequences
 
@@ -59,7 +59,7 @@ Acceptance evidence is a later Operator decision that changes this status to Acc
 
 ## Unresolved questions
 
-The Operator decides whether to accept Option A. Native Windows credential-store behavior is not certified by this text. This proposal does not choose a secret-manager product.
+The Operator has selected Option A. Native Windows credential-store behavior is not certified by this text. This proposal does not choose a secret-manager product.
 
 ## Evidence
 
