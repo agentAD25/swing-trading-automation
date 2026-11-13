@@ -4814,3 +4814,5 @@ authorized that fast-forward. GitHub PR #87 is `MERGED` at
 `7a269749d1b04af4d8940550d811190d3c4a702e` does not certify this
 merge. Stage E is not `PASS`. No migration is authorized. This
 paragraph does not embed its own hash.
+
+This later reconciliation carries Item 33 onto canonical main `afc6b76ec679b269e89e5478c5a8bf938a0dad2e`, tree `acc32eec762c1789254bbfa2c1515b32413cff29`. Item 33 stays inactive. The pass of `49a7ca0de50508c9ad2f06d689e889fc174ebe03` does not certify this merge. The scanner files are not edited. The Item 38 diagnostic blobs are canonical on that main. Campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped. Stage E is not certified. Stage F and Item 30 stay closed. This paragraph does not embed its own hash.
