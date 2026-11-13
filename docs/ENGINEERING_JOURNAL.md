@@ -4222,6 +4222,52 @@ dependencies stay `OPEN`. ADR-0004 stays Proposed. `DRY_RUN` remains
 the only authorized trading mode. This entry does not embed its own
 hash and does not call Gmail.
 
+## 2026-11-13 — Item 34 OAuth callback validation proposal
+
+Canonical main at authoring is
+`3d49dbcdbb25ad1d39688323ea9b5f7948cf6ace`, tree
+`6f6de3380403cd6bcf430846d697520b1f804798`. Operator decision
+`LANE1_ITEM34_CALLBACK_VALIDATION_GRANT_DRAFT_AUTHORIZED` authorizes
+this docs-only draft. Item 34 is proposed and inactive on this branch.
+The connector blob is
+`0a6901a82512100aff41a0494fa185b154f55527`. The Gate B source blob is
+`777db628ebe0f55aa529b26c9ad5692799121090`. The Gate B test blob is
+`86d99b6269d1c14238c5b240b7998428a206d59f`. The Item 22 attack-test
+blob is `14b911ba29f16161f179c272c2e2f5e1be50922e`.
+
+`validate_callback` on that Gate B blob rejects every callback key
+other than `code` and `state`. RFC 6749 section 4.1.2, read
+2026-11-13 at `https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2`,
+says the client must ignore unrecognized authorization-response
+parameters. RFC 6749 section 4.1.2.1 still requires an error response
+to stop before token exchange. RFC 9207 section 2.4, read the same
+day at `https://www.rfc-editor.org/rfc/rfc9207#section-2.4`, requires
+an exact issuer comparison when `iss` is supplied and permits a local
+policy that accepts a response which omits `iss`. The expected issuer
+in this grant is exactly `https://accounts.google.com`.
+
+The implementation grant is not effective until this governance commit
+has an independent exact-tree pass, an Operator integration decision,
+canonical presence on `main`, and a later steps 18 and 19 record that
+names those facts. Lane 3 may then change only `validate_callback`,
+`tests/group4_email/test_local_oauth_probe.py`, and the two probe blob
+constants in `tests/unit/test_gmail_local_connect.py`. The assertions
+stay. The attack-test constant is not in this allowlist. The connector
+source stays the blob above. No third Windows attempt is granted.
+
+Item 33 remains the separate open draft PR #66 at
+`14d3852ad54113765d1be53484a27fe660cec2d7`. This entry does not amend
+it. Its drafted future path is only
+`tests/group4_email/test_attacks.py`, not
+`tests/failure_injection/test_attacks.py`. That attack-test edit would
+change the blob pinned by the connector test, and Item 33 does not
+grant the constant replacement. PR #56 is a separate Lane 2 draft and
+is not integrated by this entry. All nine dependencies stay `OPEN`.
+ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
+authorized trading mode. This entry does not embed its own hash and
+does not call Gmail.
+Reconciliation note, 2026-11-13. Canonical main `fb9ab787464bd05131c5ead2be8c5ef5bf552b53` contains the PR #56 integration and its steps 18 and 19 record. The sentence above that calls PR #56 an unintegrated draft is authoring text. The pass of `8d21fbaf5097873e265e44d25840a0697ade00b8` does not certify this merge. The Item 34 grant is unchanged.
+
 ## 2026-11-13 — PR #56 Alpaca Gate C2 integration record
 
 Commit `4d519730bb56ddf255fdda406caf014a66d558ca`, tree
@@ -4284,5 +4330,32 @@ are `swing-trading/lane2/alpaca/paper/key-id` and
 `swing-trading/lane2/alpaca/paper/secret`. No live target is defined.
 Gate D stays closed. PR #66 and PR #67 are not amended. All nine
 dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
+`DRY_RUN` remains the only authorized trading mode. This entry does not
+embed its own hash and does not call a provider.
+
+Reconciliation note, 2026-11-13. Canonical main `b0ce11e4fd0eaf37f84a8b2a9291fec9c76ee298` contains the PR #67 integration and the PR #70 steps 18 and 19 record. Item 34 is effective. The sentence above that says PR #67 is not amended is authoring text. The pass of `f4d1638cbb401de4a85e00d7d53b3f70d231e1aa` does not certify this merge. The Item 35 grant is unchanged.
+
+## 2026-11-13 — PR #67 Item 34 integration record
+
+Commit `fc01765af77d469fcaccca2ed570f987d4d1e892`, tree
+`abddf196bfe219a6b012dec3aa05fef0209c6951`, first parent
+`8d21fbaf5097873e265e44d25840a0697ade00b8`, second parent
+`fb9ab787464bd05131c5ead2be8c5ef5bf552b53`, is canonical main. Verifier
+`bc-dd8e2c0a-3a43-505b-8918-8da9563c878f` returned
+`INDEPENDENT_EXACT_TREE_PASS`. The pass of
+`8d21fbaf5097873e265e44d25840a0697ade00b8` does not certify this merge.
+Operator decision
+`LANE1_PR67_ITEM34_EXACT_INTEGRATION_CONDITIONALLY_AUTHORIZED` authorized
+the non-forced fast-forward. The push was
+`git push origin fc01765af77d469fcaccca2ed570f987d4d1e892:refs/heads/main`.
+GitHub PR #67 is MERGED at `2026-11-13T16:47:24Z` with that merge commit.
+The net diff is the three governance files. No source or test changed.
+The connector blob remains
+`0a6901a82512100aff41a0494fa185b154f55527`. Implementation pytest was
+`NOT_RUN`. Sentences in the integrated commit that call Item 34 inactive
+are historical. The implementation grant is effective for
+`validate_callback`, the probe tests, and the two probe blob constants.
+It is not a Windows OAuth authorization. Item 33 is not amended. All
+nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
 `DRY_RUN` remains the only authorized trading mode. This entry does not
 embed its own hash and does not call a provider.
