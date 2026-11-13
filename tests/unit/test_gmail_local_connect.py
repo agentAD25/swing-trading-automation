@@ -5,10 +5,13 @@ from __future__ import annotations
 import ast
 import hashlib
 import importlib
+import json
 import socket
 from collections.abc import Mapping
 from pathlib import Path
+from urllib import error as urllib_error
 from urllib import request as urllib_request
+from urllib.parse import parse_qsl
 
 import pytest
 
@@ -42,7 +45,7 @@ SECRET = "synthetic-client-secret-value"
 MODULE = Path("src/swingtrade/gmail_local_connect.py")
 _BLOBS = {
     "src/swingtrade/group4_email/local_oauth_probe.py": (
-        "0337e979b9328ab7cb079b2e7aa06a15e6cd2080"
+        "618e510046178fa87c5fbb84a797c7b3f60d90e8"
     ),
     "tests/group4_email/test_local_oauth_probe.py": ("4f405e88a840c63e7e84f3b34e803fc4a13a3a2b"),
     "tests/group4_email/test_attacks.py": "14b911ba29f16161f179c272c2e2f5e1be50922e",
@@ -277,11 +280,11 @@ def test_invalid_or_missing_client_configuration() -> None:
         )
     )
 
-    assert missing.code == "GMAIL_OAUTH_TOKEN_REJECTED"
-    assert web.code == "GMAIL_OAUTH_TOKEN_REJECTED"
-    assert broken.code == "GMAIL_OAUTH_TOKEN_REJECTED"
-    assert empty.code == "GMAIL_OAUTH_TOKEN_REJECTED"
-    assert custody.code == "GMAIL_OAUTH_TOKEN_REJECTED"
+    assert missing.code == "GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED"
+    assert web.code == "GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED"
+    assert broken.code == "GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED"
+    assert empty.code == "GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED"
+    assert custody.code == "GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED"
     assert SECRET not in f"{custody} {custody!r}"
 
 
@@ -590,11 +593,11 @@ def test_declaration_compat_preserves_fail_closed_client_rules() -> None:
     offline = _reject(lambda: _client(access_type="offline", prompt="consent"))
     enabled = _reject(lambda: _client(network_permitted=True))
 
-    assert web.code == "GMAIL_OAUTH_TOKEN_REJECTED"
-    assert missing.code == "GMAIL_OAUTH_TOKEN_REJECTED"
-    assert broken.code == "GMAIL_OAUTH_TOKEN_REJECTED"
-    assert secret_type.code == "GMAIL_OAUTH_TOKEN_REJECTED"
-    assert custody.code == "GMAIL_OAUTH_TOKEN_REJECTED"
+    assert web.code == "GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED"
+    assert missing.code == "GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED"
+    assert broken.code == "GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED"
+    assert secret_type.code == "GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED"
+    assert custody.code == "GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED"
     assert offline.code == "GMAIL_OAUTH_SCOPE_REJECTED"
     assert enabled.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
     assert SECRET not in f"{custody} {custody!r}"
@@ -628,7 +631,7 @@ def test_token_exchange_rejection_and_malformed_response() -> None:
 
     assert denied_error.code == "GMAIL_OAUTH_TOKEN_REJECTED"
     assert denied.gets == []
-    assert malformed_error.code == "GMAIL_OAUTH_TOKEN_REJECTED"
+    assert malformed_error.code == "GMAIL_OAUTH_TOKEN_RESPONSE_MALFORMED"
 
 
 def test_missing_and_extra_scope_are_rejected() -> None:
@@ -869,3 +872,611 @@ def test_real_pass_token_is_only_loaded_by_the_windows_command() -> None:
 
     assert set(loads) == {("run_local_windows_profile_proof",)}
     assert loads
+
+
+_Call = tuple[str, str, bytes, str | None]
+_READONLY = "https://www.googleapis.com/auth/gmail.readonly"
+_HIDDEN = (
+    ACCESS,
+    REFRESH,
+    SECRET,
+    EMAIL,
+    CLIENT_ID,
+    "synthetic-error-description",
+    "synthetic-invalid-json",
+    "synthetic-doc",
+    "synthetic-transport-failure",
+    "ambiguous-send",
+    "synthetic-non-object",
+    "synthetic-code",
+    "mailbox@example.invalid",
+    "synthetic-header",
+)
+
+
+class _AmbiguousSend(Exception):
+    """Synthetic exception whose send completion state is unknown."""
+
+
+def _block_providers(monkeypatch: pytest.MonkeyPatch) -> None:
+    def boom(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("provider")
+
+    monkeypatch.setattr(socket, "socket", boom)
+    monkeypatch.setattr(socket, "create_connection", boom)
+    monkeypatch.setattr(urllib_request, "urlopen", boom)
+    monkeypatch.setattr(urllib_request, "build_opener", boom)
+
+
+def _direct_form() -> dict[str, str]:
+    return {
+        "grant_type": "authorization_code",
+        "code": "synthetic-code",
+        "code_verifier": "a" * 43,
+        "client_id": CLIENT_ID,
+        "redirect_uri": "http://127.0.0.1:43123/",
+    }
+
+
+def _assert_code(error: LocalOAuthProbeRejected, code: str) -> None:
+    assert error.code == code
+    assert str(error) == code
+    assert repr(error) == code
+    assert error.__cause__ is None
+
+
+def _assert_hidden(rendered: str) -> None:
+    for hidden in _HIDDEN:
+        assert hidden not in rendered
+
+
+def _profile_body() -> dict[str, object]:
+    return {
+        "emailAddress": EMAIL,
+        "messagesTotal": 1,
+        "threadsTotal": 1,
+        "historyId": "history-shape",
+    }
+
+
+def _methods(calls: list[_Call]) -> list[str]:
+    return [method for method, _endpoint, _body, _token in calls]
+
+
+def _exchange_calls(
+    outcome: tuple[int, object] | BaseException,
+) -> tuple[list[_Call], ProfileTransport]:
+    calls: list[_Call] = []
+
+    def exchange(
+        method: str,
+        endpoint: str,
+        body: bytes,
+        timeout: int,
+        token: str | None,
+    ) -> tuple[int, object]:
+        assert timeout == 30
+        calls.append((method, endpoint, body, token))
+        if method == "GET":
+            assert token == ACCESS
+            return 200, _profile_body()
+        assert token is None
+        if isinstance(outcome, BaseException):
+            raise outcome
+        return outcome
+
+    return calls, ProfileTransport(exchange)
+
+
+def _success_calls() -> tuple[list[_Call], ProfileTransport]:
+    calls: list[_Call] = []
+
+    def exchange(
+        method: str,
+        endpoint: str,
+        body: bytes,
+        timeout: int,
+        token: str | None,
+    ) -> tuple[int, dict[str, object]]:
+        assert timeout == 30
+        calls.append((method, endpoint, body, token))
+        if method == "POST":
+            assert token is None
+            return 200, {
+                "access_token": ACCESS,
+                "refresh_token": REFRESH,
+                "scope": METADATA,
+                "token_type": "Bearer",
+            }
+        assert method == "GET"
+        assert endpoint == PROFILE
+        assert body == b""
+        assert token == ACCESS
+        return 200, _profile_body()
+
+    return calls, ProfileTransport(exchange)
+
+
+def _reject_diagnostic(
+    outcome: tuple[int, object] | BaseException,
+    monkeypatch: pytest.MonkeyPatch,
+) -> tuple[LocalOAuthProbeRejected, list[_Call], Boundary, ProfileTransport]:
+    _block_providers(monkeypatch)
+    calls, transport = _exchange_calls(outcome)
+    boundary = Boundary()
+    error = _reject(
+        lambda: run_offline_profile_shape(_client(), transport, boundary, boundary, boundary)
+    )
+    return error, calls, boundary, transport
+
+
+def _assert_not_retried(transport: ProfileTransport, calls: list[_Call]) -> None:
+    error = _reject(lambda: transport.post_form(TOKEN, _direct_form()))
+
+    _assert_code(error, "GMAIL_OAUTH_ENDPOINT_REJECTED")
+    assert _methods(calls) == ["POST"]
+
+
+def _provider_error_body() -> dict[str, object]:
+    return {
+        "error": "invalid_grant",
+        "error_description": "synthetic-error-description",
+        "access_token": ACCESS,
+        "refresh_token": REFRESH,
+    }
+
+
+def _assert_http_status(
+    status: int,
+    code: str,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    error, calls, _boundary, transport = _reject_diagnostic(
+        (status, _provider_error_body()),
+        monkeypatch,
+    )
+    rendered = f"{error} {error!r} {capsys.readouterr().out}"
+
+    _assert_code(error, code)
+    _assert_hidden(rendered)
+    assert _methods(calls) == ["POST"]
+    assert calls[0][1] == TOKEN
+    assert transport._profiles == 0
+    assert transport._access == []
+
+
+def _request_header_names() -> list[str]:
+    tree = ast.parse(MODULE.read_text(encoding="utf-8"))
+    names: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+            continue
+        if node.func.attr == "Request":
+            assert all(keyword.arg != "headers" for keyword in node.keywords)
+        if node.func.attr != "add_header" or not node.args:
+            continue
+        header = node.args[0]
+        assert isinstance(header, ast.Constant)
+        assert isinstance(header.value, str)
+        names.append(header.value)
+    return names
+
+
+def _assert_module_prints_codes_only() -> None:
+    tree = ast.parse(MODULE.read_text(encoding="utf-8"))
+    prints = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "print"
+    ]
+
+    assert prints
+    for node in prints:
+        assert len(node.args) == 1
+        assert not node.keywords
+        arg = node.args[0]
+        if isinstance(arg, ast.Attribute):
+            assert arg.attr == "code"
+        else:
+            assert isinstance(arg, ast.Name)
+            assert arg.id in {"_REAL_PASS", "_REAL_BLOCKED"}
+
+
+def test_token_diagnostic_pre_exchange_refusal(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _block_providers(monkeypatch)
+
+    def boom(*_args: object, **_kwargs: object) -> Mapping[str, object]:
+        raise AssertionError("token post")
+
+    monkeypatch.setattr(ProfileTransport, "post_form", boom)
+    samples = (
+        lambda: desktop_client_from_document({}),
+        lambda: desktop_client_from_document({"web": {"client_id": CLIENT_ID}}),
+        lambda: desktop_client_from_document({"installed": {}}),
+        lambda: desktop_client_from_document({"installed": "client"}),
+        lambda: desktop_client_from_json_text("{"),
+        lambda: desktop_client_from_json_text(""),
+        lambda: desktop_client_from_json_text("a" * 8193),
+        lambda: desktop_client_from_document(
+            {"installed": {"client_id": CLIENT_ID, "refresh_token": REFRESH}}
+        ),
+        lambda: _client(client_secret=1),
+    )
+
+    for sample in samples:
+        error = _reject(sample)
+        rendered = f"{error} {error!r} {capsys.readouterr().out}"
+        _assert_code(error, "GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED")
+        _assert_hidden(rendered)
+
+
+def test_token_diagnostic_http_200_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    _block_providers(monkeypatch)
+    calls, transport = _success_calls()
+    boundary = Boundary()
+    evidence = run_offline_profile_shape(_client(), transport, boundary, boundary, boundary)
+
+    assert evidence.profile_result == "GMAIL_OAUTH_PROFILE_SHAPE_PASS"
+    assert evidence.token_exchange_result == "TOKEN_SHAPE_PASS"
+    assert evidence.callback_result == "CALLBACK_SHAPE_PASS"
+    assert evidence.scope_result == "SCOPE_EXACT"
+    assert evidence.content_retained is False
+    assert _methods(calls) == ["POST", "GET"]
+    assert calls[0][1] == TOKEN
+    assert calls[1][1] == PROFILE
+    assert calls[1][2] == b""
+    assert transport._access == []
+    assert transport._posts == 1
+    assert transport._profiles == 1
+    assert ACCESS not in repr(evidence)
+    assert REFRESH not in repr(evidence)
+    assert EMAIL not in repr(evidence)
+
+
+def test_token_diagnostic_http_200_missing_access_token(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    bodies = (
+        {
+            "scope": METADATA,
+            "refresh_token": REFRESH,
+            "error_description": "synthetic-error-description",
+        },
+        {"scope": METADATA, "access_token": "", "refresh_token": REFRESH},
+        {"scope": METADATA, "access_token": 15, "refresh_token": REFRESH},
+    )
+
+    for body in bodies:
+        error, calls, _boundary, transport = _reject_diagnostic((200, body), monkeypatch)
+        rendered = f"{error} {error!r} {capsys.readouterr().out}"
+        _assert_code(error, "GMAIL_OAUTH_TOKEN_MISSING_ACCESS_TOKEN")
+        _assert_hidden(rendered)
+        assert _methods(calls) == ["POST"]
+        assert transport._access == []
+        assert transport._profiles == 0
+
+
+def test_token_diagnostic_http_400(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _assert_http_status(400, "GMAIL_OAUTH_TOKEN_HTTP_4XX", monkeypatch, capsys)
+
+
+def test_token_diagnostic_http_401(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _assert_http_status(401, "GMAIL_OAUTH_TOKEN_HTTP_4XX", monkeypatch, capsys)
+
+
+def test_token_diagnostic_http_403(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _assert_http_status(403, "GMAIL_OAUTH_TOKEN_HTTP_4XX", monkeypatch, capsys)
+
+
+def test_token_diagnostic_http_500(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _assert_http_status(500, "GMAIL_OAUTH_TOKEN_HTTP_5XX", monkeypatch, capsys)
+
+
+def test_token_diagnostic_transport_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    error, calls, _boundary, transport = _reject_diagnostic(
+        urllib_error.URLError("synthetic-transport-failure"),
+        monkeypatch,
+    )
+    rendered = f"{error} {error!r} {capsys.readouterr().out}"
+
+    _assert_code(error, "GMAIL_OAUTH_TOKEN_TRANSPORT_UNKNOWN")
+    assert error.__suppress_context__ is True
+    _assert_hidden(rendered)
+    _assert_not_retried(transport, calls)
+    assert transport._profiles == 0
+
+
+def test_token_diagnostic_ambiguous_transport(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    error, calls, _boundary, transport = _reject_diagnostic(
+        _AmbiguousSend("ambiguous-send"),
+        monkeypatch,
+    )
+    rendered = f"{error} {error!r} {capsys.readouterr().out}"
+
+    _assert_code(error, "GMAIL_OAUTH_TOKEN_TRANSPORT_UNKNOWN")
+    assert error.__suppress_context__ is True
+    _assert_hidden(rendered)
+    _assert_not_retried(transport, calls)
+    assert transport._profiles == 0
+    assert calls[0][1] == TOKEN
+
+
+def test_token_diagnostic_invalid_json(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    error, calls, _boundary, transport = _reject_diagnostic(
+        json.JSONDecodeError("synthetic-invalid-json", "synthetic-doc", 0),
+        monkeypatch,
+    )
+    rendered = f"{error} {error!r} {capsys.readouterr().out}"
+
+    _assert_code(error, "GMAIL_OAUTH_TOKEN_RESPONSE_MALFORMED")
+    assert error.__suppress_context__ is True
+    _assert_hidden(rendered)
+    assert _methods(calls) == ["POST"]
+    assert transport._profiles == 0
+    assert transport._access == []
+
+
+def test_token_diagnostic_non_object_json(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    error, calls, _boundary, transport = _reject_diagnostic(
+        (200, ["synthetic-non-object"]),
+        monkeypatch,
+    )
+    rendered = f"{error} {error!r} {capsys.readouterr().out}"
+
+    _assert_code(error, "GMAIL_OAUTH_TOKEN_RESPONSE_MALFORMED")
+    _assert_hidden(rendered)
+    assert _methods(calls) == ["POST"]
+    assert transport._profiles == 0
+
+
+def test_token_diagnostic_scope_mismatch(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    bodies = (
+        {
+            "access_token": ACCESS,
+            "refresh_token": REFRESH,
+            "scope": _READONLY,
+            "error_description": "synthetic-error-description",
+        },
+        {"refresh_token": REFRESH, "error_description": "synthetic-error-description"},
+    )
+
+    for body in bodies:
+        error, calls, _boundary, transport = _reject_diagnostic((200, body), monkeypatch)
+        rendered = f"{error} {error!r} {capsys.readouterr().out}"
+        _assert_code(error, "GMAIL_OAUTH_SCOPE_REJECTED")
+        _assert_hidden(rendered)
+        assert _READONLY not in rendered
+        assert _methods(calls) == ["POST"]
+        assert transport._profiles == 0
+        assert transport._access == []
+
+
+def test_token_diagnostic_duplicate_token_post_refusal(monkeypatch: pytest.MonkeyPatch) -> None:
+    _block_providers(monkeypatch)
+    calls, transport = _exchange_calls((200, {"access_token": ACCESS, "scope": METADATA}))
+    accepted = transport.post_form(TOKEN, _direct_form())
+    error = _reject(lambda: transport.post_form(TOKEN, _direct_form()))
+
+    _assert_code(error, "GMAIL_OAUTH_ENDPOINT_REJECTED")
+    assert _methods(calls) == ["POST"]
+    assert calls[0][1] == TOKEN
+    assert accepted["status"] == 200
+    assert "refresh_token" not in accepted["body"]  # type: ignore[operator]
+
+
+def test_token_diagnostic_unauthorized_endpoint_refusal(monkeypatch: pytest.MonkeyPatch) -> None:
+    _block_providers(monkeypatch)
+    calls, transport = _exchange_calls((200, {"access_token": ACCESS, "scope": METADATA}))
+    messages = "https://gmail.googleapis.com/gmail/v1/users/me/messages"
+    foreign = "https://example.invalid/token"
+    message_error = _reject(lambda: transport.post_form(messages, _direct_form()))
+    foreign_error = _reject(lambda: transport.post_form(foreign, _direct_form()))
+
+    _assert_code(message_error, "GMAIL_OAUTH_ENDPOINT_REJECTED")
+    _assert_code(foreign_error, "GMAIL_OAUTH_ENDPOINT_REJECTED")
+    assert calls == []
+    assert messages not in f"{message_error} {message_error!r}"
+    assert "example.invalid" not in f"{foreign_error} {foreign_error!r}"
+
+
+def test_token_diagnostic_no_profile_get_after_rejection(monkeypatch: pytest.MonkeyPatch) -> None:
+    error, calls, boundary, transport = _reject_diagnostic(
+        (401, _provider_error_body()),
+        monkeypatch,
+    )
+
+    _assert_code(error, "GMAIL_OAUTH_TOKEN_HTTP_4XX")
+    assert _methods(calls) == ["POST"]
+    assert all(method != "GET" for method in _methods(calls))
+    assert transport._profiles == 0
+    assert boundary.closed == 1
+
+
+def test_token_diagnostic_one_profile_get_after_acceptance(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _block_providers(monkeypatch)
+    calls, transport = _success_calls()
+    boundary = Boundary()
+    evidence = run_offline_profile_shape(_client(), transport, boundary, boundary, boundary)
+    posts = [call for call in calls if call[0] == "POST"]
+    gets = [call for call in calls if call[0] == "GET"]
+
+    assert evidence.profile_result == "GMAIL_OAUTH_PROFILE_SHAPE_PASS"
+    assert len(posts) == 1
+    assert len(gets) == 1
+    assert posts[0][1] == TOKEN
+    assert gets[0][1] == PROFILE
+    assert gets[0][2] == b""
+    assert gets[0][3] == ACCESS
+    assert transport._profiles == 1
+    assert transport._posts == 1
+    assert transport._access == []
+
+
+def test_token_diagnostic_secret_bearing_bodies_absent_from_output(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    description = " ".join(
+        (
+            SECRET,
+            ACCESS,
+            REFRESH,
+            EMAIL,
+            CLIENT_ID,
+            "synthetic-error-description",
+            "mailbox@example.invalid",
+            "synthetic-header",
+        )
+    )
+    error, calls, boundary, _transport = _reject_diagnostic(
+        (
+            400,
+            {
+                "error": "invalid_grant",
+                "error_description": description,
+                "access_token": ACCESS,
+                "refresh_token": REFRESH,
+            },
+        ),
+        monkeypatch,
+    )
+    captured = capsys.readouterr()
+    rendered = f"{error} {error!r} {captured.out}"
+    form = dict(parse_qsl(calls[0][2].decode("ascii"), strict_parsing=True))
+    state = dict(boundary.opens[0].parameters)["state"]  # type: ignore[attr-defined]
+
+    _assert_code(error, "GMAIL_OAUTH_TOKEN_HTTP_4XX")
+    assert captured.out == ""
+    _assert_hidden(rendered)
+    assert calls[0][2].decode("ascii") not in rendered
+    assert form["code"] not in rendered
+    assert form["code_verifier"] not in rendered
+    assert form["client_id"] not in rendered
+    assert state not in rendered
+    _assert_module_prints_codes_only()
+
+
+def test_token_diagnostic_existing_callback_protections(monkeypatch: pytest.MonkeyPatch) -> None:
+    _block_providers(monkeypatch)
+    cases = (
+        ("mismatch", "GMAIL_OAUTH_STATE_REJECTED"),
+        ("missing-state", "GMAIL_OAUTH_STATE_REJECTED"),
+        ("duplicate-state", "GMAIL_OAUTH_STATE_REJECTED"),
+        ("missing-code", "GMAIL_OAUTH_CALLBACK_REJECTED"),
+        ("duplicate-code", "GMAIL_OAUTH_CALLBACK_REJECTED"),
+        ("oauth-error", "GMAIL_OAUTH_CALLBACK_REJECTED"),
+    )
+
+    for mode, code in cases:
+        boundary = Boundary()
+        boundary.mode = mode
+        error = _reject(lambda boundary=boundary: _run(boundary))
+        _assert_code(error, code)
+        assert boundary.posts == []
+        assert boundary.gets == []
+        assert boundary.closed == 1
+    rejected = _reject(lambda: _client(redirect_uris=["https://example.invalid/callback"]))
+
+    _assert_code(rejected, "GMAIL_OAUTH_REDIRECT_REJECTED")
+    assert "example.invalid" not in f"{rejected} {rejected!r}"
+
+
+def test_token_diagnostic_existing_failure_injection(monkeypatch: pytest.MonkeyPatch) -> None:
+    _block_providers(monkeypatch)
+    timeout = Boundary()
+    timeout.mode = "timeout"
+    bind = Boundary()
+    bind.mode = "bind-fail"
+    browser = Boundary()
+    browser.mode = "browser"
+    listener = Boundary()
+    listener.mode = "listener-fail"
+    timeout_error = _reject(lambda: _run(timeout))
+    bind_error = _reject(lambda: _run(bind))
+    browser_error = _reject(lambda: _run(browser))
+    listener_error = _reject(lambda: _run(listener))
+
+    _assert_code(timeout_error, "GMAIL_OAUTH_CALLBACK_REJECTED")
+    _assert_code(bind_error, "GMAIL_OAUTH_REDIRECT_REJECTED")
+    _assert_code(browser_error, "GMAIL_OAUTH_CALLBACK_REJECTED")
+    _assert_code(listener_error, "GMAIL_OAUTH_CALLBACK_REJECTED")
+    assert timeout.posts == []
+    assert bind.posts == []
+    assert browser.posts == []
+    assert listener.posts == []
+    assert timeout.closed == 1
+    assert bind.closed == 1
+    assert browser.closed == 1
+    assert listener.closed == 1
+
+
+def test_token_diagnostic_oauth_request_fields_unchanged(monkeypatch: pytest.MonkeyPatch) -> None:
+    _block_providers(monkeypatch)
+    calls, transport = _success_calls()
+    boundary = Boundary()
+    evidence = run_offline_profile_shape(_client(), transport, boundary, boundary, boundary)
+    form = dict(parse_qsl(calls[0][2].decode("ascii"), strict_parsing=True))
+    opened = boundary.opens[0]
+    parameters = dict(opened.parameters)  # type: ignore[attr-defined]
+    source = MODULE.read_text(encoding="utf-8")
+
+    assert evidence.profile_result == "GMAIL_OAUTH_PROFILE_SHAPE_PASS"
+    assert list(form) == ["grant_type", "code", "code_verifier", "client_id", "redirect_uri"]
+    assert form["grant_type"] == "authorization_code"
+    assert form["code"] == "synthetic-code"
+    assert form["client_id"] == CLIENT_ID
+    assert form["redirect_uri"] == "http://127.0.0.1:43123/"
+    assert "client_secret" not in form
+    assert "refresh_token" not in form
+    assert "access_type" not in form
+    assert calls[0][1] == TOKEN
+    assert calls[1][1] == PROFILE
+    assert calls[0][3] is None
+    assert opened.endpoint == AUTH  # type: ignore[attr-defined]
+    assert parameters["response_type"] == "code"
+    assert parameters["scope"] == METADATA
+    assert parameters["code_challenge_method"] == "S256"
+    assert parameters["redirect_uri"] == "http://127.0.0.1:43123/"
+    assert parameters["code_challenge"] == pkce_s256_challenge(form["code_verifier"])
+    assert "client_secret" not in parameters
+    assert "access_type" not in parameters
+    assert "prompt" not in parameters
+    assert "Content-Type" not in source
+    assert "content-type" not in source.lower()
+    assert _request_header_names() == ["Authorization"]
