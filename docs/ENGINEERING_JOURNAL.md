@@ -4291,6 +4291,50 @@ All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
 `DRY_RUN` remains the only authorized trading mode. This entry does not
 embed its own hash and does not call a provider.
 
+## 2026-11-13 — Item 35 Alpaca Gate C3 custody governance proposal
+
+Canonical main at authoring is
+`fb9ab787464bd05131c5ead2be8c5ef5bf552b53`, tree
+`8c079b9c81c325bebbe0dead8aa6fee1f85e685b`. Operator decision
+`LANE1_LANE2_GATE_C3_GOVERNANCE_PREPARATION_AUTHORIZED` authorizes this
+docs-only draft. Item 35 is `DRAFT` and is not effective on this branch.
+Gate C2 stays the integrated classifier at blobs
+`854e6adb5c1c2d20370f724d3a7e6d4f32970509` and
+`8e5d89ac0a3f33463d518e62ccaefdadcdf2cdd1`. The PR #56 record remains
+the operative Gate C2 status. Item 26 sentences that call Item 26
+inactive are authoring text. This entry does not grant Gate C3
+implementation.
+
+Alpaca's authentication page, accessed 2026-11-13 at
+`https://docs.alpaca.markets/us/docs/authentication`, says live and
+paper accounts have separate credentials and cannot be interchanged.
+The Trading API legacy flow uses a key id and secret. Client
+credentials are not yet available for the Trading API. The paper-trading
+page, accessed the same day at
+`https://docs.alpaca.markets/us/docs/paper-trading`, says the paper key
+differs from the live key, the API specification is the same, and the
+paper base URL shown there is `https://paper-api.alpaca.markets`. That
+page does not document a read-only Trading API key. A paper key is
+therefore treated as capable of simulated account changes. Possession
+of the key is not permission to call the API.
+
+The future effective allowlist is only
+`src/swingtrade/alpaca_paper_custody.py` and
+`tests/unit/test_alpaca_paper_custody.py`, and only after independent
+verification, integration of this exact commit, and a later steps 18
+and 19 record. The module must stay an offline synthetic mock. ADR-0002
+is not the bootstrap-secret store. ADR-0006 is not extended. Native
+Windows credential access still requires a separate accepted Alpaca
+custody ADR and a further explicit approval. The two paper target names
+are `swing-trading/lane2/alpaca/paper/key-id` and
+`swing-trading/lane2/alpaca/paper/secret`. No live target is defined.
+Gate D stays closed. PR #66 and PR #67 are not amended. All nine
+dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
+`DRY_RUN` remains the only authorized trading mode. This entry does not
+embed its own hash and does not call a provider.
+
+Reconciliation note, 2026-11-13. Canonical main `b0ce11e4fd0eaf37f84a8b2a9291fec9c76ee298` contains the PR #67 integration and the PR #70 steps 18 and 19 record. Item 34 is effective. The sentence above that says PR #67 is not amended is authoring text. The pass of `f4d1638cbb401de4a85e00d7d53b3f70d231e1aa` does not certify this merge. The Item 35 grant is unchanged.
+
 ## 2026-11-13 — PR #67 Item 34 integration record
 
 Commit `fc01765af77d469fcaccca2ed570f987d4d1e892`, tree
