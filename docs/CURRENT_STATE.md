@@ -1,6 +1,7 @@
 # Current State
 
-- Last updated: 2026-11-13 (Item 37 proposal, Stage E evidence dimensions). Canonical Item 36 remains the Gmail metadata grant. This Stage E proposal is Item 37 and is not effective. It becomes effective only when an independent verifier has passed this exact merge commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. The pass of `f44be4a2e75de2123e48506a6fd985e41c4eb64c` does not certify this merge. Until then the unamended Item 29 Stage E sentence remains in force, Stage E is not `PASS`, Stage F is not authorized, and Item 30's three source paths stay closed. SE-B-06 stays `NOT_RUN`, so Dimension B is not fully passed. Dimension C is `NOT_RUN`. No functional pass is claimed. This proposal does not embed its own hash.
+- Last updated: 2026-11-13 (Item 37 reconciliation with the Gmail Item 36 record). Item 37 remains the proposed Stage E amendment and is not effective. It becomes effective only when an independent verifier has passed this exact reconciliation commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. The passes of `f44be4a2e75de2123e48506a6fd985e41c4eb64c` and `c98812dc6c88fd7fefe1efc610e1b1598c4d3568` do not certify this commit. SE-B-06 stays `NOT_RUN` and is supplementary: Stage A stored no task-definition hash, and Item 29 does not require one. That row does not withhold the applicable Dimension B result and is not converted to `PASS`. Dimension C stays `NOT_RUN`. Stage E is not `PASS`. Stage F is not authorized. Item 30's three source paths stay closed. This proposal does not embed its own hash.
+- Last updated: 2026-11-13 (PR #82 Item 36 integration record). Commit `a06363231abb3fb8f0466da1ec79fff35ec28668`, tree `cbcb6e134197575af49ee64bf59c30c594e81645`, sole parent `0890546d63eaa0e0e5b917675071bc662b1e2d50`, is canonical `main`. Verifier `bc-9481fb1c-0259-5c37-8f96-26dede781fcb` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_GMAIL_THREE_ATTEMPT_GRANT_EXACT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward. GitHub PR #82 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T19:40:02Z`. The integrated blobs are `docs/CURRENT_STATE.md` `acf930fecedd372a469369137975dfb235454cb0`, `docs/ENGINEERING_JOURNAL.md` `200797f94f7b4dfd18ccc131c717e9ac75999b76`, and `docs/WORKSTREAM_STATUS.md` `95eef966f9e59a52e1eb550e590dec1e59505764`. Item 36 is `INTEGRATED`. Sentences in that commit that call it a draft are historical. Item 36 is not `EFFECTIVE` until this steps 18 and 19 record is canonical `main`. This record does not issue `LANE1_GMAIL_THREE_ATTEMPT_METADATA_CAMPAIGN_AUTHORIZED`. The two Item 31 execution decisions stay spent. The protected Gmail import-closure blobs stay unchanged. PR #79 and open draft PR #81 are not amended. This record does not embed its own hash.
 - Last updated: 2026-11-13 (Item 36 Gmail three-attempt metadata grant, draft). Operator decision `LANE1_GMAIL_METADATA_RUNTIME_GRANT_RECONCILIATION_AUTHORIZED` authorizes this draft only. Item 36 is not effective. It does not issue `LANE1_GMAIL_THREE_ATTEMPT_METADATA_CAMPAIGN_AUTHORIZED` and it does not issue `LANE1_GMAIL_THREE_ATTEMPT_GRANT_EXACT_INTEGRATION_AUTHORIZED`. The two Item 31 execution decisions stay spent. The new budget of three attempts is not authorized by this draft. Parent main is `0890546d63eaa0e0e5b917675071bc662b1e2d50`, tree `0b17e98773a544a3fb11937fa2e2b7301a331161`. Open draft PR #79 is a separate Alpaca record and is not mixed into this grant. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (ADR-0008 Option A acceptance and Gate D grant record). Operator decision `LANE1_ADR0008_OPTION_A_ACCEPTANCE_AUTHORIZED` selects Option A. ADR-0008 status is Accepted. Its Decision names the two paper targets and rejects every live target. Operator decision `LANE1_ALPACA_GATE_D_TWO_FILE_PROBE_GRANT_AUTHORIZED` is separate and names only `src/swingtrade/alpaca_paper_account_probe.py` and `tests/unit/test_alpaca_paper_account_probe.py`. That grant becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. Until then Lane 2 must not edit those files. When effective, the grant is offline synthetic development of one future `GET https://paper-api.alpaca.markets/v2/account`. It does not authorize a credential read, Windows Credential Manager, a provider call, a redirect, a retry, positions, orders, or streaming. The seven Gate C2 flags stay false. `DRY_RUN` stays the only trading mode. PR #77 stays the canonical record of Proposed integration. This record does not embed its own hash.
 - Last updated: 2026-11-13 (PR #76 Proposed ADR-0008 integration record). Commit `4941dc0d30359710b4a7b6160eb874c261d1cf66`, tree `a2946b87449615c5aa33fa7adf29c6e0aed178f9`, sole parent `90ad6fb2f050d3728551e23fec65b17ca3a6705a`, is canonical `main`. Verifier `bc-1957ff23-21a9-582c-8198-d5f8cfa2d3a6` returned `INDEPENDENT_EXACT_TREE_PASS` for that commit. Operator decision `LANE1_ADR0008_PROPOSED_EXACT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward while canonical main was `90ad6fb2f050d3728551e23fec65b17ca3a6705a`. GitHub PR #76 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T18:51:45Z`. The integrated blob is `docs/adr/0008-alpaca-paper-windows-local-credential-custody.md` `befca5bd775be9f4c1e4d09f8a08ae4584374b27`. ADR-0008 stays Proposed. Its Decision stays blank. Option A is not accepted. Option B is not selected. This record does not grant Gate D source files or a provider call. Item 34, Item 35, PR #74, and PR #75 stay canonical. PR #66 is not amended. This record does not embed its own hash.
@@ -3354,10 +3355,10 @@ a prohibition on later additive coordination roles.
 
     37. Stage E evidence dimensions, proposed 2026-11-13. This item
     was drafted on PR #81 as Item 36. Canonical Item 36 is the Gmail
-    metadata grant, so this proposal is renumbered. The pass of
-    `f44be4a2e75de2123e48506a6fd985e41c4eb64c` does not certify this
-    merge. This item becomes effective only when all three of these
-    are true: an independent verifier has passed this exact merge
+    metadata grant, so this proposal is renumbered.     The passes of `f44be4a2e75de2123e48506a6fd985e41c4eb64c` and
+    `c98812dc6c88fd7fefe1efc610e1b1598c4d3568` do not certify a later
+    reconciliation. This item becomes effective only when all three of
+    these are true: an independent verifier has passed this exact
     commit, an Operator decision has authorized integration of this
     exact commit, and this exact commit is canonical `main`. While any
     condition is unmet, this item is proposed and inactive. Drafting it
@@ -3367,17 +3368,23 @@ a prohibition on later additive coordination roles.
     When this item is effective, Item 29 Stage E is recorded in three
     separate dimensions. Dimension A is `INFRASTRUCTURE_SECURITY`.
     Dimension B is `PROTECTED_BASELINE_PRESERVATION`. Dimension C is
-    `APPLICATION_FUNCTIONAL_VERIFICATION`. Infrastructure certification
-    requires independent `PASS` results for every applicable A and B
-    test. Dimension C stays `NOT_RUN` when VWAP/mdpipe, SupaOpti, and
-    eBay were dormant before provisioning and no authorized functional
-    test was executed. A `NOT_RUN` result is not a functional `PASS`.
-    No application execution is simulated. The protected applications
-    are not modified. SE-B-06 stays `NOT_RUN` because no Stage A
-    task-definition hash exists to compare. Under this proposal that
-    one test does not by itself block Stage F, and it is not converted
-    to `PASS`. Dimension B is therefore not fully passed on this
-    branch. This proposal does not certify Stage E.
+    `APPLICATION_FUNCTIONAL_VERIFICATION`. An applicable test is one
+    that Item 29 names and for which a Stage A observation exists.
+    Infrastructure certification requires independent `PASS` results
+    for every applicable A and B test. SE-B-06 is supplementary. Item
+    29 does not name a task-definition hash, and Stage A never stored
+    one, so that byte comparison cannot be performed. It stays
+    `NOT_RUN`, is not converted to `PASS`, and does not withhold the
+    applicable Dimension B result or by itself block Stage F. The
+    applicable Dimension B tests are service continuity, protected-path
+    non-modification, protected configuration hashes, task state,
+    absence of a post-baseline task run, continued dormancy, and absence
+    of a new post-baseline application event. Dimension C stays
+    `NOT_RUN` when VWAP/mdpipe, SupaOpti, and eBay were dormant before
+    provisioning and no authorized functional test was executed. A
+    `NOT_RUN` result is not a functional `PASS`. No application
+    execution is simulated. The protected applications are not
+    modified. This proposal does not certify Stage E.
 
     Stage F eligibility begins only after this item is effective and
     the applicable A and B results support that eligibility for system

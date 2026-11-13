@@ -4563,14 +4563,81 @@ ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
 authorized trading mode. This entry does not embed its own hash and
 does not call Gmail.
 
-## 2026-11-13 — Item 37 Stage E dimensions, renumbered
+## 2026-11-13 — PR #82 Item 36 integration record
 
-Canonical Item 36 is the Gmail metadata grant. The Stage E proposal
-that PR #81 drafted as Item 36 is Item 37 on this merge. The pass of
-`f44be4a2e75de2123e48506a6fd985e41c4eb64c` does not certify this merge.
-Item 37 is proposed and is not effective. Stage E is not `PASS`.
-SE-B-06 stays `NOT_RUN`, so Dimension B is not fully passed. Dimension
-C stays `NOT_RUN`. No application was launched. No SQL was sent. The
-protected port 5432 service was not changed. Stage F was not run.
-Item 30 source paths were not created. PR #79 and PR #83 are not
-amended. This entry does not embed its own hash.
+Commit `a06363231abb3fb8f0466da1ec79fff35ec28668`, tree
+`cbcb6e134197575af49ee64bf59c30c594e81645`, sole parent
+`0890546d63eaa0e0e5b917675071bc662b1e2d50`, is canonical main. Verifier
+`bc-9481fb1c-0259-5c37-8f96-26dede781fcb` returned
+`INDEPENDENT_EXACT_TREE_PASS`. The evidence is the retrievable run at
+`https://cursor.com/agents/bc-9481fb1c-0259-5c37-8f96-26dede781fcb`.
+Operator decision
+`LANE1_GMAIL_THREE_ATTEMPT_GRANT_EXACT_INTEGRATION_AUTHORIZED`
+authorized the non-forced fast-forward. The push was
+`git push origin a06363231abb3fb8f0466da1ec79fff35ec28668:refs/heads/main`.
+A second fetch returned the same SHA and tree. GitHub PR #82 is MERGED
+at `2026-11-13T19:40:02Z` with `mergeCommit.oid` equal to that SHA.
+The integrated blobs are `docs/CURRENT_STATE.md`
+`acf930fecedd372a469369137975dfb235454cb0`,
+`docs/ENGINEERING_JOURNAL.md`
+`200797f94f7b4dfd18ccc131c717e9ac75999b76`, and
+`docs/WORKSTREAM_STATUS.md`
+`95eef966f9e59a52e1eb550e590dec1e59505764`.
+
+Item 36 is `INTEGRATED`. The sentences in that commit that call the
+item a draft are historical. Item 36 is not `EFFECTIVE` until this
+steps 18 and 19 record is canonical main. This record does not require
+a record of itself. It does not issue
+`LANE1_GMAIL_THREE_ATTEMPT_METADATA_CAMPAIGN_AUTHORIZED`. The two Item
+31 execution decisions stay spent. This repository still does not
+record a third initiated flow. The protected blobs stay
+`src/swingtrade/gmail_local_connect.py`
+`0a6901a82512100aff41a0494fa185b154f55527`,
+`src/swingtrade/group4_email/local_oauth_probe.py`
+`0337e979b9328ab7cb079b2e7aa06a15e6cd2080`,
+`src/swingtrade/__init__.py`
+`f05d0f91842b4615ada81ca8d044ae38d9bc4d2c`,
+`src/swingtrade/config.py`
+`35d8f918705db61c7d03d1a37e5a834186ceec71`,
+`src/swingtrade/domain.py`
+`ab3a0de9db8886561144c0947f9fc4359b72cab8`,
+`src/swingtrade/group4_email/__init__.py`
+`44d73a8b92f05fbf941eb6c6b1383e52a2913104`,
+`src/swingtrade/group4_email/contract.py`
+`a973e492634f05817b069c1655c127491a8b432c`,
+`src/swingtrade/group4_email/extract.py`
+`ed0ca1633af280a11989db259af4b41270f5a221`,
+`src/swingtrade/group4_email/parse.py`
+`4119ffe03758380e0a284cc3514721201fac34c9`, and
+`src/swingtrade/group4_email/normalize.py`
+`af0151551ff3fef520d7f7095a39f850e0d1154c`.
+Commits `142c07dfac520e84e1bb6ffcc7468256cce17b0e` and
+`ef88c609e8e4f15f136786257faa2368ea9893bd` remain ancestors.
+
+Open draft PR #79, head
+`908223a350b8d53b5ab394f5a65ba6aea5dc88da`, still records PR #78 and
+cannot fast-forward after this integration. It is not amended. Open
+draft PR #81, head `f44be4a2e75de2123e48506a6fd985e41c4eb64c`, proposes
+a different Item 36 for Stage E. That number overlap is unresolved.
+This record does not amend, integrate, or renumber PR #81. The offline
+Gate D grant stays effective for its two files and is not a provider
+call. Item 32's live read stays closed. Item 33 and PR #66 are not
+amended. All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay
+Proposed. `DRY_RUN` remains the only authorized trading mode. This
+entry does not embed its own hash and does not call Gmail.
+
+## 2026-11-13 — Item 37 reconciled with canonical Item 36
+
+This merge keeps the Gmail Item 36 integration record and keeps the
+Stage E proposal as Item 37. The sentences above that say PR #81 still
+uses Item 36 are the historical text of commit
+`0d571dec1d60e9e1c50ac2fb6593d100edc6e42c`. They are not changed.
+SE-B-06 stays `NOT_RUN`. It is supplementary because Item 29 does not
+require a task-definition hash and Stage A never stored one. It does
+not withhold the applicable Dimension B result and is not converted to
+`PASS`. Dimension C stays `NOT_RUN`. Item 37 is not effective. Stage E
+is not `PASS`. Stage F was not run. No SQL was sent. The protected
+port 5432 service was not changed. Item 30 source paths were not
+created. The passes of `f44be4a2e75de2123e48506a6fd985e41c4eb64c` and
+`c98812dc6c88fd7fefe1efc610e1b1598c4d3568` do not certify this merge.
+This entry does not embed its own hash.

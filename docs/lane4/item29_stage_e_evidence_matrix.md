@@ -21,7 +21,9 @@ was Running, and functional health was `NOT_VERIFIED`.
 Classifications are only `PASS`, `FAIL`, `SKIPPED`, or `NOT_RUN`.
 `blocks_stage_f` is `yes` only under the unamended Item 29 rule. Proposed
 Item 37 would change that block for Dimension C only after Item 37 is
-accepted and effective.
+accepted and effective. SE-B-06 is supplementary. Item 29 does not name
+a task-definition hash, and Stage A never stored one, so that row stays
+`NOT_RUN` without withholding the applicable Dimension B result.
 
 ## Dimension A — infrastructure security
 
@@ -57,7 +59,7 @@ accepted and effective.
 | SE-B-03 | B | Protected configuration hashes unchanged | SE-A-18 | Both expected hashes matched | Cursor Local Windows, read-only, 2026-11-13 | PASS | The protected configuration files match the preserved hashes. | no | no |
 | SE-B-04 | B | Scheduled-task state unchanged | `Get-ScheduledTask` | Order Scanner Disabled; SourceWatchlistScan Disabled; BatchWatchlistScan Ready; DailyScanEmail Ready; GmailOAuthHealth Ready; WeeklyInventoryEmail Ready | Cursor Local Windows, read-only, 2026-11-13 | PASS | Enabled and Disabled states match the Stage A record. No task was enabled, disabled, or started. | no | no |
 | SE-B-05 | B | No post-baseline task execution | `Get-ScheduledTaskInfo` | Latest last-run values remain 2026-06-09, never-run, 2026-11-07, 2026-11-13 05:00, 2026-11-12 18:00, and 2026-11-09 | Cursor Local Windows, read-only, 2026-11-13 | PASS | None of the six last-run times is after the Stage A baseline. Weekly result 1 remains the pre-baseline result. | no | no |
-| SE-B-06 | B | Task-definition byte identity versus Stage A | `Export-ScheduledTask` SHA-256 recorded in this file | Hashes recorded below; no Stage A hash exists to compare | Cursor Local Windows, read-only, 2026-11-13 | NOT_RUN | Current definition hashes were captured for a later comparison. They do not prove the XML was unchanged, and they are not converted to PASS. | no | no |
+| SE-B-06 | B | Task-definition byte identity versus Stage A | `Export-ScheduledTask` SHA-256 recorded in this file | Hashes recorded below; no Stage A hash exists to compare | Cursor Local Windows, read-only, 2026-11-13 | NOT_RUN | Supplementary. Item 29 does not require a task-definition hash, and Stage A never stored one. The captured hashes support a future comparison only. They are not converted to PASS and do not withhold the applicable Dimension B result. | no | no |
 | SE-B-07 | B | Previously dormant applications remain dormant | Process census | `dbeaver` 1; research-named `node.exe` or `python.exe` matches 0; no VWAP, SupaOpti, mdpipe, or eBay service | Cursor Local Windows, read-only, 2026-11-13 | PASS | The workloads that were dormant at Stage A are still not executing. DBeaver's presence matches the baseline and is not application functional health. | no | no |
 | SE-B-08 | B | No new adverse post-provisioning application event | SE-B-05 and SE-B-07 | No task entered Running and no research process appeared after baseline | Cursor Local Windows, read-only, 2026-11-13 | PASS | Absence of a new failure is preservation evidence only. It is not functional PASS. | no | no |
 
