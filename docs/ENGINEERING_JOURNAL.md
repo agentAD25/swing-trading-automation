@@ -4524,3 +4524,17 @@ and PR #66 are not amended. All nine dependencies stay `OPEN`.
 ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
 authorized trading mode. This entry does not embed its own hash and
 does not call a provider.
+
+## 2026-11-13 — Item 36 proposal, Stage E dimensions
+
+Lane 4 recorded read-only Stage E evidence for the dedicated cluster
+`postgresql-swingtrade-16`, system identifier `7707684291752896980`,
+port `5433`. Dimension A infrastructure observations and Dimension B
+baseline preservation are recorded in
+`docs/lane4/item29_stage_e_evidence_matrix.md`. Dimension C for
+VWAP/mdpipe, SupaOpti, and eBay is `NOT_RUN`. No application was
+launched. No SQL was sent. The protected port 5432 hashes matched their
+preserved values. Item 36 is a proposal and is not effective. Stage F
+was not run. Item 30 source paths were not created. Open draft PR #79
+also edits this journal and `docs/CURRENT_STATE.md`; Lane 1 reconciles
+that overlap. This entry does not embed its own hash.

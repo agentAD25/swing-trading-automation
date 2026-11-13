@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-11-13 (Item 36 proposal, Stage E evidence dimensions). Item 36 is proposed on this branch and is not effective. It becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. Until then the unamended Item 29 Stage E sentence remains in force, Stage E is not `PASS`, Stage F is not authorized, and Item 30's three source paths stay closed. The branch evidence is `docs/lane4/item29_stage_e_evidence_matrix.md`. Dimension C is `NOT_RUN`. No functional pass is claimed. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (ADR-0008 Option A acceptance and Gate D grant record). Operator decision `LANE1_ADR0008_OPTION_A_ACCEPTANCE_AUTHORIZED` selects Option A. ADR-0008 status is Accepted. Its Decision names the two paper targets and rejects every live target. Operator decision `LANE1_ALPACA_GATE_D_TWO_FILE_PROBE_GRANT_AUTHORIZED` is separate and names only `src/swingtrade/alpaca_paper_account_probe.py` and `tests/unit/test_alpaca_paper_account_probe.py`. That grant becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. Until then Lane 2 must not edit those files. When effective, the grant is offline synthetic development of one future `GET https://paper-api.alpaca.markets/v2/account`. It does not authorize a credential read, Windows Credential Manager, a provider call, a redirect, a retry, positions, orders, or streaming. The seven Gate C2 flags stay false. `DRY_RUN` stays the only trading mode. PR #77 stays the canonical record of Proposed integration. This record does not embed its own hash.
 - Last updated: 2026-11-13 (PR #76 Proposed ADR-0008 integration record). Commit `4941dc0d30359710b4a7b6160eb874c261d1cf66`, tree `a2946b87449615c5aa33fa7adf29c6e0aed178f9`, sole parent `90ad6fb2f050d3728551e23fec65b17ca3a6705a`, is canonical `main`. Verifier `bc-1957ff23-21a9-582c-8198-d5f8cfa2d3a6` returned `INDEPENDENT_EXACT_TREE_PASS` for that commit. Operator decision `LANE1_ADR0008_PROPOSED_EXACT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward while canonical main was `90ad6fb2f050d3728551e23fec65b17ca3a6705a`. GitHub PR #76 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T18:51:45Z`. The integrated blob is `docs/adr/0008-alpaca-paper-windows-local-credential-custody.md` `befca5bd775be9f4c1e4d09f8a08ae4584374b27`. ADR-0008 stays Proposed. Its Decision stays blank. Option A is not accepted. Option B is not selected. This record does not grant Gate D source files or a provider call. Item 34, Item 35, PR #74, and PR #75 stay canonical. PR #66 is not amended. This record does not embed its own hash.
 - Last updated: 2026-11-13 (PR #73 Item 35 custody implementation record). Commit `472db287f3d7ab62943d016217ac49c5a48a24cc`, tree `2d3d3e3d471861b74a3ef9f2eb2fff8625ba04c2`, parents `a64ad50bb0d8e48da68cf1e87a185053f018b8a7` and `ef88c609e8e4f15f136786257faa2368ea9893bd`, is canonical `main`. Verifier `bc-69bc8af0-87ee-5cc7-b267-20a52e50abd7` returned `INDEPENDENT_EXACT_TREE_PASS` for that commit. Operator decision `LANE1_PR73_RECONCILED_EXACT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward while canonical main was `ef88c609e8e4f15f136786257faa2368ea9893bd`. GitHub PR #73 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T18:35:25Z`. The integrated blobs are `src/swingtrade/alpaca_paper_custody.py` `86ba61b5bfecc2ec203e36c099face0e15c4068d` and `tests/unit/test_alpaca_paper_custody.py` `81c0a9d5f1cbbd12d9fe8d9fb3bcf07423424a4c`. Gate C2 blobs `854e6adb5c1c2d20370f724d3a7e6d4f32970509` and `8e5d89ac0a3f33463d518e62ccaefdadcdf2cdd1` stay unchanged. The seven execution flags stay false. This is the integrated offline mock. It is not a provider call, a native Windows credential call, or Gate D. Item 34 and PR #74 stay canonical. PR #66 is not amended. This record does not embed its own hash.
@@ -3198,6 +3199,49 @@ a prohibition on later additive coordination roles.
     only authorized trading execution mode. `SIM`, paper-order
     execution, and `LIVE` remain unauthorized. This record does not
     embed its own hash.
+
+    36. Stage E evidence dimensions, proposed 2026-11-13. This item
+    becomes effective only when all three of these are true: an
+    independent verifier has passed this exact commit, an Operator
+    decision has authorized integration of this exact commit, and this
+    exact commit is canonical `main`. While any condition is unmet,
+    this item is proposed and inactive. Drafting it does not certify
+    Stage E, does not authorize Stage F, and does not authorize Item 30.
+
+    When this item is effective, Item 29 Stage E is certified in three
+    separately recorded dimensions. Dimension A is
+    `INFRASTRUCTURE_SECURITY`. Dimension B is
+    `PROTECTED_BASELINE_PRESERVATION`. Dimension C is
+    `APPLICATION_FUNCTIONAL_VERIFICATION`. Infrastructure certification
+    requires independent `PASS` results for A and B. Dimension C stays
+    `NOT_RUN` when VWAP/mdpipe, SupaOpti, and eBay were dormant before
+    provisioning and no authorized functional test was executed. A
+    `NOT_RUN` result is not a functional `PASS`. No application
+    execution is simulated. The protected applications are not modified.
+    Functional verification remains a tracked follow-up. The unamended
+    sentence that a missing health observation is `NOT_RUN`, not a
+    complete zero-disruption pass, remains the reason C cannot complete
+    an unlabeled Stage E pass. After this item is effective, that fact
+    does not withhold infrastructure certification when A and B have
+    passed.
+
+    Stage F eligibility begins only after this item is effective and A
+    and B are `PASS` for system identifier `7707684291752896980`, host
+    `127.0.0.1`, port `5433`, and database `swingtrade_receipt_test`.
+    Every Item 29 isolation, authentication, role, and protected-instance
+    requirement stays mandatory. This item grants no source path. Item
+    30's three paths stay closed until that effective Stage E security
+    result and a Stage F isolated-test prerequisite `PASS` both exist
+    for the same cluster. The evidence cited by this proposal is
+    `docs/lane4/item29_stage_e_evidence_matrix.md`. On this branch that
+    matrix records A and B from the cited observations and records C as
+    `NOT_RUN`. Those branch statements are not canonical certification.
+
+    This item does not close a dependency, accept ADR-0004 or ADR-0005,
+    extend ADR-0006, or authorize credentials, a connection to port
+    5432, `SIM`, paper-order execution, or `LIVE`. Historical Item 29
+    sentences that say Stages A through F are `NOT_RUN` stay historical
+    snapshots. They are not changed by this proposal.
 
 ## Evidence
 
