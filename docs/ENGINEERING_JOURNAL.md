@@ -4427,3 +4427,40 @@ its two offline mock files. Gate D stays closed. Item 33 and PR #66 are
 not amended. All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005
 stay Proposed. `DRY_RUN` remains the only authorized trading mode. This
 entry does not embed its own hash and does not call a provider.
+
+## 2026-11-13 — PR #73 Item 35 custody implementation record
+
+Commit `472db287f3d7ab62943d016217ac49c5a48a24cc`, tree
+`2d3d3e3d471861b74a3ef9f2eb2fff8625ba04c2`, first parent
+`a64ad50bb0d8e48da68cf1e87a185053f018b8a7`, second parent
+`ef88c609e8e4f15f136786257faa2368ea9893bd`, is canonical main. Verifier
+`bc-69bc8af0-87ee-5cc7-b267-20a52e50abd7` returned
+`INDEPENDENT_EXACT_TREE_PASS` for that commit. The evidence is the
+retrievable run at
+`https://cursor.com/agents/bc-69bc8af0-87ee-5cc7-b267-20a52e50abd7`.
+Operator decision `LANE1_PR73_RECONCILED_EXACT_INTEGRATION_AUTHORIZED`
+authorized the non-forced fast-forward while canonical main was the
+second parent. The push was
+`git push origin 472db287f3d7ab62943d016217ac49c5a48a24cc:refs/heads/main`.
+A second fetch returned the same SHA and tree. GitHub PR #73 is MERGED
+at `2026-11-13T18:35:25Z` with `mergeCommit.oid` equal to that SHA.
+The integrated blobs are `src/swingtrade/alpaca_paper_custody.py`
+`86ba61b5bfecc2ec203e36c099face0e15c4068d` and
+`tests/unit/test_alpaca_paper_custody.py`
+`81c0a9d5f1cbbd12d9fe8d9fb3bcf07423424a4c`. Gate C2 blobs
+`854e6adb5c1c2d20370f724d3a7e6d4f32970509` and
+`8e5d89ac0a3f33463d518e62ccaefdadcdf2cdd1` stay unchanged. The seven
+flags `connect_allowed`, `network_permitted`, `submit_permitted`,
+`cancel_permitted`, `replace_permitted`, `resubmit_permitted`, and
+`safe_to_retry` stay false. The verifier's Linux full suite on that
+tree was 894 passed, 111 skipped, exit 0. Those skips require
+`SWINGTRADE_TEST_POSTGRES_URL` and are not passes. Custody, Gate C2,
+fail-closed, and Gmail probe and connector tests passed. Ruff, source
+Mypy, the Phase 1 validator, and `git diff --check` exited 0 on that
+tree. This documentation commit does not rerun that suite. Gate C3
+source is the integrated offline mock. It is not a provider call, a
+native Windows credential call, or Gate D. Item 34 and PR #74 stay
+canonical. Item 33 and PR #66 are not amended. All nine dependencies
+stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the
+only authorized trading mode. This entry does not embed its own hash
+and does not call a provider.
