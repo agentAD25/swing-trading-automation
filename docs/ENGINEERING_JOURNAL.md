@@ -4221,3 +4221,25 @@ stages stay `NOT_RUN`. Item 30 source paths stay closed. All nine
 dependencies stay `OPEN`. ADR-0004 stays Proposed. `DRY_RUN` remains
 the only authorized trading mode. This entry does not embed its own
 hash and does not call Gmail.
+
+## 2026-11-13 — Item 33 Group 4A scan exclusion proposal
+
+Canonical main at authoring is
+`3d49dbcdbb25ad1d39688323ea9b5f7948cf6ace`, tree
+`6f6de3380403cd6bcf430846d697520b1f804798`. Item 33 is proposed and
+inactive on this branch. Item 22's scan excludes only
+`local_oauth_probe.py` and forbids another exclusion. Item 32's
+effective path `gmail_readonly_pilot.py` would contain `gmail` and
+cannot pass that scan. Item 32 does not grant `test_attacks.py`.
+
+When item 33 is effective, Lane 1 may later change only
+`tests/group4_email/test_attacks.py` to also drop
+`gmail_readonly_pilot.py` from
+`test_parser_does_not_use_network_broker_or_credentials`. The glob,
+forbidden list, `local_oauth_probe.py` exclusion, and `parse_email`
+socket monkeypatch stay. That test commit needs its own verifier and
+Operator decision. After it is canonical, Lane 3 uses the existing
+Item 32 two-file grant. The live message read stays closed. All nine
+dependencies stay `OPEN`. ADR-0004 stays Proposed. `DRY_RUN` remains
+the only authorized trading mode. This entry does not embed its own
+hash and does not call Gmail.

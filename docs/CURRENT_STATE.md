@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-11-13 (item 33 proposal, one filename exclusion for the Item 32 adapter). Item 33 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 33 is proposed and inactive and does not authorize editing `tests/group4_email/test_attacks.py`. When all three are met, the only new authority is Lane 1's later one-file exclusion of `gmail_readonly_pilot.py` from `test_parser_does_not_use_network_broker_or_credentials`. That later edit needs its own verified commit and a separate Operator integration decision. Item 32's two paths stay the existing Lane 3 grant. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (PR #64 integration record). Commit `885d0b405109285a4f44b2f48247b9e7c4ad7348`, tree `20e1d540b48234970ec60f1dc9a2de3fc7ca5c00`, sole parent `f4fda11c6132da4101698e04f980612bd6d8efd6`, is canonical `main`. Verifier `bc-82336778-602d-53dd-87a5-97e4efc1ff38` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR64_ITEMS31_32_CONDITIONAL_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward of that commit. GitHub PR #64 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T14:03:34Z`. Those three facts meet the effectiveness conditions written in items 31 and 32. Item 31's effective authority is one attended Windows run of `run_local_windows_profile_proof` at blob `0a6901a82512100aff41a0494fa185b154f55527`. Item 32's effective authority is the two named source files, and its live message read stays closed. Sentences in that commit that say the items are inactive on this branch are the proposal text. This record does not embed its own hash.
 - Last updated: 2026-11-13 (items 31 and 32 proposal, attended Gmail proof and read-only pilot). Items 31 and 32 become effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, both items are proposed and inactive. When item 31 is effective, the only new authority is one attended Windows run of the existing `run_local_windows_profile_proof` at blob `0a6901a82512100aff41a0494fa185b154f55527`, scope `gmail.metadata`, and one profile GET. When item 32 is effective, the only new source authority is `src/swingtrade/group4_email/gmail_readonly_pilot.py` and `tests/group4_email/test_gmail_readonly_pilot.py`. Sharing this commit does not authorize a live message read. No Gmail write scope, durable-ingestion claim, or economic dispatch is granted. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (PR #60 integration record). Commit `dde81ba402a285b6d48e2f08b5e01bfb361f7f5b`, tree `6c9d108e02a5a94c8279cd844c39d15d9da13859`, is canonical `main`. Its parents are `af08da047bc7a04b66c04d93e5c86fd9886f5933` and `4e1d7266c8d33bef64f039d66c74d3115a1659b9`. Verifier `bc-468d0867-1059-507d-a3dd-457148b23433` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR60_CONDITIONAL_EXACT_COMMIT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward of that commit. GitHub PR #60 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T13:31:30Z`. The integrated change is offline Milestone F recovery classification in `src/swingtrade/group4_email/disposition.py` and `tests/group4_email/test_synthetic_ingestion.py`. It does not authorize a Gmail call, OAuth, a credential, durable receipt storage, or an economic dispatch. This record does not embed its own hash.
@@ -2689,6 +2690,55 @@ a prohibition on later additive coordination roles.
     and ADR-0005 stay Proposed. Supabase Free stays **NOT_ACCEPTED**.
     `DRY_RUN` remains the only authorized trading mode. This record
     does not embed its own hash and does not call Gmail.
+
+    33. Group 4A scan exclusion for the Item 32 adapter, proposed
+    2026-11-13. This item becomes effective only when all three of
+    these are true: an independent verifier has passed this exact
+    commit, an Operator decision has authorized integration of this
+    exact commit, and this exact commit is canonical `main`. While any
+    condition is unmet, this item is proposed and inactive. It does not
+    authorize editing `tests/group4_email/test_attacks.py` or any other
+    path. The parent main is
+    `3d49dbcdbb25ad1d39688323ea9b5f7948cf6ace`, tree
+    `6f6de3380403cd6bcf430846d697520b1f804798`. Items 31 and 32 stay
+    effective on that parent. Item 22 stays effective and is not
+    revised by this commit. Item 32 does not override Item 22.
+
+    When all three conditions are met, the only new authority is a
+    later Lane 1 commit whose only changed path is
+    `tests/group4_email/test_attacks.py`. Inside
+    `test_parser_does_not_use_network_broker_or_credentials`, the
+    concatenated Group 4A source drops exactly two top-level filenames:
+    the existing `local_oauth_probe.py` and `gmail_readonly_pilot.py`.
+    The glob stays `src/swingtrade/group4_email/*.py`. The forbidden
+    substring list stays unchanged. The socket monkeypatch around
+    `parse_email` stays. No other filename or directory is excluded.
+    Every other present or future top-level Group 4A Python file stays
+    in the scan. Lane 3 does not receive this test path. That later
+    test commit is not authorized by the effectiveness of this item
+    alone. It needs its own independent exact-tree pass and a separate
+    Operator decision naming that commit.
+
+    After that test commit is canonical, Lane 3 resumes under the
+    existing Item 32 grant. The only implementation paths remain
+    `src/swingtrade/group4_email/gmail_readonly_pilot.py` and
+    `tests/group4_email/test_gmail_readonly_pilot.py`. No new Item 32
+    development grant is required. The adapter tests must show an
+    official Gmail HTTPS GET host and route allowlist, a listing
+    ceiling of 10, local sender and label selectors that are not
+    committed, rejection of attachment and write routes, no substitution
+    of a provider message id for a synthetic fixture id, no credential
+    or token persistence, no broker or `OrderIntent` capability, no
+    real Gmail call, and no import of the adapter from
+    `group4_email/__init__.py`. The live message read stays closed.
+
+    This item does not edit ADRs or the dependency registry. All nine
+    dependencies stay `OPEN`. ADR-0002, ADR-0003, ADR-0006, and
+    ADR-0007 stay Accepted. ADR-0004 and ADR-0005 stay Proposed.
+    Supabase Free stays **NOT_ACCEPTED**. `DRY_RUN` remains the only
+    authorized trading execution mode. `SIM`, paper-order execution,
+    and `LIVE` remain unauthorized. This proposal does not embed its
+    own hash and does not call Gmail.
 
 ## Evidence
 
