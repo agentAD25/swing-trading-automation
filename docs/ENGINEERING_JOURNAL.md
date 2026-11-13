@@ -4135,3 +4135,89 @@ grant and it does not waive the protocol. All nine dependencies stay
 ADR-0004 and ADR-0005 stay Proposed. Supabase Free stays
 **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized trading mode.
 This entry does not embed its own hash.
+
+## 2026-11-13 — PR #60 Milestone F integration record
+
+This entry is the Integration Protocol step 18 record for the offline
+Gmail recovery classifier. It does not rewrite the entries above and it
+does not contact Gmail.
+
+Integrated commit `dde81ba402a285b6d48e2f08b5e01bfb361f7f5b`, tree
+`6c9d108e02a5a94c8279cd844c39d15d9da13859`, first parent
+`af08da047bc7a04b66c04d93e5c86fd9886f5933`, second parent
+`4e1d7266c8d33bef64f039d66c74d3115a1659b9`. Pull request:
+https://github.com/agentAD25/swing-trading-automation/pull/60.
+Verifier `bc-468d0867-1059-507d-a3dd-457148b23433` returned
+`INDEPENDENT_EXACT_TREE_PASS` for that commit. The record is
+https://cursor.com/agents/bc-468d0867-1059-507d-a3dd-457148b23433.
+Verifier `bc-f2dad9d4-3299-5736-a7c7-dcdd9e925d48` applies to an earlier
+tree and does not certify this merge.
+
+Operator decision
+`LANE1_PR60_CONDITIONAL_EXACT_COMMIT_INTEGRATION_AUTHORIZED` authorized
+that exact fast-forward. The mechanism was one non-forced
+`git push origin dde81ba402a285b6d48e2f08b5e01bfb361f7f5b:refs/heads/main`.
+GitHub records PR #60 as `MERGED`, `mergeCommit.oid`
+`dde81ba402a285b6d48e2f08b5e01bfb361f7f5b`, `mergedAt`
+`2026-11-13T13:31:30Z`. A second fetch matched that SHA and tree.
+
+The changed files are `src/swingtrade/group4_email/disposition.py`,
+blob `f0703c439b35287f25a85faea96b932e1375a304`, and
+`tests/group4_email/test_synthetic_ingestion.py`, blob
+`7f7f8969fdd90a16623f94b714ad6eb47a28fc82`. Recovery evidence keeps
+`durable_state` `UNAVAILABLE` and `economic_dispatch` false. In-memory
+replay is not durable idempotency. `DEP-GMAIL-001` stays `OPEN`. Item
+30's three source paths stay closed. Stages A through F stay `NOT_RUN`.
+All nine dependencies stay `OPEN`. ADR-0002, ADR-0003, ADR-0006, and
+ADR-0007 stay Accepted. ADR-0004 and ADR-0005 stay Proposed. Supabase
+Free stays **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized
+trading mode. This entry does not embed its own hash.
+
+## 2026-11-13 — Items 31 and 32 attended Gmail proof and read-only pilot
+
+Canonical main at authoring is
+`f4fda11c6132da4101698e04f980612bd6d8efd6`, tree
+`fabb5727eb513b9af8dc04750ff8c590c405fe68`. Items 31 and 32 are proposed
+and inactive on this branch. They are separately gated.
+
+Item 31, once effective, authorizes one attended Windows run of
+existing `run_local_windows_profile_proof` at blob
+`0a6901a82512100aff41a0494fa185b154f55527`. The scope is
+`gmail.metadata`. The only Gmail request is one profile GET. Earlier
+Decision C does not cover this blob. Official Gmail documentation read
+on 2026-11-13 says that scope does not return the message body and
+cannot use `format=full` or `format=raw`.
+
+Item 32, once effective, authorizes only
+`src/swingtrade/group4_email/gmail_readonly_pilot.py` and
+`tests/group4_email/test_gmail_readonly_pilot.py`. A live read of at
+most 10 messages requires a later integrated implementation commit and
+a separate Operator runtime decision. Real provider ids do not enter
+the synthetic ingestion functions. `gmail.readonly` is the only added
+scope, and it is restricted. Unattended ingestion stays unauthorized.
+`DEP-GMAIL-001` stays `OPEN`. Item 29 stages stay `NOT_RUN`. Item 30
+source paths stay closed. All nine dependencies stay `OPEN`. ADR-0004
+stays Proposed. ADR-0006 is not extended. `DRY_RUN` remains the only
+authorized trading mode. This entry does not embed its own hash and
+does not call Gmail.
+
+## 2026-11-13 — PR #64 Items 31 and 32 integration record
+
+Commit `885d0b405109285a4f44b2f48247b9e7c4ad7348`, tree
+`20e1d540b48234970ec60f1dc9a2de3fc7ca5c00`, sole parent
+`f4fda11c6132da4101698e04f980612bd6d8efd6`, is canonical main. Verifier
+`bc-82336778-602d-53dd-87a5-97e4efc1ff38` returned
+`INDEPENDENT_EXACT_TREE_PASS`. Operator decision
+`LANE1_PR64_ITEMS31_32_CONDITIONAL_INTEGRATION_AUTHORIZED` authorized
+the non-forced fast-forward. GitHub PR #64 is MERGED at
+`2026-11-13T14:03:34Z` with that merge commit. The proposal sentences
+that call items 31 and 32 inactive are historical. Item 31 is effective
+for one attended Windows profile proof at connector blob
+`0a6901a82512100aff41a0494fa185b154f55527`. Item 32 is effective for
+the two named files only. Its live message read stays closed. This
+record is the steps 18 and 19 documentation. It is not a further gate
+on the Item 31 Windows session. `DEP-GMAIL-001` stays `OPEN`. Item 29
+stages stay `NOT_RUN`. Item 30 source paths stay closed. All nine
+dependencies stay `OPEN`. ADR-0004 stays Proposed. `DRY_RUN` remains
+the only authorized trading mode. This entry does not embed its own
+hash and does not call Gmail.
