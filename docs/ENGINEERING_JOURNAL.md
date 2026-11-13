@@ -4524,3 +4524,200 @@ and PR #66 are not amended. All nine dependencies stay `OPEN`.
 ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
 authorized trading mode. This entry does not embed its own hash and
 does not call a provider.
+
+## 2026-11-13 — PR #78 Option A and Gate D grant integration record
+
+Commit `0890546d63eaa0e0e5b917675071bc662b1e2d50`, tree
+`0b17e98773a544a3fb11937fa2e2b7301a331161`, sole parent
+`9b18eaece2e16f44151da0d1afb0bbb4d654d519`, is canonical main. Verifier
+`bc-01d43b1b-f0ba-5297-bf15-2283bccc895a` returned
+`INDEPENDENT_EXACT_TREE_PASS` for that commit. The evidence is the
+retrievable run at
+`https://cursor.com/agents/bc-01d43b1b-f0ba-5297-bf15-2283bccc895a`.
+Operator decision
+`LANE1_PR78_OPTION_A_AND_GATE_D_GRANT_EXACT_INTEGRATION_AUTHORIZED`
+authorized the non-forced fast-forward. The push was
+`git push origin 0890546d63eaa0e0e5b917675071bc662b1e2d50:refs/heads/main`.
+A second fetch returned the same SHA and tree. GitHub PR #78 is MERGED
+at `2026-11-13T19:21:28Z` with `mergeCommit.oid` equal to that SHA.
+ADR-0008 blob `1b68f90002663751e5febc1dd9e44717aec46b96` is Accepted and
+selects Option A. The separate grant for
+`src/swingtrade/alpaca_paper_account_probe.py` and
+`tests/unit/test_alpaca_paper_account_probe.py` is effective because
+that commit was independently verified, its integration was authorized,
+and it is canonical. The grant is offline synthetic work only. It does
+not authorize a credential read, Windows Credential Manager, or a
+provider call. The seven Gate C2 flags stay false. Gmail connector
+`0a6901a82512100aff41a0494fa185b154f55527` and probe
+`0337e979b9328ab7cb079b2e7aa06a15e6cd2080` stay unchanged. Item 29 and
+Item 30 are not amended. Item 33 and PR #66 are not amended. All nine
+dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
+`DRY_RUN` remains the only authorized trading mode. This entry does
+not embed its own hash and does not call a provider.
+
+This reconciliation keeps that record while current main is an
+ancestor of this merge. Commit `0890546d63eaa0e0e5b917675071bc662b1e2d50`
+remains an ancestor and is not restated as the tip. Item 38 stays
+effective. No provider call is authorized.
+
+## 2026-11-13 — Item 36 Gmail three-attempt metadata grant draft
+
+Canonical main at authoring is
+`0890546d63eaa0e0e5b917675071bc662b1e2d50`, tree
+`0b17e98773a544a3fb11937fa2e2b7301a331161`. Operator decision
+`LANE1_GMAIL_METADATA_RUNTIME_GRANT_RECONCILIATION_AUTHORIZED`
+authorizes this docs-only draft. Item 36 is proposed and inactive on
+this branch. It does not issue
+`LANE1_GMAIL_THREE_ATTEMPT_GRANT_EXACT_INTEGRATION_AUTHORIZED` or
+`LANE1_GMAIL_THREE_ATTEMPT_METADATA_CAMPAIGN_AUTHORIZED`.
+
+The governance grant becomes effective only after an independent
+exact-tree pass of this commit, a later Operator integration of this
+exact commit, and a later canonical steps 18 and 19 record. The record
+does not issue the runtime decision and does not need its own record.
+The runtime decision, once the grant is effective, names the
+then-canonical main SHA and tree. It needs no further commit. It stays
+effective only while that main and the protected import-closure blobs
+remain unchanged. Readiness tokens
+`OPERATOR_READY_ATTEMPT_1`, `OPERATOR_READY_ATTEMPT_2`, and
+`OPERATOR_READY_ATTEMPT_3` are separate and are not issued here.
+
+The two Item 31 execution decisions stay spent. This repository does
+not record a third initiated flow. The new budget is three new
+attempts and is not yet authorized. The connector blob
+`0a6901a82512100aff41a0494fa185b154f55527` and the probe blob
+`0337e979b9328ab7cb079b2e7aa06a15e6cd2080` stay unchanged, as do the
+eight other modules imported when the command starts. Source commits
+`142c07dfac520e84e1bb6ffcc7468256cce17b0e` and
+`ef88c609e8e4f15f136786257faa2368ea9893bd` stay ancestors. Verifier
+`bc-f03012d9-881d-506c-b537-81b04be77878` remains historical source
+evidence. Open draft PR #79 is not mixed into this grant. Item 32's
+live read stays closed. Item 33 and PR #66 are not amended. The Gate D
+offline grant is not amended. All nine dependencies stay `OPEN`.
+ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
+authorized trading mode. This entry does not embed its own hash and
+does not call Gmail.
+
+## 2026-11-13 — PR #82 Item 36 integration record
+
+Commit `a06363231abb3fb8f0466da1ec79fff35ec28668`, tree
+`cbcb6e134197575af49ee64bf59c30c594e81645`, sole parent
+`0890546d63eaa0e0e5b917675071bc662b1e2d50`, is canonical main. Verifier
+`bc-9481fb1c-0259-5c37-8f96-26dede781fcb` returned
+`INDEPENDENT_EXACT_TREE_PASS`. The evidence is the retrievable run at
+`https://cursor.com/agents/bc-9481fb1c-0259-5c37-8f96-26dede781fcb`.
+Operator decision
+`LANE1_GMAIL_THREE_ATTEMPT_GRANT_EXACT_INTEGRATION_AUTHORIZED`
+authorized the non-forced fast-forward. The push was
+`git push origin a06363231abb3fb8f0466da1ec79fff35ec28668:refs/heads/main`.
+A second fetch returned the same SHA and tree. GitHub PR #82 is MERGED
+at `2026-11-13T19:40:02Z` with `mergeCommit.oid` equal to that SHA.
+The integrated blobs are `docs/CURRENT_STATE.md`
+`acf930fecedd372a469369137975dfb235454cb0`,
+`docs/ENGINEERING_JOURNAL.md`
+`200797f94f7b4dfd18ccc131c717e9ac75999b76`, and
+`docs/WORKSTREAM_STATUS.md`
+`95eef966f9e59a52e1eb550e590dec1e59505764`.
+
+Item 36 is `INTEGRATED`. The sentences in that commit that call the
+item a draft are historical. Item 36 is not `EFFECTIVE` until this
+steps 18 and 19 record is canonical main. This record does not require
+a record of itself. It does not issue
+`LANE1_GMAIL_THREE_ATTEMPT_METADATA_CAMPAIGN_AUTHORIZED`. The two Item
+31 execution decisions stay spent. This repository still does not
+record a third initiated flow. The protected blobs stay
+`src/swingtrade/gmail_local_connect.py`
+`0a6901a82512100aff41a0494fa185b154f55527`,
+`src/swingtrade/group4_email/local_oauth_probe.py`
+`0337e979b9328ab7cb079b2e7aa06a15e6cd2080`,
+`src/swingtrade/__init__.py`
+`f05d0f91842b4615ada81ca8d044ae38d9bc4d2c`,
+`src/swingtrade/config.py`
+`35d8f918705db61c7d03d1a37e5a834186ceec71`,
+`src/swingtrade/domain.py`
+`ab3a0de9db8886561144c0947f9fc4359b72cab8`,
+`src/swingtrade/group4_email/__init__.py`
+`44d73a8b92f05fbf941eb6c6b1383e52a2913104`,
+`src/swingtrade/group4_email/contract.py`
+`a973e492634f05817b069c1655c127491a8b432c`,
+`src/swingtrade/group4_email/extract.py`
+`ed0ca1633af280a11989db259af4b41270f5a221`,
+`src/swingtrade/group4_email/parse.py`
+`4119ffe03758380e0a284cc3514721201fac34c9`, and
+`src/swingtrade/group4_email/normalize.py`
+`af0151551ff3fef520d7f7095a39f850e0d1154c`.
+Commits `142c07dfac520e84e1bb6ffcc7468256cce17b0e` and
+`ef88c609e8e4f15f136786257faa2368ea9893bd` remain ancestors.
+
+Open draft PR #79, head
+`908223a350b8d53b5ab394f5a65ba6aea5dc88da`, still records PR #78 and
+cannot fast-forward after this integration. It is not amended. Open
+draft PR #81, head `f44be4a2e75de2123e48506a6fd985e41c4eb64c`, proposes
+a different Item 36 for Stage E. That number overlap is unresolved.
+This record does not amend, integrate, or renumber PR #81. The offline
+Gate D grant stays effective for its two files and is not a provider
+call. Item 32's live read stays closed. Item 33 and PR #66 are not
+amended. All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay
+Proposed. `DRY_RUN` remains the only authorized trading mode. This
+entry does not embed its own hash and does not call Gmail.
+
+## 2026-11-13 — Item 38 Gmail token-diagnostic grant draft
+
+Canonical main at authoring is
+`0d571dec1d60e9e1c50ac2fb6593d100edc6e42c`, tree
+`ab33d9172c7c4ed2583b7de9afc2499dbaa30abb`. Operator decision
+`LANE1_GMAIL_TOKEN_DIAGNOSTIC_GOVERNANCE_PREPARATION_AUTHORIZED`
+authorizes this docs-only draft. Item 38 is not effective. It does
+not issue
+`LANE1_GMAIL_TOKEN_DIAGNOSTIC_GRANT_EXACT_INTEGRATION_AUTHORIZED`.
+
+Campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped. Attempt 1
+is consumed. Attempts 2 and 3 are unused and are not exercisable. The
+reported result remains `GMAIL_OAUTH_TOKEN_REJECTED`. No profile GET
+is recorded. This draft does not rerun OAuth.
+
+On CPython 3.12.3, a synthetic POST `Request` had no headers at
+construction. `AbstractHTTPHandler.do_request_` then added
+`Content-type: application/x-www-form-urlencoded` and
+`Content-length` without `urlopen`. Historical provider headers were
+not captured. The missing-Content-Type theory is unsupported. No
+Content-Type or token-form change is authorized.
+
+`LocalOAuthProbeRejected` rewrites codes outside `_CODES` to
+`fail_closed`. The connector currently collapses distinct token-stage
+failures into `GMAIL_OAUTH_TOKEN_REJECTED`. That is an observability
+gap, not an identified provider cause. The later source grant, after
+verification, integration, and a steps 18 and 19 record, is limited
+to `src/swingtrade/gmail_local_connect.py`,
+`tests/unit/test_gmail_local_connect.py`, and new `_CODES` entries in
+`src/swingtrade/group4_email/local_oauth_probe.py`. Item 36 stays the
+campaign grant. Item 37 stays the open Stage E proposal. Item 32,
+Item 33, PR #66, Gate D, PostgreSQL, and TradeStation are not
+amended. All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005
+stay Proposed. `DRY_RUN` remains the only authorized trading mode.
+This entry does not embed its own hash and does not call Gmail.
+
+## 2026-11-13 — PR #84 Item 38 integration record
+
+Commit `77b2e64f0ad83307758be138aa2d748accf2f7cf`, tree
+`18e7fa89524c72b9d3a475f0ecee76c7df4d96a4`, sole parent
+`0d571dec1d60e9e1c50ac2fb6593d100edc6e42c`, is canonical `main`.
+Verifier `bc-c6651348-cac2-507d-8bdb-84866d0a4690` returned
+`INDEPENDENT_EXACT_TREE_PASS`. Operator decision
+`LANE1_GMAIL_TOKEN_DIAGNOSTIC_GRANT_EXACT_INTEGRATION_AUTHORIZED`
+authorized one non-forced fast-forward. GitHub PR #84 is `MERGED`
+with `mergeCommit.oid` equal to that SHA at `2026-11-13T20:27:22Z`.
+
+Item 38 is `INTEGRATED`. Sentences in that commit that call the grant
+a draft are historical. Item 38 is not `EFFECTIVE` until this record
+is canonical `main`. Lane 3 must not edit the connector, its unit
+test, or the probe allowlist before then. Campaign
+`GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped. Attempt 1 is
+consumed. Attempts 2 and 3 are unused and are not exercisable. Profile
+GET count stays 0. No OAuth resume, `client_secret`, or Content-Type
+change is authorized. Item 36 stays the campaign grant. Item 37 stays
+the open Stage E proposal. PR #79, PR #80, and PR #81 are not
+integrated by this record. All nine dependencies stay `OPEN`.
+ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
+authorized trading mode. This entry does not embed its own hash and
+does not call Gmail.
