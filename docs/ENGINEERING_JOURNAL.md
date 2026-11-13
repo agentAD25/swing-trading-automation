@@ -4784,3 +4784,33 @@ authorized that fast-forward. GitHub PR #87 is `MERGED` at
 `7a269749d1b04af4d8940550d811190d3c4a702e` does not certify this
 merge. Stage E is not `PASS`. No migration is authorized. This
 paragraph does not embed its own hash.
+
+## 2026-11-13 — Item 40 Alpaca PAPER account-read source grant draft
+
+Parent main is `213acc52bfb79bb5b60ceab75fb106aa209a1fbe`, tree
+`9692c3593c0d348d3bcd875cb9804d22302c985c`. Item 40 is proposed and
+inactive. It names only `src/swingtrade/alpaca_paper_account_read.py`
+and `tests/unit/test_alpaca_paper_account_read.py`. Lane 2 must not
+create those files before the commit containing this entry is
+independently verified, authorized for integration, and canonical
+`main`.
+
+The grant is offline and mocked. `ctypes` is allowed only inside
+`load_paper_credential_material`. `urllib.request` is allowed only
+inside `perform_paper_account_get`. Neither runs at import. The Item
+25 scanner is not edited. The new module must still avoid that
+scanner's six tokens because the scan will include the new file.
+ADR-0008 Option A and PR #80 are not amended. The only future
+operation is `GET https://paper-api.alpaca.markets/v2/account`.
+
+The account contract uses the Alpaca Get Account document consulted
+on 2026-11-13. The documented status enum is preserved. Local
+trade-ready classification is narrower and does not prove the
+Operator's intended account by itself. In-memory consumption of a
+future runtime authorization is not a durable single-use guarantee.
+No credential read, HTTPS request, order, or migration is authorized.
+Stage E is not recertified. Stage F and Item 30 stay closed.
+`DRY_RUN` remains the only authorized trading mode. This entry does
+not embed its own hash.
+
+This later reconciliation carries Item 40 onto canonical main `afc6b76ec679b269e89e5478c5a8bf938a0dad2e`, tree `acc32eec762c1789254bbfa2c1515b32413cff29`. Item 40 stays inactive. The pass of `8be1d0d0fe3fccd1da95b66bc28ca31d3795b8ec` does not certify this merge. The two account-read files are not created. The Item 25 scanner and ADR-0008 are not edited. Stage E is not certified. Stage F and Item 30 stay closed. This paragraph does not embed its own hash.
