@@ -4135,3 +4135,40 @@ grant and it does not waive the protocol. All nine dependencies stay
 ADR-0004 and ADR-0005 stay Proposed. Supabase Free stays
 **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized trading mode.
 This entry does not embed its own hash.
+
+## 2026-11-13 — PR #60 Milestone F integration record
+
+This entry is the Integration Protocol step 18 record for the offline
+Gmail recovery classifier. It does not rewrite the entries above and it
+does not contact Gmail.
+
+Integrated commit `dde81ba402a285b6d48e2f08b5e01bfb361f7f5b`, tree
+`6c9d108e02a5a94c8279cd844c39d15d9da13859`, first parent
+`af08da047bc7a04b66c04d93e5c86fd9886f5933`, second parent
+`4e1d7266c8d33bef64f039d66c74d3115a1659b9`. Pull request:
+https://github.com/agentAD25/swing-trading-automation/pull/60.
+Verifier `bc-468d0867-1059-507d-a3dd-457148b23433` returned
+`INDEPENDENT_EXACT_TREE_PASS` for that commit. The record is
+https://cursor.com/agents/bc-468d0867-1059-507d-a3dd-457148b23433.
+Verifier `bc-f2dad9d4-3299-5736-a7c7-dcdd9e925d48` applies to an earlier
+tree and does not certify this merge.
+
+Operator decision
+`LANE1_PR60_CONDITIONAL_EXACT_COMMIT_INTEGRATION_AUTHORIZED` authorized
+that exact fast-forward. The mechanism was one non-forced
+`git push origin dde81ba402a285b6d48e2f08b5e01bfb361f7f5b:refs/heads/main`.
+GitHub records PR #60 as `MERGED`, `mergeCommit.oid`
+`dde81ba402a285b6d48e2f08b5e01bfb361f7f5b`, `mergedAt`
+`2026-11-13T13:31:30Z`. A second fetch matched that SHA and tree.
+
+The changed files are `src/swingtrade/group4_email/disposition.py`,
+blob `f0703c439b35287f25a85faea96b932e1375a304`, and
+`tests/group4_email/test_synthetic_ingestion.py`, blob
+`7f7f8969fdd90a16623f94b714ad6eb47a28fc82`. Recovery evidence keeps
+`durable_state` `UNAVAILABLE` and `economic_dispatch` false. In-memory
+replay is not durable idempotency. `DEP-GMAIL-001` stays `OPEN`. Item
+30's three source paths stay closed. Stages A through F stay `NOT_RUN`.
+All nine dependencies stay `OPEN`. ADR-0002, ADR-0003, ADR-0006, and
+ADR-0007 stay Accepted. ADR-0004 and ADR-0005 stay Proposed. Supabase
+Free stays **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized
+trading mode. This entry does not embed its own hash.

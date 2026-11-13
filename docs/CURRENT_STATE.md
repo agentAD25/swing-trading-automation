@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-11-13 (PR #60 integration record). Commit `dde81ba402a285b6d48e2f08b5e01bfb361f7f5b`, tree `6c9d108e02a5a94c8279cd844c39d15d9da13859`, is canonical `main`. Its parents are `af08da047bc7a04b66c04d93e5c86fd9886f5933` and `4e1d7266c8d33bef64f039d66c74d3115a1659b9`. Verifier `bc-468d0867-1059-507d-a3dd-457148b23433` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR60_CONDITIONAL_EXACT_COMMIT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward of that commit. GitHub PR #60 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T13:31:30Z`. The integrated change is offline Milestone F recovery classification in `src/swingtrade/group4_email/disposition.py` and `tests/group4_email/test_synthetic_ingestion.py`. It does not authorize a Gmail call, OAuth, a credential, durable receipt storage, or an economic dispatch. This record does not embed its own hash.
 - Last updated: 2026-11-12 (PR #61 integration record). Commit `a9333b5c92628981eacdf6ae091780dcd27313f5`, tree `17c04894d2385bfae153de41febafc048e799cbf`, is canonical `main`. Verifier `bc-e583af06-ed8e-51e0-b0a7-cdeb35881ef2` returned `INDEPENDENT_EXACT_TREE_PASS` for that commit. Operator decision `LANE1_PR61_ITEMS29_30_OPERATOR_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward of that commit, and GitHub PR #61 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-12T21:43:06Z`. Those three facts meet the effectiveness conditions written in items 29 and 30. Item 29's effective authority is the attended Windows sequence already written in item 29. No PostgreSQL service, database, role, or connection was created by that integration. Stages A through F are `NOT_RUN`. Item 30 governance is effective on that same commit, and its three source paths stay closed until Stage E and Stage F are `PASS` for the new cluster. This record is not a second Item 29 grant. It does not embed its own hash.
 - Last updated: 2026-11-12 (item 30 proposal, three-file PostgreSQL ReceiptStore). Item 30 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 30 is proposed and inactive and does not authorize coding. When those three are met, item 30 still does not authorize editing its three paths until item 29 has a recorded security PASS and isolated-test prerequisite PASS for the new cluster. The only later authority is `src/swingtrade/postgres_receipt_store.py`, `tests/integration/test_postgres_receipt_store.py`, and `migrations/versions/0004_instruction_receipts.py`. Items 18 through 29 stay as governed by their own text. This proposal does not close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, or authorize credentials in Git, a connection to port 5432, `SIM`, paper-order execution, or `LIVE`.
 - Last updated: 2026-11-12 (item 29 proposal, dedicated loopback PostgreSQL cluster). Item 29 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 29 is proposed and inactive and does not authorize provisioning. When all three are met, the only new authority is an attended Cursor Local Windows session that creates `postgresql-swingtrade-16` on `127.0.0.1` and a verified free port, using a new data directory, without changing `postgresql-x64-16` or port 5432. Items 18 through 28 stay effective and are not revised. This proposal does not select Path A, close a dependency, accept ADR-0004 or ADR-0005, extend ADR-0006, or authorize `SIM`, paper-order execution, or `LIVE`.
@@ -2504,6 +2505,55 @@ a prohibition on later additive coordination roles.
     **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized trading
     execution mode. `SIM`, paper-order execution, and `LIVE` remain
     unauthorized. This record does not embed its own hash.
+
+    PR #60 integration record, 2026-11-13. This is the Integration
+    Protocol steps 18 and 19 record for the integrated Milestone F
+    commit. It is not a new item and it does not replace item 28.
+
+    The integrated commit is
+    `dde81ba402a285b6d48e2f08b5e01bfb361f7f5b`, tree
+    `6c9d108e02a5a94c8279cd844c39d15d9da13859`. Its first parent is
+    `af08da047bc7a04b66c04d93e5c86fd9886f5933`. Its second parent is
+    `4e1d7266c8d33bef64f039d66c74d3115a1659b9`. Independent verifier
+    `bc-468d0867-1059-507d-a3dd-457148b23433` fetched that commit and
+    returned `INDEPENDENT_EXACT_TREE_PASS`. The record is
+    https://cursor.com/agents/bc-468d0867-1059-507d-a3dd-457148b23433.
+    The original implementation verifier
+    `bc-f2dad9d4-3299-5736-a7c7-dcdd9e925d48` certified an earlier tree
+    and is not the certification of this merge.
+
+    Operator decision
+    `LANE1_PR60_CONDITIONAL_EXACT_COMMIT_INTEGRATION_AUTHORIZED`
+    authorized one non-forced fast-forward of that exact SHA. The
+    mechanism was
+    `git push origin dde81ba402a285b6d48e2f08b5e01bfb361f7f5b:refs/heads/main`.
+    GitHub PR #60 is `MERGED`. Its `mergeCommit.oid` is that SHA. Its
+    `mergedAt` is `2026-11-13T13:31:30Z`. A second fetch showed the same
+    SHA and tree. The merged state is the integration result. The named
+    Operator decision is the authorization.
+
+    The net change against the second parent is
+    `src/swingtrade/group4_email/disposition.py`, blob
+    `f0703c439b35287f25a85faea96b932e1375a304`, and
+    `tests/group4_email/test_synthetic_ingestion.py`, blob
+    `7f7f8969fdd90a16623f94b714ad6eb47a28fc82`. Those paths add
+    `classify_synthetic_record` and `classify_ingestion_stop`. Every
+    recovery result keeps `durable_state` `UNAVAILABLE` and
+    `economic_dispatch` false. A fresh in-memory store after a simulated
+    restart can admit the same message again. This integration does not
+    claim durable duplicate suppression. `record_synthetic_ingestion`
+    and the nine-field `SyntheticIngestionRecord` are unchanged. No
+    Gmail call, OAuth exchange, credential read, mailbox poll, or
+    `OrderIntent` dispatch was performed.
+
+    Item 29 and Item 30 stay as recorded by the PR #61 integration
+    record. Stages A through F stay `NOT_RUN`. Item 30's three source
+    paths stay closed. All nine dependencies stay `OPEN`. ADR-0002,
+    ADR-0003, ADR-0006, and ADR-0007 stay Accepted. ADR-0004 and
+    ADR-0005 stay Proposed. ADR-0006 is not extended. Supabase Free
+    stays **NOT_ACCEPTED**. `DRY_RUN` remains the only authorized
+    trading execution mode. `SIM`, paper-order execution, and `LIVE`
+    remain unauthorized. This record does not embed its own hash.
 
 ## Evidence
 
