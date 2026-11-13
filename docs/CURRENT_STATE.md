@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-11-13 (PR #67 Item 34 integration record). Commit `fc01765af77d469fcaccca2ed570f987d4d1e892`, tree `abddf196bfe219a6b012dec3aa05fef0209c6951`, parents `8d21fbaf5097873e265e44d25840a0697ade00b8` and `fb9ab787464bd05131c5ead2be8c5ef5bf552b53`, is canonical `main`. Verifier `bc-dd8e2c0a-3a43-505b-8918-8da9563c878f` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR67_ITEM34_EXACT_INTEGRATION_CONDITIONALLY_AUTHORIZED` authorized one non-forced fast-forward. GitHub PR #67 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T16:47:24Z`. Sentences in that commit that say Item 34 is inactive are historical. The implementation grant is the three named paths and is not a Windows OAuth attempt. The pass of `8d21fbaf5097873e265e44d25840a0697ade00b8` does not certify this merge. This record does not embed its own hash.
 - Last updated: 2026-11-13 (item 34 proposal, OAuth callback validation compatibility). Item 34 becomes an implementation grant only when an independent verifier has passed this exact governance commit, an Operator decision has authorized integration of this exact commit, this exact commit is canonical `main`, and a later canonical steps 18 and 19 record names that verifier, that decision, and this governance commit. While any condition is unmet, item 34 is proposed and inactive and does not authorize editing `src/swingtrade/group4_email/local_oauth_probe.py`, `tests/group4_email/test_local_oauth_probe.py`, or `tests/unit/test_gmail_local_connect.py`. When all four are met, the only new authority is Lane 3's later change inside `validate_callback`, its direct synthetic tests, and the two probe blob constants in the connector test. Connector blob `0a6901a82512100aff41a0494fa185b154f55527` stays unchanged. No third Windows OAuth attempt is granted. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (PR #56 integration record). Commit `4d519730bb56ddf255fdda406caf014a66d558ca`, tree `63157384d1e0742c82e26cd8d22739c71b269478`, parents `c6c5ad000c874c9f192986470e2e301bc83bf5be` and `3d49dbcdbb25ad1d39688323ea9b5f7948cf6ace`, is canonical `main`. Verifier `bc-60651ea8-7488-59cb-8926-fe421d0a4bf0` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR56_4D519730_CONDITIONAL_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward. GitHub PR #56 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T16:12:06Z`. The net change is `src/swingtrade/alpaca_paper_boundary.py` blob `854e6adb5c1c2d20370f724d3a7e6d4f32970509` and `tests/unit/test_alpaca_paper_boundary.py` blob `8e5d89ac0a3f33463d518e62ccaefdadcdf2cdd1`. All seven boundary permissions stay false. This record does not authorize a provider call or Gate C3. This record does not embed its own hash.
 - Last updated: 2026-11-13 (PR #64 integration record). Commit `885d0b405109285a4f44b2f48247b9e7c4ad7348`, tree `20e1d540b48234970ec60f1dc9a2de3fc7ca5c00`, sole parent `f4fda11c6132da4101698e04f980612bd6d8efd6`, is canonical `main`. Verifier `bc-82336778-602d-53dd-87a5-97e4efc1ff38` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR64_ITEMS31_32_CONDITIONAL_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward of that commit. GitHub PR #64 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T14:03:34Z`. Those three facts meet the effectiveness conditions written in items 31 and 32. Item 31's effective authority is one attended Windows run of `run_local_windows_profile_proof` at blob `0a6901a82512100aff41a0494fa185b154f55527`. Item 32's effective authority is the two named source files, and its live message read stays closed. Sentences in that commit that say the items are inactive on this branch are the proposal text. This record does not embed its own hash.
@@ -2903,6 +2904,65 @@ a prohibition on later additive coordination roles.
     execution, and `LIVE` remain unauthorized. This record does not
     authorize Gate C3, Gate D, or a provider connection. This record
     does not embed its own hash.
+
+    PR #67 integration record, 2026-11-13. This is the Integration
+    Protocol steps 18 and 19 record for Item 34. Commit
+    `fc01765af77d469fcaccca2ed570f987d4d1e892`, tree
+    `abddf196bfe219a6b012dec3aa05fef0209c6951`, first parent
+    `8d21fbaf5097873e265e44d25840a0697ade00b8`, second parent
+    `fb9ab787464bd05131c5ead2be8c5ef5bf552b53`, is canonical `main`.
+    Verifier `bc-dd8e2c0a-3a43-505b-8918-8da9563c878f` returned
+    `INDEPENDENT_EXACT_TREE_PASS` for that commit. The record is
+    https://cursor.com/agents/bc-dd8e2c0a-3a43-505b-8918-8da9563c878f.
+    The earlier pass of `8d21fbaf5097873e265e44d25840a0697ade00b8` by
+    `bc-55a06392-e610-5836-834c-37e209cc7687` does not certify this
+    merge. Operator decision
+    `LANE1_PR67_ITEM34_EXACT_INTEGRATION_CONDITIONALLY_AUTHORIZED`
+    authorized one non-forced fast-forward. The mechanism was
+    `git push origin fc01765af77d469fcaccca2ed570f987d4d1e892:refs/heads/main`.
+    GitHub PR #67 is `MERGED`. Its `mergeCommit.oid` is that SHA. Its
+    `mergedAt` is `2026-11-13T16:47:24Z`. A second fetch showed the same
+    SHA and tree.
+
+    The net diff against the second parent is exactly
+    `docs/CURRENT_STATE.md` blob
+    `062469b9a92157de3327fcdf5dd64c5c2bb44b83`,
+    `docs/ENGINEERING_JOURNAL.md` blob
+    `2a85fad6ea5e25a66560198fd53895e4cc174db6`, and
+    `docs/WORKSTREAM_STATUS.md` blob
+    `be0d51378676dcce0aaa5b3b7d0be772c29f5d26`. No source or test path
+    changed. `python3 tests/validate_phase1_contracts.py` passed on that
+    candidate. Implementation pytest was `NOT_RUN`. `git diff --check`
+    was clean. The connector blob remains
+    `0a6901a82512100aff41a0494fa185b154f55527`. The probe blob remains
+    `777db628ebe0f55aa529b26c9ad5692799121090`.
+
+    Sentences in that commit that say Item 34 is proposed and inactive,
+    and sentences that call PR #56 an open draft, are historical. The
+    four effectiveness conditions are met. The implementation grant is
+    effective. Lane 3 may change only
+    `src/swingtrade/group4_email/local_oauth_probe.py`,
+    `tests/group4_email/test_local_oauth_probe.py`, and the two probe
+    blob constants in `tests/unit/test_gmail_local_connect.py`. The
+    production change stays inside `validate_callback`. The attack-test
+    blob constant stays unchanged. The connector source stays unchanged.
+    The callback contract in Item 34 stays in force: one nonempty code,
+    one matching state, rejection of `error` including `access_denied`,
+    omitted `iss` accepted, a present `iss` exactly
+    `https://accounts.google.com`, and ordinary parameters including
+    `scope` ignored. No callback value other than the code enters the
+    token form. This record does not authorize a Windows OAuth attempt,
+    a Gmail read, or integration of the later implementation commit.
+
+    Item 33 and PR #66 are not amended. Gate C2 stays the integrated
+    offline classifier. Gate C3 and Gate D stay closed. Item 29 stages
+    stay `NOT_RUN`. Item 30 source paths stay closed. All nine
+    dependencies stay `OPEN`. ADR-0002, ADR-0003, ADR-0006, and
+    ADR-0007 stay Accepted. ADR-0004 and ADR-0005 stay Proposed.
+    Supabase Free stays **NOT_ACCEPTED**. `DRY_RUN` remains the only
+    authorized trading execution mode. `SIM`, paper-order execution,
+    and `LIVE` remain unauthorized. This record does not embed its own
+    hash.
 
 ## Evidence
 

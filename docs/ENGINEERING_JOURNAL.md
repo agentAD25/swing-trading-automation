@@ -4290,3 +4290,28 @@ The seven boundary permissions stay false. No Gate C3 authority follows.
 All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
 `DRY_RUN` remains the only authorized trading mode. This entry does not
 embed its own hash and does not call a provider.
+
+## 2026-11-13 — PR #67 Item 34 integration record
+
+Commit `fc01765af77d469fcaccca2ed570f987d4d1e892`, tree
+`abddf196bfe219a6b012dec3aa05fef0209c6951`, first parent
+`8d21fbaf5097873e265e44d25840a0697ade00b8`, second parent
+`fb9ab787464bd05131c5ead2be8c5ef5bf552b53`, is canonical main. Verifier
+`bc-dd8e2c0a-3a43-505b-8918-8da9563c878f` returned
+`INDEPENDENT_EXACT_TREE_PASS`. The pass of
+`8d21fbaf5097873e265e44d25840a0697ade00b8` does not certify this merge.
+Operator decision
+`LANE1_PR67_ITEM34_EXACT_INTEGRATION_CONDITIONALLY_AUTHORIZED` authorized
+the non-forced fast-forward. The push was
+`git push origin fc01765af77d469fcaccca2ed570f987d4d1e892:refs/heads/main`.
+GitHub PR #67 is MERGED at `2026-11-13T16:47:24Z` with that merge commit.
+The net diff is the three governance files. No source or test changed.
+The connector blob remains
+`0a6901a82512100aff41a0494fa185b154f55527`. Implementation pytest was
+`NOT_RUN`. Sentences in the integrated commit that call Item 34 inactive
+are historical. The implementation grant is effective for
+`validate_callback`, the probe tests, and the two probe blob constants.
+It is not a Windows OAuth authorization. Item 33 is not amended. All
+nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
+`DRY_RUN` remains the only authorized trading mode. This entry does not
+embed its own hash and does not call a provider.
