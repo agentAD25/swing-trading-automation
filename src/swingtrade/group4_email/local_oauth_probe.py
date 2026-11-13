@@ -218,16 +218,18 @@ def validate_callback(pairs: object, expected_state: str) -> str:
         ):
             raise LocalOAuthProbeRejected("GMAIL_OAUTH_CALLBACK_REJECTED")
         parsed.append((item[0], item[1]))
-    keys = [key for key, _ in parsed]
-    if any(key not in {"code", "state"} for key in keys):
+    if any(key in {"error", "error_description", "error_uri"} for key, _ in parsed):
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_CALLBACK_REJECTED")
     states = [value for key, value in parsed if key == "state"]
     codes = [value for key, value in parsed if key == "code"]
-    if len(states) != 1:
+    issuers = [value for key, value in parsed if key == "iss"]
+    if len(states) != 1 or states[0] == "":
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_STATE_REJECTED")
     if not hmac.compare_digest(expected_state, states[0]):
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_STATE_REJECTED")
     if len(codes) != 1 or codes[0] == "":
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_CALLBACK_REJECTED")
+    if len(issuers) > 1 or (len(issuers) == 1 and issuers[0] != "https://accounts.google.com"):
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_CALLBACK_REJECTED")
     return codes[0]
 

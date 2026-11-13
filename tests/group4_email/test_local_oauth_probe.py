@@ -120,6 +120,19 @@ class Boundary:
             return (("state", state), ("code", "one-code"), ("code", "other-code"))
         if self.query_mode == "oauth_error":
             return (("error", "access_denied"), ("state", state))
+        if self.query_mode == "empty_code":
+            return (("state", state), ("code", ""))
+        if self.query_mode == "empty_state":
+            return (("state", ""), ("code", "synthetic-code"))
+        if self.query_mode == "extensions":
+            return (
+                ("state", state),
+                ("code", "synthetic-code"),
+                ("scope", "https://example.invalid/synthetic-scope"),
+                ("iss", "https://accounts.google.com"),
+                ("authuser", "0"),
+                ("hd", "example.test"),
+            )
         return (("state", state), ("code", "synthetic-code"))
 
     def monotonic(self) -> float:
@@ -367,6 +380,104 @@ def test_oauth_error_callback_is_rejected() -> None:
 
     assert error.code == "GMAIL_OAUTH_CALLBACK_REJECTED"
     assert "access_denied" not in f"{error} {error!r}"
+
+
+_ISSUER = "https://accounts.google.com"
+_CODE_STATE = (("code", "synthetic-code"), ("state", "expected-state"))
+
+
+@pytest.mark.parametrize(
+    "pairs",
+    [
+        _CODE_STATE,
+        (*_CODE_STATE, ("scope", "https://example.invalid/synthetic-scope")),
+        (*_CODE_STATE, ("iss", _ISSUER)),
+        (
+            *_CODE_STATE,
+            ("scope", "https://example.invalid/synthetic-scope"),
+            ("iss", _ISSUER),
+        ),
+        (*_CODE_STATE, ("authuser", "0"), ("prompt", "consent"), ("hd", "example.test")),
+    ],
+)
+def test_valid_callback_extensions_are_accepted(pairs: tuple[tuple[str, str], ...]) -> None:
+    assert validate_callback(pairs, "expected-state") == "synthetic-code"
+
+
+@pytest.mark.parametrize(
+    ("pairs", "code"),
+    [
+        ((("code", ""), ("state", "expected-state")), "GMAIL_OAUTH_CALLBACK_REJECTED"),
+        ((("state", ""), ("code", "synthetic-code")), "GMAIL_OAUTH_STATE_REJECTED"),
+        ((("iss", ""), *_CODE_STATE), "GMAIL_OAUTH_CALLBACK_REJECTED"),
+        (
+            (("iss", _ISSUER), ("iss", _ISSUER), *_CODE_STATE),
+            "GMAIL_OAUTH_CALLBACK_REJECTED",
+        ),
+        ((*_CODE_STATE, ("iss", "https://attacker.example")), "GMAIL_OAUTH_CALLBACK_REJECTED"),
+        ((*_CODE_STATE, ("iss", "accounts.google.com")), "GMAIL_OAUTH_CALLBACK_REJECTED"),
+        (
+            (*_CODE_STATE, ("iss", "https://accounts.google.com.evil")),
+            "GMAIL_OAUTH_CALLBACK_REJECTED",
+        ),
+        (
+            (*_CODE_STATE, ("iss", "https://accounts.google.com/")),
+            "GMAIL_OAUTH_CALLBACK_REJECTED",
+        ),
+        ((*_CODE_STATE, ("error", "access_denied")), "GMAIL_OAUTH_CALLBACK_REJECTED"),
+        ((*_CODE_STATE, ("error_description", "denied")), "GMAIL_OAUTH_CALLBACK_REJECTED"),
+        (
+            (*_CODE_STATE, ("error_uri", "https://example.invalid/e")),
+            "GMAIL_OAUTH_CALLBACK_REJECTED",
+        ),
+        (
+            (*_CODE_STATE, ("iss", _ISSUER), ("error", "access_denied")),
+            "GMAIL_OAUTH_CALLBACK_REJECTED",
+        ),
+        ("not-a-tuple", "GMAIL_OAUTH_CALLBACK_REJECTED"),
+        ((("code",),), "GMAIL_OAUTH_CALLBACK_REJECTED"),
+    ],
+)
+def test_callback_security_rejections(pairs: object, code: str) -> None:
+    error = _reject(lambda: validate_callback(pairs, "expected-state"))
+
+    assert error.code == code
+    assert "synthetic-code" not in str(error)
+    assert _ISSUER not in str(error)
+
+
+def test_callback_extensions_do_not_enter_the_token_form() -> None:
+    boundary = Boundary()
+    boundary.query_mode = "extensions"
+    _probe(boundary)
+    form = boundary.posts[0][1]
+
+    assert tuple(form) == (
+        "grant_type",
+        "code",
+        "code_verifier",
+        "client_id",
+        "redirect_uri",
+    )
+    assert form["code"] == "synthetic-code"
+    assert "scope" not in form
+    assert "iss" not in form
+    assert "authuser" not in form
+    assert "hd" not in form
+    assert "https://example.invalid/synthetic-scope" not in form.values()
+    assert _ISSUER not in form.values()
+    assert form["client_id"] == CLIENT_ID
+    assert form["redirect_uri"] == "http://127.0.0.1:43123/"
+
+
+@pytest.mark.parametrize("mode", ["empty_code", "empty_state", "oauth_error"])
+def test_rejected_callback_does_not_exchange_a_token(mode: str) -> None:
+    boundary = Boundary()
+    boundary.query_mode = mode
+    _reject(lambda: _probe(boundary))
+
+    assert boundary.posts == []
+    assert boundary.gets == []
 
 
 def test_callback_timeout_stops_before_token_exchange() -> None:
