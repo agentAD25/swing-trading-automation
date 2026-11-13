@@ -4464,3 +4464,32 @@ canonical. Item 33 and PR #66 are not amended. All nine dependencies
 stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the
 only authorized trading mode. This entry does not embed its own hash
 and does not call a provider.
+
+## 2026-11-13 — PR #76 Proposed ADR-0008 integration record
+
+Commit `4941dc0d30359710b4a7b6160eb874c261d1cf66`, tree
+`a2946b87449615c5aa33fa7adf29c6e0aed178f9`, sole parent
+`90ad6fb2f050d3728551e23fec65b17ca3a6705a`, is canonical main. Verifier
+`bc-1957ff23-21a9-582c-8198-d5f8cfa2d3a6` returned
+`INDEPENDENT_EXACT_TREE_PASS` for that commit. The evidence is the
+retrievable run at
+`https://cursor.com/agents/bc-1957ff23-21a9-582c-8198-d5f8cfa2d3a6`.
+Operator decision `LANE1_ADR0008_PROPOSED_EXACT_INTEGRATION_AUTHORIZED`
+authorized the non-forced fast-forward while canonical main was the
+parent. The push was
+`git push origin 4941dc0d30359710b4a7b6160eb874c261d1cf66:refs/heads/main`.
+A second fetch returned the same SHA and tree. GitHub PR #76 is MERGED
+at `2026-11-13T18:51:45Z` with `mergeCommit.oid` equal to that SHA.
+The integrated blob is
+`docs/adr/0008-alpaca-paper-windows-local-credential-custody.md`
+`befca5bd775be9f4c1e4d09f8a08ae4584374b27`. Status stays Proposed. The
+Decision section stays blank. Option A is not accepted. Option B is
+not selected. The Phase 1 validator and `git diff --check` exited 0 on
+that tree. Implementation pytest for that documentation commit is
+`NOT_RUN`. This documentation commit does not rerun a suite. No Gate D
+source grant exists. No credential was read and no provider was called.
+Item 34, Item 35, PR #74, and PR #75 stay canonical. Item 33 and PR #66
+are not amended. All nine dependencies stay `OPEN`. ADR-0004 and
+ADR-0005 stay Proposed. `DRY_RUN` remains the only authorized trading
+mode. This entry does not embed its own hash and does not call a
+provider.
