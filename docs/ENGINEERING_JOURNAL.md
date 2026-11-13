@@ -4524,3 +4524,41 @@ and PR #66 are not amended. All nine dependencies stay `OPEN`.
 ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
 authorized trading mode. This entry does not embed its own hash and
 does not call a provider.
+
+## 2026-11-13 — Item 36 Gmail three-attempt metadata grant draft
+
+Canonical main at authoring is
+`0890546d63eaa0e0e5b917675071bc662b1e2d50`, tree
+`0b17e98773a544a3fb11937fa2e2b7301a331161`. Operator decision
+`LANE1_GMAIL_METADATA_RUNTIME_GRANT_RECONCILIATION_AUTHORIZED`
+authorizes this docs-only draft. Item 36 is proposed and inactive on
+this branch. It does not issue
+`LANE1_GMAIL_THREE_ATTEMPT_GRANT_EXACT_INTEGRATION_AUTHORIZED` or
+`LANE1_GMAIL_THREE_ATTEMPT_METADATA_CAMPAIGN_AUTHORIZED`.
+
+The governance grant becomes effective only after an independent
+exact-tree pass of this commit, a later Operator integration of this
+exact commit, and a later canonical steps 18 and 19 record. The record
+does not issue the runtime decision and does not need its own record.
+The runtime decision, once the grant is effective, names the
+then-canonical main SHA and tree. It needs no further commit. It stays
+effective only while that main and the protected import-closure blobs
+remain unchanged. Readiness tokens
+`OPERATOR_READY_ATTEMPT_1`, `OPERATOR_READY_ATTEMPT_2`, and
+`OPERATOR_READY_ATTEMPT_3` are separate and are not issued here.
+
+The two Item 31 execution decisions stay spent. This repository does
+not record a third initiated flow. The new budget is three new
+attempts and is not yet authorized. The connector blob
+`0a6901a82512100aff41a0494fa185b154f55527` and the probe blob
+`0337e979b9328ab7cb079b2e7aa06a15e6cd2080` stay unchanged, as do the
+eight other modules imported when the command starts. Source commits
+`142c07dfac520e84e1bb6ffcc7468256cce17b0e` and
+`ef88c609e8e4f15f136786257faa2368ea9893bd` stay ancestors. Verifier
+`bc-f03012d9-881d-506c-b537-81b04be77878` remains historical source
+evidence. Open draft PR #79 is not mixed into this grant. Item 32's
+live read stays closed. Item 33 and PR #66 are not amended. The Gate D
+offline grant is not amended. All nine dependencies stay `OPEN`.
+ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
+authorized trading mode. This entry does not embed its own hash and
+does not call Gmail.
