@@ -4222,6 +4222,36 @@ dependencies stay `OPEN`. ADR-0004 stays Proposed. `DRY_RUN` remains
 the only authorized trading mode. This entry does not embed its own
 hash and does not call Gmail.
 
+## 2026-11-13 — Item 33 Group 4A scan exclusion proposal
+
+Canonical main at authoring is
+`3d49dbcdbb25ad1d39688323ea9b5f7948cf6ace`, tree
+`6f6de3380403cd6bcf430846d697520b1f804798`. Item 33 is proposed and
+inactive on this branch. Item 22's scan excludes only
+`local_oauth_probe.py` and forbids another exclusion. Item 32's
+effective path `gmail_readonly_pilot.py` would contain `gmail` and
+cannot pass that scan. Item 32 does not grant `test_attacks.py`.
+
+When item 33 is effective, Lane 1 may later change only
+`tests/group4_email/test_attacks.py` and, in
+`tests/unit/test_gmail_local_connect.py`, only the expected Git blob
+constant for that attack test. The scan still only also drops
+`gmail_readonly_pilot.py`. The glob, forbidden list,
+`local_oauth_probe.py` exclusion, and `parse_email` socket monkeypatch
+stay. The connector-test assertion stays. No other connector-test line
+is granted. The constant on the authoring parent is
+`14b911ba29f16161f179c272c2e2f5e1be50922e`. Item 25 and Item 34
+constants are outside this grant. Operator decision
+`LANE1_ITEM33_ATTACK_BLOB_PIN_ALLOWLIST_AMENDMENT_DRAFT_AUTHORIZED`
+authorizes this documentation correction only. That test commit needs
+its own verifier and Operator decision. After it is canonical, Lane 3 uses the existing
+Item 32 two-file grant. The live message read stays closed. All nine
+dependencies stay `OPEN`. ADR-0004 stays Proposed. `DRY_RUN` remains
+the only authorized trading mode. This entry does not embed its own
+hash and does not call Gmail.
+
+This reconciliation carries that proposal onto canonical main `213acc52bfb79bb5b60ceab75fb106aa209a1fbe`, tree `9692c3593c0d348d3bcd875cb9804d22302c985c`. Item 33 stays inactive on this commit. The scanner files are not edited. Items 32, 34, 36, 38, and 39 stay as recorded on that main. Item 37's commit is that main, so its own effectiveness conditions are met; this paragraph does not recertify Stage E. SE-B-06 and Dimension C stay `NOT_RUN`. Stage F and Item 30 stay closed. This paragraph does not embed its own hash.
+
 ## 2026-11-13 — Item 34 OAuth callback validation proposal
 
 Canonical main at authoring is
@@ -4784,3 +4814,5 @@ authorized that fast-forward. GitHub PR #87 is `MERGED` at
 `7a269749d1b04af4d8940550d811190d3c4a702e` does not certify this
 merge. Stage E is not `PASS`. No migration is authorized. This
 paragraph does not embed its own hash.
+
+This later reconciliation carries Item 33 onto canonical main `afc6b76ec679b269e89e5478c5a8bf938a0dad2e`, tree `acc32eec762c1789254bbfa2c1515b32413cff29`. Item 33 stays inactive. The pass of `49a7ca0de50508c9ad2f06d689e889fc174ebe03` does not certify this merge. The scanner files are not edited. The Item 38 diagnostic blobs are canonical on that main. Campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped. Stage E is not certified. Stage F and Item 30 stay closed. This paragraph does not embed its own hash.

@@ -1,5 +1,7 @@
 # Current State
 
+- Last updated: 2026-11-13 (Item 33 reconciliation onto canonical main `afc6b76ec679b269e89e5478c5a8bf938a0dad2e`). Item 33 stays proposed and inactive. It becomes effective only when an independent verifier has passed the commit that contains this sentence, an Operator decision has authorized integration of that commit, and that commit is canonical `main`. The pass of `49a7ca0de50508c9ad2f06d689e889fc174ebe03` does not certify this commit. This reconciliation does not authorize editing `tests/group4_email/test_attacks.py` or `tests/unit/test_gmail_local_connect.py`. The Item 38 diagnostic implementation is canonical at `afc6b76ec679b269e89e5478c5a8bf938a0dad2e`, merged at `2026-11-13T21:56:43Z`, with blobs `1a0b1d5a245b5ae985645f95a50cce6dc315f54a`, `618e510046178fa87c5fbb84a797c7b3f60d90e8`, and `d80baf1ac579f4f873086ec1c05211b0699037ce`. Campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped. Stage E is not certified. Stage F and Item 30 stay closed. This reconciliation does not embed its own hash.
+- Last updated: 2026-11-13 (Item 33 reconciliation onto canonical main `213acc52bfb79bb5b60ceab75fb106aa209a1fbe`). Item 33 stays proposed and inactive. It becomes effective only when an independent verifier has passed the commit that contains this sentence, an Operator decision has authorized integration of that commit, and that commit is canonical `main`. Until then this reconciliation does not authorize editing `tests/group4_email/test_attacks.py` or `tests/unit/test_gmail_local_connect.py`. The existing Item 33 proposal text is preserved and is not a second grant. Items 32, 34, 36, 38, and 39 stay as already recorded. Item 37's own sentence is satisfied by canonical `213acc52bfb79bb5b60ceab75fb106aa209a1fbe`; this reconciliation does not recertify Stage E. SE-B-06 and Dimension C stay `NOT_RUN`. Stage F is not authorized. Item 30 stays closed. This reconciliation does not embed its own hash.
 - Last updated: 2026-11-13 (Item 37 reconciliation with effective Item 39). Item 37 remains proposed and inactive. It becomes effective only when an independent verifier has passed the commit that contains this sentence, an Operator decision has authorized integration of that commit, and that commit is canonical `main`. The passes of `f44be4a2e75de2123e48506a6fd985e41c4eb64c`, `c98812dc6c88fd7fefe1efc610e1b1598c4d3568`, `cf00ab378cb7c0d2667521cdb484282b3cd80737`, and `7a269749d1b04af4d8940550d811190d3c4a702e` do not certify that commit. SE-B-06 stays `NOT_RUN` and supplementary. Dimension C stays `NOT_RUN`. Stage E is not `PASS`. Stage F is not authorized. Item 30 stays closed. Items 36 and 38 stay effective. Item 39 is effective: verifier `bc-5a71318b-51be-512a-ae34-3638d620d2e2` passed `e52ad5e6e40e228ffba20199707a6c39d7fd4f5e`, Operator decision `LANE1_ITEM39_ALEMBIC_GUARD_GRANT_EXACT_INTEGRATION_AUTHORIZED` authorized it, and that commit is on canonical `main`. This reconciliation does not authorize a migration. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (Item 39 Alembic target-guard grant, draft). Parent main is `bfcdec0c2a28a57bbbf373eb3b9bc854f9ae7744`, tree `459f72955cbe1114a9bba121836fa4c4386e5345`. Item 39 is not effective. It names only `alembic.ini`, `migrations/env.py`, and `tests/unit/test_alembic_target_guard.py`. It does not authorize a migration, a connection to port 5432, Stage F, or Item 30. Open PR #81 remains the separate Item 37 candidate and is not amended. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (PR #78 Option A and Gate D grant integration record). Commit `0890546d63eaa0e0e5b917675071bc662b1e2d50`, tree `0b17e98773a544a3fb11937fa2e2b7301a331161`, sole parent `9b18eaece2e16f44151da0d1afb0bbb4d654d519`, is an ancestor of canonical `main`. Verifier `bc-01d43b1b-f0ba-5297-bf15-2283bccc895a` returned `INDEPENDENT_EXACT_TREE_PASS` for that commit. Operator decision `LANE1_PR78_OPTION_A_AND_GATE_D_GRANT_EXACT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward. GitHub PR #78 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T19:21:28Z`. ADR-0008 is Accepted and Option A is selected. The separate two-file grant is effective for offline synthetic work on `src/swingtrade/alpaca_paper_account_probe.py` and `tests/unit/test_alpaca_paper_account_probe.py`. The grant does not authorize a credential read or a provider call. The seven Gate C2 flags stay false. Gmail blobs stay unchanged. Item 29 and Item 30 are not amended. PR #66 is not amended. This reconciliation keeps Item 36 and Item 38. Item 38 stays effective. It does not authorize a provider call. This record does not embed its own hash.
@@ -2706,6 +2708,173 @@ a prohibition on later additive coordination roles.
     `DRY_RUN` remains the only authorized trading mode. This record
     does not embed its own hash and does not call Gmail.
 
+    33. Group 4A scan exclusion for the Item 32 adapter, proposed
+    2026-11-13. This item becomes effective only when all three of
+    these are true: an independent verifier has passed this exact
+    commit, an Operator decision has authorized integration of this
+    exact commit, and this exact commit is canonical `main`. While any
+    condition is unmet, this item is proposed and inactive. It does not
+    authorize editing `tests/group4_email/test_attacks.py` or any other
+    path. The parent main is
+    `3d49dbcdbb25ad1d39688323ea9b5f7948cf6ace`, tree
+    `6f6de3380403cd6bcf430846d697520b1f804798`. Items 31 and 32 stay
+    effective on that parent. Item 22 stays effective and is not
+    revised by this commit. Item 32 does not override Item 22.
+
+    When all three conditions are met, the only new authority is a
+    later Lane 1 commit whose only changed paths are
+    `tests/group4_email/test_attacks.py` and
+    `tests/unit/test_gmail_local_connect.py`. In the connector test,
+    the only permitted change is replacement of the expected Git blob
+    constant for `tests/group4_email/test_attacks.py`. On the authoring
+    parent, that constant is
+    `14b911ba29f16161f179c272c2e2f5e1be50922e`. The replacement must
+    equal the attack-test blob in the same implementation commit. The
+    assertion that compares the blob stays. No other line of that file
+    may change under this item. `tests/failure_injection/test_attacks.py`
+    is not a path in this item. Item 25's
+    `tests/failure_injection/test_fail_closed.py` stays outside it.
+    The two probe blob constants reserved for Item 34 are not this
+    grant. Inside
+    `test_parser_does_not_use_network_broker_or_credentials`, the
+    concatenated Group 4A source drops exactly two top-level filenames:
+    the existing `local_oauth_probe.py` and `gmail_readonly_pilot.py`.
+    The glob stays `src/swingtrade/group4_email/*.py`. The forbidden
+    substring list stays unchanged. The socket monkeypatch around
+    `parse_email` stays. No other filename or directory is excluded.
+    Every other present or future top-level Group 4A Python file stays
+    in the scan. Lane 3 does not receive this test path. That later
+    test commit is not authorized by the effectiveness of this item
+    alone. It needs its own independent exact-tree pass and a separate
+    Operator decision naming that commit.
+
+    After that test commit is canonical, Lane 3 resumes under the
+    existing Item 32 grant. The only implementation paths remain
+    `src/swingtrade/group4_email/gmail_readonly_pilot.py` and
+    `tests/group4_email/test_gmail_readonly_pilot.py`. No new Item 32
+    development grant is required. The adapter tests must show an
+    official Gmail HTTPS GET host and route allowlist, a listing
+    ceiling of 10, local sender and label selectors that are not
+    committed, rejection of attachment and write routes, no substitution
+    of a provider message id for a synthetic fixture id, no credential
+    or token persistence, no broker or `OrderIntent` capability, no
+    real Gmail call, and no import of the adapter from
+    `group4_email/__init__.py`.     The live message read stays closed.
+
+    Operator decision
+    `LANE1_ITEM33_ATTACK_BLOB_PIN_ALLOWLIST_AMENDMENT_DRAFT_AUTHORIZED`
+    authorizes this documentation correction only. It does not authorize
+    editing either test now, and it does not authorize a Gmail call.
+    The corrected proposal is this commit. The one-file allowlist in
+    ancestor `14d3852ad54113765d1be53484a27fe660cec2d7` is not the
+    operative allowlist of this commit. This commit must contain
+    canonical main `4d519730bb56ddf255fdda406caf014a66d558ca` as an
+    ancestor. The historical parent sentence above remains the
+    authoring baseline.
+
+    This item does not edit ADRs or the dependency registry. All nine
+    dependencies stay `OPEN`. ADR-0002, ADR-0003, ADR-0006, and
+    ADR-0007 stay Accepted. ADR-0004 and ADR-0005 stay Proposed.
+    Supabase Free stays **NOT_ACCEPTED**. `DRY_RUN` remains the only
+    authorized trading execution mode. `SIM`, paper-order execution,
+    and `LIVE` remain unauthorized. This proposal does not embed its
+    own hash and does not call Gmail.
+
+## Evidence
+
+Starting-state and change evidence is recorded in
+`docs/ENGINEERING_JOURNAL.md`. Phase 1A validation completed successfully on
+2026-09-25. Phase 1B design and fixture validation passed within their stated
+scope. Phase 1C integrated-content validation is recorded in the journal.
+Independent verification passed the exact Phase 1 candidate, and bounded
+Operator acceptance is recorded in `PHASE_1_ACCEPTANCE_MANIFEST.md`. The human
+Operator authorized the bounded Phase 1E offline implementation; findings
+F01–F06 across all remediation rounds were corrected and independently
+re-verified, culminating in the Gate A pass (218 tests, PostgreSQL 16.15) at
+SHA `eb4b3b550874b4729abf7902cda2df8bf01e70ba`. The Gate B evidence-only
+closure audit in `docs/PHASE_1_CLOSURE.md` records `PHASE1A_COMPLETE` through
+`PHASE1E_COMPLETE` and `PHASE1_COMPLETE`. No Phase 2, broker, TradeStation
+`SIM`, credential, account, order, deployment, real-capital, or `LIVE`
+authority follows.
+
+P2-0 Group 1 specialist documents were integrated on 2026-09-29 onto
+isolated branch `cursor/p2-0-integration-1f76` from then-canonical `main`
+`1ecbbe6d487d97195fde393b05c9499357599bdb`, preserving specialist commit
+lineage. Coordinator reconciliation is `docs/PHASE_2_RECONCILIATION.md`.
+Independent Gate `H1` verification **PASS (C1 carried)** is recorded for
+exact artifact `33110c7c0aa2f385d179a1f66d068daca2c47537` /
+`5f45983b19bed47988133c5b832e125d0602133c`. On 2026-09-30 canonical `main`
+was fast-forwarded to evidence HEAD
+`9631de3bd8a6a2e24c6833ca534c5e626fdb7b75`, tree
+`41588e7af631db0213b80d5a02472dd0e4d206ba` (PR #12). This descendant
+evidence commit is neither the attested H1 tree nor that fast-forward
+tip. C1 remains open. Group 2 remains unauthorized. Phase 2
+implementation remains unstarted. No credential, broker, TradeStation
+`SIM`, order, deployment, real-capital, or `LIVE` authority follows.
+
+On 2026-09-30, after that evidence commit was already `origin/main`,
+canonical `main` fast-forwarded PR #14 commit
+`e549ab9e59604abecce0c882c60f845f00f8be09`, tree
+`dee2ef72378bcffa8499bd1d560c8c324a97569e`, then history-preserved PR
+#13 commit `78f485b33bdd3f859d540458ba170b2353c04c61`, tree
+`28b3ced5663c00f4b8d32828ed2b160344d09805`, as merge
+`e0ec755e39c897492fbc8d970bb165d8335d361c`, tree
+`5e687dc37376b1b9c092a2a56a40348e5d36532f`. No squash, rebase, or
+force-push. The prior sentences that C1 remains merely open and that
+Group 2 remains unauthorized are **pre-authorization**. Independent
+verification of `e549ab9` returned **PASS** and
+**OFFLINE_IMPLEMENTATION_UNBLOCKED**, not
+`P2_G2_CONTRACT_DECISION_REQUIRED`. C1/U-10 has a verified
+**PROPOSED** resolution. The human Operator authorizes the offline
+Group 2 foundation only. Bootstrap injector, key custody, retention,
+and the SIM host remain later decisions.
+`INITIAL_DATABASE_INCREMENTAL_SERVICE_COST = 0 USD` supersedes only
+the initial-deployment effect of the historical RDS recommendation.
+Supabase is **NOT_ACCEPTED**. Credentials, broker calls, Supabase
+connections, provisioning, SIM orders, and `LIVE` remain unauthorized.
+
+On 2026-09-30 the human Operator accepts ADR-0002. Independent review
+`C1_U10_CONTRACT_PASS` of
+`a4213f8356a9e32ca4647865ee98e13660e3d656`, tree
+`c07487c88f24f9432de89df7f574130274d50b4b`, left C1 **PROPOSED**. This
+status commit resolves C1/U-10. Earlier sentences that leave C1 proposed,
+open, or unclosed are **pre-closure**. Contract acceptance is not
+operational credential certification, key management, Supabase selection,
+or `LIVE` authorization. Non-blocking residuals, recorded in
+`docs/ENGINEERING_JOURNAL.md` and `docs/C1_U10_CONTRACT_STATUS.md`, are
+process-local same-attempt tracking, fence monotonicity not forced,
+`read_redacted` not environment-scoped, and stale "not implemented"
+wording in the historical proposal documents. Those residuals do not
+reopen C1. No source or test file changes. This branch is not merged.
+
+On 2026-10-06 the Operator supplied written TradeStation Client Experience
+answers. They are recorded in `docs/P2_TS_PROVIDER_EVIDENCE.md` and
+reconciled in `docs/P2_PRE_CREDENTIAL_DECISION.md`, with dated addenda on
+the broker, authentication, and question documents. ADR-0005 is Proposed
+and its Decision is blank. The provider did not select an application
+type. A SIM-only key is not available, so LIVE denial cannot depend on
+one. Default personal-use refresh tokens are non-rotating and long-lived;
+that does not close the published 30-versus-40-minute rotating-token
+conflict. The Native PKCE callback form is open, so no API client is
+created. No TradeStation authentication, token, SIM call, LIVE call,
+order, Gmail change, or Supabase connection follows. Gmail draft PR #21
+is not modified. Draft PR #19 is not updated.
+
+On 2026-10-08 the Operator presented the same written clarification for
+Lane 2 intake. `docs/P2_TS_PROVIDER_EVIDENCE_2026-10-08.md` records
+confirmed, partial, and unresolved claims without replacing the
+2026-10-06 quotations. ADR-0005 proposes a Regular Web confidential
+client and remains Proposed with a blank Decision. The issued key's
+type is not verified. Local DRY_RUN code denies LIVE and SIM
+connection, elevated scopes, profile B, and HTTP 429 retries. No
+credential was onboarded. No TradeStation call was made. Canonical
+`main` at the start of this intake was
+`af0d69b1dfc2046899db05a2f12767fc20b623ae`. PR #22 is not merged.
+Independent verification of implementation commit
+`19154eae43990df1d83a78be7b6dac3710a28804`, tree
+`de97145c7278afbfe432463733a02b5e8a74ced9`, passed the local DRY_RUN
+suites named in `docs/ENGINEERING_JOURNAL.md`. That pass is not
+TradeStation connectivity.
     34. Gmail OAuth callback validation compatibility, proposed
     2026-11-13. This item is drafted under Operator decision
     `LANE1_ITEM34_CALLBACK_VALIDATION_GRANT_DRAFT_AUTHORIZED`. Drafting
