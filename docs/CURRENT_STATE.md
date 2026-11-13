@@ -1,6 +1,7 @@
 # Current State
 
-- Last updated: 2026-11-13 (Item 36 proposal, Stage E evidence dimensions). Item 36 is proposed on this branch and is not effective. It becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. Until then the unamended Item 29 Stage E sentence remains in force, Stage E is not `PASS`, Stage F is not authorized, and Item 30's three source paths stay closed. The branch evidence is `docs/lane4/item29_stage_e_evidence_matrix.md`. Dimension C is `NOT_RUN`. No functional pass is claimed. This proposal does not embed its own hash.
+- Last updated: 2026-11-13 (Item 37 proposal, Stage E evidence dimensions). Canonical Item 36 remains the Gmail metadata grant. This Stage E proposal is Item 37 and is not effective. It becomes effective only when an independent verifier has passed this exact merge commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. The pass of `f44be4a2e75de2123e48506a6fd985e41c4eb64c` does not certify this merge. Until then the unamended Item 29 Stage E sentence remains in force, Stage E is not `PASS`, Stage F is not authorized, and Item 30's three source paths stay closed. SE-B-06 stays `NOT_RUN`, so Dimension B is not fully passed. Dimension C is `NOT_RUN`. No functional pass is claimed. This proposal does not embed its own hash.
+- Last updated: 2026-11-13 (Item 36 Gmail three-attempt metadata grant, draft). Operator decision `LANE1_GMAIL_METADATA_RUNTIME_GRANT_RECONCILIATION_AUTHORIZED` authorizes this draft only. Item 36 is not effective. It does not issue `LANE1_GMAIL_THREE_ATTEMPT_METADATA_CAMPAIGN_AUTHORIZED` and it does not issue `LANE1_GMAIL_THREE_ATTEMPT_GRANT_EXACT_INTEGRATION_AUTHORIZED`. The two Item 31 execution decisions stay spent. The new budget of three attempts is not authorized by this draft. Parent main is `0890546d63eaa0e0e5b917675071bc662b1e2d50`, tree `0b17e98773a544a3fb11937fa2e2b7301a331161`. Open draft PR #79 is a separate Alpaca record and is not mixed into this grant. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (ADR-0008 Option A acceptance and Gate D grant record). Operator decision `LANE1_ADR0008_OPTION_A_ACCEPTANCE_AUTHORIZED` selects Option A. ADR-0008 status is Accepted. Its Decision names the two paper targets and rejects every live target. Operator decision `LANE1_ALPACA_GATE_D_TWO_FILE_PROBE_GRANT_AUTHORIZED` is separate and names only `src/swingtrade/alpaca_paper_account_probe.py` and `tests/unit/test_alpaca_paper_account_probe.py`. That grant becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. Until then Lane 2 must not edit those files. When effective, the grant is offline synthetic development of one future `GET https://paper-api.alpaca.markets/v2/account`. It does not authorize a credential read, Windows Credential Manager, a provider call, a redirect, a retry, positions, orders, or streaming. The seven Gate C2 flags stay false. `DRY_RUN` stays the only trading mode. PR #77 stays the canonical record of Proposed integration. This record does not embed its own hash.
 - Last updated: 2026-11-13 (PR #76 Proposed ADR-0008 integration record). Commit `4941dc0d30359710b4a7b6160eb874c261d1cf66`, tree `a2946b87449615c5aa33fa7adf29c6e0aed178f9`, sole parent `90ad6fb2f050d3728551e23fec65b17ca3a6705a`, is canonical `main`. Verifier `bc-1957ff23-21a9-582c-8198-d5f8cfa2d3a6` returned `INDEPENDENT_EXACT_TREE_PASS` for that commit. Operator decision `LANE1_ADR0008_PROPOSED_EXACT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward while canonical main was `90ad6fb2f050d3728551e23fec65b17ca3a6705a`. GitHub PR #76 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T18:51:45Z`. The integrated blob is `docs/adr/0008-alpaca-paper-windows-local-credential-custody.md` `befca5bd775be9f4c1e4d09f8a08ae4584374b27`. ADR-0008 stays Proposed. Its Decision stays blank. Option A is not accepted. Option B is not selected. This record does not grant Gate D source files or a provider call. Item 34, Item 35, PR #74, and PR #75 stay canonical. PR #66 is not amended. This record does not embed its own hash.
 - Last updated: 2026-11-13 (PR #73 Item 35 custody implementation record). Commit `472db287f3d7ab62943d016217ac49c5a48a24cc`, tree `2d3d3e3d471861b74a3ef9f2eb2fff8625ba04c2`, parents `a64ad50bb0d8e48da68cf1e87a185053f018b8a7` and `ef88c609e8e4f15f136786257faa2368ea9893bd`, is canonical `main`. Verifier `bc-69bc8af0-87ee-5cc7-b267-20a52e50abd7` returned `INDEPENDENT_EXACT_TREE_PASS` for that commit. Operator decision `LANE1_PR73_RECONCILED_EXACT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward while canonical main was `ef88c609e8e4f15f136786257faa2368ea9893bd`. GitHub PR #73 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T18:35:25Z`. The integrated blobs are `src/swingtrade/alpaca_paper_custody.py` `86ba61b5bfecc2ec203e36c099face0e15c4068d` and `tests/unit/test_alpaca_paper_custody.py` `81c0a9d5f1cbbd12d9fe8d9fb3bcf07423424a4c`. Gate C2 blobs `854e6adb5c1c2d20370f724d3a7e6d4f32970509` and `8e5d89ac0a3f33463d518e62ccaefdadcdf2cdd1` stay unchanged. The seven execution flags stay false. This is the integrated offline mock. It is not a provider call, a native Windows credential call, or Gate D. Item 34 and PR #74 stay canonical. PR #66 is not amended. This record does not embed its own hash.
@@ -3200,48 +3201,201 @@ a prohibition on later additive coordination roles.
     execution, and `LIVE` remain unauthorized. This record does not
     embed its own hash.
 
-    36. Stage E evidence dimensions, proposed 2026-11-13. This item
-    becomes effective only when all three of these are true: an
-    independent verifier has passed this exact commit, an Operator
-    decision has authorized integration of this exact commit, and this
-    exact commit is canonical `main`. While any condition is unmet,
-    this item is proposed and inactive. Drafting it does not certify
-    Stage E, does not authorize Stage F, and does not authorize Item 30.
+    36. Gmail three-attempt metadata campaign grant, proposed
+    2026-11-13. This item is drafted under Operator decision
+    `LANE1_GMAIL_METADATA_RUNTIME_GRANT_RECONCILIATION_AUTHORIZED`.
+    Drafting is not effectiveness. Parent main is
+    `0890546d63eaa0e0e5b917675071bc662b1e2d50`, tree
+    `0b17e98773a544a3fb11937fa2e2b7301a331161`. No equivalent campaign
+    grant is canonical and no equivalent grant pull request was found.
+    This item does not amend Items 31 through 35, PR #66, PR #79, the
+    dependency registry, or an ADR. It does not edit
+    `docs/AGENT_AUTHORITY.md`, `docs/INTEGRATION_PROTOCOL.md`, or
+    `.cursor/rules/`.
 
-    When this item is effective, Item 29 Stage E is certified in three
-    separately recorded dimensions. Dimension A is
-    `INFRASTRUCTURE_SECURITY`. Dimension B is
-    `PROTECTED_BASELINE_PRESERVATION`. Dimension C is
+    The phases are separate. None implies the next. `DRAFT` is this
+    text. `INDEPENDENTLY_VERIFIED` means an independent verifier has
+    returned `INDEPENDENT_EXACT_TREE_PASS` for this exact commit.
+    `INTEGRATION_AUTHORIZED` means a later Operator decision,
+    `LANE1_GMAIL_THREE_ATTEMPT_GRANT_EXACT_INTEGRATION_AUTHORIZED`,
+    names this exact commit for one non-forced fast-forward. That
+    decision is not issued by this draft. `INTEGRATED` means that
+    commit was fast-forwarded onto `main` and remains an ancestor of
+    current `main`. It does not need to remain the tip.
+    `POST_MERGE_ATTESTED` means a later canonical Integration Protocol
+    steps 18 and 19 record names that verifier, that integration
+    decision, and this commit, and labels these proposal sentences as
+    historical. The record does not require a record of itself and
+    does not issue the runtime decision below. The governance grant is
+    `EFFECTIVE` only when this commit is `INDEPENDENTLY_VERIFIED`,
+    `INTEGRATED`, and `POST_MERGE_ATTESTED`. Fast-forward alone is not
+    effectiveness. On this branch the grant is `DRAFT`.
+
+    The runtime decision identifier
+    `LANE1_GMAIL_THREE_ATTEMPT_METADATA_CAMPAIGN_AUTHORIZED` is
+    reserved and is not issued here. It may be issued only after the
+    governance grant is `EFFECTIVE`. It must name the then-canonical
+    `main` SHA and tree. It does not need a descendant commit to
+    restate it. It is effective only while canonical `main` remains
+    that named SHA and tree, the grant commit remains an ancestor, and
+    every protected blob below is unchanged. A later main move retires
+    it. Until it is issued, no OAuth attempt is authorized. Issuing it
+    does not start an attempt.
+
+    Each attempt also requires its own readiness confirmation,
+    `OPERATOR_READY_ATTEMPT_1`, `OPERATOR_READY_ATTEMPT_2`, or
+    `OPERATOR_READY_ATTEMPT_3`, immediately before that attempt. Those
+    confirmations are not advance permission to run the other
+    attempts. A readiness confirmation that is not followed by starting
+    the command does not consume an attempt.
+
+    Item 31 authorized one attended profile proof. Its two execution
+    decisions are spent. Canonical Item 34 text and the PR #56 record
+    keep that fact, and they do not authorize a third attempt. This
+    repository does not record a third initiated flow. This item does
+    not reset, conceal, or reuse those two decisions. The new budget,
+    once a campaign is actually authorized, is three new attempts.
+    Each initiated OAuth flow consumes one. There is no automatic
+    second or third attempt. The campaign stops on the first
+    `GMAIL_GATE_C_REAL_CONNECTIVITY_PASS`, on three consumed attempts,
+    on Operator cancellation, on an ambiguous token exchange, on an
+    ambiguous profile response, on an unexpected scope, on a callback
+    or state failure that needs remediation, on credential exposure,
+    on unauthorized provider behavior, on a material source or
+    governance change, and on any applicable fail-closed condition.
+    An unambiguous failed attempt may be followed by a later attended
+    attempt only when the campaign is effective, the remaining budget
+    is positive, and a new readiness confirmation was issued. Item 34
+    integration is not this grant. Matching a source blob is not this
+    grant.
+
+    The protected runtime identity is the whole import closure of
+    `python -m swingtrade.gmail_local_connect`, not the two OAuth files
+    alone. On parent main those blobs are
+    `src/swingtrade/gmail_local_connect.py`
+    `0a6901a82512100aff41a0494fa185b154f55527`,
+    `src/swingtrade/group4_email/local_oauth_probe.py`
+    `0337e979b9328ab7cb079b2e7aa06a15e6cd2080`,
+    `src/swingtrade/__init__.py`
+    `f05d0f91842b4615ada81ca8d044ae38d9bc4d2c`,
+    `src/swingtrade/config.py`
+    `35d8f918705db61c7d03d1a37e5a834186ceec71`,
+    `src/swingtrade/domain.py`
+    `ab3a0de9db8886561144c0947f9fc4359b72cab8`,
+    `src/swingtrade/group4_email/__init__.py`
+    `44d73a8b92f05fbf941eb6c6b1383e52a2913104`,
+    `src/swingtrade/group4_email/contract.py`
+    `a973e492634f05817b069c1655c127491a8b432c`,
+    `src/swingtrade/group4_email/extract.py`
+    `ed0ca1633af280a11989db259af4b41270f5a221`,
+    `src/swingtrade/group4_email/parse.py`
+    `4119ffe03758380e0a284cc3514721201fac34c9`, and
+    `src/swingtrade/group4_email/normalize.py`
+    `af0151551ff3fef520d7f7095a39f850e0d1154c`.
+    Commits `142c07dfac520e84e1bb6ffcc7468256cce17b0e` and
+    `ef88c609e8e4f15f136786257faa2368ea9893bd` must remain ancestors.
+    Verifier `bc-f03012d9-881d-506c-b537-81b04be77878` is historical
+    source evidence. It is not a runtime authorization. If any
+    protected blob differs, or either ancestor is absent, the campaign
+    stops before a socket.
+
+    When a campaign attempt is authorized, the only command is
+    `python -m swingtrade.gmail_local_connect` with the Desktop client
+    JSON path supplied on the Operator's Windows computer. The Operator
+    is present. The client is the existing private Desktop client. No
+    new client is registered. The JSON stays outside the repository
+    and outside Cursor Cloud, GitHub, and chat. The process may print
+    only its sanitized reason code. It must not retain an access
+    token, refresh token, authorization code, callback payload, or raw
+    profile response. The scope is exactly
+    `https://www.googleapis.com/auth/gmail.metadata`. The authorization
+    endpoint is `https://accounts.google.com/o/oauth2/v2/auth`. The
+    token endpoint is `https://oauth2.googleapis.com/token`. PKCE is
+    S256. State validation is cryptographic. Callback and issuer
+    validation stay the accepted connector contract. The listener is
+    `127.0.0.1` on an operating-system-selected port. One attempt has
+    at most one token exchange. No refresh token is acquired or
+    stored. There is no automatic retry. The only Gmail request is one
+    `GET https://gmail.googleapis.com/gmail/v1/users/me/profile` after
+    a completed exchange. Message, label, thread, attachment, history,
+    body, polling, and modification routes stay closed. No other
+    Google scope is granted. A non-Windows process refuses before a
+    socket. This draft does not run the command.
+
+    This item does not grant Gmail message reads, a broader scope,
+    Google account modification, background access, persistent token
+    storage, broker connectivity, Alpaca runtime access, PostgreSQL
+    migration, `SIM`, or `LIVE`. The Gate D offline grant and its
+    seven false flags are unchanged. Item 32's live message read stays
+    closed. Item 29 and Item 30 are not amended. `DEP-TS-001`,
+    `DEP-TS-002`, `DEP-TS-003`, `DEP-TS-004`, `DEP-GMAIL-001`,
+    `DEP-DB-001`, `DEP-DB-002`, `DEP-CORE-001`, and `DEP-CORE-002`
+    stay `OPEN`. ADR-0002, ADR-0003, ADR-0006, ADR-0007, and ADR-0008
+    stay Accepted. ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN`
+    remains the only authorized trading mode.
+
+    Open draft PR #79, head
+    `908223a350b8d53b5ab394f5a65ba6aea5dc88da`, is the separate PR #78
+    record. It shares this parent and the same three documentation
+    files. This item does not integrate it. If that record is
+    integrated before this commit, this candidate is reconciled by one
+    normal merge that keeps both parents and is independently verified
+    again. If this commit is integrated first, PR #79 cannot
+    fast-forward until it is reconciled the same way. Neither order is
+    authorized by this draft. The runtime decision cannot be issued
+    against a main SHA that this draft does not yet know. It is issued
+    only after this grant and its steps 18 and 19 record are
+    canonical, and it names that resulting tip. No policy exception
+    for an arbitrary future SHA is created.
+
+    No Gmail, Google, Alpaca, TradeStation, PostgreSQL, credential, or
+    `OrderIntent` operation is performed by this commit. This proposal
+    does not embed its own hash.
+
+    37. Stage E evidence dimensions, proposed 2026-11-13. This item
+    was drafted on PR #81 as Item 36. Canonical Item 36 is the Gmail
+    metadata grant, so this proposal is renumbered. The pass of
+    `f44be4a2e75de2123e48506a6fd985e41c4eb64c` does not certify this
+    merge. This item becomes effective only when all three of these
+    are true: an independent verifier has passed this exact merge
+    commit, an Operator decision has authorized integration of this
+    exact commit, and this exact commit is canonical `main`. While any
+    condition is unmet, this item is proposed and inactive. Drafting it
+    does not certify Stage E, does not authorize Stage F, and does not
+    authorize Item 30.
+
+    When this item is effective, Item 29 Stage E is recorded in three
+    separate dimensions. Dimension A is `INFRASTRUCTURE_SECURITY`.
+    Dimension B is `PROTECTED_BASELINE_PRESERVATION`. Dimension C is
     `APPLICATION_FUNCTIONAL_VERIFICATION`. Infrastructure certification
-    requires independent `PASS` results for A and B. Dimension C stays
-    `NOT_RUN` when VWAP/mdpipe, SupaOpti, and eBay were dormant before
-    provisioning and no authorized functional test was executed. A
-    `NOT_RUN` result is not a functional `PASS`. No application
-    execution is simulated. The protected applications are not modified.
-    Functional verification remains a tracked follow-up. The unamended
-    sentence that a missing health observation is `NOT_RUN`, not a
-    complete zero-disruption pass, remains the reason C cannot complete
-    an unlabeled Stage E pass. After this item is effective, that fact
-    does not withhold infrastructure certification when A and B have
-    passed.
+    requires independent `PASS` results for every applicable A and B
+    test. Dimension C stays `NOT_RUN` when VWAP/mdpipe, SupaOpti, and
+    eBay were dormant before provisioning and no authorized functional
+    test was executed. A `NOT_RUN` result is not a functional `PASS`.
+    No application execution is simulated. The protected applications
+    are not modified. SE-B-06 stays `NOT_RUN` because no Stage A
+    task-definition hash exists to compare. Under this proposal that
+    one test does not by itself block Stage F, and it is not converted
+    to `PASS`. Dimension B is therefore not fully passed on this
+    branch. This proposal does not certify Stage E.
 
-    Stage F eligibility begins only after this item is effective and A
-    and B are `PASS` for system identifier `7707684291752896980`, host
-    `127.0.0.1`, port `5433`, and database `swingtrade_receipt_test`.
-    Every Item 29 isolation, authentication, role, and protected-instance
-    requirement stays mandatory. This item grants no source path. Item
-    30's three paths stay closed until that effective Stage E security
-    result and a Stage F isolated-test prerequisite `PASS` both exist
-    for the same cluster. The evidence cited by this proposal is
-    `docs/lane4/item29_stage_e_evidence_matrix.md`. On this branch that
-    matrix records A and B from the cited observations and records C as
-    `NOT_RUN`. Those branch statements are not canonical certification.
+    Stage F eligibility begins only after this item is effective and
+    the applicable A and B results support that eligibility for system
+    identifier `7707684291752896980`, host `127.0.0.1`, port `5433`,
+    and database `swingtrade_receipt_test`. Every Item 29 isolation,
+    authentication, role, and protected-instance requirement stays
+    mandatory. This item grants no source path. Item 30's three paths
+    stay closed until that effective Stage E security result and a
+    Stage F isolated-test prerequisite `PASS` both exist for the same
+    cluster. The evidence cited by this proposal is
+    `docs/lane4/item29_stage_e_evidence_matrix.md`. Those branch
+    statements are not canonical certification.
 
-    This item does not close a dependency, accept ADR-0004 or ADR-0005,
-    extend ADR-0006, or authorize credentials, a connection to port
-    5432, `SIM`, paper-order execution, or `LIVE`. Historical Item 29
-    sentences that say Stages A through F are `NOT_RUN` stay historical
-    snapshots. They are not changed by this proposal.
+    This item does not close a dependency, accept ADR-0004 or
+    ADR-0005, extend ADR-0006, or authorize credentials, a connection
+    to port 5432, `SIM`, paper-order execution, or `LIVE`. Historical
+    Item 29 sentences that say Stages A through F are `NOT_RUN` stay
+    historical snapshots. This proposal does not embed its own hash.
 
 ## Evidence
 

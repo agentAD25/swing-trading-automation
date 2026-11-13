@@ -1,7 +1,7 @@
 # Item 29 Stage E evidence matrix
 
-Status of this file: branch evidence for proposed Item 36. It is not
-canonical certification. It does not make Item 36 effective, does not
+Status of this file: branch evidence for proposed Item 37. It is not
+canonical certification. It does not make Item 37 effective, does not
 authorize Stage F execution, and does not authorize the three Item 30
 source paths.
 
@@ -20,7 +20,7 @@ was Running, and functional health was `NOT_VERIFIED`.
 
 Classifications are only `PASS`, `FAIL`, `SKIPPED`, or `NOT_RUN`.
 `blocks_stage_f` is `yes` only under the unamended Item 29 rule. Proposed
-Item 36 would change that block for Dimension C only after Item 36 is
+Item 37 would change that block for Dimension C only after Item 37 is
 accepted and effective.
 
 ## Dimension A — infrastructure security
@@ -43,7 +43,7 @@ accepted and effective.
 | SE-A-14 | A | Database CONNECT isolation | Operator checkpoint I negative connections | Test runner denied `swingtrade_receipt_dev`; app denied `swingtrade_receipt_test`; migrator denied `swingtrade_receipt_dev` | Prior Operator session; not replayed | PASS | The denials were executed before this review. Repeating them would open new authenticated sessions, so they were not repeated. | no | no |
 | SE-A-15 | A | Schema permissions | Operator checkpoint H schema-privilege matrix and checkpoint I create-table denials | App USAGE on dev only; test runner USAGE on test only; migrator USAGE and CREATE on test public only; both create probes absent afterward | Prior Operator session; not replayed | PASS | The probes were denied and reported absent. No schema change was made in this session. | no | no |
 | SE-A-16 | A | No unauthorized PUBLIC privileges | Operator checkpoint H PUBLIC ACL result | PUBLIC lacked CONNECT on the two new databases, `postgres`, and `template1` except the expected remaining TEMPORARY on `postgres`; PUBLIC schema privileges were none | Prior Operator session; not replayed | PASS | The result is the prior catalog assertion, tied to the reattested system identifier. | no | no |
-| SE-A-17 | A | No secrets in evidence | This matrix and the Item 36 text | No password, token, connection URL, or command-line secret | Cursor Local Windows, 2026-11-13 | PASS | Evidence names services, ports, roles, and hashes only. | no | no |
+| SE-A-17 | A | No secrets in evidence | This matrix and the Item 37 text | No password, token, connection URL, or command-line secret | Cursor Local Windows, 2026-11-13 | PASS | Evidence names services, ports, roles, and hashes only. | no | no |
 | SE-A-18 | A | Protected 5432 preservation | Service query and SHA-256 of the protected configuration files | `postgresql-x64-16` Running, Automatic, `NT AUTHORITY\NetworkService`; `postgresql.conf` `E136B69566CB9A42E1424F4D92CB3CF153EEBAA3672EEF09F2E5BA4728404611`; `pg_hba.conf` `D704A72F523AA44A5EACFD8A3C9BB5CEA0A6FB7470F67B456D83FE0A0393D0FA` | Cursor Local Windows, read-only, 2026-11-13 | PASS | Both preserved hashes match. The protected service was not restarted or edited. Its pre-existing `0.0.0.0:5432` listener remains and was not changed. | no | no |
 | SE-A-19 | A | No leftover security-test objects | Operator checkpoint I probe count | Both create-table probes reported absent | Prior Operator session; catalog was not re-queried | PASS | The prior session reported a zero probe count and did not delete through this review. No new probe was created. | no | no |
 | SE-A-20 | A | No unintended network exposure of the new cluster | SE-A-04 through SE-A-07 | `127.0.0.1:5433` only | Cursor Local Windows, read-only, 2026-11-13 | PASS | Exposure finding for the new cluster is loopback-only. The protected instance's pre-existing wildcard listener is outside this test and was not remediated. | no | no |
@@ -81,7 +81,7 @@ Current task-definition hashes, first recorded by this review:
 | SE-C-03 | C | eBay functional execution | Task history and existing logs from before Stage A | Six tasks installed; none has completed since the Stage A baseline | Cursor Local Windows, read-only, 2026-11-13 | NOT_RUN | Scheduler state and older logs were not treated as a new functional pass. No task was started. | yes | yes |
 
 Under the unamended Item 29 sentence, SE-C-01, SE-C-02, and SE-C-03 block a
-complete Stage E pass and therefore block Stage F. Proposed Item 36 removes
+complete Stage E pass and therefore block Stage F. Proposed Item 37 removes
 that block only after it becomes effective, and only while C remains recorded
 as `NOT_RUN` rather than `PASS`.
 
