@@ -4812,3 +4812,5 @@ No credential read, HTTPS request, order, or migration is authorized.
 Stage E is not recertified. Stage F and Item 30 stay closed.
 `DRY_RUN` remains the only authorized trading mode. This entry does
 not embed its own hash.
+
+This later reconciliation carries Item 40 onto canonical main `afc6b76ec679b269e89e5478c5a8bf938a0dad2e`, tree `acc32eec762c1789254bbfa2c1515b32413cff29`. Item 40 stays inactive. The pass of `8be1d0d0fe3fccd1da95b66bc28ca31d3795b8ec` does not certify this merge. The two account-read files are not created. The Item 25 scanner and ADR-0008 are not edited. Stage E is not certified. Stage F and Item 30 stay closed. This paragraph does not embed its own hash.
