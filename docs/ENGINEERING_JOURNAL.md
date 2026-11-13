@@ -4266,3 +4266,27 @@ is not integrated by this entry. All nine dependencies stay `OPEN`.
 ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
 authorized trading mode. This entry does not embed its own hash and
 does not call Gmail.
+Reconciliation note, 2026-11-13. Canonical main `fb9ab787464bd05131c5ead2be8c5ef5bf552b53` contains the PR #56 integration and its steps 18 and 19 record. The sentence above that calls PR #56 an unintegrated draft is authoring text. The pass of `8d21fbaf5097873e265e44d25840a0697ade00b8` does not certify this merge. The Item 34 grant is unchanged.
+
+## 2026-11-13 — PR #56 Alpaca Gate C2 integration record
+
+Commit `4d519730bb56ddf255fdda406caf014a66d558ca`, tree
+`63157384d1e0742c82e26cd8d22739c71b269478`, first parent
+`c6c5ad000c874c9f192986470e2e301bc83bf5be`, second parent
+`3d49dbcdbb25ad1d39688323ea9b5f7948cf6ace`, is canonical main. Verifier
+`bc-60651ea8-7488-59cb-8926-fe421d0a4bf0` returned
+`INDEPENDENT_EXACT_TREE_PASS`. Operator decision
+`LANE1_PR56_4D519730_CONDITIONAL_INTEGRATION_AUTHORIZED` authorized the
+non-forced fast-forward. The push was
+`git push origin 4d519730bb56ddf255fdda406caf014a66d558ca:refs/heads/main`.
+GitHub PR #56 is MERGED at `2026-11-13T16:12:06Z` with that merge commit.
+The net diff is `src/swingtrade/alpaca_paper_boundary.py` blob
+`854e6adb5c1c2d20370f724d3a7e6d4f32970509` and
+`tests/unit/test_alpaca_paper_boundary.py` blob
+`8e5d89ac0a3f33463d518e62ccaefdadcdf2cdd1`. The verifier recorded
+`854 passed, 111 skipped` for pytest. Those skips are not a database
+PASS. Ruff, Mypy on 59 source files, and the Phase 1 validator exited 0.
+The seven boundary permissions stay false. No Gate C3 authority follows.
+All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
+`DRY_RUN` remains the only authorized trading mode. This entry does not
+embed its own hash and does not call a provider.

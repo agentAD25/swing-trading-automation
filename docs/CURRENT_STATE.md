@@ -1,6 +1,7 @@
 # Current State
 
 - Last updated: 2026-11-13 (item 34 proposal, OAuth callback validation compatibility). Item 34 becomes an implementation grant only when an independent verifier has passed this exact governance commit, an Operator decision has authorized integration of this exact commit, this exact commit is canonical `main`, and a later canonical steps 18 and 19 record names that verifier, that decision, and this governance commit. While any condition is unmet, item 34 is proposed and inactive and does not authorize editing `src/swingtrade/group4_email/local_oauth_probe.py`, `tests/group4_email/test_local_oauth_probe.py`, or `tests/unit/test_gmail_local_connect.py`. When all four are met, the only new authority is Lane 3's later change inside `validate_callback`, its direct synthetic tests, and the two probe blob constants in the connector test. Connector blob `0a6901a82512100aff41a0494fa185b154f55527` stays unchanged. No third Windows OAuth attempt is granted. This proposal does not embed its own hash.
+- Last updated: 2026-11-13 (PR #56 integration record). Commit `4d519730bb56ddf255fdda406caf014a66d558ca`, tree `63157384d1e0742c82e26cd8d22739c71b269478`, parents `c6c5ad000c874c9f192986470e2e301bc83bf5be` and `3d49dbcdbb25ad1d39688323ea9b5f7948cf6ace`, is canonical `main`. Verifier `bc-60651ea8-7488-59cb-8926-fe421d0a4bf0` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR56_4D519730_CONDITIONAL_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward. GitHub PR #56 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T16:12:06Z`. The net change is `src/swingtrade/alpaca_paper_boundary.py` blob `854e6adb5c1c2d20370f724d3a7e6d4f32970509` and `tests/unit/test_alpaca_paper_boundary.py` blob `8e5d89ac0a3f33463d518e62ccaefdadcdf2cdd1`. All seven boundary permissions stay false. This record does not authorize a provider call or Gate C3. This record does not embed its own hash.
 - Last updated: 2026-11-13 (PR #64 integration record). Commit `885d0b405109285a4f44b2f48247b9e7c4ad7348`, tree `20e1d540b48234970ec60f1dc9a2de3fc7ca5c00`, sole parent `f4fda11c6132da4101698e04f980612bd6d8efd6`, is canonical `main`. Verifier `bc-82336778-602d-53dd-87a5-97e4efc1ff38` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR64_ITEMS31_32_CONDITIONAL_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward of that commit. GitHub PR #64 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T14:03:34Z`. Those three facts meet the effectiveness conditions written in items 31 and 32. Item 31's effective authority is one attended Windows run of `run_local_windows_profile_proof` at blob `0a6901a82512100aff41a0494fa185b154f55527`. Item 32's effective authority is the two named source files, and its live message read stays closed. Sentences in that commit that say the items are inactive on this branch are the proposal text. This record does not embed its own hash.
 - Last updated: 2026-11-13 (items 31 and 32 proposal, attended Gmail proof and read-only pilot). Items 31 and 32 become effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, both items are proposed and inactive. When item 31 is effective, the only new authority is one attended Windows run of the existing `run_local_windows_profile_proof` at blob `0a6901a82512100aff41a0494fa185b154f55527`, scope `gmail.metadata`, and one profile GET. When item 32 is effective, the only new source authority is `src/swingtrade/group4_email/gmail_readonly_pilot.py` and `tests/group4_email/test_gmail_readonly_pilot.py`. Sharing this commit does not authorize a live message read. No Gmail write scope, durable-ingestion claim, or economic dispatch is granted. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (PR #60 integration record). Commit `dde81ba402a285b6d48e2f08b5e01bfb361f7f5b`, tree `6c9d108e02a5a94c8279cd844c39d15d9da13859`, is canonical `main`. Its parents are `af08da047bc7a04b66c04d93e5c86fd9886f5933` and `4e1d7266c8d33bef64f039d66c74d3115a1659b9`. Verifier `bc-468d0867-1059-507d-a3dd-457148b23433` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR60_CONDITIONAL_EXACT_COMMIT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward of that commit. GitHub PR #60 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T13:31:30Z`. The integrated change is offline Milestone F recovery classification in `src/swingtrade/group4_email/disposition.py` and `tests/group4_email/test_synthetic_ingestion.py`. It does not authorize a Gmail call, OAuth, a credential, durable receipt storage, or an economic dispatch. This record does not embed its own hash.
@@ -2842,6 +2843,66 @@ a prohibition on later additive coordination roles.
     Alpaca, TradeStation, PostgreSQL, `OrderIntent`, or broker
     operation is performed by this commit. This proposal does not
     embed its own hash.
+    Reconciliation with canonical main
+    `fb9ab787464bd05131c5ead2be8c5ef5bf552b53`, 2026-11-13. This merge
+    keeps the Item 34 proposal and the PR #56 integration record. The
+    Item 34 sentences that call PR #56 an open draft are authoring text
+    from parent `3d49dbcdbb25ad1d39688323ea9b5f7948cf6ace`. PR #56 is
+    integrated at `4d519730bb56ddf255fdda406caf014a66d558ca`. The pass of
+    `8d21fbaf5097873e265e44d25840a0697ade00b8` does not certify this
+    merge. Item 34's allowlist, callback contract, and effectiveness
+    conditions are unchanged. This merge does not authorize a provider
+    call.
+
+    PR #56 integration record, 2026-11-13. This is the Integration
+    Protocol steps 18 and 19 record for the Item 26 Alpaca Gate C2
+    classifier. Commit
+    `4d519730bb56ddf255fdda406caf014a66d558ca`, tree
+    `63157384d1e0742c82e26cd8d22739c71b269478`, first parent
+    `c6c5ad000c874c9f192986470e2e301bc83bf5be`, second parent
+    `3d49dbcdbb25ad1d39688323ea9b5f7948cf6ace`, is canonical `main`.
+    Verifier `bc-60651ea8-7488-59cb-8926-fe421d0a4bf0` returned
+    `INDEPENDENT_EXACT_TREE_PASS` for that commit. The record is
+    https://cursor.com/agents/bc-60651ea8-7488-59cb-8926-fe421d0a4bf0.
+    The earlier verifier `bc-e1644d03-b0e6-58f9-9c55-0ba72561b347`
+    certified `c6c5ad000c874c9f192986470e2e301bc83bf5be` and is not the
+    certification of this merge. Operator decision
+    `LANE1_PR56_4D519730_CONDITIONAL_INTEGRATION_AUTHORIZED` authorized
+    one non-forced fast-forward. The mechanism was
+    `git push origin 4d519730bb56ddf255fdda406caf014a66d558ca:refs/heads/main`.
+    GitHub PR #56 is `MERGED`. Its `mergeCommit.oid` is that SHA. Its
+    `mergedAt` is `2026-11-13T16:12:06Z`. A second fetch showed the same
+    SHA and tree.
+
+    The net diff against the second parent is exactly
+    `src/swingtrade/alpaca_paper_boundary.py`, blob
+    `854e6adb5c1c2d20370f724d3a7e6d4f32970509`, and
+    `tests/unit/test_alpaca_paper_boundary.py`, blob
+    `8e5d89ac0a3f33463d518e62ccaefdadcdf2cdd1`. On that candidate,
+    `python3 -m pytest -p no:cacheprovider tests` exited 0 with
+    `854 passed, 111 skipped, 1 warning`. The 111 skips are not a
+    PostgreSQL certification. `python3 -m ruff check --no-cache src tests`
+    exited 0. `python3 -m mypy --cache-dir=/tmp/mc src` exited 0 with
+    no issues in 59 source files. `python3 tests/validate_phase1_contracts.py`
+    exited 0. `git diff --check` exited 0. `BoundaryDecision` keeps
+    `connect_allowed`, `network_permitted`, `submit_permitted`,
+    `cancel_permitted`, `replace_permitted`, `resubmit_permitted`, and
+    `safe_to_retry` false. No credential, provider call, or order was
+    part of the integration.
+
+    Gmail Items 27 through 32 stay as already recorded. The connector
+    blob remains `0a6901a82512100aff41a0494fa185b154f55527`. Item 31's
+    two attended attempts stay spent. A third OAuth attempt is not
+    authorized. Item 32's live message read stays closed. Item 22 and
+    Item 25 scanners were not changed. TradeStation source was not
+    changed. Item 29 stages stay `NOT_RUN`. Item 30 source paths stay
+    closed. All nine dependencies stay `OPEN`. ADR-0002, ADR-0003,
+    ADR-0006, and ADR-0007 stay Accepted. ADR-0004 and ADR-0005 stay
+    Proposed. Supabase Free stays **NOT_ACCEPTED**. `DRY_RUN` remains
+    the only authorized trading execution mode. `SIM`, paper-order
+    execution, and `LIVE` remain unauthorized. This record does not
+    authorize Gate C3, Gate D, or a provider connection. This record
+    does not embed its own hash.
 
 ## Evidence
 
