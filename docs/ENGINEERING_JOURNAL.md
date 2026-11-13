@@ -4222,7 +4222,6 @@ dependencies stay `OPEN`. ADR-0004 stays Proposed. `DRY_RUN` remains
 the only authorized trading mode. This entry does not embed its own
 hash and does not call Gmail.
 
-<<<<<<< HEAD
 ## 2026-11-13 — Item 33 Group 4A scan exclusion proposal
 
 Canonical main at authoring is
@@ -4250,7 +4249,9 @@ Item 32 two-file grant. The live message read stays closed. All nine
 dependencies stay `OPEN`. ADR-0004 stays Proposed. `DRY_RUN` remains
 the only authorized trading mode. This entry does not embed its own
 hash and does not call Gmail.
-=======
+
+This reconciliation carries that proposal onto canonical main `213acc52bfb79bb5b60ceab75fb106aa209a1fbe`, tree `9692c3593c0d348d3bcd875cb9804d22302c985c`. Item 33 stays inactive on this commit. The scanner files are not edited. Items 32, 34, 36, 38, and 39 stay as recorded on that main. Item 37's commit is that main, so its own effectiveness conditions are met; this paragraph does not recertify Stage E. SE-B-06 and Dimension C stay `NOT_RUN`. Stage F and Item 30 stay closed. This paragraph does not embed its own hash.
+
 ## 2026-11-13 — Item 34 OAuth callback validation proposal
 
 Canonical main at authoring is
@@ -4813,4 +4814,3 @@ authorized that fast-forward. GitHub PR #87 is `MERGED` at
 `7a269749d1b04af4d8940550d811190d3c4a702e` does not certify this
 merge. Stage E is not `PASS`. No migration is authorized. This
 paragraph does not embed its own hash.
->>>>>>> origin/main
