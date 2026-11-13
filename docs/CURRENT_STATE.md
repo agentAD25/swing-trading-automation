@@ -1,6 +1,9 @@
 # Current State
 
-- Last updated: 2026-11-13 (Item 37 reconciliation with the Gmail Item 36 record). Item 37 remains the proposed Stage E amendment and is not effective. It becomes effective only when an independent verifier has passed this exact reconciliation commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. The passes of `f44be4a2e75de2123e48506a6fd985e41c4eb64c` and `c98812dc6c88fd7fefe1efc610e1b1598c4d3568` do not certify this commit. SE-B-06 stays `NOT_RUN` and is supplementary: Stage A stored no task-definition hash, and Item 29 does not require one. That row does not withhold the applicable Dimension B result and is not converted to `PASS`. Dimension C stays `NOT_RUN`. Stage E is not `PASS`. Stage F is not authorized. Item 30's three source paths stay closed. This proposal does not embed its own hash.
+- Last updated: 2026-11-13 (Item 37 reconciliation with current main). Item 37 remains the proposed Stage E amendment and is not effective. It becomes effective only when an independent verifier has passed the commit that contains this sentence, an Operator decision has authorized integration of that commit, and that commit is canonical `main`. The passes of `f44be4a2e75de2123e48506a6fd985e41c4eb64c`, `c98812dc6c88fd7fefe1efc610e1b1598c4d3568`, and `cf00ab378cb7c0d2667521cdb484282b3cd80737` do not certify that commit. SE-B-06 stays `NOT_RUN` and is supplementary: Stage A stored no task-definition hash, and Item 29 does not require one. That row does not withhold the applicable Dimension B result and is not converted to `PASS`. Dimension C stays `NOT_RUN`. Stage E is not `PASS`. Stage F is not authorized. Item 30's three source paths stay closed. Items 36 and 38 stay effective. This proposal does not embed its own hash.
+- Last updated: 2026-11-13 (PR #78 Option A and Gate D grant integration record). Commit `0890546d63eaa0e0e5b917675071bc662b1e2d50`, tree `0b17e98773a544a3fb11937fa2e2b7301a331161`, sole parent `9b18eaece2e16f44151da0d1afb0bbb4d654d519`, is an ancestor of canonical `main`. Verifier `bc-01d43b1b-f0ba-5297-bf15-2283bccc895a` returned `INDEPENDENT_EXACT_TREE_PASS` for that commit. Operator decision `LANE1_PR78_OPTION_A_AND_GATE_D_GRANT_EXACT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward. GitHub PR #78 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T19:21:28Z`. ADR-0008 is Accepted and Option A is selected. The separate two-file grant is effective for offline synthetic work on `src/swingtrade/alpaca_paper_account_probe.py` and `tests/unit/test_alpaca_paper_account_probe.py`. The grant does not authorize a credential read or a provider call. The seven Gate C2 flags stay false. Gmail blobs stay unchanged. Item 29 and Item 30 are not amended. PR #66 is not amended. This reconciliation keeps Item 36 and Item 38. Item 38 stays effective. It does not authorize a provider call. This record does not embed its own hash.
+- Last updated: 2026-11-13 (PR #84 Item 38 integration record). Commit `77b2e64f0ad83307758be138aa2d748accf2f7cf`, tree `18e7fa89524c72b9d3a475f0ecee76c7df4d96a4`, sole parent `0d571dec1d60e9e1c50ac2fb6593d100edc6e42c`, is canonical `main`. Verifier `bc-c6651348-cac2-507d-8bdb-84866d0a4690` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_GMAIL_TOKEN_DIAGNOSTIC_GRANT_EXACT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward. GitHub PR #84 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T20:27:22Z`. The integrated blobs are `docs/CURRENT_STATE.md` `ae06ebf60c00473dc9efad4295dda37faf75233c`, `docs/ENGINEERING_JOURNAL.md` `16a2bba7ee3d7c4137ebb4e1d3a8147c3cdfad4e`, and `docs/WORKSTREAM_STATUS.md` `f700af4ac3dbde7e0d5aedbbba1385ef3e7227f1`. Item 38 is `INTEGRATED`. Sentences in that commit that call it a draft are historical. Item 38 is not `EFFECTIVE` until this steps 18 and 19 record is canonical `main`. Until then Lane 3 must not edit `src/swingtrade/gmail_local_connect.py`, `tests/unit/test_gmail_local_connect.py`, or `src/swingtrade/group4_email/local_oauth_probe.py`. Campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped. Attempt 1 is consumed. Attempts 2 and 3 are unused and are not exercisable. Profile GET count stays 0. This record does not resume OAuth, does not add `client_secret`, and does not authorize a Content-Type change. This record does not embed its own hash.
+- Last updated: 2026-11-13 (Item 38 Gmail token-diagnostic grant, draft). Operator decision `LANE1_GMAIL_TOKEN_DIAGNOSTIC_GOVERNANCE_PREPARATION_AUTHORIZED` authorizes this draft only. Item 38 is not effective. It does not authorize a Gmail call, a Content-Type change, a `client_secret`, or resumption of campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC`. Canonical main at authoring is `0d571dec1d60e9e1c50ac2fb6593d100edc6e42c`, tree `ab33d9172c7c4ed2583b7de9afc2499dbaa30abb`. Item 36 remains the metadata campaign grant. Item 37 remains the open Stage E proposal. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (PR #82 Item 36 integration record). Commit `a06363231abb3fb8f0466da1ec79fff35ec28668`, tree `cbcb6e134197575af49ee64bf59c30c594e81645`, sole parent `0890546d63eaa0e0e5b917675071bc662b1e2d50`, is canonical `main`. Verifier `bc-9481fb1c-0259-5c37-8f96-26dede781fcb` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_GMAIL_THREE_ATTEMPT_GRANT_EXACT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward. GitHub PR #82 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T19:40:02Z`. The integrated blobs are `docs/CURRENT_STATE.md` `acf930fecedd372a469369137975dfb235454cb0`, `docs/ENGINEERING_JOURNAL.md` `200797f94f7b4dfd18ccc131c717e9ac75999b76`, and `docs/WORKSTREAM_STATUS.md` `95eef966f9e59a52e1eb550e590dec1e59505764`. Item 36 is `INTEGRATED`. Sentences in that commit that call it a draft are historical. Item 36 is not `EFFECTIVE` until this steps 18 and 19 record is canonical `main`. This record does not issue `LANE1_GMAIL_THREE_ATTEMPT_METADATA_CAMPAIGN_AUTHORIZED`. The two Item 31 execution decisions stay spent. The protected Gmail import-closure blobs stay unchanged. PR #79 and open draft PR #81 are not amended. This record does not embed its own hash.
 - Last updated: 2026-11-13 (Item 36 Gmail three-attempt metadata grant, draft). Operator decision `LANE1_GMAIL_METADATA_RUNTIME_GRANT_RECONCILIATION_AUTHORIZED` authorizes this draft only. Item 36 is not effective. It does not issue `LANE1_GMAIL_THREE_ATTEMPT_METADATA_CAMPAIGN_AUTHORIZED` and it does not issue `LANE1_GMAIL_THREE_ATTEMPT_GRANT_EXACT_INTEGRATION_AUTHORIZED`. The two Item 31 execution decisions stay spent. The new budget of three attempts is not authorized by this draft. Parent main is `0890546d63eaa0e0e5b917675071bc662b1e2d50`, tree `0b17e98773a544a3fb11937fa2e2b7301a331161`. Open draft PR #79 is a separate Alpaca record and is not mixed into this grant. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (ADR-0008 Option A acceptance and Gate D grant record). Operator decision `LANE1_ADR0008_OPTION_A_ACCEPTANCE_AUTHORIZED` selects Option A. ADR-0008 status is Accepted. Its Decision names the two paper targets and rejects every live target. Operator decision `LANE1_ALPACA_GATE_D_TWO_FILE_PROBE_GRANT_AUTHORIZED` is separate and names only `src/swingtrade/alpaca_paper_account_probe.py` and `tests/unit/test_alpaca_paper_account_probe.py`. That grant becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. Until then Lane 2 must not edit those files. When effective, the grant is offline synthetic development of one future `GET https://paper-api.alpaca.markets/v2/account`. It does not authorize a credential read, Windows Credential Manager, a provider call, a redirect, a retry, positions, orders, or streaming. The seven Gate C2 flags stay false. `DRY_RUN` stays the only trading mode. PR #77 stays the canonical record of Proposed integration. This record does not embed its own hash.
@@ -3402,7 +3405,129 @@ a prohibition on later additive coordination roles.
     ADR-0005, extend ADR-0006, or authorize credentials, a connection
     to port 5432, `SIM`, paper-order execution, or `LIVE`. Historical
     Item 29 sentences that say Stages A through F are `NOT_RUN` stay
-    historical snapshots. This proposal does not embed its own hash.
+    historical snapshots. Keeping this text beside effective Item 38
+    does not make Item 37 effective and does not certify Stage E. This
+    proposal does not embed its own hash.
+
+    38. Gmail token-stage diagnostic grant, proposed 2026-11-13. This
+    item is drafted under Operator decision
+    `LANE1_GMAIL_TOKEN_DIAGNOSTIC_GOVERNANCE_PREPARATION_AUTHORIZED`.
+    Drafting is not effectiveness. Parent main is
+    `0d571dec1d60e9e1c50ac2fb6593d100edc6e42c`, tree
+    `ab33d9172c7c4ed2583b7de9afc2499dbaa30abb`. Item 36 is the effective
+    metadata governance grant. Item 37 is the Stage E proposal on open
+    PR #81 and is not reused. No equivalent diagnostic source grant is
+    canonical. Item 34's callback grant and Item 36's campaign grant
+    are not source authority for this change.
+
+    The reported campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC` is
+    stopped. Attempt 1 is consumed. Attempts 2 and 3 are unused and
+    are not exercisable. The reported result is
+    `GMAIL_OAUTH_TOKEN_REJECTED`. Profile GET count is 0. This item
+    does not reset that budget and does not authorize another OAuth
+    attempt.
+
+    A coordinator check on CPython 3.12.3, with a synthetic POST body
+    and no `urlopen`, saw empty headers immediately after
+    `urllib.request.Request` construction. After
+    `AbstractHTTPHandler.do_request_` and before any socket, the
+    headers included `Content-type: application/x-www-form-urlencoded`
+    and `Content-length`. The historical provider headers were not
+    captured and remain unknown. The missing-Content-Type theory is
+    unsupported. This item does not authorize a Content-Type change or
+    a change to the five-field token form.
+
+    `LocalOAuthProbeRejected` keeps only codes in `_CODES` and
+    rewrites every other code to `fail_closed`. The connector and the
+    token validator currently map local client rejection, transport
+    exceptions, HTTP 4xx, HTTP 5xx, malformed bodies, and a missing
+    access token to `GMAIL_OAUTH_TOKEN_REJECTED`. Those source facts
+    show an observability gap. They do not identify the historical
+    provider failure. A grant limited to the connector and its unit
+    test cannot emit a new code. The minimum later edit is therefore
+    three paths, and only after this item is effective.
+
+    The phases are separate. `DRAFT` is this text.
+    `INDEPENDENTLY_VERIFIED` means an independent verifier has returned
+    `INDEPENDENT_EXACT_TREE_PASS` for this exact commit.
+    `INTEGRATION_AUTHORIZED` means a later Operator decision,
+    `LANE1_GMAIL_TOKEN_DIAGNOSTIC_GRANT_EXACT_INTEGRATION_AUTHORIZED`,
+    names this exact commit for one non-forced fast-forward. That
+    decision is not issued here. `INTEGRATED` means that commit is an
+    ancestor of canonical `main`. `POST_MERGE_ATTESTED` means a later
+    canonical steps 18 and 19 record names that verifier, that
+    decision, and this commit, and labels these proposal sentences
+    historical. The record does not require a record of itself. The
+    source grant is `EFFECTIVE` only when this commit is
+    `INDEPENDENTLY_VERIFIED`, `INTEGRATED`, and `POST_MERGE_ATTESTED`.
+    On this branch the grant is `DRAFT`.
+
+    When effective, Lane 3 may change only
+    `src/swingtrade/gmail_local_connect.py`,
+    `tests/unit/test_gmail_local_connect.py`, and the `_CODES`
+    allowlist in `src/swingtrade/group4_email/local_oauth_probe.py`.
+    The probe edit may add only these codes:
+    `GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED`,
+    `GMAIL_OAUTH_TOKEN_TRANSPORT_UNKNOWN`,
+    `GMAIL_OAUTH_TOKEN_HTTP_4XX`,
+    `GMAIL_OAUTH_TOKEN_HTTP_5XX`,
+    `GMAIL_OAUTH_TOKEN_RESPONSE_MALFORMED`, and
+    `GMAIL_OAUTH_TOKEN_MISSING_ACCESS_TOKEN`.
+    Scope mismatch stays `GMAIL_OAUTH_SCOPE_REJECTED`. An accepted
+    token keeps the existing shape result and may be followed by one
+    profile GET. No other probe function, token field, endpoint,
+    scope, callback check, or PKCE behavior may change.
+
+    The connector must raise one of those allowlisted codes before a
+    rejected token body is returned to the probe. A transport
+    exception after the request is handed to urllib is
+    `GMAIL_OAUTH_TOKEN_TRANSPORT_UNKNOWN`, including an exception whose
+    send state is ambiguous. That outcome is fail-closed and is not
+    retryable. HTTP 400, 401, and 403 are
+    `GMAIL_OAUTH_TOKEN_HTTP_4XX`. HTTP 500 is
+    `GMAIL_OAUTH_TOKEN_HTTP_5XX`. Invalid JSON and non-object JSON are
+    `GMAIL_OAUTH_TOKEN_RESPONSE_MALFORMED`. HTTP 200 without a usable
+    access token is `GMAIL_OAUTH_TOKEN_MISSING_ACCESS_TOKEN`. Local
+    client-document rejection before the token POST is
+    `GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED`. Printed output is the
+    code only. Response bodies, `error_description`, OAuth codes,
+    state, tokens, PKCE verifiers, request bodies, response headers,
+    client identifiers, and mailbox addresses stay out of the output.
+
+    The implementation preserves the five-field token form,
+    authorization-code flow, PKCE S256, cryptographic state
+    validation, the corrected callback validation, the existing
+    authorization and token endpoints, the `gmail.metadata` scope, the
+    loopback listener, one token POST, one profile GET only after an
+    accepted token, the existing profile validation, and the absence
+    of token persistence, refresh persistence, automatic retry,
+    background execution, message retrieval, broker or database work,
+    and economic execution. It does not add `client_secret`. It does
+    not change Content-Type behavior. Synthetic tests are not evidence
+    of Google's historical response.
+
+    The offline tests, once the source grant is effective, cover
+    pre-exchange refusal, synthetic HTTP 200, HTTP 200 without an
+    access token, HTTP 400, 401, 403, and 500, transport failure,
+    ambiguous transport outcome, invalid JSON, non-object JSON, scope
+    mismatch, a second token POST, an unauthorized endpoint, no
+    profile GET after rejection, one profile GET after acceptance,
+    secret-bearing synthetic bodies absent from output, the existing
+    callback protections, the existing failure-injection tests, and
+    unchanged OAuth request fields. Environmental skips are reported
+    separately. The required local checks are the applicable
+    regression, Ruff, Mypy, `python3 tests/validate_phase1_contracts.py`,
+    and `git diff --check`.
+
+    This item does not authorize implementation before effectiveness,
+    does not authorize Lane 3 to merge, and does not resume the
+    stopped campaign. A later attended run requires a separate
+    Operator decision naming the certified implementation commit and
+    the then-canonical main. Item 32, Item 33, PR #66, Gate D,
+    PostgreSQL, and TradeStation are not amended. All nine
+    dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay Proposed.
+    `DRY_RUN` remains the only authorized trading mode. This proposal
+    does not embed its own hash.
 
 ## Evidence
 
