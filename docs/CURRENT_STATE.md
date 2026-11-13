@@ -1,6 +1,6 @@
 # Current State
 
-- Last updated: 2026-11-13 (item 33 proposal, one filename exclusion for the Item 32 adapter). Item 33 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 33 is proposed and inactive and does not authorize editing `tests/group4_email/test_attacks.py`. When all three are met, the only new authority is Lane 1's later one-file exclusion of `gmail_readonly_pilot.py` from `test_parser_does_not_use_network_broker_or_credentials`. That later edit needs its own verified commit and a separate Operator integration decision. Item 32's two paths stay the existing Lane 3 grant. This proposal does not embed its own hash.
+- Last updated: 2026-11-13 (item 33 proposal, one filename exclusion for the Item 32 adapter). Item 33 becomes effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, item 33 is proposed and inactive and does not authorize editing `tests/group4_email/test_attacks.py`. When all three are met, the only new authority is Lane 1's later exclusion of `gmail_readonly_pilot.py` from `test_parser_does_not_use_network_broker_or_credentials`, plus replacement of only the expected Git blob constant for `tests/group4_email/test_attacks.py` inside `tests/unit/test_gmail_local_connect.py`. The assertion stays. No other change to that connector test is granted. That later edit needs its own verified commit and a separate Operator integration decision. Item 32's two paths stay the existing Lane 3 grant. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (PR #64 integration record). Commit `885d0b405109285a4f44b2f48247b9e7c4ad7348`, tree `20e1d540b48234970ec60f1dc9a2de3fc7ca5c00`, sole parent `f4fda11c6132da4101698e04f980612bd6d8efd6`, is canonical `main`. Verifier `bc-82336778-602d-53dd-87a5-97e4efc1ff38` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR64_ITEMS31_32_CONDITIONAL_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward of that commit. GitHub PR #64 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T14:03:34Z`. Those three facts meet the effectiveness conditions written in items 31 and 32. Item 31's effective authority is one attended Windows run of `run_local_windows_profile_proof` at blob `0a6901a82512100aff41a0494fa185b154f55527`. Item 32's effective authority is the two named source files, and its live message read stays closed. Sentences in that commit that say the items are inactive on this branch are the proposal text. This record does not embed its own hash.
 - Last updated: 2026-11-13 (items 31 and 32 proposal, attended Gmail proof and read-only pilot). Items 31 and 32 become effective only when an independent verifier has passed this exact commit, an Operator decision has authorized integration of this exact commit, and this exact commit is canonical `main`. While any condition is unmet, both items are proposed and inactive. When item 31 is effective, the only new authority is one attended Windows run of the existing `run_local_windows_profile_proof` at blob `0a6901a82512100aff41a0494fa185b154f55527`, scope `gmail.metadata`, and one profile GET. When item 32 is effective, the only new source authority is `src/swingtrade/group4_email/gmail_readonly_pilot.py` and `tests/group4_email/test_gmail_readonly_pilot.py`. Sharing this commit does not authorize a live message read. No Gmail write scope, durable-ingestion claim, or economic dispatch is granted. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (PR #60 integration record). Commit `dde81ba402a285b6d48e2f08b5e01bfb361f7f5b`, tree `6c9d108e02a5a94c8279cd844c39d15d9da13859`, is canonical `main`. Its parents are `af08da047bc7a04b66c04d93e5c86fd9886f5933` and `4e1d7266c8d33bef64f039d66c74d3115a1659b9`. Verifier `bc-468d0867-1059-507d-a3dd-457148b23433` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR60_CONDITIONAL_EXACT_COMMIT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward of that commit. GitHub PR #60 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T13:31:30Z`. The integrated change is offline Milestone F recovery classification in `src/swingtrade/group4_email/disposition.py` and `tests/group4_email/test_synthetic_ingestion.py`. It does not authorize a Gmail call, OAuth, a credential, durable receipt storage, or an economic dispatch. This record does not embed its own hash.
@@ -2705,8 +2705,20 @@ a prohibition on later additive coordination roles.
     revised by this commit. Item 32 does not override Item 22.
 
     When all three conditions are met, the only new authority is a
-    later Lane 1 commit whose only changed path is
-    `tests/group4_email/test_attacks.py`. Inside
+    later Lane 1 commit whose only changed paths are
+    `tests/group4_email/test_attacks.py` and
+    `tests/unit/test_gmail_local_connect.py`. In the connector test,
+    the only permitted change is replacement of the expected Git blob
+    constant for `tests/group4_email/test_attacks.py`. On the authoring
+    parent, that constant is
+    `14b911ba29f16161f179c272c2e2f5e1be50922e`. The replacement must
+    equal the attack-test blob in the same implementation commit. The
+    assertion that compares the blob stays. No other line of that file
+    may change under this item. `tests/failure_injection/test_attacks.py`
+    is not a path in this item. Item 25's
+    `tests/failure_injection/test_fail_closed.py` stays outside it.
+    The two probe blob constants reserved for Item 34 are not this
+    grant. Inside
     `test_parser_does_not_use_network_broker_or_credentials`, the
     concatenated Group 4A source drops exactly two top-level filenames:
     the existing `local_oauth_probe.py` and `gmail_readonly_pilot.py`.
@@ -2730,7 +2742,18 @@ a prohibition on later additive coordination roles.
     of a provider message id for a synthetic fixture id, no credential
     or token persistence, no broker or `OrderIntent` capability, no
     real Gmail call, and no import of the adapter from
-    `group4_email/__init__.py`. The live message read stays closed.
+    `group4_email/__init__.py`.     The live message read stays closed.
+
+    Operator decision
+    `LANE1_ITEM33_ATTACK_BLOB_PIN_ALLOWLIST_AMENDMENT_DRAFT_AUTHORIZED`
+    authorizes this documentation correction only. It does not authorize
+    editing either test now, and it does not authorize a Gmail call.
+    The corrected proposal is this commit. The one-file allowlist in
+    ancestor `14d3852ad54113765d1be53484a27fe660cec2d7` is not the
+    operative allowlist of this commit. This commit must contain
+    canonical main `4d519730bb56ddf255fdda406caf014a66d558ca` as an
+    ancestor. The historical parent sentence above remains the
+    authoring baseline.
 
     This item does not edit ADRs or the dependency registry. All nine
     dependencies stay `OPEN`. ADR-0002, ADR-0003, ADR-0006, and

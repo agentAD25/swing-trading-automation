@@ -4233,12 +4233,18 @@ effective path `gmail_readonly_pilot.py` would contain `gmail` and
 cannot pass that scan. Item 32 does not grant `test_attacks.py`.
 
 When item 33 is effective, Lane 1 may later change only
-`tests/group4_email/test_attacks.py` to also drop
-`gmail_readonly_pilot.py` from
-`test_parser_does_not_use_network_broker_or_credentials`. The glob,
-forbidden list, `local_oauth_probe.py` exclusion, and `parse_email`
-socket monkeypatch stay. That test commit needs its own verifier and
-Operator decision. After it is canonical, Lane 3 uses the existing
+`tests/group4_email/test_attacks.py` and, in
+`tests/unit/test_gmail_local_connect.py`, only the expected Git blob
+constant for that attack test. The scan still only also drops
+`gmail_readonly_pilot.py`. The glob, forbidden list,
+`local_oauth_probe.py` exclusion, and `parse_email` socket monkeypatch
+stay. The connector-test assertion stays. No other connector-test line
+is granted. The constant on the authoring parent is
+`14b911ba29f16161f179c272c2e2f5e1be50922e`. Item 25 and Item 34
+constants are outside this grant. Operator decision
+`LANE1_ITEM33_ATTACK_BLOB_PIN_ALLOWLIST_AMENDMENT_DRAFT_AUTHORIZED`
+authorizes this documentation correction only. That test commit needs
+its own verifier and Operator decision. After it is canonical, Lane 3 uses the existing
 Item 32 two-file grant. The live message read stays closed. All nine
 dependencies stay `OPEN`. ADR-0004 stays Proposed. `DRY_RUN` remains
 the only authorized trading mode. This entry does not embed its own
