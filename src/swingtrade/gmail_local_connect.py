@@ -111,24 +111,26 @@ def desktop_client_from_document(document: object) -> DesktopClientConfig:
     """Build a Desktop config. Secret custody fields are rejected."""
 
     if type(document) is not dict or set(document) != {"installed"}:
-        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_REJECTED")
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED")
     installed = document["installed"]
     if type(installed) is not dict:
-        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_REJECTED")
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED")
     if "network_permitted" in installed:
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
     if _CUSTODY_KEYS.intersection(installed):
-        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_REJECTED")
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED")
     if _OFFLINE_KEYS.intersection(installed):
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_SCOPE_REJECTED")
     if "client_secret" in installed and type(installed.get("client_secret")) is not str:
-        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_REJECTED")
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED")
     if "scopes" in installed and not _scope_declaration(installed.get("scopes")):
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_SCOPE_REJECTED")
     _reject_redirects(installed.get("redirect_uris"))
     _reject_auth_declaration(installed)
     _reject_declared_endpoint(installed, "token_uri", _TOKEN_ENDPOINT)
     client_id = installed.get("client_id")
+    if type(client_id) is not str or client_id == "":
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED")
     client = DesktopClientConfig(
         client_type="installed",
         redirect_host="127.0.0.1",
@@ -145,11 +147,11 @@ def desktop_client_from_json_text(text: str) -> DesktopClientConfig:
     """Parse one in-memory Desktop client document."""
 
     if type(text) is not str or text.strip() == "" or len(text) > _MAX_CLIENT_BYTES:
-        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_REJECTED")
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED")
     try:
         document = json.loads(text)
     except json.JSONDecodeError:
-        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_REJECTED") from None
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED") from None
     return desktop_client_from_document(document)
 
 
@@ -206,6 +208,38 @@ class CommandBrowser:
             raise LocalOAuthProbeRejected("GMAIL_OAUTH_CALLBACK_REJECTED")
 
 
+def _token_stage_error(method: str, exc: BaseException, code: str) -> LocalOAuthProbeRejected:
+    """Map a failure after the request is handed to urllib.
+
+    A POST exception, including one whose send state is ambiguous, is
+    fail-closed and is not retryable.
+    """
+
+    if method != "POST":
+        return LocalOAuthProbeRejected(code)
+    if isinstance(exc, (json.JSONDecodeError, UnicodeError)):
+        return LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_RESPONSE_MALFORMED")
+    return LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_TRANSPORT_UNKNOWN")
+
+
+def _accepted_token_response(status: int, body: Mapping[str, object]) -> dict[str, object]:
+    """Return an accepted token body, or raise before the probe sees a rejection."""
+
+    if status in {400, 401, 403}:
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_HTTP_4XX")
+    if status == 500:
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_HTTP_5XX")
+    if status != 200:
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_REJECTED")
+    if body.get("scope") != _METADATA_SCOPE:
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_SCOPE_REJECTED")
+    access_token = body.get("access_token")
+    if type(access_token) is not str or access_token == "":
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_MISSING_ACCESS_TOKEN")
+    retained = {key: value for key, value in body.items() if key != "refresh_token"}
+    return {"status": status, "body": retained}
+
+
 class ProfileTransport:
     """One token POST and one profile GET. The access token is not retained."""
 
@@ -227,12 +261,18 @@ class ProfileTransport:
         from urllib.parse import urlencode
 
         encoded = urlencode(list(form.items())).encode("ascii")
-        status, body = self._call("POST", endpoint, encoded, None, "GMAIL_OAUTH_TOKEN_REJECTED")
+        status, body = self._call(
+            "POST",
+            endpoint,
+            encoded,
+            None,
+            "GMAIL_OAUTH_TOKEN_TRANSPORT_UNKNOWN",
+        )
         access_token = body.get("access_token")
-        if status == 200 and type(access_token) is str and access_token != "":
+        response = _accepted_token_response(status, body)
+        if type(access_token) is str and access_token != "":
             self._access = [access_token]
-        retained = {key: value for key, value in body.items() if key != "refresh_token"}
-        return {"status": status, "body": retained}
+        return response
 
     def get_profile(self, endpoint: str, body: bytes) -> Mapping[str, object]:
         access_token = self._access[0] if self._access else None
@@ -263,9 +303,11 @@ class ProfileTransport:
             status, payload = self._exchange(method, endpoint, body, _HTTP_TIMEOUT, access_token)
         except LocalOAuthProbeRejected:
             raise
-        except Exception:
-            raise LocalOAuthProbeRejected(code) from None
+        except Exception as exc:
+            raise _token_stage_error(method, exc, code) from None
         if type(status) is not int or type(payload) is not dict:
+            if method == "POST":
+                raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_RESPONSE_MALFORMED")
             raise LocalOAuthProbeRejected(code)
         self._access = [] if method == "GET" else self._access
         return status, dict(payload)
@@ -345,12 +387,12 @@ def _path_argument(argv: list[str]) -> str:
 
 def _load_client_path(path: str) -> DesktopClientConfig:
     if type(path) is not str or path == "" or "\x00" in path:
-        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_REJECTED")
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED")
     try:
         with open(path, encoding="utf-8") as handle:
             text = handle.read(_MAX_CLIENT_BYTES + 1)
     except OSError:
-        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_REJECTED") from None
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED") from None
     return desktop_client_from_json_text(text)
 
 
@@ -390,7 +432,7 @@ def run_local_windows_profile_proof(client_json_path: str) -> str:
         request = urllib_request.Request(endpoint, data=data, method=method)
         if access_token is not None:
             request.add_header("Authorization", "Bearer " + access_token)
-        code = "GMAIL_OAUTH_TOKEN_REJECTED" if method == "POST" else "GMAIL_OAUTH_PROFILE_REJECTED"
+        fallback = "GMAIL_OAUTH_PROFILE_REJECTED"
         try:
             with opener.open(request, timeout=timeout_seconds) as response:
                 status = response.status
@@ -400,14 +442,16 @@ def run_local_windows_profile_proof(client_json_path: str) -> str:
             raw = error.read(65536)
         except LocalOAuthProbeRejected:
             raise
-        except Exception:
-            raise LocalOAuthProbeRejected(code) from None
+        except Exception as exc:
+            raise _token_stage_error(method, exc, fallback) from None
         try:
             parsed = json.loads(raw.decode("utf-8"))
-        except (UnicodeError, json.JSONDecodeError):
-            raise LocalOAuthProbeRejected(code) from None
+        except (UnicodeError, json.JSONDecodeError) as exc:
+            raise _token_stage_error(method, exc, fallback) from None
         if type(parsed) is not dict or type(status) is not int:
-            raise LocalOAuthProbeRejected(code)
+            if method == "POST":
+                raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_RESPONSE_MALFORMED")
+            raise LocalOAuthProbeRejected(fallback)
         return status, dict(parsed)
 
     def open_socket() -> _BoundSocket:
