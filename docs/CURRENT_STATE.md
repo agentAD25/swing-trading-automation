@@ -1,5 +1,6 @@
 # Current State
 
+- Last updated: 2026-11-13 (PR #69 Item 35 integration record). Commit `182884702b419484c40348124e1b67f17d06b1eb`, tree `bf82dd4fa556a24fcf5883ae136c445a37368f87`, parents `f4d1638cbb401de4a85e00d7d53b3f70d231e1aa` and `b0ce11e4fd0eaf37f84a8b2a9291fec9c76ee298`, is canonical `main`. Verifier `bc-929dbcb3-9c2f-54f4-901c-57beab99a00d` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR69_ITEM35_EXACT_INTEGRATION_AUTHORIZED` authorized one non-forced fast-forward. GitHub PR #69 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T17:08:58Z`. Sentences in that commit that say Item 35 is `DRAFT` or inactive are historical. The implementation grant is the two offline mock custody files and is not a provider call, a native Windows credential call, or Gate D. The pass of `f4d1638cbb401de4a85e00d7d53b3f70d231e1aa` does not certify this merge. This record does not embed its own hash.
 - Last updated: 2026-11-13 (item 35 proposal, Alpaca Gate C3 paper-credential custody governance). Item 35 is `DRAFT` on this branch. It is `INDEPENDENTLY_VERIFIED` only after `INDEPENDENT_EXACT_TREE_PASS` for this exact commit. It is `INTEGRATION_AUTHORIZED` only after an Operator decision names this exact commit. It is `INTEGRATED` only when that commit is canonical `main`. It is `POST_MERGE_ATTESTED` only when a later canonical steps 18 and 19 record names that verifier, that decision, and this commit and labels these proposal sentences historical. It is `EFFECTIVE` only when the same commit is `INDEPENDENTLY_VERIFIED`, `INTEGRATED`, and `POST_MERGE_ATTESTED`. Until then, Lane 2 must not add `src/swingtrade/alpaca_paper_custody.py` or `tests/unit/test_alpaca_paper_custody.py`. Gate C2 remains the integrated offline classifier. This proposal grants no credential, provider call, or paper order. This proposal does not embed its own hash.
 - Last updated: 2026-11-13 (PR #67 Item 34 integration record). Commit `fc01765af77d469fcaccca2ed570f987d4d1e892`, tree `abddf196bfe219a6b012dec3aa05fef0209c6951`, parents `8d21fbaf5097873e265e44d25840a0697ade00b8` and `fb9ab787464bd05131c5ead2be8c5ef5bf552b53`, is canonical `main`. Verifier `bc-dd8e2c0a-3a43-505b-8918-8da9563c878f` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_PR67_ITEM34_EXACT_INTEGRATION_CONDITIONALLY_AUTHORIZED` authorized one non-forced fast-forward. GitHub PR #67 is `MERGED` with `mergeCommit.oid` equal to that SHA at `2026-11-13T16:47:24Z`. Sentences in that commit that say Item 34 is inactive are historical. The implementation grant is the three named paths and is not a Windows OAuth attempt. The pass of `8d21fbaf5097873e265e44d25840a0697ade00b8` does not certify this merge. This record does not embed its own hash.
 - Last updated: 2026-11-13 (item 34 proposal, OAuth callback validation compatibility). Item 34 becomes an implementation grant only when an independent verifier has passed this exact governance commit, an Operator decision has authorized integration of this exact commit, this exact commit is canonical `main`, and a later canonical steps 18 and 19 record names that verifier, that decision, and this governance commit. While any condition is unmet, item 34 is proposed and inactive and does not authorize editing `src/swingtrade/group4_email/local_oauth_probe.py`, `tests/group4_email/test_local_oauth_probe.py`, or `tests/unit/test_gmail_local_connect.py`. When all four are met, the only new authority is Lane 3's later change inside `validate_callback`, its direct synthetic tests, and the two probe blob constants in the connector test. Connector blob `0a6901a82512100aff41a0494fa185b154f55527` stays unchanged. No third Windows OAuth attempt is granted. This proposal does not embed its own hash.
@@ -3126,6 +3127,73 @@ a prohibition on later additive coordination roles.
     authorized trading execution mode. `SIM`, paper-order execution,
     and `LIVE` remain unauthorized. This record does not embed its own
     hash.
+
+    hash.
+
+    PR #69 integration record, 2026-11-13. This is the Integration
+    Protocol steps 18 and 19 record for Item 35. Commit
+    `182884702b419484c40348124e1b67f17d06b1eb`, tree
+    `bf82dd4fa556a24fcf5883ae136c445a37368f87`, first parent
+    `f4d1638cbb401de4a85e00d7d53b3f70d231e1aa`, second parent
+    `b0ce11e4fd0eaf37f84a8b2a9291fec9c76ee298`, is canonical `main`.
+    Verifier `bc-929dbcb3-9c2f-54f4-901c-57beab99a00d` returned
+    `INDEPENDENT_EXACT_TREE_PASS` for that commit. The record is
+    https://cursor.com/agents/bc-929dbcb3-9c2f-54f4-901c-57beab99a00d.
+    The earlier pass of `f4d1638cbb401de4a85e00d7d53b3f70d231e1aa` by
+    `bc-abae03f8-49cc-5aab-9060-b32b3209fe56` does not certify this
+    merge. Operator decision
+    `LANE1_PR69_ITEM35_EXACT_INTEGRATION_AUTHORIZED` authorized one
+    non-forced fast-forward. The mechanism was
+    `git push origin 182884702b419484c40348124e1b67f17d06b1eb:refs/heads/main`.
+    GitHub PR #69 is `MERGED`. Its `mergeCommit.oid` is that SHA. Its
+    `mergedAt` is `2026-11-13T17:08:58Z`. A second fetch showed the same
+    SHA and tree.
+
+    The net diff against the second parent is exactly
+    `docs/CURRENT_STATE.md` blob
+    `f0065af493e672addb53db87dd98ec1a2a4e66de`,
+    `docs/ENGINEERING_JOURNAL.md` blob
+    `a80eb420355b8fca16823d324323e3ae1136a457`, and
+    `docs/WORKSTREAM_STATUS.md` blob
+    `213841552be576953fdedca0f92fc590fc57721e`. No source or test path
+    changed. The independent verifier recorded a passing Phase 1
+    contract validator. Implementation pytest was `NOT_RUN`.
+    `git diff --check` was clean. The connector blob remains
+    `0a6901a82512100aff41a0494fa185b154f55527`. The probe blob remains
+    `777db628ebe0f55aa529b26c9ad5692799121090`. The Gate C2 source blob
+    remains `854e6adb5c1c2d20370f724d3a7e6d4f32970509` and its test blob
+    remains `8e5d89ac0a3f33463d518e62ccaefdadcdf2cdd1`.
+
+    Sentences in that commit that say Item 35 is `DRAFT` or inactive
+    are historical. The sentence in the Item 34 record that says Gate
+    C3 stays closed is the state before this record. The four Item 35
+    effectiveness conditions are met. The implementation grant is
+    effective. Lane 2 may add only
+    `src/swingtrade/alpaca_paper_custody.py` and
+    `tests/unit/test_alpaca_paper_custody.py`. The module is an offline
+    synthetic mock. The only storable target names are
+    `swing-trading/lane2/alpaca/paper/key-id` and
+    `swing-trading/lane2/alpaca/paper/secret`. The only host those
+    targets may be associated with is `paper-api.alpaca.markets`.
+    Live names and live hosts are rejected. A missing mock fails
+    closed. Secret bytes must not appear in `repr`, `str`, or
+    exception text. `connect_allowed`, `network_permitted`,
+    `submit_permitted`, `cancel_permitted`, `replace_permitted`,
+    `resubmit_permitted`, and `safe_to_retry` stay false. ADR-0006 is
+    not extended. Native Windows credential access still requires a
+    separate accepted Alpaca custody ADR. Gate D stays closed. Item 34
+    stays effective for its three named paths. This record does not
+    authorize a provider call, a real key, or integration of the later
+    implementation commit.
+
+    Item 33 and PR #66 are not amended. Item 29 stages stay `NOT_RUN`.
+    Item 30 source paths stay closed. All nine dependencies stay
+    `OPEN`. ADR-0002, ADR-0003, ADR-0006, and ADR-0007 stay Accepted.
+    ADR-0004 and ADR-0005 stay Proposed. ADR-0005's Decision stays
+    blank. Supabase Free stays **NOT_ACCEPTED**. `DRY_RUN` remains the
+    only authorized trading execution mode. `SIM`, paper-order
+    execution, and `LIVE` remain unauthorized. This record does not
+    embed its own hash.
 
 ## Evidence
 
