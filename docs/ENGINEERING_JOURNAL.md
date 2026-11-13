@@ -4200,3 +4200,24 @@ source paths stay closed. All nine dependencies stay `OPEN`. ADR-0004
 stays Proposed. ADR-0006 is not extended. `DRY_RUN` remains the only
 authorized trading mode. This entry does not embed its own hash and
 does not call Gmail.
+
+## 2026-11-13 — PR #64 Items 31 and 32 integration record
+
+Commit `885d0b405109285a4f44b2f48247b9e7c4ad7348`, tree
+`20e1d540b48234970ec60f1dc9a2de3fc7ca5c00`, sole parent
+`f4fda11c6132da4101698e04f980612bd6d8efd6`, is canonical main. Verifier
+`bc-82336778-602d-53dd-87a5-97e4efc1ff38` returned
+`INDEPENDENT_EXACT_TREE_PASS`. Operator decision
+`LANE1_PR64_ITEMS31_32_CONDITIONAL_INTEGRATION_AUTHORIZED` authorized
+the non-forced fast-forward. GitHub PR #64 is MERGED at
+`2026-11-13T14:03:34Z` with that merge commit. The proposal sentences
+that call items 31 and 32 inactive are historical. Item 31 is effective
+for one attended Windows profile proof at connector blob
+`0a6901a82512100aff41a0494fa185b154f55527`. Item 32 is effective for
+the two named files only. Its live message read stays closed. This
+record is the steps 18 and 19 documentation. It is not a further gate
+on the Item 31 Windows session. `DEP-GMAIL-001` stays `OPEN`. Item 29
+stages stay `NOT_RUN`. Item 30 source paths stay closed. All nine
+dependencies stay `OPEN`. ADR-0004 stays Proposed. `DRY_RUN` remains
+the only authorized trading mode. This entry does not embed its own
+hash and does not call Gmail.
