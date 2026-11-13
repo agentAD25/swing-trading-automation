@@ -40,6 +40,8 @@ _DENIED_HOSTS = frozenset(
         DATA_SANDBOX_HOST,
     }
 )
+_ACCEPTED_BODY_STATUS = "ACTIVE"
+_MISSING_BODY = object()
 _FAULTS = frozenset({"ambiguous", "inconsistent", "incomplete", "malformed", "env-fallback"})
 _FAULT_REASONS = {
     "ambiguous": "AMBIGUOUS_CUSTODY",
@@ -178,7 +180,7 @@ class ScriptedOutcome:
         status: object = 200,
         redirected: object = False,
         fault: object = None,
-        body: object = None,
+        body: object = _MISSING_BODY,
     ) -> None:
         self.status = status
         self.redirected = redirected
@@ -205,6 +207,8 @@ class SyntheticTransport:
 
     def exchange(self) -> ScriptedOutcome:
         self.calls += 1
+        if self._outcome.fault == "exception":
+            raise RuntimeError("TRANSPORT_EXCEPTION")
         return self._outcome
 
     def __repr__(self) -> str:
@@ -250,7 +254,11 @@ def read_account(
     _require_custody(custody)
     scripted = _require_transport(transport)
     current._exchanged = True
-    return _interpret(scripted.exchange())
+    try:
+        outcome = scripted.exchange()
+    except RuntimeError:
+        raise ProbeError("TRANSPORT_EXCEPTION") from None
+    return _interpret(outcome)
 
 
 def _require_session(session: object) -> ProbeSession:
@@ -330,8 +338,39 @@ def _interpret(outcome: ScriptedOutcome) -> ProbeDecision:
     if outcome.redirected or 300 <= outcome.status < 400:
         raise ProbeError("REDIRECT_DENIED")
     if outcome.status == 200:
+        reason = _body_reason(outcome._body)
+        if reason is not None:
+            raise ProbeError(reason)
         return ProbeDecision(ProbeClassification.ACCEPTED, "ACCOUNT_OBSERVED")
     raise ProbeError("UNEXPECTED_STATUS")
+
+
+def _body_reason(body: object) -> str | None:
+    if body is _MISSING_BODY:
+        return "MISSING_BODY"
+    if body is None:
+        return "NULL_BODY"
+    if type(body) is not dict:
+        return "MALFORMED_BODY"
+    if len(body) == 0:
+        return "EMPTY_BODY"
+    if any(type(key) is not str for key in body):
+        return "MALFORMED_BODY"
+    if "status" not in body:
+        return "MISSING_STATUS"
+    status = body["status"]
+    if type(status) is not str or status == "" or status != status.strip():
+        return "MALFORMED_STATUS"
+    if status != _ACCEPTED_BODY_STATUS:
+        return "UNSUPPORTED_STATUS"
+    extras = [key for key in body if key != "status"]
+    if not extras:
+        return None
+    for key in extras:
+        value = body[key]
+        if value is None or type(value) is bool or type(value) is str:
+            return "CONTRADICTORY_BODY"
+    return "AMBIGUOUS_RESPONSE"
 
 
 def _custody_denial(

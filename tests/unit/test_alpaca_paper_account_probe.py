@@ -241,9 +241,46 @@ def test_process_env_is_not_a_credential_source(monkeypatch: pytest.MonkeyPatch)
     assert missing[2].calls == 0
 
 
+def test_invalid_synthetic_body_is_terminal() -> None:
+    cases = (
+        (ScriptedOutcome(status=200), "MISSING_BODY"),
+        (ScriptedOutcome(status=200, body=None), "NULL_BODY"),
+        (ScriptedOutcome(status=200, body={}), "EMPTY_BODY"),
+        (ScriptedOutcome(status=200, body=["ACTIVE"]), "MALFORMED_BODY"),
+        (ScriptedOutcome(status=200, body={"state": "ACTIVE"}), "MISSING_STATUS"),
+        (ScriptedOutcome(status=200, body={"status": 1}), "MALFORMED_STATUS"),
+        (ScriptedOutcome(status=200, body={"status": True}), "MALFORMED_STATUS"),
+        (ScriptedOutcome(status=200, body={"status": None}), "MALFORMED_STATUS"),
+        (ScriptedOutcome(status=200, body={"status": ""}), "MALFORMED_STATUS"),
+        (ScriptedOutcome(status=200, body={"status": "INACTIVE"}), "UNSUPPORTED_STATUS"),
+        (
+            ScriptedOutcome(status=200, body={"status": "ACTIVE", "state": "INACTIVE"}),
+            "CONTRADICTORY_BODY",
+        ),
+        (
+            ScriptedOutcome(status=200, body={"status": "ACTIVE", "classification": "DENIED"}),
+            "CONTRADICTORY_BODY",
+        ),
+    )
+    for outcome, reason in cases:
+        ready = _ready(outcome=outcome)
+        _denied(lambda current=ready: read_account(*current), reason)
+        assert ready[2].calls == 1
+        _denied(lambda current=ready: read_account(*current), "MULTIPLE_GET_DENIED")
+        assert ready[2].calls == 1
+
+
+def test_transport_exception_does_not_repeat() -> None:
+    failed = _ready(outcome=ScriptedOutcome(fault="exception", body={"status": "ACTIVE"}))
+    _denied(lambda: read_account(*failed), "TRANSPORT_EXCEPTION")
+    assert failed[2].calls == 1
+    _denied(lambda: read_account(*failed), "MULTIPLE_GET_DENIED")
+    assert failed[2].calls == 1
+
+
 def test_secret_bytes_stay_out_of_text() -> None:
     session, custody, transport, runtime = _ready(
-        outcome=ScriptedOutcome(body={"secret": _SECRET.decode()})
+        outcome=ScriptedOutcome(body={"status": "ACTIVE"})
     )
     decision = read_account(session, custody, transport, runtime)
     rendered = " ".join(
@@ -259,8 +296,13 @@ def test_secret_bytes_stay_out_of_text() -> None:
     )
     assert _SECRET.decode() not in rendered
     assert _KEY_ID.decode() not in rendered
-    denied = _ready(outcome=ScriptedOutcome(status=500, body=_SECRET))
-    error = _denied(lambda: read_account(*denied), "UNEXPECTED_STATUS")
+    denied = _ready(
+        outcome=ScriptedOutcome(
+            status=200,
+            body={"status": "ACTIVE", "note": _SECRET.decode()},
+        )
+    )
+    error = _denied(lambda: read_account(*denied), "CONTRADICTORY_BODY")
     assert _SECRET.decode() not in repr(error)
     assert _SECRET.decode() not in str(error)
 
