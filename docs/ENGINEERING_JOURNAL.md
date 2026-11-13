@@ -4661,6 +4661,28 @@ amended. All nine dependencies stay `OPEN`. ADR-0004 and ADR-0005 stay
 Proposed. `DRY_RUN` remains the only authorized trading mode. This
 entry does not embed its own hash and does not call Gmail.
 
+## 2026-11-13 — Item 37 reconciled with canonical Item 36
+
+This merge keeps the Gmail Item 36 integration record and keeps the
+Stage E proposal as Item 37. The sentences above that say PR #81 still
+uses Item 36 are the historical text of commit
+`0d571dec1d60e9e1c50ac2fb6593d100edc6e42c`. They are not changed.
+SE-B-06 stays `NOT_RUN`. It is supplementary because Item 29 does not
+require a task-definition hash and Stage A never stored one. It does
+not withhold the applicable Dimension B result and is not converted to
+`PASS`. Dimension C stays `NOT_RUN`. Item 37 is not effective. Stage E
+is not `PASS`. Stage F was not run. No SQL was sent. The protected
+port 5432 service was not changed. Item 30 source paths were not
+created. The passes of `f44be4a2e75de2123e48506a6fd985e41c4eb64c` and
+`c98812dc6c88fd7fefe1efc610e1b1598c4d3568` do not certify this merge.
+This entry does not embed its own hash.
+
+This later merge keeps that Item 37 proposal inactive. Commit
+`cf00ab378cb7c0d2667521cdb484282b3cd80737` remains an ancestor and does
+not certify this merge. Items 36 and 38 stay effective. Stage E is not
+`PASS`. Stage F is not authorized. Item 30 source paths stay closed.
+No SQL was sent.
+
 ## 2026-11-13 — Item 38 Gmail token-diagnostic grant draft
 
 Canonical main at authoring is
@@ -4721,3 +4743,44 @@ integrated by this record. All nine dependencies stay `OPEN`.
 ADR-0004 and ADR-0005 stay Proposed. `DRY_RUN` remains the only
 authorized trading mode. This entry does not embed its own hash and
 does not call Gmail.
+
+## 2026-11-13 — Item 39 Alembic target-guard grant draft
+
+Parent main is `bfcdec0c2a28a57bbbf373eb3b9bc854f9ae7744`, tree
+`459f72955cbe1114a9bba121836fa4c4386e5345`. This entry prepares Item
+39 only. Item 39 is not effective. Lane 4 must not edit `alembic.ini`,
+`migrations/env.py`, or `tests/unit/test_alembic_target_guard.py`
+before an independent verifier has passed the commit that contains
+this entry, an Operator decision has authorized that commit, and that
+commit is canonical `main`.
+
+The committed Alembic URL names port 5432, and `migrations/env.py`
+uses it. The future guard refuses every target except `127.0.0.1`,
+port `5433`, database `swingtrade_receipt_test`, role
+`swingtrade_migrator`, and system identifier
+`7707684291752896980`. It does not fall back to the committed URL. It
+does not assume `pg_control_system()` is granted, and it fails closed
+when the same-connection identity proof is missing. Host
+`pg_controldata` does not replace that connection check. No privilege
+grant is made. Revision `0004` stays refused. Revisions `0001`
+through `0003` are not edited. No migration is authorized.
+
+Lane 4 reported 703 passed, 11 failed, 15 errors, and 111 skipped on
+Windows Python 3.13.0. Lane 1 did not re-run that suite. The reported
+11 failures are LF/CRLF checkout differences, and the reported 15
+errors are oversized pytest node identifiers. Fixture hashes stay
+unchanged. The pytest-id repair is not authorized here. The suite is
+not `PASS`. Open PR #81 is not amended. Stage F and Item 30 stay
+closed. `DRY_RUN` remains the only authorized trading mode. This
+entry does not embed its own hash and does not connect to PostgreSQL.
+
+This later reconciliation keeps Item 37 inactive and keeps Item 39
+effective. Commit `e52ad5e6e40e228ffba20199707a6c39d7fd4f5e` remains
+an ancestor. Verifier `bc-5a71318b-51be-512a-ae34-3638d620d2e2`
+returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision
+`LANE1_ITEM39_ALEMBIC_GUARD_GRANT_EXACT_INTEGRATION_AUTHORIZED`
+authorized that fast-forward. GitHub PR #87 is `MERGED` at
+`2026-11-13T21:11:03Z`. Prior commit
+`7a269749d1b04af4d8940550d811190d3c4a702e` does not certify this
+merge. Stage E is not `PASS`. No migration is authorized. This
+paragraph does not embed its own hash.
