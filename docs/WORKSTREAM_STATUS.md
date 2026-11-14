@@ -81,6 +81,8 @@ ADR-0009 proposal, 2026-11-14. Parent main `afc6b76ec679b269e89e5478c5a8bf938a0d
 
 ADR-0009 Option A acceptance preparation, 2026-11-14. Operator decision `LANE1_ADR0009_OPTION_A_ACCEPTANCE_PREPARATION_AUTHORIZED` selects Option A. ADR-0009 status is Accepted. The pass of `010acfa2ddd3aecc3889d8aae885a5717132323b` does not certify this acceptance commit. Layer D becomes effective only when the commit that contains this paragraph is independently verified, integration-authorized, and canonical main. Until then the packages are not authority. Layer P stays inactive. PR #66, PR #80, PR #88, and PR #90 are not closed. All nine dependencies stay OPEN. ADR-0004 and ADR-0005 stay Proposed. ADR-0008 stays Accepted and is not widened. This descendant cannot embed its own hash.
 
+ADR-0009 prospective Layer D candidate, 2026-11-14. Operator direction `LANE1_ADR0009_PROSPECTIVE_LAYER_D_CORRECTION_PREPARATION_AUTHORIZED` authorizes preparation only. Parent main `80b5437c5296ba07e3f4f9f149c11629b6dfa497` does not contain the acceptance-verifier report or the integration decision. Those historical claims stay unresolved. Option A stays selected. Prospective Layer D authority becomes effective only when the commit that contains this paragraph is independently verified, named by `LANE1_ADR0009_LAYER_D_PROSPECTIVE_ACTIVATION_EXACT_INTEGRATION_AUTHORIZED`, and an ancestor of canonical main. Until then the packages are not authority. Layer P stays inactive. Campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped. PR #66, PR #80, PR #88, and PR #90 are not amended. All nine dependencies stay OPEN. ADR-0008 stays Accepted and is not widened. This descendant cannot embed its own hash.
+
 ## Controlled states
 
 Only these values are permitted for `Current state`:

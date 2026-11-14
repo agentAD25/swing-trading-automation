@@ -65,7 +65,27 @@ The Operator selected Option A on 2026-11-14 by decision `LANE1_ADR0009_OPTION_A
 
 The selected text is the Layer D and Layer P text in this record. Layer D becomes effective only when an independent verifier has returned `INDEPENDENT_EXACT_TREE_PASS` for the commit that contains this Decision and the current-state acceptance record, an Operator decision has authorized integration of that same commit, and that commit is canonical `main`. The pass of proposal `010acfa2ddd3aecc3889d8aae885a5717132323b` does not certify that commit. Until those three conditions are met, existing item grants remain the only implementation authority.
 
+Acceptance commit `80b5437c5296ba07e3f4f9f149c11629b6dfa497` is canonical `main`. It does not contain the acceptance-verifier report or the integration decision. Those historical activation claims are unresolved. The prospective section below is the new activation boundary. It does not certify pull request #91.
+
 Layer P stays inactive. This Decision authorizes no provider call, credential read, migration, paper order, or `LIVE` route. Class 1 and class 2 controls stay in force. `DRY_RUN` remains the only authorized trading mode. Open PR #66, PR #80, PR #88, and PR #90 are not closed or rewritten. This Decision does not embed the acceptance commit hash.
+
+## Prospective Layer D activation
+
+Operator direction `LANE1_ADR0009_PROSPECTIVE_LAYER_D_CORRECTION_PREPARATION_AUTHORIZED` authorizes this candidate only. It does not authorize integration and it does not issue `LANE1_ADR0009_LAYER_D_PROSPECTIVE_ACTIVATION_EXACT_INTEGRATION_AUTHORIZED`.
+
+Pull request #91 merged `80b5437c5296ba07e3f4f9f149c11629b6dfa497`, tree `360cab4fbf10a365dfc6e4498ea13dd343afb44b`. That commit does not contain verifier `bc-1ed51ee2-d22c-5ac0-8ca2-1ea97d5b3b81` or decision `LANE1_ADR0009_LAYER_D_EXACT_INTEGRATION_AUTHORIZED`. The pull-request description names both. A pull-request description is not independent verification and is not an Operator decision. Proposal verifier `bc-5b70ba13-fdd5-58be-9c8c-dc5736908571` passed only `010acfa2ddd3aecc3889d8aae885a5717132323b`. The Operator records that retrieval of the acceptance verifier returned HTTP 500. This section does not backdate the missing artifacts and does not certify that historical activation.
+
+Option A stays selected. The Layer D paths, the mocked read-only pilot bounds, and the single added scanner exclusion of `gmail_readonly_pilot.py` beside `local_oauth_probe.py` stay as written. No other scanner exclusion is added.
+
+Offline Layer D authority becomes effective only when all three are true for the commit that contains this section:
+
+1. An independent verifier, distinct from the author, returns `INDEPENDENT_EXACT_TREE_PASS` for that exact commit and tree.
+2. A new Operator decision, `LANE1_ADR0009_LAYER_D_PROSPECTIVE_ACTIVATION_EXACT_INTEGRATION_AUTHORIZED`, authorizes integration of that same commit.
+3. That commit is integrated by one non-forced fast-forward and remains an ancestor of canonical `main` until a later Operator decision revokes or supersedes it.
+
+A later document whose only purpose is to declare this activation effective is not required. Security-sensitive commits and completed milestones still require independent exact-tree verification before integration. Lane 1 remains the only proposer of canonical integration. Ordinary in-package commits do not need a new governance item.
+
+Layer P stays inactive. No standing Gmail, Alpaca, or PostgreSQL grant is activated. Campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped. Attempt 1 stays consumed. Attempts 2 and 3 stay unused. `DRY_RUN` remains the only authorized trading mode. This section authorizes no credential read, provider call, migration, paper order, or `LIVE` route. It does not embed its own hash.
 
 ## Option A text
 
@@ -73,7 +93,7 @@ This text governs Layer D only after the acceptance commit that contains the Dec
 
 ### Layer D — offline development packages
 
-Layer D becomes effective only when all three are true: an independent verifier has returned `INDEPENDENT_EXACT_TREE_PASS` for the commit that sets this ADR to Accepted and records that acceptance in `docs/CURRENT_STATE.md`; an Operator decision has authorized integration of that commit; and that commit is canonical `main`. Until then, existing item grants remain the only implementation authority.
+Layer D becomes effective only when all three are true: an independent verifier has returned `INDEPENDENT_EXACT_TREE_PASS` for the commit that sets this ADR to Accepted and records that acceptance in `docs/CURRENT_STATE.md`; an Operator decision has authorized integration of that commit; and that commit is canonical `main`. Until then, existing item grants remain the only implementation authority. While the historical activation evidence for that acceptance commit remains unresolved, the Prospective Layer D activation section is the controlling activation boundary.
 
 After Layer D is effective, a specialist may continue implementation, debugging, and non-destructive local tests across multiple commits inside the one open package for that lane. Ordinary commits do not need a new Lane 1 authorization, a new item number, or an independent verifier. The specialist keeps the existing branch and pull request. Evidence of ordinary commits lives in the pull request and the test output. The specialist does not edit `docs/CURRENT_STATE.md`, `docs/ENGINEERING_JOURNAL.md`, `docs/WORKSTREAM_STATUS.md`, `docs/WORKSTREAM_DEPENDENCIES.md`, `docs/INTEGRATION_PROTOCOL.md`, `docs/WORKSTREAM_OWNERSHIP.md`, `docs/adr/`, `pyproject.toml`, `.github/`, or `.cursor/rules/` for ordinary package work.
 

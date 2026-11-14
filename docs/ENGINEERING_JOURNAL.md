@@ -4841,3 +4841,32 @@ authority. Layer P stays inactive. Class 1 and class 2 controls stay.
 edited. PR #66, PR #80, PR #88, and PR #90 are not closed or rewritten.
 This entry does not call a provider, read a credential, connect to
 PostgreSQL, or submit an order. It does not embed its own hash.
+
+## 2026-11-14 — ADR-0009 prospective Layer D candidate
+
+Operator direction
+`LANE1_ADR0009_PROSPECTIVE_LAYER_D_CORRECTION_PREPARATION_AUTHORIZED`
+authorizes this candidate only. It does not authorize integration.
+Parent main is `80b5437c5296ba07e3f4f9f149c11629b6dfa497`, tree
+`360cab4fbf10a365dfc6e4498ea13dd343afb44b`. Pull request #91 is merged
+at that commit. The commit does not contain verifier
+`bc-1ed51ee2-d22c-5ac0-8ca2-1ea97d5b3b81` or decision
+`LANE1_ADR0009_LAYER_D_EXACT_INTEGRATION_AUTHORIZED`. The
+pull-request description is not independent evidence. Proposal
+verifier `bc-5b70ba13-fdd5-58be-9c8c-dc5736908571` passed only
+`010acfa2ddd3aecc3889d8aae885a5717132323b`. The historical activation
+claim stays unresolved. This entry does not backdate it.
+
+Option A stays selected. Prospective offline Layer D authority becomes
+effective only when an independent verifier has passed the commit that
+contains this entry, Operator decision
+`LANE1_ADR0009_LAYER_D_PROSPECTIVE_ACTIVATION_EXACT_INTEGRATION_AUTHORIZED`
+names that commit, and that commit remains an ancestor of canonical
+`main`. No further document is required only to declare that
+activation. Until then the packages are not authority. Layer P stays
+inactive. Campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped.
+Attempt 1 stays consumed. Attempts 2 and 3 stay unused. `DRY_RUN`
+remains the only authorized trading mode. PR #66, PR #80, PR #88, and
+PR #90 are not amended. This entry does not call a provider, read a
+credential, connect to PostgreSQL, or submit an order. It does not
+embed its own hash.
