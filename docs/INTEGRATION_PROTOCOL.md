@@ -84,6 +84,12 @@ Current owners:
 
 Documentation-only eligibility is not operational authorization.
 
+## Autonomous specialist operation
+
+ADR-0010 is Proposed. Until the three acceptance facts in that ADR are true, this section does not change the mandatory integration steps and ADR-0009 remains the development rule.
+
+After those facts, ordinary commits inside the ADR-0010 packages are not integration events. They do not need an Operator decision or a current-state item. Lane 1 batches completed milestones into one verification and, where the merge is materially consequential, one Operator decision. Security-sensitive candidates still need an independent verifier distinct from the author. Specialists do not self-merge. A standing-access decision named in ADR-0010 is not implied by a development commit.
+
 ## Non-goals
 
 - Automatic merging of draft PRs #21 or #22 from this protocol document alone
