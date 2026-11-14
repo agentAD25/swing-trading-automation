@@ -15,6 +15,7 @@ import subprocess
 import sys
 import threading
 import traceback
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -26,6 +27,7 @@ from sqlalchemy.exc import SQLAlchemyError
 import migrations.env as env
 from swingtrade.group4_email.contract import (
     EMAIL_RETENTION_POLICY,
+    MAX_EMAIL_BYTES,
     PARSER_VERSION,
     SCHEMA_VERSION,
     CanonicalInstructionEnvelope,
@@ -441,6 +443,134 @@ def test_raw_body_and_economic_fields_are_not_stored() -> None:
     assert set(connection.rows[MESSAGE_ID]) == set(COLUMNS)
     assert "body" not in InstructionReceiptRow.__table__.columns
     assert "raw_body" not in InstructionReceiptRow.__table__.columns
+
+
+def _invalid_direct_receipts() -> list[tuple[str, InstructionReceipt]]:
+    base = _receipt()
+    digest_key = project_receipt(_outcome(message_id=None))
+    raw = "From: sender@example.invalid\r\n\r\nRAW_MIME_BODY_TOKEN"
+    huge_id = f"<{'a' * (MAX_EMAIL_BYTES + 1)}@example.invalid>"
+    huge_instruction = f"v1:email_instruction:{DIGEST_A}:{'1' * (MAX_EMAIL_BYTES + 1)}"
+    valid_instruction = f"v1:email_instruction:{DIGEST_A}:0"
+    return [
+        ("non-hex digest", replace(base, content_digest="g" * 64)),
+        ("short digest", replace(base, content_digest=DIGEST_A[:-1])),
+        ("long digest", replace(base, content_digest=DIGEST_A + "ab")),
+        ("uppercase digest", replace(base, content_digest=DIGEST_A.upper())),
+        ("empty receipt key", replace(base, receipt_key="")),
+        ("non-fixture receipt key", replace(base, receipt_key="<user@gmail.com>")),
+        ("raw body as receipt key", replace(base, receipt_key=raw)),
+        ("key is digest while message id is present", replace(base, receipt_key=DIGEST_A)),
+        (
+            "key disagrees with the digest-only identity",
+            replace(digest_key, receipt_key=DIGEST_B),
+        ),
+        ("malformed instruction id", replace(base, instruction_ids=("not-an-id",))),
+        (
+            "instruction id uses another digest",
+            replace(base, instruction_ids=(f"v1:email_instruction:{DIGEST_B}:0",)),
+        ),
+        (
+            "instruction index has a leading zero",
+            replace(base, instruction_ids=(f"v1:email_instruction:{DIGEST_A}:01",)),
+        ),
+        ("duplicate instruction id", replace(base, instruction_ids=(valid_instruction,) * 2)),
+        ("unsupported reason", replace(base, reasons=("NOT_A_REASON",))),
+        ("raw body as reason", replace(base, reasons=(raw,))),
+        ("invalid source timestamp", replace(base, source_timestamp="2024-01-01")),
+        ("offset source timestamp", replace(base, source_timestamp="2024-01-01T00:00:00+00:00")),
+        ("unexpected provider type", replace(base, provider_type="GMAIL")),
+        ("unexpected provider reference", replace(base, provider_message_ref="other-ref")),
+        ("missing provider reference", replace(base, provider_message_ref=None)),
+        ("unexpected parser version", replace(base, parser_version="g4a.2")),
+        ("unexpected schema version", replace(base, schema_version="other")),
+        ("unexpected retention policy", replace(base, retention_policy="KEEP_RAW_BODY")),
+        (
+            "non-fixture message identity",
+            replace(
+                base,
+                receipt_key="<user@gmail.com>",
+                message_id="<user@gmail.com>",
+                provider_message_ref="<user@gmail.com>",
+            ),
+        ),
+        (
+            "oversized fixture message id",
+            replace(
+                base,
+                receipt_key=huge_id,
+                message_id=huge_id,
+                provider_message_ref=huge_id,
+            ),
+        ),
+        ("oversized instruction id", replace(base, instruction_ids=(huge_instruction,))),
+        ("raw body as content digest", replace(base, content_digest=raw)),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("label", "receipt"),
+    _invalid_direct_receipts(),
+    ids=[item[0] for item in _invalid_direct_receipts()],
+)
+def test_direct_noncanonical_receipt_does_not_execute_sql(
+    label: str,
+    receipt: InstructionReceipt,
+) -> None:
+    del label
+    connection = FakeConnection()
+    store = PostgresReceiptStore(connection)
+
+    with pytest.raises(ReceiptStoreUnavailable) as caught:
+        store.compare_and_insert(receipt.receipt_key, receipt)
+
+    assert caught.value.args == ("RECEIPT_STORE_UNAVAILABLE",)
+    assert connection.statements == []
+    assert connection.rows == {}
+    assert connection.inserts == 0
+    assert connection.commits == 0
+    assert connection.rollbacks == 0
+
+
+def test_projected_digest_key_and_absent_timestamp_still_insert() -> None:
+    connection = FakeConnection()
+    store = PostgresReceiptStore(connection)
+    receipt = replace(project_receipt(_outcome(message_id=None)), source_timestamp=None)
+
+    assert receipt.receipt_key == DIGEST_A
+    assert receipt.message_id is None
+    assert receipt.provider_message_ref is None
+    assert store.compare_and_insert(receipt.receipt_key, receipt) is None
+    assert connection.inserts == 1
+    assert connection.commits == 0
+    assert connection.rows[DIGEST_A]["source_timestamp"] is None
+
+
+def test_noncanonical_stored_row_is_not_returned() -> None:
+    connection, store, receipt = _store()
+    connection.rows[receipt.receipt_key] = {
+        "receipt_key": receipt.receipt_key,
+        "content_digest": "RAW_MIME_BODY_TOKEN",
+        "disposition": receipt.disposition.value,
+        "message_type": receipt.message_type.value,
+        "reasons": ["RAW_MIME_BODY_TOKEN"],
+        "instruction_ids": [],
+        "message_id": receipt.message_id,
+        "provider_type": receipt.provider_type,
+        "parser_version": receipt.parser_version,
+        "schema_version": receipt.schema_version,
+        "retention_policy": receipt.retention_policy,
+        "provider_message_ref": receipt.provider_message_ref,
+        "source_timestamp": receipt.source_timestamp,
+    }
+
+    with pytest.raises(ReceiptStoreUnavailable) as caught:
+        store.compare_and_insert(receipt.receipt_key, receipt)
+
+    assert caught.value.args == ("RECEIPT_STORE_UNAVAILABLE",)
+    assert connection.rows[receipt.receipt_key]["content_digest"] == "RAW_MIME_BODY_TOKEN"
+    assert connection.commits == 0
+    assert connection.rollbacks == 0
 
 
 def test_mismatched_key_writes_nothing() -> None:

@@ -1,9 +1,16 @@
 """PostgreSQL instruction-receipt store.
 
 The caller owns the connection and its transaction. This module does not open
-a socket, begin a transaction, commit, roll back, or close that connection.
-Importing it does not contact a database. A mocked result is not a migration
-and is not evidence that revision 0004 has run.
+a socket, begin a transaction, commit, roll back, retry, or close that
+connection. ``None`` means this statement inserted a row inside that still-open
+transaction. It is not a durable commit and it does not authorize an order.
+
+``InstructionReceipt`` is a public value object. ``project_receipt`` is not a
+required constructor, so ``compare_and_insert`` applies that function's
+allowlist itself and rejects the call before SQL when the value disagrees.
+Each persisted string must also fit in ``MAX_EMAIL_BYTES``, the accepted raw
+email ceiling. Importing this module does not contact a database. A mocked
+result is not a migration and is not evidence that revision 0004 has run.
 """
 
 from __future__ import annotations
@@ -16,8 +23,24 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from swingtrade.group4_email.contract import Disposition, MessageType
-from swingtrade.instruction_receipt import InstructionReceipt, ReceiptStoreUnavailable
+from swingtrade.group4_email.contract import (
+    EMAIL_RETENTION_POLICY,
+    MAX_EMAIL_BYTES,
+    PARSER_VERSION,
+    SCHEMA_VERSION,
+    Disposition,
+    MessageType,
+    ProviderType,
+)
+from swingtrade.group4_email.normalize import _FIXTURE_MESSAGE_ID
+from swingtrade.instruction_receipt import (
+    _REASON_VALUES,
+    _TIMESTAMP,
+    InstructionReceipt,
+    ReceiptStoreUnavailable,
+    _instruction_id_ok,
+    _is_digest,
+)
 
 
 class ReceiptBase(DeclarativeBase):
@@ -88,7 +111,7 @@ class PostgresReceiptStore:
 
 
 def _acceptable(key: object, receipt: object) -> bool:
-    if type(key) is not str or key == "" or type(receipt) is not InstructionReceipt:
+    if type(key) is not str or not _fits(key) or type(receipt) is not InstructionReceipt:
         return False
     if receipt.receipt_key != key:
         return False
@@ -96,32 +119,58 @@ def _acceptable(key: object, receipt: object) -> bool:
         return False
     if type(receipt.message_type) is not MessageType:
         return False
-    if type(receipt.content_digest) is not str or receipt.content_digest == "":
+    return _matches_projection(receipt)
+
+
+def _matches_projection(receipt: InstructionReceipt) -> bool:
+    """Same allowlist as ``project_receipt``, applied at the persistence boundary."""
+
+    digest = receipt.content_digest
+    if not _is_digest(digest):
         return False
-    if not _text_tuple(receipt.reasons) or not _text_tuple(receipt.instruction_ids):
-        return False
-    if any(
-        type(value) is not str or value == ""
-        for value in (
-            receipt.provider_type,
-            receipt.parser_version,
-            receipt.schema_version,
-            receipt.retention_policy,
-        )
+    message_id = receipt.message_id
+    if message_id is None:
+        if receipt.receipt_key != digest or receipt.provider_message_ref is not None:
+            return False
+    elif (
+        type(message_id) is not str
+        or not _fits(message_id)
+        or _FIXTURE_MESSAGE_ID.fullmatch(message_id) is None
+        or receipt.receipt_key != message_id
+        or receipt.provider_message_ref != message_id
     ):
         return False
+    if (
+        receipt.provider_type != ProviderType.FIXTURE.value
+        or receipt.parser_version != PARSER_VERSION
+        or receipt.schema_version != SCHEMA_VERSION
+        or receipt.retention_policy != EMAIL_RETENTION_POLICY
+    ):
+        return False
+    timestamp = receipt.source_timestamp
+    if timestamp is not None and (
+        type(timestamp) is not str
+        or not _fits(timestamp)
+        or _TIMESTAMP.fullmatch(timestamp) is None
+    ):
+        return False
+    reasons = receipt.reasons
+    instruction_ids = receipt.instruction_ids
+    if type(reasons) is not tuple or type(instruction_ids) is not tuple:
+        return False
+    if any(type(reason) is not str or reason not in _REASON_VALUES for reason in reasons):
+        return False
+    if len(instruction_ids) != len(set(instruction_ids)):
+        return False
+    if any(type(identifier) is not str or not _fits(identifier) for identifier in instruction_ids):
+        return False
     return all(
-        value is None or (type(value) is str and value != "")
-        for value in (
-            receipt.message_id,
-            receipt.provider_message_ref,
-            receipt.source_timestamp,
-        )
+        _instruction_id_ok(identifier, digest, message_id) for identifier in instruction_ids
     )
 
 
-def _text_tuple(value: object) -> bool:
-    return type(value) is tuple and all(type(item) is str and item != "" for item in value)
+def _fits(value: str) -> bool:
+    return len(value) <= MAX_EMAIL_BYTES
 
 
 def _values(receipt: InstructionReceipt) -> dict[str, object]:
@@ -187,6 +236,8 @@ def _receipt_from_row(row: object) -> InstructionReceipt:
         )
     except (KeyError, TypeError, ValueError):
         raise ReceiptStoreUnavailable() from None
+    if not _acceptable(receipt.receipt_key, receipt):
+        raise ReceiptStoreUnavailable()
     return receipt
 
 
