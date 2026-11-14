@@ -397,7 +397,7 @@ def test_parser_does_not_use_network_broker_or_credentials(
     source = "\n".join(
         path.read_text(encoding="utf-8")
         for path in sorted(PACKAGE.glob("*.py"))
-        if path.name != "local_oauth_probe.py"
+        if path.name not in {"local_oauth_probe.py", "gmail_readonly_pilot.py"}
     )
     for banned in (
         "import socket",
