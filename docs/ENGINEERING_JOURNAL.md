@@ -4899,3 +4899,30 @@ development rule. Pull requests #80, #90, #92, and #94 are not merged.
 `GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped. This entry does not
 call a provider, read a credential, connect to PostgreSQL, or submit
 an order. It does not embed its own hash.
+
+## 2026-11-14 — ADR-0011 connectivity autonomy proposed
+
+ADR-0010 Option A development authority is already effective for
+`92ea9527236647773312d0713c76da418bd2fcfc`. This entry does not reopen
+that record. ADR-0011 is Proposed. Its Decision is blank. Option A is
+not selected.
+
+The candidate adds `src/swingtrade/gmail_credential/` and its tests to
+Lane 3, states the existing Lane 2 and Lane 4 runtime-development
+scope, and publishes `docs/connectivity/capability-registry.json`.
+That registry cannot authorize a call. Gmail campaign
+`GMAIL-READONLY-SIGNAL-DISCOVERY-20261114-R1` is designated and
+inactive. The attended Gmail, Alpaca account-read, and receipt-cluster
+grants are not issued. Revision `0004` execution stays a separate
+decision. The guard is unchanged. Immutable commit
+`92ea9527236647773312d0713c76da418bd2fcfc` remains the `0001` through
+`0003` source checkout.
+
+Option A becomes effective only when an independent verifier has
+passed the commit that contains this entry, Operator decision
+`OPERATOR_CONNECTIVITY_AUTONOMY_EXACT_INTEGRATION_AUTHORIZED` selects
+it, and that commit is an ancestor of canonical `main`. Pull requests
+#92, #94, and #96 are not merged. `DRY_RUN` remains the only
+authorized trading mode. This entry does not call a provider, read a
+credential, connect to PostgreSQL, or submit an order. It does not
+embed its own hash.
