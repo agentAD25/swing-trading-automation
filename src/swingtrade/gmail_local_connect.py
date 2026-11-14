@@ -13,6 +13,12 @@ import sys
 from collections.abc import Callable, Mapping
 from typing import Protocol
 
+from swingtrade.group4_email.gmail_readonly_pilot import (
+    DailyBudget,
+    PilotEvidence,
+    PilotTransport,
+    run_readonly_connection,
+)
 from swingtrade.group4_email.local_oauth_probe import (
     AuthorizationRequest,
     DesktopClientConfig,
@@ -162,6 +168,43 @@ def desktop_client_from_json_text(
     except json.JSONDecodeError:
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED") from None
     return desktop_client_from_document(document, capability=capability)
+
+
+def run_offline_readonly_acquisition(
+    document: object,
+    transport: PilotTransport,
+    *,
+    redirect_uri: str,
+    state: str,
+    code_verifier: str,
+    selectors: tuple[str, ...],
+    budget: DailyBudget,
+    expected_mailbox: str,
+    callback: tuple[tuple[str, str], ...] | None = None,
+    refresh_token: str | None = None,
+    limit: int = 10,
+) -> PilotEvidence:
+    """Run the readonly path with an injected transport and an in-memory client.
+
+    The Windows command remains the metadata profile proof and does not call
+    this function. No socket, browser, or credential file is opened here.
+    """
+
+    client = desktop_client_from_document(document, capability="readonly")
+    return run_readonly_connection(
+        transport,
+        capability="readonly",
+        client_id=client.client_id,
+        redirect_uri=redirect_uri,
+        state=state,
+        code_verifier=code_verifier,
+        selectors=selectors,
+        budget=budget,
+        expected_mailbox=expected_mailbox,
+        callback=callback,
+        refresh_token=refresh_token,
+        limit=limit,
+    )
 
 
 def run_offline_profile_shape(

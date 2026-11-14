@@ -9,15 +9,28 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 import re
-from collections.abc import Mapping
+import threading
+import time
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
 from typing import Protocol
+from zoneinfo import ZoneInfo
 
 from swingtrade.group4_email.contract import EMAIL_RETENTION_POLICY
 from swingtrade.group4_email.local_oauth_probe import (
+    AuthorizationRequest,
     LocalOAuthProbeRejected,
+    build_refresh_request,
+    build_scoped_authorization_request,
+    build_token_request,
+    pkce_s256_challenge,
     require_exact_granted_scope,
+    validate_callback,
+    validate_redirect_uri,
 )
 from swingtrade.group4_email.normalize import message_id_classification
 from swingtrade.group4_email.parse import MessageIdentityRegistry, parse_email
@@ -58,9 +71,15 @@ class PilotRejected(Exception):
 
 
 class PilotTransport(Protocol):
-    """One injected exchange. The pilot calls it with GET only."""
+    """One injected exchange. The bearer stays out of the URL and the body."""
 
-    def exchange(self, method: str, url: str, body: bytes = b"") -> tuple[int, bytes]:
+    def exchange(
+        self,
+        method: str,
+        url: str,
+        body: bytes = b"",
+        bearer: str | None = None,
+    ) -> tuple[int, bytes]:
         """Return one HTTP status and raw body, or raise TimeoutError."""
 
 
@@ -106,34 +125,146 @@ class PilotEvidence:
             raise RuntimeError("pilot message count is outside the offline cap")
 
 
-@dataclass
-class ReadBudget:
-    """Caller-held request counts. A restart passes the same counts forward."""
+_BUDGET_KEYS = frozenset(
+    {"version", "zone", "day", "recorded_at", "token_attempts", "read_gets"}
+)
+_NY = ZoneInfo("America/New_York")
+_BUDGET_ZONE = "America/New_York"
 
-    token_attempts: int = 0
-    read_gets: int = 0
 
-    def __post_init__(self) -> None:
-        if type(self.token_attempts) is not int or type(self.read_gets) is not int:
-            raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
-        if not 0 <= self.token_attempts <= _MAX_TOKEN_ATTEMPTS:
-            raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
-        if not 0 <= self.read_gets <= _MAX_READ_GETS:
-            raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
+class _IssuedGrant:
+    """Private proof that a grant passed the token-response checks."""
+
+
+_ISSUED = _IssuedGrant()
+
+
+class BudgetStore(Protocol):
+    """Persistent counts. A new client reads the same record."""
+
+    def read(self) -> str | None:
+        """Return the current record, or None when no record exists."""
+
+    def update(self, mutate: Callable[[str | None], str]) -> None:
+        """Replace the record only when ``mutate`` returns normally."""
+
+
+class MemoryBudgetStore:
+    """In-process record. Restart is a new budget object on this same store."""
+
+    def __init__(self) -> None:
+        self._payload: str | None = None
+        self._lock = threading.Lock()
+
+    def read(self) -> str | None:
+        with self._lock:
+            return self._payload
+
+    def update(self, mutate: Callable[[str | None], str]) -> None:
+        with self._lock:
+            self._payload = _budget_text(mutate(self._payload))
+
+
+class FileBudgetStore:
+    """Local record. Two callers share the file through an exclusive lock."""
+
+    def __init__(self, path: Path) -> None:
+        if not isinstance(path, Path) or not path.is_absolute():
+            raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+        self._path = path
+        self._lock_path = path.with_name(path.name + ".lock")
+
+    def read(self) -> str | None:
+        descriptor = self._acquire()
+        try:
+            return self._read()
+        finally:
+            self._release(descriptor)
+
+    def update(self, mutate: Callable[[str | None], str]) -> None:
+        descriptor = self._acquire()
+        try:
+            self._write(_budget_text(mutate(self._read())))
+        finally:
+            self._release(descriptor)
+
+    def _read(self) -> str | None:
+        if not self._path.exists():
+            return None
+        return self._path.read_text(encoding="utf-8")
+
+    def _write(self, payload: str) -> None:
+        temporary = self._path.with_name(self._path.name + ".tmp")
+        temporary.write_text(payload, encoding="utf-8", newline="\n")
+        os.replace(temporary, self._path)
+
+    def _acquire(self) -> int:
+        for _attempt in range(50):
+            try:
+                return os.open(self._lock_path, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+            except FileExistsError:
+                time.sleep(0.01)
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+
+    def _release(self, descriptor: int) -> None:
+        os.close(descriptor)
+        try:
+            os.remove(self._lock_path)
+        except OSError:
+            return
+
+
+class DailyBudget:
+    """New York calendar-day counts loaded from a store before every attempt."""
+
+    def __init__(self, store: BudgetStore, now: Callable[[], int]) -> None:
+        if not callable(now):
+            raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+        self._store = store
+        self._now = now
+
+    def __repr__(self) -> str:
+        return "DailyBudget"
+
+    def consume_token(self) -> None:
+        self._consume("token_attempts", _MAX_TOKEN_ATTEMPTS)
+
+    def consume_get(self) -> None:
+        self._consume("read_gets", _MAX_READ_GETS)
+
+    def _consume(self, field: str, limit: int) -> None:
+        moment = self._now()
+
+        def mutate(current: str | None) -> str:
+            state = _budget_for_moment(current, moment)
+            count = state[field]
+            if type(count) is not int or count >= limit:
+                raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
+            state[field] = count + 1
+            state["recorded_at"] = moment
+            state["day"] = _ny_day(moment)
+            return _dump_budget(state)
+
+        self._store.update(mutate)
 
 
 @dataclass
 class TokenGrant:
-    """In-memory grant. Ordinary repr omits both token values."""
+    """Validated grant. Ordinary repr omits both token values and the proof."""
 
     scope: str
     access_token: str = field(repr=False)
     refresh_token: str | None = field(default=None, repr=False)
+    proof: object = field(default=None, repr=False, compare=False)
 
     def __post_init__(self) -> None:
-        if self.scope != READONLY_SCOPE or self.access_token == "":
+        if self.proof is not _ISSUED:
+            raise PilotRejected("GMAIL_PILOT_GRANT_UNVERIFIED")
+        if self.scope != READONLY_SCOPE:
             raise PilotRejected("GMAIL_PILOT_SCOPE_REJECTED")
-        if self.refresh_token is not None and self.refresh_token == "":
+        if not _printable_secret(self.access_token, 2048):
+            raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
+        if self.refresh_token is not None and not _printable_secret(self.refresh_token, 512):
             raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
 
 
@@ -141,11 +272,12 @@ def acquire_readonly_messages(
     transport: PilotTransport,
     selectors: tuple[str, ...],
     *,
+    grant: TokenGrant | None = None,
+    budget: DailyBudget | None = None,
+    expected_mailbox: str | None = None,
     limit: int = MAX_LIST_RESULTS,
     registry: MessageIdentityRegistry | None = None,
     seen_provider_ids: set[str] | None = None,
-    granted_scope: str = READONLY_SCOPE,
-    budget: ReadBudget | None = None,
 ) -> PilotEvidence:
     """Read at most ten messages through the injected transport.
 
@@ -165,17 +297,26 @@ def acquire_readonly_messages(
         raise PilotRejected("GMAIL_PILOT_TRANSPORT_REJECTED")
     if seen_provider_ids is not None and type(seen_provider_ids) is not set:
         raise PilotRejected("GMAIL_PILOT_TRANSPORT_REJECTED")
-    if granted_scope != READONLY_SCOPE:
-        raise PilotRejected("GMAIL_PILOT_SCOPE_REJECTED")
-    if budget is not None and type(budget) is not ReadBudget:
-        raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
+    if type(grant) is not TokenGrant or type(budget) is not DailyBudget:
+        raise PilotRejected(
+            "GMAIL_PILOT_SCOPE_REJECTED"
+            if type(grant) is not TokenGrant
+            else "GMAIL_PILOT_BUDGET_UNAVAILABLE"
+        )
+    assert isinstance(grant, TokenGrant)
+    assert isinstance(budget, DailyBudget)
+    if type(expected_mailbox) is not str or expected_mailbox == "":
+        raise PilotRejected("GMAIL_PILOT_MAILBOX_REJECTED")
     active_registry = MessageIdentityRegistry() if registry is None else registry
     seen = set() if seen_provider_ids is None else seen_provider_ids
     seen_rfc: dict[str, str] = {}
-    session = _Session(transport, budget or ReadBudget())
+    session = _Session(transport, budget, grant.access_token)
     profile = session.get_object(_PROFILE)
-    if type(profile.get("emailAddress")) is not str or profile.get("emailAddress") == "":
+    mailbox = profile.get("emailAddress")
+    if type(mailbox) is not str or mailbox == "":
         raise PilotRejected("GMAIL_PILOT_MALFORMED")
+    if mailbox != expected_mailbox:
+        raise PilotRejected("GMAIL_PILOT_MAILBOX_REJECTED")
     labels = session.get_object(_LABELS)
     if type(labels.get("labels")) is not list:
         raise PilotRejected("GMAIL_PILOT_MALFORMED")
@@ -223,10 +364,14 @@ def acquire_readonly_messages(
 
 
 class _Session:
-    def __init__(self, transport: PilotTransport, budget: ReadBudget) -> None:
+    def __init__(self, transport: PilotTransport, budget: DailyBudget, bearer: str) -> None:
         self._transport = transport
         self._budget = budget
+        self._bearer = bearer
         self.request_count = 0
+
+    def __repr__(self) -> str:
+        return "_Session"
 
     def get_object(self, url: str) -> dict[str, object]:
         status, body = self._exchange(url)
@@ -260,9 +405,9 @@ class _Session:
         raise PilotRejected("GMAIL_PILOT_RETRY_EXHAUSTED")
 
     def _consume_get(self) -> None:
-        if self._budget.read_gets >= _MAX_READ_GETS or self.request_count >= _MAX_READ_GETS:
+        self._budget.consume_get()
+        if self.request_count >= _MAX_READ_GETS:
             raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
-        self._budget.read_gets += 1
         self.request_count += 1
 
     def _call(self, method: str, url: str, body: bytes, timeout_code: str) -> tuple[int, bytes]:
@@ -270,7 +415,7 @@ class _Session:
             if method == "POST":
                 status, raw = self._transport.exchange(method, url, body)
             else:
-                status, raw = self._transport.exchange(method, url)
+                status, raw = self._transport.exchange(method, url, bearer=self._bearer)
         except PilotRejected:
             raise
         except TimeoutError:
@@ -453,15 +598,13 @@ def exchange_readonly_grant(
     transport: PilotTransport,
     form: tuple[tuple[str, str], ...],
     *,
-    budget: ReadBudget | None = None,
+    budget: DailyBudget | None = None,
 ) -> TokenGrant:
     """Exchange or refresh one readonly grant. Ambiguous failures are not retried."""
 
-    active = budget if budget is not None else ReadBudget()
-    if type(active) is not ReadBudget:
-        raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
-    if active.token_attempts >= _MAX_TOKEN_ATTEMPTS:
-        raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
+    if type(budget) is not DailyBudget:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_UNAVAILABLE")
+    assert isinstance(budget, DailyBudget)
     if type(form) is not tuple or any(type(item) is not tuple or len(item) != 2 for item in form):
         raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
     keys = tuple(key for key, _ in form)
@@ -479,7 +622,7 @@ def exchange_readonly_grant(
     refresh_grant = ("grant_type", "refresh_token")
     if grant != code_grant and grant != refresh_grant:
         raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
-    active.token_attempts += 1
+    budget.consume_token()
     encoded = "&".join(f"{_quote(key)}={_quote(value)}" for key, value in form).encode("ascii")
     try:
         status, raw = transport.exchange("POST", _TOKEN_URL, encoded)
@@ -509,15 +652,241 @@ def exchange_readonly_grant(
         raise PilotRejected("GMAIL_PILOT_SCOPE_REJECTED") from None
     access_token = parsed.get("access_token")
     refresh_token = parsed.get("refresh_token")
-    if type(access_token) is not str or access_token == "":
+    if type(access_token) is not str or not _printable_secret(access_token, 2048):
         raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
-    if refresh_token is not None and (type(refresh_token) is not str or refresh_token == ""):
+    if refresh_token is None:
+        issued_refresh: str | None = None
+    elif type(refresh_token) is str and _printable_secret(refresh_token, 512):
+        issued_refresh = refresh_token
+    else:
         raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
     return TokenGrant(
         scope=READONLY_SCOPE,
         access_token=access_token,
-        refresh_token=refresh_token if type(refresh_token) is str else None,
+        refresh_token=issued_refresh,
+        proof=_ISSUED,
     )
+
+
+def run_readonly_connection(
+    transport: PilotTransport,
+    *,
+    capability: str,
+    client_id: str,
+    redirect_uri: str,
+    state: str,
+    code_verifier: str,
+    selectors: tuple[str, ...],
+    budget: DailyBudget | None,
+    expected_mailbox: str,
+    callback: tuple[tuple[str, str], ...] | None = None,
+    refresh_token: str | None = None,
+    limit: int = MAX_LIST_RESULTS,
+    registry: MessageIdentityRegistry | None = None,
+    seen_provider_ids: set[str] | None = None,
+) -> PilotEvidence:
+    """Connect one explicit readonly selection to injected Gmail reads.
+
+    The capability string selects the authorization request. Message reads
+    accept only the grant returned by the token endpoint.
+    """
+
+    if capability != "readonly":
+        raise PilotRejected("GMAIL_PILOT_SCOPE_REJECTED")
+    if type(budget) is not DailyBudget:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_UNAVAILABLE")
+    assert isinstance(budget, DailyBudget)
+    if type(client_id) is not str or client_id == "" or type(state) is not str or state == "":
+        raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
+    _require_loopback(redirect_uri)
+    challenge = pkce_s256_challenge(code_verifier)
+    authorization = build_scoped_authorization_request(
+        capability="readonly",
+        client_id=client_id,
+        redirect_uri=redirect_uri,
+        state=state,
+        code_challenge=challenge,
+    )
+    _require_readonly_authorization(
+        authorization,
+        client_id=client_id,
+        redirect_uri=redirect_uri,
+        state=state,
+        challenge=challenge,
+    )
+    if (callback is None) == (refresh_token is None):
+        raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
+    if refresh_token is not None:
+        token_request = build_refresh_request(refresh_token=refresh_token, client_id=client_id)
+    elif callback is not None:
+        code = validate_callback(callback, state)
+        token_request = build_token_request(
+            code=code,
+            code_verifier=code_verifier,
+            client_id=client_id,
+            redirect_uri=redirect_uri,
+        )
+    else:
+        raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
+    if token_request.endpoint != _TOKEN_URL:
+        raise PilotRejected("GMAIL_PILOT_ENDPOINT_REJECTED")
+    issued = exchange_readonly_grant(transport, token_request.form, budget=budget)
+    return acquire_readonly_messages(
+        transport,
+        selectors,
+        grant=issued,
+        budget=budget,
+        expected_mailbox=expected_mailbox,
+        limit=limit,
+        registry=registry,
+        seen_provider_ids=seen_provider_ids,
+    )
+
+
+def seed_daily_budget(
+    store: BudgetStore,
+    now: int,
+    *,
+    token_attempts: int = 0,
+    read_gets: int = 0,
+) -> None:
+    """Create the first daily record. An existing record is not replaced."""
+
+    if type(now) is not int or type(token_attempts) is not int or type(read_gets) is not int:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    payload = _dump_budget(
+        {
+            "version": 1,
+            "zone": _BUDGET_ZONE,
+            "day": _ny_day(now),
+            "recorded_at": now,
+            "token_attempts": token_attempts,
+            "read_gets": read_gets,
+        }
+    )
+    _parse_budget(payload)
+
+    def mutate(current: str | None) -> str:
+        if current is not None:
+            raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+        return payload
+
+    store.update(mutate)
+
+
+def _printable_secret(value: object, limit: int) -> bool:
+    if type(value) is not str or value == "" or len(value) > limit:
+        return False
+    return all(33 <= ord(char) <= 126 for char in value)
+
+
+def _budget_text(payload: object) -> str:
+    if type(payload) is not str or payload == "" or "\x00" in payload or len(payload) > 512:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    _parse_budget(payload)
+    return payload
+
+
+def _budget_for_moment(current: str | None, now: object) -> dict[str, object]:
+    if current is None:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_MISSING")
+    if type(now) is not int:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    state = _parse_budget(current)
+    recorded = state["recorded_at"]
+    if type(recorded) is not int or now < recorded:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    if _ny_day(now) != state["day"]:
+        state["token_attempts"] = 0
+        state["read_gets"] = 0
+    return state
+
+
+def _parse_budget(current: str) -> dict[str, object]:
+    try:
+        parsed = json.loads(current)
+    except json.JSONDecodeError:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID") from None
+    if type(parsed) is not dict or set(parsed) != _BUDGET_KEYS:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    version = parsed.get("version")
+    zone = parsed.get("zone")
+    day = parsed.get("day")
+    recorded = parsed.get("recorded_at")
+    tokens = parsed.get("token_attempts")
+    gets = parsed.get("read_gets")
+    counts_ok = (
+        type(tokens) is int
+        and type(gets) is int
+        and 0 <= tokens <= _MAX_TOKEN_ATTEMPTS
+        and 0 <= gets <= _MAX_READ_GETS
+    )
+    identity_ok = (
+        type(version) is int
+        and version == 1
+        and zone == _BUDGET_ZONE
+        and type(day) is str
+        and type(recorded) is int
+        and counts_ok
+    )
+    if not identity_ok or type(recorded) is not int or _ny_day(recorded) != day:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    return {
+        "version": version,
+        "zone": zone,
+        "day": day,
+        "recorded_at": recorded,
+        "token_attempts": tokens,
+        "read_gets": gets,
+    }
+
+
+def _dump_budget(state: Mapping[str, object]) -> str:
+    if set(state) != _BUDGET_KEYS:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    return json.dumps({key: state[key] for key in sorted(_BUDGET_KEYS)}, separators=(",", ":"))
+
+
+def _ny_day(epoch: int) -> str:
+    if epoch < 0 or epoch > 4_102_444_800:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    try:
+        zoned = datetime.fromtimestamp(epoch, tz=_NY)
+    except (OverflowError, OSError, ValueError):
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID") from None
+    return zoned.date().isoformat()
+
+
+def _require_loopback(uri: object) -> None:
+    if type(uri) is not str or not uri.startswith("http://127.0.0.1:"):
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_REDIRECT_REJECTED")
+    port_text, slash, tail = uri.removeprefix("http://127.0.0.1:").partition("/")
+    if slash != "/" or tail != "" or not port_text.isdigit() or port_text.startswith("0"):
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_REDIRECT_REJECTED")
+    validate_redirect_uri(uri, int(port_text))
+
+
+def _require_readonly_authorization(
+    request: AuthorizationRequest,
+    *,
+    client_id: str,
+    redirect_uri: str,
+    state: str,
+    challenge: str,
+) -> None:
+    if request.endpoint != "https://accounts.google.com/o/oauth2/v2/auth":
+        raise PilotRejected("GMAIL_PILOT_ENDPOINT_REJECTED")
+    expected = {
+        "response_type": "code",
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "scope": READONLY_SCOPE,
+        "code_challenge": challenge,
+        "code_challenge_method": "S256",
+        "state": state,
+    }
+    if dict(request.parameters) != expected:
+        raise PilotRejected("GMAIL_PILOT_SCOPE_REJECTED")
 
 
 def _query(query: str) -> tuple[tuple[str, str], ...] | None:

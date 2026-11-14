@@ -3,20 +3,33 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
+import threading
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pytest
 
 from swingtrade.group4_email.gmail_readonly_pilot import (
     READONLY_SCOPE,
+    DailyBudget,
+    FileBudgetStore,
+    MemoryBudgetStore,
     PilotRejected,
-    ReadBudget,
+    TokenGrant,
     _require_readonly_url,
     acquire_readonly_messages,
     exchange_readonly_grant,
+    run_readonly_connection,
+    seed_daily_budget,
 )
-from swingtrade.group4_email.local_oauth_probe import build_refresh_request, build_token_request
+from swingtrade.group4_email.local_oauth_probe import (
+    LocalOAuthProbeRejected,
+    build_refresh_request,
+    build_token_request,
+)
 from swingtrade.group4_email.parse import MessageIdentityRegistry
 from tests.group4_email.conftest import body, plain_message
 
@@ -29,10 +42,24 @@ class Scripted:
     def __init__(self, responses: list[tuple[int, bytes]]) -> None:
         self.responses = list(responses)
         self.calls: list[tuple[str, str]] = []
+        self.body = b""
+        self.bodies: list[bytes] = []
+        self.digests: list[str | None] = []
 
-    def exchange(self, method: str, url: str, body: bytes = b"") -> tuple[int, bytes]:
+    def exchange(
+        self,
+        method: str,
+        url: str,
+        body: bytes = b"",
+        bearer: str | None = None,
+    ) -> tuple[int, bytes]:
         self.calls.append((method, url))
         self.body = body
+        self.bodies.append(body)
+        if bearer is None:
+            self.digests.append(None)
+        else:
+            self.digests.append(hashlib.sha256(bearer.encode("utf-8")).hexdigest())
         if not self.responses:
             raise AssertionError("unexpected request")
         return self.responses.pop(0)
@@ -44,13 +71,19 @@ class TimeoutAt(Scripted):
         self.index = index
         self._seen = 0
 
-    def exchange(self, method: str, url: str) -> tuple[int, bytes]:
+    def exchange(
+        self,
+        method: str,
+        url: str,
+        body: bytes = b"",
+        bearer: str | None = None,
+    ) -> tuple[int, bytes]:
         current = self._seen
         self._seen += 1
         if current == self.index:
             self.calls.append((method, url))
             raise TimeoutError
-        return super().exchange(method, url)
+        return super().exchange(method, url, body, bearer)
 
 
 def _json(payload: object, status: int = 200) -> tuple[int, bytes]:
@@ -97,8 +130,8 @@ def test_mocked_success_keeps_provider_identity_distinct_from_instruction() -> N
     raw = plain_message(body("tday_dated.txt"), "<pilot-success@example.invalid>")
     transport = Scripted(_ready(_listed("provider-success"), _rfc822("provider-success", raw)))
 
-    evidence = acquire_readonly_messages(transport, SELECTORS, limit=1)
-    repeated = acquire_readonly_messages(
+    evidence = _acquire(transport, SELECTORS, limit=1)
+    repeated = _acquire(
         Scripted(_ready(_listed("provider-success"), _rfc822("provider-success", raw))),
         SELECTORS,
         limit=1,
@@ -132,7 +165,7 @@ def test_mocked_success_keeps_provider_identity_distinct_from_instruction() -> N
 def test_empty_mailbox_performs_no_message_read() -> None:
     transport = Scripted(_ready(_json({"resultSizeEstimate": 0})))
 
-    evidence = acquire_readonly_messages(transport, ("label:synthetic",))
+    evidence = _acquire(transport, ("label:synthetic",))
 
     assert evidence.messages == ()
     assert evidence.request_count == 3
@@ -148,7 +181,7 @@ def test_malformed_mime_is_rejected_by_the_existing_parser() -> None:
     )
     transport = Scripted(_ready(_listed("provider-bad"), _rfc822("provider-bad", malformed)))
 
-    evidence = acquire_readonly_messages(transport, ("label:synthetic",), limit=1)
+    evidence = _acquire(transport, ("label:synthetic",), limit=1)
 
     assert evidence.messages[0].disposition == "REJECT"
     assert evidence.messages[0].reasons == ("MALFORMED_MIME",)
@@ -166,10 +199,10 @@ def test_bad_timestamp_and_non_trading_text_do_not_become_instructions() -> None
     )
     note_transport = Scripted(_ready(_listed("provider-hello"), _rfc822("provider-hello", note)))
 
-    incomplete_evidence = acquire_readonly_messages(
+    incomplete_evidence = _acquire(
         incomplete_transport, ("label:synthetic",), limit=1
     )
-    note_evidence = acquire_readonly_messages(note_transport, ("label:synthetic",), limit=1)
+    note_evidence = _acquire(note_transport, ("label:synthetic",), limit=1)
     message = incomplete_evidence.messages[0]
 
     assert message.disposition == "QUARANTINE"
@@ -190,7 +223,7 @@ def test_partial_message_is_quarantined_and_the_complete_message_is_kept() -> No
         )
     )
 
-    evidence = acquire_readonly_messages(transport, ("label:synthetic",), limit=2)
+    evidence = _acquire(transport, ("label:synthetic",), limit=2)
 
     assert [item.provider_message_id for item in evidence.messages] == [
         "provider-whole",
@@ -206,9 +239,9 @@ def test_timeout_and_provider_denial_fail_closed() -> None:
     denied = Scripted([(403, b"{}")])
 
     with pytest.raises(PilotRejected) as timed:
-        acquire_readonly_messages(timeout, ("label:synthetic",))
+        _acquire(timeout, ("label:synthetic",))
     with pytest.raises(PilotRejected) as blocked:
-        acquire_readonly_messages(denied, ("label:synthetic",))
+        _acquire(denied, ("label:synthetic",))
 
     assert timed.value.code == "GMAIL_PILOT_TIMEOUT"
     assert blocked.value.code == "GMAIL_PILOT_DENIED"
@@ -225,14 +258,14 @@ def test_duplicate_provider_id_is_not_fetched_twice_and_replay_is_stable() -> No
     second_raw = plain_message(body("tday_dated.txt"), "<pilot-replay@example.invalid>")
     second = Scripted(_ready(_listed("provider-other"), _rfc822("provider-other", second_raw)))
 
-    original = acquire_readonly_messages(
+    original = _acquire(
         first,
         ("label:synthetic",),
         limit=2,
         registry=registry,
         seen_provider_ids=seen,
     )
-    replay = acquire_readonly_messages(
+    replay = _acquire(
         second,
         ("label:synthetic",),
         limit=1,
@@ -252,11 +285,11 @@ def test_duplicate_provider_id_is_not_fetched_twice_and_replay_is_stable() -> No
 def test_malformed_list_selector_and_limit_are_rejected() -> None:
     malformed = Scripted(_ready((200, b"[]")))
     with pytest.raises(PilotRejected) as listed:
-        acquire_readonly_messages(malformed, ("label:synthetic",))
+        _acquire(malformed, ("label:synthetic",))
     with pytest.raises(PilotRejected) as selected:
-        acquire_readonly_messages(Scripted([]), ("subject:trade",))
+        _acquire(Scripted([]), ("subject:trade",))
     with pytest.raises(PilotRejected) as limited:
-        acquire_readonly_messages(Scripted([]), ("label:synthetic",), limit=11)
+        _acquire(Scripted([]), ("label:synthetic",), limit=11)
 
     assert listed.value.code == "GMAIL_PILOT_MALFORMED"
     assert selected.value.code == "GMAIL_PILOT_SELECTOR_REJECTED"
@@ -289,7 +322,7 @@ def test_attachment_part_is_not_fetched() -> None:
     }
     transport = Scripted(_ready(_listed("provider-file"), _json(payload)))
 
-    evidence = acquire_readonly_messages(transport, ("label:synthetic",), limit=1)
+    evidence = _acquire(transport, ("label:synthetic",), limit=1)
 
     assert evidence.ignored_attachment_count == 1
     assert evidence.messages[0].disposition == "QUARANTINE"
@@ -326,8 +359,54 @@ def _grant_body(scope: str = READONLY_SCOPE, refresh: bool = False) -> bytes:
     return json.dumps(payload).encode("utf-8")
 
 
+NY = ZoneInfo("America/New_York")
+FIXED = int(datetime(2026, 11, 14, 12, 0, tzinfo=NY).timestamp())
+MAILBOX = "signals@example.invalid"
+REDIRECT = "http://127.0.0.1:43123/"
+VERIFIER = "a" * 43
+STATE = "synthetic-state"
+
+
+def _open_budget(
+    now: int = FIXED,
+    *,
+    tokens: int = 0,
+    gets: int = 0,
+    clock: list[int] | None = None,
+) -> tuple[DailyBudget, MemoryBudgetStore]:
+    store = MemoryBudgetStore()
+    seed_daily_budget(store, now, token_attempts=tokens, read_gets=gets)
+    source = [now] if clock is None else clock
+    return DailyBudget(store, lambda: source[0]), store
+
+
+def _issued_grant() -> TokenGrant:
+    budget, _store = _open_budget()
+    return exchange_readonly_grant(Scripted([(200, _grant_body())]), _token_form(), budget=budget)
+
+
+def _acquire(transport: Scripted, selectors: tuple[str, ...], **kwargs: object) -> object:
+    if "grant" not in kwargs:
+        kwargs["grant"] = _issued_grant()
+    if "budget" not in kwargs:
+        kwargs["budget"], _store = _open_budget()
+    kwargs.setdefault("expected_mailbox", MAILBOX)
+    return acquire_readonly_messages(transport, selectors, **kwargs)  # type: ignore[arg-type]
+
+
+def _counts(store: MemoryBudgetStore) -> tuple[int, int]:
+    raw = store.read()
+    assert raw is not None
+    payload = json.loads(raw)
+    return payload["token_attempts"], payload["read_gets"]
+
+
+def _callback(state: str = STATE, code: str = "synthetic-code") -> tuple[tuple[str, str], ...]:
+    return (("code", code), ("state", state), ("iss", "https://accounts.google.com"))
+
+
 def test_token_exchange_and_refresh_hide_tokens_and_reject_bad_results() -> None:
-    budget = ReadBudget()
+    budget, store = _open_budget()
     success = Scripted([(200, _grant_body(refresh=True))])
     grant = exchange_readonly_grant(success, _token_form(), budget=budget)
     refresh = build_refresh_request(refresh_token="synthetic-refresh", client_id="synthetic-client")
@@ -365,27 +444,53 @@ def test_token_exchange_and_refresh_hide_tokens_and_reject_bad_results() -> None
     assert ambiguous.value.code == "GMAIL_PILOT_TOKEN_AMBIGUOUS"
     assert redirect.value.code == "GMAIL_PILOT_REDIRECT_REJECTED"
     assert scope.value.code == "GMAIL_PILOT_SCOPE_REJECTED"
-    assert budget.token_attempts == 7
-    capped = ReadBudget(token_attempts=20)
+    assert _counts(store) == (7, 0)
+    capped, capped_store = _open_budget(tokens=20)
     with pytest.raises(PilotRejected) as stopped:
         exchange_readonly_grant(Scripted([]), _token_form(), budget=capped)
     assert stopped.value.code == "GMAIL_PILOT_BUDGET_EXHAUSTED"
-    assert capped.token_attempts == 20
+    assert _counts(capped_store) == (20, 0)
 
 
 def test_metadata_scope_cannot_acquire_messages_and_budget_survives_restart() -> None:
-    budget = ReadBudget(read_gets=50)
+    budget, store = _open_budget(gets=50)
+    grant = _issued_grant()
     transport = Scripted([])
+    before = store.read()
 
     with pytest.raises(PilotRejected) as scope:
-        acquire_readonly_messages(Scripted([]), ("label:synthetic",), granted_scope="metadata")
+        acquire_readonly_messages(
+            Scripted([]),
+            ("label:synthetic",),
+            grant=READONLY_SCOPE,  # type: ignore[arg-type]
+            budget=budget,
+            expected_mailbox=MAILBOX,
+        )
     with pytest.raises(PilotRejected) as exhausted:
-        acquire_readonly_messages(transport, ("label:synthetic",), budget=budget)
+        acquire_readonly_messages(
+            transport,
+            ("label:synthetic",),
+            grant=grant,
+            budget=budget,
+            expected_mailbox=MAILBOX,
+        )
+    restarted = DailyBudget(store, lambda: FIXED)
+
+    with pytest.raises(PilotRejected) as again:
+        acquire_readonly_messages(
+            transport,
+            ("label:synthetic",),
+            grant=grant,
+            budget=restarted,
+            expected_mailbox=MAILBOX,
+        )
 
     assert scope.value.code == "GMAIL_PILOT_SCOPE_REJECTED"
     assert exhausted.value.code == "GMAIL_PILOT_BUDGET_EXHAUSTED"
+    assert again.value.code == "GMAIL_PILOT_BUDGET_EXHAUSTED"
     assert transport.calls == []
-    assert budget.read_gets == 50
+    assert store.read() == before
+    assert _counts(store) == (0, 50)
 
 
 def test_retry_redirect_and_pagination_stay_inside_the_cap() -> None:
@@ -399,10 +504,10 @@ def test_retry_redirect_and_pagination_stay_inside_the_cap() -> None:
             _rfc822("provider-retry", raw),
         ]
     )
-    evidence = acquire_readonly_messages(retry, ("label:synthetic",), limit=1)
+    evidence = _acquire(retry, ("label:synthetic",), limit=1)
     redirected = Scripted([(302, b"https://evil.example/")])
     with pytest.raises(PilotRejected) as redirect:
-        acquire_readonly_messages(redirected, ("label:synthetic",))
+        _acquire(redirected, ("label:synthetic",))
     hostile = _reject_url("https://evil.example/gmail/v1/users/me/profile")
     first, second = "provider-one", "provider-two"
     pages = Scripted(
@@ -415,10 +520,10 @@ def test_retry_redirect_and_pagination_stay_inside_the_cap() -> None:
             _rfc822(second, raw.replace(b"pilot-page", b"pilot-next")),
         ]
     )
-    paged = acquire_readonly_messages(pages, ("label:synthetic",), limit=2)
+    paged = _acquire(pages, ("label:synthetic",), limit=2)
     repeated = Scripted([(500, b"{}"), (500, b"{}"), (500, b"{}")])
     with pytest.raises(PilotRejected) as failed:
-        acquire_readonly_messages(repeated, ("label:synthetic",))
+        _acquire(repeated, ("label:synthetic",))
 
     assert evidence.messages[0].provider_message_id == "provider-retry"
     assert evidence.request_count == 5
@@ -441,7 +546,7 @@ def test_realistic_message_id_stays_distinct_and_non_actionable() -> None:
             _rfc822("provider-copy", changed),
         )
     )
-    evidence = acquire_readonly_messages(transport, ("label:synthetic",), limit=2)
+    evidence = _acquire(transport, ("label:synthetic",), limit=2)
     first, second = evidence.messages
 
     assert first.rfc_message_id == "<abc123+tag@mail.example.com>"
@@ -461,3 +566,275 @@ def _reject_url(url: str) -> str:
     except PilotRejected as rejected:
         return rejected.code
     return ""
+
+
+def _connection_args(budget: DailyBudget) -> dict[str, object]:
+    return {
+        "capability": "readonly",
+        "client_id": "synthetic-client",
+        "redirect_uri": REDIRECT,
+        "state": STATE,
+        "code_verifier": VERIFIER,
+        "selectors": ("label:synthetic",),
+        "budget": budget,
+        "expected_mailbox": MAILBOX,
+        "limit": 1,
+    }
+
+
+def test_readonly_connection_uses_the_validated_grant_for_every_get() -> None:
+    raw = plain_message(body("tday_dated.txt"), "<pilot-success@example.invalid>")
+    responses = [(200, _grant_body())]
+    responses.extend(_ready(_listed("provider-success"), _rfc822("provider-success", raw)))
+    transport = Scripted(responses)
+    budget, store = _open_budget()
+    evidence = run_readonly_connection(transport, callback=_callback(), **_connection_args(budget))
+    digest = hashlib.sha256(b"synthetic-access").hexdigest()
+
+    assert evidence.durable_state == "UNAVAILABLE"
+    assert evidence.economic_dispatch is False
+    assert evidence.messages[0].disposition == "ACCEPT"
+    assert evidence.messages[0].actionable is True
+    assert transport.calls[0] == ("POST", "https://oauth2.googleapis.com/token")
+    assert transport.digests[0] is None
+    assert transport.digests[1:] == [digest, digest, digest, digest]
+    assert b"grant_type=authorization_code" in transport.bodies[0]
+    assert b"code_verifier=" in transport.bodies[0]
+    assert b"client_secret" not in b"".join(transport.bodies)
+    assert "synthetic-access" not in repr(evidence)
+    assert _counts(store) == (1, 4)
+
+
+def test_connection_rejects_metadata_callback_and_redirect_before_http() -> None:
+    budget, store = _open_budget()
+    transport = Scripted([(200, _grant_body())])
+    metadata = dict(_connection_args(budget), capability="metadata")
+    bad_state = _callback(state="other-state")
+    with pytest.raises(PilotRejected) as scope:
+        run_readonly_connection(transport, callback=_callback(), **metadata)
+    with pytest.raises(LocalOAuthProbeRejected) as state:
+        run_readonly_connection(
+            transport,
+            callback=bad_state,
+            **_connection_args(budget),
+        )
+    with pytest.raises(LocalOAuthProbeRejected) as redirect:
+        run_readonly_connection(
+            transport,
+            callback=_callback(),
+            **dict(_connection_args(budget), redirect_uri="https://evil.example/callback"),
+        )
+    with pytest.raises(LocalOAuthProbeRejected) as verifier:
+        run_readonly_connection(
+            transport,
+            callback=_callback(),
+            **dict(_connection_args(budget), code_verifier="short"),
+        )
+
+    assert scope.value.code == "GMAIL_PILOT_SCOPE_REJECTED"
+    assert state.value.code == "GMAIL_OAUTH_STATE_REJECTED"
+    assert redirect.value.code == "GMAIL_OAUTH_REDIRECT_REJECTED"
+    assert verifier.value.code == "GMAIL_OAUTH_PKCE_REJECTED"
+    assert transport.calls == []
+    assert _counts(store) == (0, 0)
+
+
+def test_connection_rejects_bad_token_results_without_a_message_read() -> None:
+    budget, store = _open_budget()
+    missing = Scripted([(200, b'{"scope":"https://www.googleapis.com/auth/gmail.readonly"}')])
+    broader = Scripted(
+        [(200, _grant_body(READONLY_SCOPE + " https://www.googleapis.com/auth/gmail.modify"))]
+    )
+    metadata = Scripted([(200, _grant_body("https://www.googleapis.com/auth/gmail.metadata"))])
+    denied = Scripted([(403, b"{}")])
+    timed = TimeoutAt(0, [(200, _grant_body())])
+    injected = json.dumps(
+        {"access_token": "synthetic\r\nhidden-value", "scope": READONLY_SCOPE}
+    ).encode()
+    hostile = Scripted([(200, injected)])
+
+    with pytest.raises(PilotRejected) as absent:
+        run_readonly_connection(missing, callback=_callback(), **_connection_args(budget))
+    with pytest.raises(PilotRejected) as wide:
+        run_readonly_connection(broader, callback=_callback(), **_connection_args(budget))
+    with pytest.raises(PilotRejected) as wrong:
+        run_readonly_connection(metadata, callback=_callback(), **_connection_args(budget))
+    with pytest.raises(PilotRejected) as blocked:
+        run_readonly_connection(denied, callback=_callback(), **_connection_args(budget))
+    with pytest.raises(PilotRejected) as ambiguous:
+        run_readonly_connection(timed, callback=_callback(), **_connection_args(budget))
+    with pytest.raises(PilotRejected) as leaked:
+        run_readonly_connection(hostile, callback=_callback(), **_connection_args(budget))
+
+    assert absent.value.code == "GMAIL_PILOT_TOKEN_REJECTED"
+    assert wide.value.code == "GMAIL_PILOT_SCOPE_REJECTED"
+    assert wrong.value.code == "GMAIL_PILOT_SCOPE_REJECTED"
+    assert blocked.value.code == "GMAIL_PILOT_DENIED"
+    assert ambiguous.value.code == "GMAIL_PILOT_TOKEN_AMBIGUOUS"
+    assert leaked.value.code == "GMAIL_PILOT_TOKEN_REJECTED"
+    assert "hidden-value" not in f"{leaked.value} {leaked.value!r}"
+    assert len(timed.calls) == 1
+    assert all(call[0] == "POST" for call in missing.calls + broader.calls + metadata.calls)
+    assert _counts(store) == (6, 0)
+
+
+def test_refresh_connection_and_mailbox_mismatch_stop_at_the_right_request() -> None:
+    raw = plain_message("Entry: Buy stop $7.23.\n", "<pilot-refresh@example.invalid>")
+    responses = [(200, _grant_body())]
+    responses.extend(_ready(_listed("provider-refresh"), _rfc822("provider-refresh", raw)))
+    transport = Scripted(responses)
+    budget, _store = _open_budget()
+    evidence = run_readonly_connection(
+        transport,
+        refresh_token="synthetic-refresh",
+        **_connection_args(budget),
+    )
+    mismatch = Scripted([(200, _grant_body()), _profile()])
+    mismatch_budget, mismatch_store = _open_budget()
+    with pytest.raises(PilotRejected) as rejected:
+        run_readonly_connection(
+            mismatch,
+            callback=_callback(),
+            **dict(_connection_args(mismatch_budget), expected_mailbox="other@example.invalid"),
+        )
+
+    assert evidence.messages[0].provider_message_id == "provider-refresh"
+    assert evidence.economic_dispatch is False
+    assert b"grant_type=refresh_token" in transport.bodies[0]
+    assert b"grant_type=authorization_code" not in transport.bodies[0]
+    assert "synthetic-refresh" not in repr(evidence)
+    assert rejected.value.code == "GMAIL_PILOT_MAILBOX_REJECTED"
+    assert [method for method, _url in mismatch.calls] == ["POST", "GET"]
+    assert "/messages" not in mismatch.calls[1][1]
+    assert _counts(mismatch_store) == (1, 1)
+
+
+def test_hand_built_grant_and_missing_budget_do_not_dispatch() -> None:
+    transport = Scripted([_profile()])
+    with pytest.raises(PilotRejected) as unverified:
+        TokenGrant(scope=READONLY_SCOPE, access_token="synthetic-access")
+    with pytest.raises(PilotRejected) as missing:
+        acquire_readonly_messages(
+            transport,
+            ("label:synthetic",),
+            grant=_issued_grant(),
+            expected_mailbox=MAILBOX,
+        )
+
+    assert unverified.value.code == "GMAIL_PILOT_GRANT_UNVERIFIED"
+    assert "synthetic-access" not in f"{unverified.value} {unverified.value!r}"
+    assert missing.value.code == "GMAIL_PILOT_BUDGET_UNAVAILABLE"
+    assert transport.calls == []
+
+
+def test_daily_budget_is_restart_safe_and_fail_closed(tmp_path: Path) -> None:
+    budget, store = _open_budget()
+    observed = store.read()
+    DailyBudget(store, lambda: FIXED)
+    assert store.read() == observed
+    budget.consume_token()
+    fresh = DailyBudget(store, lambda: FIXED)
+    fresh.consume_get()
+    with pytest.raises(PilotRejected) as seeded:
+        seed_daily_budget(store, FIXED)
+    path = tmp_path / "budget.json"
+    file_store = FileBudgetStore(path)
+    seed_daily_budget(file_store, FIXED)
+    DailyBudget(file_store, lambda: FIXED).consume_get()
+    recorded = path.read_text(encoding="utf-8")
+    reopened = FileBudgetStore(path)
+    assert reopened.read() == recorded
+    DailyBudget(reopened, lambda: FIXED).consume_get()
+    missing = tmp_path / "missing.json"
+    corrupt = tmp_path / "corrupt.json"
+    corrupt.write_text("{", encoding="utf-8")
+    with pytest.raises(PilotRejected) as absent:
+        DailyBudget(FileBudgetStore(missing), lambda: FIXED).consume_token()
+    with pytest.raises(PilotRejected) as broken:
+        DailyBudget(FileBudgetStore(corrupt), lambda: FIXED).consume_get()
+    rolled = DailyBudget(store, lambda: FIXED - 60)
+    with pytest.raises(PilotRejected) as rollback:
+        rolled.consume_token()
+
+    assert _counts(store) == (1, 1)
+    assert seeded.value.code == "GMAIL_PILOT_BUDGET_INVALID"
+    assert json.loads(path.read_text(encoding="utf-8"))["read_gets"] == 2
+    assert absent.value.code == "GMAIL_PILOT_BUDGET_MISSING"
+    assert missing.exists() is False
+    assert broken.value.code == "GMAIL_PILOT_BUDGET_INVALID"
+    assert corrupt.read_text(encoding="utf-8") == "{"
+    assert rollback.value.code == "GMAIL_PILOT_BUDGET_INVALID"
+
+
+def test_budget_day_boundary_daylight_saving_and_concurrency(tmp_path: Path) -> None:
+    start = int(datetime(2026, 11, 14, 23, 30, tzinfo=NY).timestamp())
+    later = int(datetime(2026, 11, 15, 0, 30, tzinfo=NY).timestamp())
+    clock = [start]
+    budget, store = _open_budget(start, tokens=20, clock=clock)
+    with pytest.raises(PilotRejected) as exhausted:
+        budget.consume_token()
+    clock[0] = later
+    budget.consume_token()
+    early = int(datetime(2026, 3, 8, 1, 30, tzinfo=NY).timestamp())
+    sprung = int(datetime(2026, 3, 8, 3, 30, tzinfo=NY).timestamp())
+    spring_clock = [early]
+    spring, spring_store = _open_budget(early, gets=4, clock=spring_clock)
+    spring_clock[0] = sprung
+    spring.consume_get()
+    first = int(datetime(2026, 11, 1, 1, 30, tzinfo=NY, fold=0).timestamp())
+    second = int(datetime(2026, 11, 1, 1, 30, tzinfo=NY, fold=1).timestamp())
+    fall_clock = [first]
+    fall, fall_store = _open_budget(first, gets=3, clock=fall_clock)
+    fall_clock[0] = second
+    fall.consume_get()
+    shared = MemoryBudgetStore()
+    seed_daily_budget(shared, FIXED)
+    ok: list[int] = []
+    bad: list[str] = []
+    guard = threading.Lock()
+
+    def worker() -> None:
+        try:
+            DailyBudget(shared, lambda: FIXED).consume_token()
+        except PilotRejected as exc:
+            with guard:
+                bad.append(exc.code)
+        else:
+            with guard:
+                ok.append(1)
+
+    threads = [threading.Thread(target=worker) for _index in range(30)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    file_store = FileBudgetStore(tmp_path / "shared.json")
+    seed_daily_budget(file_store, FIXED)
+    file_ok: list[int] = []
+
+    def file_worker() -> None:
+        DailyBudget(FileBudgetStore(tmp_path / "shared.json"), lambda: FIXED).consume_get()
+        with guard:
+            file_ok.append(1)
+
+    file_threads = [threading.Thread(target=file_worker) for _index in range(8)]
+    for thread in file_threads:
+        thread.start()
+    for thread in file_threads:
+        thread.join()
+    rolled = json.loads(store.read() or "")
+    spring_payload = json.loads(spring_store.read() or "")
+    fall_payload = json.loads(fall_store.read() or "")
+
+    assert exhausted.value.code == "GMAIL_PILOT_BUDGET_EXHAUSTED"
+    assert rolled["day"] == "2026-11-15"
+    assert rolled["token_attempts"] == 1
+    assert spring_payload["day"] == "2026-03-08"
+    assert spring_payload["read_gets"] == 5
+    assert second > first
+    assert fall_payload["day"] == "2026-11-01"
+    assert fall_payload["read_gets"] == 4
+    assert len(ok) == 20
+    assert bad == ["GMAIL_PILOT_BUDGET_EXHAUSTED"] * 10
+    assert len(file_ok) == 8
+    assert json.loads((tmp_path / "shared.json").read_text(encoding="utf-8"))["read_gets"] == 8
