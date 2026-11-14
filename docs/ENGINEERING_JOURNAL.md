@@ -4841,3 +4841,88 @@ authority. Layer P stays inactive. Class 1 and class 2 controls stay.
 edited. PR #66, PR #80, PR #88, and PR #90 are not closed or rewritten.
 This entry does not call a provider, read a credential, connect to
 PostgreSQL, or submit an order. It does not embed its own hash.
+
+## 2026-11-14 — ADR-0009 prospective Layer D candidate
+
+Operator direction
+`LANE1_ADR0009_PROSPECTIVE_LAYER_D_CORRECTION_PREPARATION_AUTHORIZED`
+authorizes this candidate only. It does not authorize integration.
+Parent main is `80b5437c5296ba07e3f4f9f149c11629b6dfa497`, tree
+`360cab4fbf10a365dfc6e4498ea13dd343afb44b`. Pull request #91 is merged
+at that commit. The commit does not contain verifier
+`bc-1ed51ee2-d22c-5ac0-8ca2-1ea97d5b3b81` or decision
+`LANE1_ADR0009_LAYER_D_EXACT_INTEGRATION_AUTHORIZED`. The
+pull-request description is not independent evidence. Proposal
+verifier `bc-5b70ba13-fdd5-58be-9c8c-dc5736908571` passed only
+`010acfa2ddd3aecc3889d8aae885a5717132323b`. The historical activation
+claim stays unresolved. This entry does not backdate it.
+
+Option A stays selected. Prospective offline Layer D authority becomes
+effective only when an independent verifier has passed the commit that
+contains this entry, Operator decision
+`LANE1_ADR0009_LAYER_D_PROSPECTIVE_ACTIVATION_EXACT_INTEGRATION_AUTHORIZED`
+names that commit, and that commit remains an ancestor of canonical
+`main`. No further document is required only to declare that
+activation. Until then the packages are not authority. Layer P stays
+inactive. Campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped.
+Attempt 1 stays consumed. Attempts 2 and 3 stay unused. `DRY_RUN`
+remains the only authorized trading mode. PR #66, PR #80, PR #88, and
+PR #90 are not amended. This entry does not call a provider, read a
+credential, connect to PostgreSQL, or submit an order. It does not
+embed its own hash.
+
+## 2026-11-14 — ADR-0010 autonomous specialist operating model proposed
+
+Operator direction
+`OPERATOR_AUTONOMOUS_LANES_2_3_4_RESTRUCTURING_PREPARATION_AUTHORIZED`
+authorizes this candidate only. Parent main is
+`6d50b3eb292d78fd6396fc6f0d35023d24b3290e`, tree
+`89f648d862f8831d78ba2b9de565934d4a8a7112`. ADR-0010 is Proposed.
+Its Decision is blank. Option A is not selected.
+
+The candidate defines standing development packages for Lanes 2, 3,
+and 4, including offline authorship of the three Item 30 paths.
+Running revision `0004` stays a separate decision. Standing Alpaca
+account-read, Gmail read-only, and receipt-cluster grants are defined
+and not issued. `DEP-GMAIL-001` still needs an OAuth-setup attestation
+and a named mailbox and campaign. The receipt-cluster grant still
+needs a same-connection identity proof. `DEP-CORE-001` and
+`DEP-CORE-002` still block paper orders.
+
+Option A becomes effective only when an independent verifier has
+passed the commit that contains this entry, Operator decision
+`OPERATOR_AUTONOMOUS_LANES_2_3_4_EXACT_INTEGRATION_AUTHORIZED` selects
+it, and that commit is an ancestor of canonical `main`. No second
+activation commit is required. Until then ADR-0009 remains the
+development rule. Pull requests #80, #90, #92, and #94 are not merged.
+`DRY_RUN` remains the only authorized trading mode. Campaign
+`GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped. This entry does not
+call a provider, read a credential, connect to PostgreSQL, or submit
+an order. It does not embed its own hash.
+
+## 2026-11-14 — ADR-0011 connectivity autonomy proposed
+
+ADR-0010 Option A development authority is already effective for
+`92ea9527236647773312d0713c76da418bd2fcfc`. This entry does not reopen
+that record. ADR-0011 is Proposed. Its Decision is blank. Option A is
+not selected.
+
+The candidate adds `src/swingtrade/gmail_credential/` and its tests to
+Lane 3, states the existing Lane 2 and Lane 4 runtime-development
+scope, and publishes `docs/connectivity/capability-registry.json`.
+That registry cannot authorize a call. Gmail campaign
+`GMAIL-READONLY-SIGNAL-DISCOVERY-20261114-R1` is designated and
+inactive. The attended Gmail, Alpaca account-read, and receipt-cluster
+grants are not issued. Revision `0004` execution stays a separate
+decision. The guard is unchanged. Immutable commit
+`92ea9527236647773312d0713c76da418bd2fcfc` remains the `0001` through
+`0003` source checkout.
+
+Option A becomes effective only when an independent verifier has
+passed the commit that contains this entry, Operator decision
+`OPERATOR_CONNECTIVITY_AUTONOMY_EXACT_INTEGRATION_AUTHORIZED` selects
+it, and that commit is an ancestor of canonical `main`. Pull requests
+#92, #94, and #96 are not merged. `DRY_RUN` remains the only
+authorized trading mode. This entry does not call a provider, read a
+credential, connect to PostgreSQL, or submit an order. It does not
+embed its own hash.
