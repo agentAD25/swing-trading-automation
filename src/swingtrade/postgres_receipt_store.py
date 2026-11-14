@@ -8,9 +8,10 @@ transaction. It is not a durable commit and it does not authorize an order.
 ``InstructionReceipt`` is a public value object. ``project_receipt`` is not a
 required constructor, so ``compare_and_insert`` applies that function's
 allowlist itself and rejects the call before SQL when the value disagrees.
-Each persisted string must also fit in ``MAX_EMAIL_BYTES``, the accepted raw
-email ceiling. Importing this module does not contact a database. A mocked
-result is not a migration and is not evidence that revision 0004 has run.
+Each persisted string must also fit in ``MAX_EMAIL_BYTES`` UTF-8 bytes, the
+accepted raw-email ceiling. Character length is not that ceiling. Importing
+this module does not contact a database. A mocked result is not a migration
+and is not evidence that revision 0004 has run.
 """
 
 from __future__ import annotations
@@ -170,7 +171,13 @@ def _matches_projection(receipt: InstructionReceipt) -> bool:
 
 
 def _fits(value: str) -> bool:
-    return len(value) <= MAX_EMAIL_BYTES
+    """Bound one persisted string by the raw email's UTF-8 byte ceiling."""
+
+    try:
+        encoded = value.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return len(encoded) <= MAX_EMAIL_BYTES
 
 
 def _values(receipt: InstructionReceipt) -> dict[str, object]:

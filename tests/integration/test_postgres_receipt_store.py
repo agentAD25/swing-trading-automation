@@ -573,6 +573,171 @@ def test_noncanonical_stored_row_is_not_returned() -> None:
     assert connection.rollbacks == 0
 
 
+def _with_fixture_id(local: str) -> InstructionReceipt:
+    message_id = f"<{local}@example.invalid>"
+    return replace(
+        _receipt(),
+        receipt_key=message_id,
+        message_id=message_id,
+        provider_message_ref=message_id,
+    )
+
+
+def _reject_before_sql(receipt: InstructionReceipt) -> None:
+    connection = FakeConnection()
+    store = PostgresReceiptStore(connection)
+
+    with pytest.raises(ReceiptStoreUnavailable) as caught:
+        store.compare_and_insert(receipt.receipt_key, receipt)
+
+    assert caught.value.args == ("RECEIPT_STORE_UNAVAILABLE",)
+    assert SECRET not in str(caught.value)
+    assert connection.statements == []
+    assert connection.rows == {}
+    assert connection.inserts == 0
+    assert connection.commits == 0
+
+
+def _inserted(receipt: InstructionReceipt) -> None:
+    connection = FakeConnection()
+    store = PostgresReceiptStore(connection)
+
+    assert store.compare_and_insert(receipt.receipt_key, receipt) is None
+    assert connection.inserts == 1
+    assert connection.commits == 0
+    assert connection.rollbacks == 0
+    assert connection.rows[receipt.receipt_key]["content_digest"] == receipt.content_digest
+
+
+def test_ascii_fixture_id_at_the_byte_limit_is_inserted() -> None:
+    affix = len("<@example.invalid>")
+    receipt = _with_fixture_id("a" * (MAX_EMAIL_BYTES - affix))
+    message_id = receipt.message_id
+
+    assert message_id is not None
+    assert len(message_id) == MAX_EMAIL_BYTES
+    assert len(message_id.encode("utf-8")) == MAX_EMAIL_BYTES
+    _inserted(receipt)
+
+
+def test_ascii_fixture_id_one_byte_over_does_not_execute_sql() -> None:
+    affix = len("<@example.invalid>")
+    receipt = _with_fixture_id("a" * (MAX_EMAIL_BYTES - affix + 1))
+    message_id = receipt.message_id
+
+    assert message_id is not None
+    assert len(message_id.encode("utf-8")) == MAX_EMAIL_BYTES + 1
+    _reject_before_sql(receipt)
+
+
+def test_multibyte_fixture_id_below_the_byte_limit_is_inserted() -> None:
+    receipt = _with_fixture_id("caf\u00e9")
+    message_id = receipt.message_id
+
+    assert message_id is not None
+    assert len(message_id) < len(message_id.encode("utf-8")) < MAX_EMAIL_BYTES
+    _inserted(receipt)
+    _inserted(_receipt())
+
+
+def test_multibyte_fixture_id_at_the_byte_limit_is_inserted() -> None:
+    affix = len("<@example.invalid>")
+    unit = "\u00e9"
+    assert len(unit.encode("utf-8")) == 2
+    receipt = _with_fixture_id(unit * ((MAX_EMAIL_BYTES - affix) // 2))
+    message_id = receipt.message_id
+
+    assert message_id is not None
+    assert len(message_id.encode("utf-8")) == MAX_EMAIL_BYTES
+    assert len(message_id) < MAX_EMAIL_BYTES
+    _inserted(receipt)
+
+
+def test_multibyte_fixture_id_over_the_byte_limit_does_not_execute_sql() -> None:
+    affix = len("<@example.invalid>")
+    unit = "\u00e9"
+    receipt = _with_fixture_id(unit * (((MAX_EMAIL_BYTES - affix) // 2) + 1))
+    message_id = receipt.message_id
+
+    assert message_id is not None
+    assert len(message_id) <= MAX_EMAIL_BYTES
+    assert len(message_id.encode("utf-8")) > MAX_EMAIL_BYTES
+    _reject_before_sql(receipt)
+
+
+def test_empty_and_malformed_metadata_do_not_execute_sql() -> None:
+    base = _receipt()
+    surrogate = "<\ud800@example.invalid>"
+    rejected = (
+        replace(base, receipt_key=""),
+        replace(base, content_digest=""),
+        replace(base, source_timestamp=""),
+        replace(
+            base,
+            receipt_key=surrogate,
+            message_id=surrogate,
+            provider_message_ref=surrogate,
+        ),
+        replace(base, instruction_ids=(f"v1:email_instruction:{DIGEST_A}:\ud800",)),
+    )
+
+    for receipt in rejected:
+        _reject_before_sql(receipt)
+
+
+def test_multibyte_instruction_index_over_the_byte_limit_does_not_execute_sql() -> None:
+    digit = "\u0661"
+    prefix = f"v1:email_instruction:{DIGEST_A}:"
+    identifier = prefix + digit * (((MAX_EMAIL_BYTES - len(prefix)) // 2) + 1)
+
+    assert digit.isdecimal()
+    assert len(digit.encode("utf-8")) == 2
+    assert len(identifier) <= MAX_EMAIL_BYTES
+    assert len(identifier.encode("utf-8")) > MAX_EMAIL_BYTES
+    assert MESSAGE_ID not in identifier
+    _reject_before_sql(replace(_receipt(), instruction_ids=(identifier,)))
+
+
+def test_short_multibyte_instruction_index_remains_accepted() -> None:
+    receipt = replace(
+        _receipt(disposition=Disposition.ACCEPT),
+        instruction_ids=(f"v1:email_instruction:{DIGEST_A}:\u0661",),
+    )
+
+    _inserted(receipt)
+
+
+def test_stored_over_byte_instruction_id_is_not_returned() -> None:
+    connection, store, receipt = _store()
+    digit = "\u0661"
+    prefix = f"v1:email_instruction:{DIGEST_A}:"
+    identifier = prefix + digit * (((MAX_EMAIL_BYTES - len(prefix)) // 2) + 1)
+    connection.rows[receipt.receipt_key] = {
+        "receipt_key": receipt.receipt_key,
+        "content_digest": receipt.content_digest,
+        "disposition": receipt.disposition.value,
+        "message_type": receipt.message_type.value,
+        "reasons": list(receipt.reasons),
+        "instruction_ids": [identifier],
+        "message_id": receipt.message_id,
+        "provider_type": receipt.provider_type,
+        "parser_version": receipt.parser_version,
+        "schema_version": receipt.schema_version,
+        "retention_policy": receipt.retention_policy,
+        "provider_message_ref": receipt.provider_message_ref,
+        "source_timestamp": receipt.source_timestamp,
+    }
+
+    with pytest.raises(ReceiptStoreUnavailable) as caught:
+        store.compare_and_insert(receipt.receipt_key, receipt)
+
+    assert caught.value.args == ("RECEIPT_STORE_UNAVAILABLE",)
+    assert SECRET not in str(caught.value)
+    assert connection.rows[receipt.receipt_key]["instruction_ids"] == [identifier]
+    assert connection.rows[receipt.receipt_key]["content_digest"] == DIGEST_A
+    assert connection.commits == 0
+
+
 def test_mismatched_key_writes_nothing() -> None:
     connection, store, receipt = _store()
 
