@@ -90,6 +90,12 @@ ADR-0010 is Proposed. Until the three acceptance facts in that ADR are true, thi
 
 After those facts, ordinary commits inside the ADR-0010 packages are not integration events. They do not need an Operator decision or a current-state item. Lane 1 batches completed milestones into one verification and, where the merge is materially consequential, one Operator decision. Security-sensitive candidates still need an independent verifier distinct from the author. Specialists do not self-merge. A standing-access decision named in ADR-0010 is not implied by a development commit.
 
+## Connectivity autonomy
+
+The preceding section is the pre-acceptance text of ADR-0010. ADR-0010 development authority is effective for commit `92ea9527236647773312d0713c76da418bd2fcfc`, verifier `bc-a78f0a1c-aaa9-5c1f-b3df-df2d3f27ea11`, and Operator decision `OPERATOR_AUTONOMOUS_LANES_2_3_4_EXACT_INTEGRATION_AUTHORIZED`. ADR-0011 is Proposed. Until its three acceptance facts are true, the expanded packages and direct-grant procedure are not authority.
+
+After those facts, ordinary work inside the expanded packages is not an integration event. The Operator may issue one named attended grant directly to the owning specialist. That grant does not require a Lane 1 relay or a commit per attempt. Canonical integration of a security-sensitive milestone still needs one independent verification and, where the merge is materially consequential, one Operator decision. Specialists do not self-merge. The capability registry does not authorize runtime access.
+
 ## Non-goals
 
 - Automatic merging of draft PRs #21 or #22 from this protocol document alone

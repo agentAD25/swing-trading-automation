@@ -1,0 +1,140 @@
+{
+  "schema": "swingtrade.capability-registry.v1",
+  "authorizes_runtime": false,
+  "registry_status_is_not_authorization": true,
+  "governing_commit_rule": "ADR-0011 Option A is effective only after INDEPENDENT_EXACT_TREE_PASS, OPERATOR_CONNECTIVITY_AUTONOMY_EXACT_INTEGRATION_AUTHORIZED, and canonical ancestry of the commit that contains this file.",
+  "capabilities": [
+    {
+      "name": "lane3-gmail-development",
+      "owning_lane": 3,
+      "kind": "development_package",
+      "approved_operations": [
+        "offline implementation and repair of gmail_local_connect",
+        "group4_email",
+        "gmail_credential",
+        "matching Gmail credential tests",
+        "attended diagnostic code"
+      ],
+      "endpoint_or_cluster": "none",
+      "governing_policy": "ADR-0010 and ADR-0011",
+      "authorization_status": "EFFECTIVE_AFTER_ADR0011_ACCEPTANCE",
+      "campaign_identifier": null,
+      "expiration_policy": "until a later Operator decision revokes the package",
+      "revocation_policy": "Operator decision",
+      "evidence_reference": "docs/adr/0011-connectivity-autonomy.md"
+    },
+    {
+      "name": "lane2-alpaca-paper-development",
+      "owning_lane": 2,
+      "kind": "development_package",
+      "approved_operations": [
+        "offline alpaca_paper account reader",
+        "grant verification code",
+        "budget accounting code",
+        "synthetic order lifecycle",
+        "inactive order-gate adapters"
+      ],
+      "endpoint_or_cluster": "none",
+      "governing_policy": "ADR-0010 and ADR-0011",
+      "authorization_status": "EFFECTIVE_AFTER_ADR0011_ACCEPTANCE",
+      "campaign_identifier": null,
+      "expiration_policy": "until a later Operator decision revokes the package",
+      "revocation_policy": "Operator decision",
+      "evidence_reference": "docs/adr/0011-connectivity-autonomy.md"
+    },
+    {
+      "name": "lane4-postgres-development",
+      "owning_lane": 4,
+      "kind": "development_package",
+      "approved_operations": [
+        "offline receipt store",
+        "revision 0004 source authorship",
+        "order-intent and outbox code",
+        "replay tests"
+      ],
+      "endpoint_or_cluster": "none",
+      "governing_policy": "ADR-0010 and ADR-0011",
+      "authorization_status": "EFFECTIVE_AFTER_ADR0011_ACCEPTANCE",
+      "campaign_identifier": null,
+      "expiration_policy": "until a later Operator decision revokes the package",
+      "revocation_policy": "Operator decision",
+      "evidence_reference": "docs/adr/0011-connectivity-autonomy.md"
+    },
+    {
+      "name": "LANE1_GMAIL_STANDING_READONLY_CONNECTION_AUTHORIZED",
+      "owning_lane": 3,
+      "kind": "attended_diagnostic_grant",
+      "approved_operations": [
+        "token exchange or refresh",
+        "profile GET",
+        "read-only message GET"
+      ],
+      "endpoint_or_cluster": "https://www.googleapis.com/auth/gmail.readonly",
+      "governing_policy": "ADR-0006 and ADR-0011",
+      "authorization_status": "INACTIVE",
+      "campaign_identifier": "GMAIL-READONLY-SIGNAL-DISCOVERY-20261114-R1",
+      "expiration_policy": "named in the Operator decision; one America/New_York day budgets are 20 token attempts and 50 GETs, at most 10 messages per list",
+      "revocation_policy": "named in the Operator decision",
+      "evidence_reference": "private Windows mailbox binding; not stored in Git"
+    },
+    {
+      "name": "LANE1_ALPACA_STANDING_PAPER_ACCOUNT_READ_AUTHORIZED",
+      "owning_lane": 2,
+      "kind": "attended_diagnostic_grant",
+      "approved_operations": [
+        "GET https://paper-api.alpaca.markets/v2/account"
+      ],
+      "endpoint_or_cluster": "https://paper-api.alpaca.markets/v2/account",
+      "governing_policy": "ADR-0008 and ADR-0011",
+      "authorization_status": "INACTIVE",
+      "campaign_identifier": null,
+      "expiration_policy": "named in the Operator decision; 30 requests per America/New_York day",
+      "revocation_policy": "named in the Operator decision",
+      "evidence_reference": "ADR-0008 paper credential targets; account binding stays on the Windows runtime"
+    },
+    {
+      "name": "LANE1_POSTGRES_STANDING_RECEIPT_CLUSTER_AUTHORIZED",
+      "owning_lane": 4,
+      "kind": "attended_diagnostic_grant",
+      "approved_operations": [
+        "repeatable tests",
+        "migrations 0001 through 0003 from commit 92ea9527236647773312d0713c76da418bd2fcfc"
+      ],
+      "endpoint_or_cluster": "127.0.0.1:5433 swingtrade_receipt_test swingtrade_migrator 7707684291752896980",
+      "governing_policy": "ADR-0011",
+      "authorization_status": "INACTIVE",
+      "campaign_identifier": null,
+      "expiration_policy": "named in the Operator decision",
+      "revocation_policy": "named in the Operator decision",
+      "evidence_reference": "same-connection identity proof is not in this registry"
+    },
+    {
+      "name": "LANE1_POSTGRES_REVISION_0004_EXECUTION_AUTHORIZED",
+      "owning_lane": 4,
+      "kind": "attended_diagnostic_grant",
+      "approved_operations": [
+        "execute revision 0004_instruction_receipts after a separately verified guard allowlist change"
+      ],
+      "endpoint_or_cluster": "127.0.0.1:5433 swingtrade_receipt_test swingtrade_migrator 7707684291752896980",
+      "governing_policy": "ADR-0011",
+      "authorization_status": "INACTIVE",
+      "campaign_identifier": null,
+      "expiration_policy": "named in the Operator decision",
+      "revocation_policy": "named in the Operator decision",
+      "evidence_reference": "immutable 0001-0003 source 92ea9527236647773312d0713c76da418bd2fcfc"
+    },
+    {
+      "name": "LANE1_ALPACA_STANDING_PAPER_ORDER_AUTHORIZED",
+      "owning_lane": 2,
+      "kind": "execution_grant",
+      "approved_operations": [],
+      "endpoint_or_cluster": "none",
+      "governing_policy": "ADR-0011",
+      "authorization_status": "INACTIVE",
+      "campaign_identifier": null,
+      "expiration_policy": "not selected",
+      "revocation_policy": "not selected",
+      "evidence_reference": "DEP-CORE-001 and DEP-CORE-002 remain blocking"
+    }
+  ]
+}
