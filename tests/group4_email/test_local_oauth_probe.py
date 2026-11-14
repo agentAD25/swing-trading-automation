@@ -23,6 +23,8 @@ from swingtrade.group4_email.local_oauth_probe import (
     TokenRequest,
     build_authorization_request,
     build_profile_request,
+    build_refresh_request,
+    build_scoped_authorization_request,
     build_token_request,
     loopback_redirect,
     new_oauth_state,
@@ -800,3 +802,95 @@ def test_authorization_and_token_builders_hide_secrets() -> None:
     assert "synthetic-code" not in repr(token)
     assert "client_secret" not in dict(token.form)
     assert "access_type" not in dict(authorization.parameters)
+
+
+READONLY = "https://www.googleapis.com/auth/gmail.readonly"
+
+
+def test_metadata_and_readonly_scopes_are_selected_explicitly() -> None:
+    metadata = build_authorization_request(
+        client_id=CLIENT_ID,
+        redirect_uri="http://127.0.0.1:43123/",
+        state="state-value",
+        code_challenge=RFC_CHALLENGE,
+    )
+    readonly = build_scoped_authorization_request(
+        capability="readonly",
+        client_id=CLIENT_ID,
+        redirect_uri="http://127.0.0.1:43123/",
+        state="state-value",
+        code_challenge=RFC_CHALLENGE,
+    )
+    missing = _reject(lambda: build_scoped_authorization_request(
+        capability="modify",
+        client_id=CLIENT_ID,
+        redirect_uri="http://127.0.0.1:43123/",
+        state="state-value",
+        code_challenge=RFC_CHALLENGE,
+    ))
+
+    assert dict(metadata.parameters)["scope"] == METADATA
+    assert dict(readonly.parameters)["scope"] == READONLY
+    assert dict(metadata.parameters)["code_challenge_method"] == "S256"
+    assert dict(readonly.parameters)["code_challenge_method"] == "S256"
+    assert missing.code == "GMAIL_OAUTH_SCOPE_REJECTED"
+
+
+def test_token_scope_must_match_the_requested_capability() -> None:
+    body = {"access_token": ACCESS_TOKEN, "token_type": "Bearer"}
+    readonly_body = {**body, "scope": READONLY}
+    metadata_body = {**body, "scope": METADATA}
+    broader = {**body, "scope": f"{READONLY} {METADATA}"}
+    malformed = {**body, "scope": ["readonly"]}
+    validate_token_response({"status": 200, "body": readonly_body}, expected_scope=READONLY)
+    wrong = _reject(lambda: validate_token_response({"status": 200, "body": readonly_body}))
+    other = _reject(
+        lambda: validate_token_response(
+            {"status": 200, "body": metadata_body},
+            expected_scope=READONLY,
+        )
+    )
+    extra = _reject(
+        lambda: validate_token_response(
+            {"status": 200, "body": broader},
+            expected_scope=READONLY,
+        )
+    )
+    absent = _reject(
+        lambda: validate_token_response(
+            {"status": 200, "body": body},
+            expected_scope=READONLY,
+        )
+    )
+    broken = _reject(
+        lambda: validate_token_response({"status": 200, "body": malformed}, expected_scope=READONLY)
+    )
+    denied = _reject(
+        lambda: validate_token_response(
+            {"status": 401, "body": {"error": "invalid_grant"}}, expected_scope=READONLY
+        )
+    )
+
+    assert wrong.code == "GMAIL_OAUTH_SCOPE_REJECTED"
+    assert other.code == "GMAIL_OAUTH_SCOPE_REJECTED"
+    assert extra.code == "GMAIL_OAUTH_SCOPE_REJECTED"
+    assert absent.code == "GMAIL_OAUTH_SCOPE_REJECTED"
+    assert broken.code == "GMAIL_OAUTH_SCOPE_REJECTED"
+    assert denied.code == "GMAIL_OAUTH_TOKEN_REJECTED"
+
+
+def test_refresh_form_has_no_client_secret_and_is_not_the_code_form() -> None:
+    refresh = build_refresh_request(refresh_token="refresh-value", client_id=CLIENT_ID)
+    code = build_token_request(
+        code="synthetic-code",
+        code_verifier=RFC_VERIFIER,
+        client_id=CLIENT_ID,
+        redirect_uri="http://127.0.0.1:43123/",
+    )
+    form = dict(refresh.form)
+
+    assert tuple(form) == ("grant_type", "refresh_token", "client_id")
+    assert form["grant_type"] == "refresh_token"
+    assert "client_secret" not in form
+    assert "refresh_token" not in dict(code.form)
+    assert refresh.endpoint == TOKEN_ENDPOINT

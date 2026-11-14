@@ -16,6 +16,8 @@ from dataclasses import dataclass, field
 from typing import Protocol
 
 _METADATA_SCOPE = "https://www.googleapis.com/auth/gmail.metadata"
+_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
+_CAPABILITY_SCOPES = {"metadata": _METADATA_SCOPE, "readonly": _READONLY_SCOPE}
 _AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth"
 _TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
 _PROFILE_ENDPOINT = "https://gmail.googleapis.com/gmail/v1/users/me/profile"
@@ -47,6 +49,7 @@ _CODES = frozenset(
     }
 )
 _TOKEN_FORM_KEYS = ("grant_type", "code", "code_verifier", "client_id", "redirect_uri")
+_REFRESH_FORM_KEYS = ("grant_type", "refresh_token", "client_id")
 _AUTH_PARAMETER_KEYS = (
     "response_type",
     "client_id",
@@ -240,7 +243,24 @@ def validate_callback(pairs: object, expected_state: str) -> str:
     return codes[0]
 
 
-def validate_desktop_client(client: object) -> None:
+def oauth_capability_scope(capability: object) -> str:
+    """Return one scope. The caller must name metadata or readonly."""
+
+    if type(capability) is not str or capability not in _CAPABILITY_SCOPES:
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_SCOPE_REJECTED")
+    return _CAPABILITY_SCOPES[capability]
+
+
+def require_exact_granted_scope(scope: object, expected: str) -> None:
+    """Accept only the one requested scope. A broader or other scope is rejected."""
+
+    if expected != _METADATA_SCOPE and expected != _READONLY_SCOPE:
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_SCOPE_REJECTED")
+    if type(scope) is not str or scope != expected:
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_SCOPE_REJECTED")
+
+
+def validate_desktop_client(client: object, *, capability: str = "metadata") -> None:
     """Reject a synthetic client that is not a loopback Desktop configuration."""
 
     if type(client) is not DesktopClientConfig:
@@ -257,7 +277,7 @@ def validate_desktop_client(client: object) -> None:
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_REDIRECT_REJECTED")
     if client.redirect_port is not None:
         _require_port(client.redirect_port)
-    _require_scope(client.scopes)
+    _require_scope(client.scopes, capability)
 
 
 def build_authorization_request(
@@ -267,13 +287,32 @@ def build_authorization_request(
     state: str,
     code_challenge: str,
 ) -> AuthorizationRequest:
-    """Build the authorization shape. Offline access is not requested."""
+    """Build the historical metadata authorization shape."""
+
+    return build_scoped_authorization_request(
+        capability="metadata",
+        client_id=client_id,
+        redirect_uri=redirect_uri,
+        state=state,
+        code_challenge=code_challenge,
+    )
+
+
+def build_scoped_authorization_request(
+    *,
+    capability: str,
+    client_id: str,
+    redirect_uri: str,
+    state: str,
+    code_challenge: str,
+) -> AuthorizationRequest:
+    """Build one explicit capability. Metadata is not upgraded in place."""
 
     parameters = (
         ("response_type", "code"),
         ("client_id", client_id),
         ("redirect_uri", redirect_uri),
-        ("scope", _METADATA_SCOPE),
+        ("scope", oauth_capability_scope(capability)),
         ("code_challenge", code_challenge),
         ("code_challenge_method", "S256"),
         ("state", state),
@@ -304,15 +343,34 @@ def build_token_request(
     return TokenRequest(endpoint=_TOKEN_ENDPOINT, form=form)
 
 
-def validate_token_response(response: object) -> None:
+def build_refresh_request(*, refresh_token: str, client_id: str) -> TokenRequest:
+    """Build a refresh form. The client secret is not a field."""
+
+    if (
+        type(refresh_token) is not str
+        or refresh_token == ""
+        or len(refresh_token) > 512
+        or type(client_id) is not str
+        or client_id == ""
+        or len(client_id) > 256
+    ):
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_REJECTED")
+    form = (
+        ("grant_type", "refresh_token"),
+        ("refresh_token", refresh_token),
+        ("client_id", client_id),
+    )
+    _require_pairs(form, _REFRESH_FORM_KEYS, "GMAIL_OAUTH_TOKEN_REJECTED")
+    return TokenRequest(endpoint=_TOKEN_ENDPOINT, form=form)
+
+
+def validate_token_response(response: object, *, expected_scope: str = _METADATA_SCOPE) -> None:
     """Check one synthetic token response and retain none of its secrets."""
 
     status, body = _response_parts(response, "GMAIL_OAUTH_TOKEN_REJECTED")
     if status != 200:
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_REJECTED")
-    scope = body.get("scope")
-    if scope != _METADATA_SCOPE:
-        raise LocalOAuthProbeRejected("GMAIL_OAUTH_SCOPE_REJECTED")
+    require_exact_granted_scope(body.get("scope"), expected_scope)
     access_token = body.get("access_token")
     if type(access_token) is not str or access_token == "":
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_REJECTED")
@@ -435,8 +493,9 @@ def _require_port(port: object) -> None:
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_REDIRECT_REJECTED")
 
 
-def _require_scope(scopes: object) -> None:
-    if scopes != (_METADATA_SCOPE,):
+def _require_scope(scopes: object, capability: str = "metadata") -> None:
+    expected = oauth_capability_scope(capability)
+    if scopes != (expected,):
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_SCOPE_REJECTED")
 
 

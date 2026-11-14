@@ -45,10 +45,10 @@ SECRET = "synthetic-client-secret-value"
 MODULE = Path("src/swingtrade/gmail_local_connect.py")
 _BLOBS = {
     "src/swingtrade/group4_email/local_oauth_probe.py": (
-        "618e510046178fa87c5fbb84a797c7b3f60d90e8"
+        "d763823e5d719ed2623c40531f93a5f207d6e742"
     ),
-    "tests/group4_email/test_local_oauth_probe.py": ("4f405e88a840c63e7e84f3b34e803fc4a13a3a2b"),
-    "tests/group4_email/test_attacks.py": "14b911ba29f16161f179c272c2e2f5e1be50922e",
+    "tests/group4_email/test_local_oauth_probe.py": ("2857821ccffada300021dd519abaceaa9e4e81e6"),
+    "tests/group4_email/test_attacks.py": "0997ba2237e8d0643061ec65e9a8032380abb611",
 }
 
 
@@ -828,6 +828,7 @@ def test_module_has_no_database_broker_or_economic_imports() -> None:
         "sys",
         "collections.abc",
         "typing",
+        "swingtrade.group4_email.gmail_readonly_pilot",
         "swingtrade.group4_email.local_oauth_probe",
         "__future__",
     }
@@ -1480,3 +1481,139 @@ def test_token_diagnostic_oauth_request_fields_unchanged(monkeypatch: pytest.Mon
     assert "Content-Type" not in source
     assert "content-type" not in source.lower()
     assert _request_header_names() == ["Authorization"]
+
+
+def test_urllib_supplies_form_content_type_when_preparing_a_post() -> None:
+    """A constructed token request has no content type until urllib prepares it.
+
+    The historical GMAIL_OAUTH_TOKEN_REJECTED result remains unclassified.
+    This does not show that Google received an untyped body, and it does not
+    change the five-field token form.
+    """
+
+    from urllib.request import AbstractHTTPHandler, Request
+
+    request = Request(TOKEN, data=b"grant_type=authorization_code", method="POST")
+    handler = AbstractHTTPHandler()
+    handler.parent = type("Parent", (), {"addheaders": []})()
+    assert request.header_items() == []
+    handler.do_request_(request)
+    headers = dict(request.header_items())
+    assert headers["Content-type"] == "application/x-www-form-urlencoded"
+
+
+def test_readonly_selection_does_not_upgrade_a_metadata_client() -> None:
+    metadata = desktop_client_from_document({"installed": {"client_id": CLIENT_ID}})
+    readonly = desktop_client_from_document(
+        {"installed": {"client_id": CLIENT_ID}},
+        capability="readonly",
+    )
+    upgraded = _reject(
+        lambda: desktop_client_from_document(
+            {"installed": {"client_id": CLIENT_ID, "scopes": [METADATA]}},
+            capability="readonly",
+        )
+    )
+
+    assert metadata.scopes == (METADATA,)
+    assert readonly.scopes == (_READONLY,)
+    assert upgraded.code == "GMAIL_OAUTH_SCOPE_REJECTED"
+
+
+def test_offline_readonly_acquisition_is_separate_from_the_windows_command() -> None:
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    from swingtrade.group4_email.gmail_readonly_pilot import (
+        DailyBudget,
+        MemoryBudgetStore,
+        seed_daily_budget,
+    )
+
+    tree = ast.parse(MODULE.read_text(encoding="utf-8"))
+    windows = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "run_local_windows_profile_proof"
+    )
+    rendered = ast.dump(windows)
+    assert "run_offline_readonly_acquisition" not in rendered
+    assert "readonly" not in rendered
+
+    class Transport:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+            self.authenticated: list[bool] = []
+            self._responses = [
+                (
+                    200,
+                    json.dumps(
+                        {"access_token": "connector-synthetic-access", "scope": _READONLY}
+                    ).encode(),
+                ),
+                (
+                    200,
+                    json.dumps(
+                        {
+                            "emailAddress": EMAIL,
+                            "messagesTotal": 1,
+                            "threadsTotal": 1,
+                            "historyId": "history-shape",
+                        }
+                    ).encode(),
+                ),
+                (200, json.dumps({"labels": []}).encode()),
+                (200, json.dumps({"resultSizeEstimate": 0}).encode()),
+            ]
+
+        def exchange(
+            self,
+            method: str,
+            url: str,
+            body: bytes = b"",
+            bearer: str | None = None,
+        ) -> tuple[int, bytes]:
+            self.calls.append(method)
+            self.authenticated.append(bearer is not None)
+            return self._responses.pop(0)
+
+    now = int(datetime(2026, 11, 14, 12, tzinfo=ZoneInfo("America/New_York")).timestamp())
+    store = MemoryBudgetStore()
+    seed_daily_budget(store, now)
+    transport = Transport()
+    evidence = connect.run_offline_readonly_acquisition(
+        {"installed": {"client_id": CLIENT_ID}},
+        transport,
+        redirect_uri="http://127.0.0.1:43123/",
+        state="synthetic-state",
+        code_verifier="b" * 43,
+        selectors=("label:synthetic",),
+        budget=DailyBudget(store, lambda: now),
+        expected_mailbox=EMAIL,
+        callback=(
+            ("code", "synthetic-code"),
+            ("state", "synthetic-state"),
+            ("iss", "https://accounts.google.com"),
+        ),
+    )
+    denied = _reject(
+        lambda: connect.run_offline_readonly_acquisition(
+            {"installed": {"client_id": CLIENT_ID, "scopes": [METADATA]}},
+            Transport(),
+            redirect_uri="http://127.0.0.1:43123/",
+            state="synthetic-state",
+            code_verifier="b" * 43,
+            selectors=("label:synthetic",),
+            budget=DailyBudget(store, lambda: now),
+            expected_mailbox=EMAIL,
+            callback=(("code", "synthetic-code"), ("state", "synthetic-state")),
+        )
+    )
+
+    assert evidence.economic_dispatch is False
+    assert evidence.durable_state == "UNAVAILABLE"
+    assert evidence.messages == ()
+    assert transport.calls == ["POST", "GET", "GET", "GET"]
+    assert transport.authenticated == [False, True, True, True]
+    assert "connector-synthetic-access" not in repr(evidence)
+    assert denied.code == "GMAIL_OAUTH_SCOPE_REJECTED"
