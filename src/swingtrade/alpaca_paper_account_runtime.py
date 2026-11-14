@@ -15,6 +15,7 @@ import urllib.error
 import urllib.request
 from collections.abc import Callable
 from enum import StrEnum
+from typing import Any, cast
 
 from swingtrade.alpaca_paper_account_read import ACCOUNT_URL, _body_reason, _request_reason
 from swingtrade.alpaca_paper_custody import PAPER_KEY_ID_TARGET, PAPER_SECRET_TARGET
@@ -532,7 +533,7 @@ def _cred_read_target(target: str) -> bytes:
             ("UserName", wintypes.LPWSTR),
         )
 
-    library = ctypes.WinDLL("advapi32")
+    library = cast(Any, ctypes).WinDLL("advapi32")
     pointer = ctypes.POINTER(_Credential)()
     found = library.CredReadW(target, 1, 0, ctypes.byref(pointer))
     if not found:
