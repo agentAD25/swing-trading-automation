@@ -4784,3 +4784,38 @@ authorized that fast-forward. GitHub PR #87 is `MERGED` at
 `7a269749d1b04af4d8940550d811190d3c4a702e` does not certify this
 merge. Stage E is not `PASS`. No migration is authorized. This
 paragraph does not embed its own hash.
+
+## 2026-11-14 — ADR-0009 standing specialist authority proposed
+
+Parent main is `afc6b76ec679b269e89e5478c5a8bf938a0dad2e`, tree
+`acc32eec762c1789254bbfa2c1515b32413cff29`. The Operator directed one
+governance restructuring. This entry records the audit and the
+proposed ADR. ADR-0009 stays Proposed. Its Decision stays blank.
+Option A is not selected. Layer D and Layer P are inactive.
+
+Facts inspected on that main:
+
+- `docs/AGENT_AUTHORITY.md` denies credentials, broker or account or
+  network activity, TradeStation `SIM`, order submission, real
+  capital, and `LIVE` while current state denies them. An ADR cannot
+  override that rule.
+- `.cursor/rules/10-trading-safety.mdc` keeps `DRY_RUN` as the only
+  authorized execution mode. Those rules are not edited.
+- ADR-0008 is Accepted. Its two paper targets and its rejection of
+  live targets stay as written. It authorizes no credential read and
+  no provider call.
+- Item 39 is effective and authorizes no migration. Stage E is not
+  `PASS`. Stage F is not authorized. Item 30 source paths stay closed.
+- Campaign `GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped.
+- Open PR #66 head `de742e59b171bf85b5a31f61148b186347c641ed` and open
+  PR #88 head `8e84f0511cffe310c76b8aeaa2b2a7c067fe9145` contain that
+  main. Open PR #80 head `49a38a0802eae2464ba4d48a79c8d4bc8d303510` and
+  open PR #90 head `e3ea2af594582003f4cd218d34a913a0ff2100ac` do not.
+  None of those pull requests is merged or closed here.
+
+The audit classes are in ADR-0009. Class 1 safety controls and class 2
+integration controls stay. Class 3 per-step administration is the
+overhead Option A would consolidate after acceptance. Class 4
+historical grants stay readable. This entry does not call a provider,
+read a credential, connect to PostgreSQL, or submit an order. It does
+not embed its own hash.

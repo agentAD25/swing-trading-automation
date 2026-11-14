@@ -77,6 +77,8 @@ Item 39 Alembic target-guard grant, 2026-11-13. Parent main `bfcdec0c2a28a57bbbf
 
 Item 39 is effective, 2026-11-13. Commit `e52ad5e6e40e228ffba20199707a6c39d7fd4f5e`, tree `40de41cca9dfad6c485270430b84d4c54dcae0e6`, sole parent `bfcdec0c2a28a57bbbf373eb3b9bc854f9ae7744`, is on canonical main. Verifier `bc-5a71318b-51be-512a-ae34-3638d620d2e2` returned `INDEPENDENT_EXACT_TREE_PASS`. Operator decision `LANE1_ITEM39_ALEMBIC_GUARD_GRANT_EXACT_INTEGRATION_AUTHORIZED` authorized the fast-forward. GitHub PR #87 is MERGED at `2026-11-13T21:11:03Z`. The three-file grant is effective. It does not authorize a migration. Item 37 stays inactive in this reconciliation. Stage E is not certified. All nine dependencies stay OPEN. ADR-0004 and ADR-0005 stay Proposed. This descendant cannot embed its own hash.
 
+ADR-0009 proposal, 2026-11-14. Parent main `afc6b76ec679b269e89e5478c5a8bf938a0dad2e`, tree `acc32eec762c1789254bbfa2c1515b32413cff29`. ADR-0009 is Proposed and its Decision is blank. Lanes 2, 3, and 4 must not treat the proposed packages as authority. Layer D and Layer P are inactive. Existing effective grants stay in force. All nine dependencies stay OPEN. ADR-0004 and ADR-0005 stay Proposed. ADR-0008 stays Accepted and is not widened. This descendant cannot embed its own hash.
+
 ## Controlled states
 
 Only these values are permitted for `Current state`:
