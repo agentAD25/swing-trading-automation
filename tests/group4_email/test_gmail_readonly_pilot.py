@@ -840,11 +840,15 @@ def test_budget_day_boundary_daylight_saving_and_concurrency(tmp_path: Path) -> 
     assert json.loads((tmp_path / "shared.json").read_text(encoding="utf-8"))["read_gets"] == 8
 
 
-def test_operator_grant_rejects_forgeries_and_cannot_enable_the_network(tmp_path: Path) -> None:
+def test_operator_grant_rejects_forgeries_and_cannot_enable_the_network(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     from swingtrade.gmail_local_connect import run_local_windows_readonly_runtime
     from swingtrade.group4_email.gmail_readonly_pilot import (
         READONLY_CAMPAIGN,
         OperatorGrant,
+        RuntimePaths,
         assess_readonly_runtime,
         grant_mac,
         mailbox_hash,
@@ -892,8 +896,20 @@ def test_operator_grant_rejects_forgeries_and_cannot_enable_the_network(tmp_path
     assert assess_readonly_runtime(forged, mac, key=None, now=FIXED) == (
         "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
     )
+    empty = tmp_path / "empty"
+    budget = empty / READONLY_CAMPAIGN
+    budget.mkdir(parents=True)
+    monkeypatch.setattr(
+        "swingtrade.group4_email.gmail_readonly_pilot.production_runtime_paths",
+        lambda: RuntimePaths(
+            empty / "standing-grant.json",
+            empty / "grant-key.bin",
+            budget,
+            empty / "desktop-client.json",
+        ),
+    )
     with pytest.raises(LocalOAuthProbeRejected) as blocked:
-        run_local_windows_readonly_runtime(str(tmp_path / "client.json"))
+        run_local_windows_readonly_runtime()
     assert blocked.value.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
 
 
@@ -1055,6 +1071,9 @@ def _grant_document() -> dict[str, object]:
         "campaign": READONLY_CAMPAIGN,
         "capability": "readonly",
         "custody_target": "swing-trading/lane3/gmail/dev/refresh-token",
+        "decision": "LANE1_GMAIL_STANDING_READONLY_CONNECTION_AUTHORIZED",
+        "scope": "https://www.googleapis.com/auth/gmail.readonly",
+        "selector": "from:signals@example.invalid",
         "endpoints": [
             "https://oauth2.googleapis.com/token",
             "https://gmail.googleapis.com/gmail/v1/users/me/",
@@ -1066,3 +1085,340 @@ def _grant_document() -> dict[str, object]:
         "revoked": False,
         "runtime": "win32",
     }
+
+
+class _Port:
+    def __init__(self, material: bytes = b"synthetic-refresh", fail: str | None = None) -> None:
+        self.material = bytearray(material)
+        self.fail = fail
+        self.reads = 0
+        self.releases = 0
+
+    def read(self) -> bytes:
+        self.reads += 1
+        if self.fail is not None:
+            raise PilotRejected(self.fail)
+        return bytes(self.material)
+
+    def release(self) -> None:
+        self.releases += 1
+        self.material = bytearray(b"\x00" * len(self.material))
+
+
+class _Bindings:
+    def __init__(
+        self,
+        blob: bytes = b"synthetic-refresh",
+        *,
+        fail_copy: bool = False,
+        fail_free: bool = False,
+    ) -> None:
+        self.blob = blob
+        self.fail_copy = fail_copy
+        self.fail_free = fail_free
+        self.reads = 0
+        self.frees = 0
+
+    def cred_read(self, _target: str, pointer: list[object]) -> bool:
+        self.reads += 1
+        pointer[0] = object()
+        return True
+
+    def copy_blob(self, _pointer: list[object]) -> bytes:
+        if self.fail_copy:
+            raise RuntimeError("copy failed")
+        return self.blob
+
+    def cred_free(self, pointer: list[object]) -> None:
+        self.frees += 1
+        pointer[0] = None
+        if self.fail_free:
+            raise RuntimeError("free failed")
+
+
+def _prepare(
+    root: Path,
+    document: dict[str, object] | None = None,
+    *,
+    mac: str | None = None,
+    key: bytes = b"k" * 32,
+    write_grant: bool = True,
+) -> object:
+    from swingtrade.group4_email.gmail_readonly_pilot import (
+        READONLY_CAMPAIGN,
+        RuntimePaths,
+        grant_mac,
+    )
+
+    budget = root / READONLY_CAMPAIGN
+    budget.mkdir(parents=True)
+    (root / "grant-key.bin").write_bytes(key)
+    if write_grant:
+        chosen = _grant_document() if document is None else document
+        signature = grant_mac(chosen, key) if mac is None else mac
+        (root / "standing-grant.json").write_text(
+            json.dumps({"document": chosen, "mac": signature}),
+            encoding="utf-8",
+        )
+    (root / "desktop-client.json").write_text(
+        json.dumps({"installed": {"client_id": "synthetic-client"}}),
+        encoding="utf-8",
+    )
+    return RuntimePaths(
+        root / "standing-grant.json",
+        root / "grant-key.bin",
+        budget,
+        root / "desktop-client.json",
+    )
+
+
+def _seal(paths: object, key: bytes = b"k" * 32) -> None:
+    from swingtrade.group4_email.gmail_readonly_pilot import (
+        SealedFileStore,
+        establish_protected_budget,
+    )
+
+    establish_protected_budget(SealedFileStore(paths.budget_dir), FIXED, key)  # type: ignore[attr-defined]
+
+
+def test_authorized_runtime_fails_closed_until_a_real_grant(tmp_path: Path) -> None:
+    import ssl
+
+    from swingtrade.group4_email.gmail_readonly_pilot import (
+        BoundOpenerTransport,
+        PilotRejected,
+        execute_trusted_runtime,
+        native_credential_read,
+        read_native_credential,
+        readonly_opener,
+    )
+
+    def run(
+        name: str,
+        document: dict[str, object] | None = None,
+        *,
+        mac: str | None = None,
+        key: bytes = b"k" * 32,
+        write_grant: bool = True,
+        seal: bool = False,
+        transport: Scripted | None = None,
+        port: _Port | None = None,
+        live: bool = False,
+    ) -> object:
+        paths = _prepare(
+            tmp_path / name,
+            document,
+            mac=mac,
+            key=key,
+            write_grant=write_grant,
+        )
+        if seal:
+            _seal(paths, key)
+        holder = port or _Port()
+        calls = {"count": 0}
+
+        def factory() -> _Port:
+            calls["count"] += 1
+            return holder
+
+        if live:
+            return execute_trusted_runtime(paths, now=FIXED, transport=None)  # type: ignore[arg-type]
+        try:
+            result = execute_trusted_runtime(
+                paths,  # type: ignore[arg-type]
+                now=FIXED,
+                transport=transport or Scripted([]),
+                custody_factory=factory,
+            )
+        except PilotRejected as rejected:
+            assert calls["count"] == 0 or holder.reads == holder.releases
+            return rejected
+        assert calls["count"] == 1
+        assert holder.reads == 1
+        assert holder.releases == 1
+        return result
+
+    missing = run("missing", write_grant=False, key=b"x")
+    forged = run("forged", mac="ab" * 32)
+    expired = dict(_grant_document())
+    expired["expires_at"] = FIXED
+    late = run("expired", expired)
+    revoked = dict(_grant_document())
+    revoked["revoked"] = True
+    stopped = run("revoked", revoked)
+    wrong_box = dict(_grant_document())
+    wrong_box["mailbox_hash"] = "ab" * 32
+    mailbox = run(
+        "mailbox",
+        wrong_box,
+        seal=True,
+        transport=Scripted(
+            [
+                _json({"access_token": "synthetic-access", "scope": READONLY_SCOPE}),
+                _profile(),
+            ]
+        ),
+    )
+    campaign = dict(_grant_document())
+    campaign["campaign"] = "OTHER-CAMPAIGN"
+    campaign["budget_id"] = "OTHER-CAMPAIGN"
+    other = run("campaign", campaign)
+    scope = dict(_grant_document())
+    scope["scope"] = "https://www.googleapis.com/auth/gmail.metadata"
+    metadata = run("scope", scope)
+    runtime = dict(_grant_document())
+    runtime["runtime"] = "linux"
+    platform = run("runtime", runtime)
+    custody = dict(_grant_document())
+    custody["custody_target"] = "swing-trading/other"
+    target = run("custody", custody)
+    budget = run("budget", seal=False)
+    corrupt_paths = _prepare(tmp_path / "corrupt")
+    _seal(corrupt_paths)
+    budget_file = corrupt_paths.budget_dir / "budget.json"  # type: ignore[attr-defined]
+    budget_file.write_text(
+        "deleted",
+        encoding="utf-8",
+    )
+    corrupt_port = _Port()
+    with pytest.raises(PilotRejected) as corrupt:
+        execute_trusted_runtime(
+            corrupt_paths,  # type: ignore[arg-type]
+            now=FIXED,
+            transport=Scripted([]),
+            custody_factory=lambda: corrupt_port,
+        )
+    with pytest.raises(PilotRejected) as blocked_live:
+        run("live", seal=True, live=True)
+
+    opener = readonly_opener()
+    names = ",".join(type(handler).__name__ for handler in opener.handlers)
+    hostile = BoundOpenerTransport(opener)
+
+    class _Redirect:
+        def open(self, _request: object, timeout: int = 0) -> object:
+            raise PilotRejected("GMAIL_PILOT_REDIRECT_REJECTED")
+
+    class _Tls:
+        def open(self, _request: object, timeout: int = 0) -> object:
+            raise ssl.SSLError("synthetic")
+
+    with pytest.raises(PilotRejected) as wrong_host:
+        hostile.exchange("GET", "https://evil.example/messages")
+    with pytest.raises(PilotRejected) as redirect:
+        BoundOpenerTransport(_Redirect()).exchange(
+            "GET",
+            "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+        )
+    with pytest.raises(PilotRejected) as tls:
+        BoundOpenerTransport(_Tls()).exchange(
+            "GET",
+            "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+        )
+    native = _Bindings()
+    with pytest.raises(PilotRejected) as unread:
+        native_credential_read()
+    with pytest.raises(PilotRejected) as wrong_native:
+        read_native_credential("swing-trading/other", native)
+    failed_copy = _Bindings(fail_copy=True)
+    with pytest.raises(PilotRejected):
+        read_native_credential(
+            "swing-trading/lane3/gmail/dev/refresh-token",
+            failed_copy,
+        )
+    failed_free = _Bindings(fail_free=True)
+    with pytest.raises(PilotRejected):
+        read_native_credential(
+            "swing-trading/lane3/gmail/dev/refresh-token",
+            failed_free,
+        )
+    raw = (
+        b"Message-ID: <outside@signals.example>\r\n"
+        b"From: signals@example.invalid\r\n"
+        b"Subject: Desk note\r\n"
+        b"Date: Sat, 14 Nov 2026 17:00:00 +0000\r\n"
+        b"\r\n"
+        b"not a signal\r\n"
+    )
+    scripted = Scripted(
+        [
+            _json({"access_token": "synthetic-access", "scope": READONLY_SCOPE}),
+            _profile(),
+            _labels(),
+            _listed("provider-1"),
+            _rfc822("provider-1", raw),
+        ]
+    )
+    inspected = run("connected", seal=True, transport=scripted)
+    empty = Scripted(
+        [
+            _json({"access_token": "synthetic-access", "scope": READONLY_SCOPE}),
+            _profile(),
+            _labels(),
+            _json({"messages": []}),
+        ]
+    )
+    quiet = run("quiet", seal=True, transport=empty)
+    mismatched = Scripted(
+        [
+            _json({"access_token": "synthetic-access", "scope": READONLY_SCOPE}),
+            _json({"emailAddress": "other@example.invalid", "messagesTotal": 1, "threadsTotal": 1}),
+        ]
+    )
+    rejected_box = run("profile", seal=True, transport=mismatched)
+    malformed = run("token", seal=True, transport=Scripted([(200, b"{")]))
+    denied = run(
+        "denied",
+        seal=True,
+        transport=Scripted(
+            [
+                _json({"access_token": "synthetic-access", "scope": READONLY_SCOPE}),
+                (403, b"{}"),
+            ]
+        ),
+    )
+    failed_port = run("credential", seal=True, port=_Port(fail="GMAIL_PILOT_CUSTODY_REJECTED"))
+
+    assert missing.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED"  # type: ignore[attr-defined]
+    assert forged.code == "GMAIL_PILOT_GRANT_REJECTED"  # type: ignore[attr-defined]
+    assert late.code == "GMAIL_PILOT_GRANT_REJECTED"  # type: ignore[attr-defined]
+    assert stopped.code == "GMAIL_PILOT_GRANT_REJECTED"  # type: ignore[attr-defined]
+    assert mailbox.code == "GMAIL_PILOT_MAILBOX_REJECTED"  # type: ignore[attr-defined]
+    assert other.code == "GMAIL_PILOT_GRANT_REJECTED"  # type: ignore[attr-defined]
+    assert metadata.code == "GMAIL_PILOT_GRANT_REJECTED"  # type: ignore[attr-defined]
+    assert platform.code == "GMAIL_PILOT_GRANT_REJECTED"  # type: ignore[attr-defined]
+    assert target.code == "GMAIL_PILOT_GRANT_REJECTED"  # type: ignore[attr-defined]
+    assert budget.code == "GMAIL_PILOT_BUDGET_INVALID"  # type: ignore[attr-defined]
+    assert corrupt.value.code == "GMAIL_PILOT_BUDGET_INVALID"
+    assert corrupt_port.reads == 0
+    assert blocked_live.value.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
+    assert "ProxyHandler" not in names
+    assert wrong_host.value.code == "GMAIL_PILOT_ENDPOINT_REJECTED"
+    assert redirect.value.code == "GMAIL_PILOT_REDIRECT_REJECTED"
+    assert tls.value.code == "GMAIL_PILOT_TLS_REJECTED"
+    assert unread.value.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
+    assert wrong_native.value.code == "GMAIL_PILOT_CUSTODY_REJECTED"
+    assert native.reads == 0
+    assert failed_copy.frees == 1
+    assert failed_free.frees == 1
+    assert inspected.code == "READONLY_RUNTIME_INJECTED_PASS"  # type: ignore[attr-defined]
+    assert inspected.transport_mode == "injected"  # type: ignore[attr-defined]
+    assert inspected.economic_dispatch is False  # type: ignore[attr-defined]
+    assert inspected.profile_matched is True  # type: ignore[attr-defined]
+    assert inspected.message_count == 1  # type: ignore[attr-defined]
+    assert inspected.classifications == ("NON_ACTIONABLE",)  # type: ignore[attr-defined]
+    assert inspected.token_attempts == 1  # type: ignore[attr-defined]
+    assert inspected.read_gets == 4  # type: ignore[attr-defined]
+    assert quiet.message_count == 0  # type: ignore[attr-defined]
+    assert quiet.read_gets == 3  # type: ignore[attr-defined]
+    assert rejected_box.code == "GMAIL_PILOT_MAILBOX_REJECTED"  # type: ignore[attr-defined]
+    assert malformed.code == "GMAIL_PILOT_MALFORMED"  # type: ignore[attr-defined]
+    assert denied.code == "GMAIL_PILOT_DENIED"  # type: ignore[attr-defined]
+    assert failed_port.code == "GMAIL_PILOT_CUSTODY_REJECTED"  # type: ignore[attr-defined]
+    rendered = repr(inspected)
+    assert MAILBOX not in rendered
+    assert "synthetic-access" not in rendered
+    assert "synthetic-refresh" not in rendered
+    assert all("attachments" not in url for _method, url in scripted.calls)
+    assert scripted.calls[0][0] == "POST"
+    assert [method for method, _url in scripted.calls].count("GET") == 4

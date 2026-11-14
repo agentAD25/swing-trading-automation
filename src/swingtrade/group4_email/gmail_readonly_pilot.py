@@ -1,8 +1,8 @@
 """Injected-transport Gmail read-only acquisition.
 
-The transport is supplied by the caller. This module does not open a socket,
-read a credential, send mail, or submit an order. Message bytes are parsed
-and then dropped. Evidence keeps hashes, dispositions, and identities.
+Injected transports do not open a socket. A native credential read happens
+only after a trusted local grant validates. Message bytes are parsed and
+then dropped. Evidence keeps hashes, dispositions, and identities.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Protocol
+from typing import NoReturn, Protocol, cast
 from zoneinfo import ZoneInfo
 
 from swingtrade.group4_email.contract import EMAIL_RETENTION_POLICY
@@ -29,6 +29,9 @@ from swingtrade.group4_email.local_oauth_probe import (
     build_refresh_request,
     build_scoped_authorization_request,
     build_token_request,
+    loopback_redirect,
+    new_oauth_state,
+    new_pkce_verifier,
     pkce_s256_challenge,
     require_exact_granted_scope,
     validate_callback,
@@ -271,13 +274,21 @@ class TokenGrant:
             raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
 
 
+def _budget(value: object) -> DailyBudget | ProtectedBudget:
+    if type(value) is not DailyBudget and type(value) is not ProtectedBudget:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_UNAVAILABLE")
+    assert isinstance(value, (DailyBudget, ProtectedBudget))
+    return value
+
+
 def acquire_readonly_messages(
     transport: PilotTransport,
     selectors: tuple[str, ...],
     *,
     grant: TokenGrant | None = None,
-    budget: DailyBudget | None = None,
+    budget: DailyBudget | ProtectedBudget | None = None,
     expected_mailbox: str | None = None,
+    expected_mailbox_hash: str | None = None,
     limit: int = MAX_LIST_RESULTS,
     registry: MessageIdentityRegistry | None = None,
     seen_provider_ids: set[str] | None = None,
@@ -300,25 +311,30 @@ def acquire_readonly_messages(
         raise PilotRejected("GMAIL_PILOT_TRANSPORT_REJECTED")
     if seen_provider_ids is not None and type(seen_provider_ids) is not set:
         raise PilotRejected("GMAIL_PILOT_TRANSPORT_REJECTED")
-    if type(grant) is not TokenGrant or type(budget) is not DailyBudget:
-        raise PilotRejected(
-            "GMAIL_PILOT_SCOPE_REJECTED"
-            if type(grant) is not TokenGrant
-            else "GMAIL_PILOT_BUDGET_UNAVAILABLE"
-        )
+    if type(grant) is not TokenGrant:
+        raise PilotRejected("GMAIL_PILOT_SCOPE_REJECTED")
+    active_budget = _budget(budget)
     assert isinstance(grant, TokenGrant)
-    assert isinstance(budget, DailyBudget)
-    if type(expected_mailbox) is not str or expected_mailbox == "":
+    if expected_mailbox_hash is None:
+        if type(expected_mailbox) is not str or expected_mailbox == "":
+            raise PilotRejected("GMAIL_PILOT_MAILBOX_REJECTED")
+    elif type(expected_mailbox_hash) is not str or len(expected_mailbox_hash) != 64:
+        raise PilotRejected("GMAIL_PILOT_MAILBOX_REJECTED")
+    elif any(character not in "0123456789abcdef" for character in expected_mailbox_hash):
         raise PilotRejected("GMAIL_PILOT_MAILBOX_REJECTED")
     active_registry = MessageIdentityRegistry() if registry is None else registry
     seen = set() if seen_provider_ids is None else seen_provider_ids
     seen_rfc: dict[str, str] = {}
-    session = _Session(transport, budget, grant.access_token)
+    session = _Session(transport, active_budget, grant.access_token)
     profile = session.get_object(_PROFILE)
     mailbox = profile.get("emailAddress")
     if type(mailbox) is not str or mailbox == "":
         raise PilotRejected("GMAIL_PILOT_MALFORMED")
-    if mailbox != expected_mailbox:
+    if expected_mailbox_hash is None:
+        matched = mailbox == expected_mailbox
+    else:
+        matched = mailbox_hash(mailbox) == expected_mailbox_hash
+    if not matched:
         raise PilotRejected("GMAIL_PILOT_MAILBOX_REJECTED")
     labels = session.get_object(_LABELS)
     if type(labels.get("labels")) is not list:
@@ -367,7 +383,12 @@ def acquire_readonly_messages(
 
 
 class _Session:
-    def __init__(self, transport: PilotTransport, budget: DailyBudget, bearer: str) -> None:
+    def __init__(
+        self,
+        transport: PilotTransport,
+        budget: DailyBudget | ProtectedBudget,
+        bearer: str,
+    ) -> None:
         self._transport = transport
         self._budget = budget
         self._bearer = bearer
@@ -613,13 +634,11 @@ def exchange_readonly_grant(
     transport: PilotTransport,
     form: tuple[tuple[str, str], ...],
     *,
-    budget: DailyBudget | None = None,
+    budget: DailyBudget | ProtectedBudget | None = None,
 ) -> TokenGrant:
     """Exchange or refresh one readonly grant. Ambiguous failures are not retried."""
 
-    if type(budget) is not DailyBudget:
-        raise PilotRejected("GMAIL_PILOT_BUDGET_UNAVAILABLE")
-    assert isinstance(budget, DailyBudget)
+    active_budget = _budget(budget)
     if type(form) is not tuple or any(type(item) is not tuple or len(item) != 2 for item in form):
         raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
     keys = tuple(key for key, _ in form)
@@ -637,7 +656,7 @@ def exchange_readonly_grant(
     refresh_grant = ("grant_type", "refresh_token")
     if grant != code_grant and grant != refresh_grant:
         raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
-    budget.consume_token()
+    active_budget.consume_token()
     encoded = "&".join(f"{_quote(key)}={_quote(value)}" for key, value in form).encode("ascii")
     try:
         status, raw = transport.exchange("POST", _TOKEN_URL, encoded)
@@ -692,11 +711,12 @@ def run_readonly_connection(
     state: str,
     code_verifier: str,
     selectors: tuple[str, ...],
-    budget: DailyBudget | None,
+    budget: DailyBudget | ProtectedBudget | None,
     expected_mailbox: str,
     callback: tuple[tuple[str, str], ...] | None = None,
     refresh_token: str | None = None,
     limit: int = MAX_LIST_RESULTS,
+    expected_mailbox_hash: str | None = None,
     registry: MessageIdentityRegistry | None = None,
     seen_provider_ids: set[str] | None = None,
 ) -> PilotEvidence:
@@ -708,9 +728,7 @@ def run_readonly_connection(
 
     if capability != "readonly":
         raise PilotRejected("GMAIL_PILOT_SCOPE_REJECTED")
-    if type(budget) is not DailyBudget:
-        raise PilotRejected("GMAIL_PILOT_BUDGET_UNAVAILABLE")
-    assert isinstance(budget, DailyBudget)
+    active_budget = _budget(budget)
     if type(client_id) is not str or client_id == "" or type(state) is not str or state == "":
         raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
     _require_loopback(redirect_uri)
@@ -745,13 +763,14 @@ def run_readonly_connection(
         raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
     if token_request.endpoint != _TOKEN_URL:
         raise PilotRejected("GMAIL_PILOT_ENDPOINT_REJECTED")
-    issued = exchange_readonly_grant(transport, token_request.form, budget=budget)
+    issued = exchange_readonly_grant(transport, token_request.form, budget=active_budget)
     return acquire_readonly_messages(
         transport,
         selectors,
         grant=issued,
-        budget=budget,
+        budget=active_budget,
         expected_mailbox=expected_mailbox,
+        expected_mailbox_hash=expected_mailbox_hash,
         limit=limit,
         registry=registry,
         seen_provider_ids=seen_provider_ids,
@@ -1050,12 +1069,14 @@ def _attachment(part: Mapping[str, object]) -> bool:
 
 
 READONLY_CAMPAIGN = "GMAIL-READONLY-SIGNAL-DISCOVERY-20261114-R1"
+STANDING_DECISION = "LANE1_GMAIL_STANDING_READONLY_CONNECTION_AUTHORIZED"
 _GRANT_KEYS = frozenset(
     {
         "budget_id",
         "campaign",
         "capability",
         "custody_target",
+        "decision",
         "endpoints",
         "expires_at",
         "mailbox_hash",
@@ -1063,6 +1084,8 @@ _GRANT_KEYS = frozenset(
         "not_before",
         "revoked",
         "runtime",
+        "scope",
+        "selector",
     }
 )
 _GRANT_ENDPOINTS = [
@@ -1083,12 +1106,31 @@ class _Authorized:
 _AUTHORIZED = _Authorized()
 
 
-def standing_network_allowed(grant: object) -> bool:
-    """Caller flags cannot enable a provider call. The standing grant is inactive."""
+class _Trusted:
+    """Private proof that the local grant file authenticated."""
 
-    if type(grant) is dict and (grant.get("effective") is True or grant.get("attended") is True):
+
+_TRUSTED = _Trusted()
+
+
+@dataclass(frozen=True)
+class TrustedRuntime:
+    """Grant proof held only by the runtime. A caller cannot supply it."""
+
+    campaign: str
+    proof: object = field(default=None, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        if self.proof is not _TRUSTED or self.campaign != READONLY_CAMPAIGN:
+            raise PilotRejected("GMAIL_PILOT_GRANT_UNVERIFIED")
+
+
+def standing_network_allowed(grant: object) -> bool:
+    """A caller flag or an in-memory grant object does not enable the network."""
+
+    if type(grant) is not TrustedRuntime:
         return False
-    return False
+    return grant.proof is _TRUSTED
 
 
 @dataclass(frozen=True)
@@ -1188,6 +1230,318 @@ def assess_readonly_runtime(
     except PilotRejected as rejected:
         return rejected.code
     return "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
+
+
+@dataclass(frozen=True)
+class RuntimePaths:
+    """Fixed local files. The Windows command does not accept these as arguments."""
+
+    grant_file: Path
+    key_file: Path
+    budget_dir: Path
+    client_file: Path
+
+    def __post_init__(self) -> None:
+        paths = (self.grant_file, self.key_file, self.budget_dir, self.client_file)
+        if any(not isinstance(path, Path) for path in paths):
+            raise PilotRejected("GMAIL_PILOT_GRANT_REJECTED")
+        if self.budget_dir.name != READONLY_CAMPAIGN:
+            raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+
+
+@dataclass(frozen=True)
+class RuntimeInspection:
+    """Sanitized runtime result. It has no mailbox, body, or token."""
+
+    code: str
+    profile_matched: bool
+    message_count: int
+    classifications: tuple[str, ...]
+    dispositions: tuple[str, ...]
+    token_attempts: int
+    read_gets: int
+    transport_mode: str
+    economic_dispatch: bool
+
+    def __post_init__(self) -> None:
+        if self.economic_dispatch is not False or self.transport_mode not in {"injected", "live"}:
+            raise PilotRejected("GMAIL_PILOT_MALFORMED")
+
+
+class _HttpResponse(Protocol):
+    status: int
+
+    def read(self, size: int) -> bytes: ...
+
+    def close(self) -> None: ...
+
+
+class _HttpOpener(Protocol):
+    def open(self, request: object, timeout: int = 0) -> _HttpResponse: ...
+
+
+class BoundOpenerTransport:
+    """One exchange through the pinned opener. Ambiguous token posts are not retried."""
+
+    def __init__(self, opener: _HttpOpener) -> None:
+        self._opener = opener
+
+    def exchange(
+        self,
+        method: str,
+        url: str,
+        body: bytes = b"",
+        bearer: str | None = None,
+    ) -> tuple[int, bytes]:
+        import ssl
+        from urllib.request import Request
+
+        if method not in {"GET", "POST"}:
+            raise PilotRejected("GMAIL_PILOT_ENDPOINT_REJECTED")
+        if method == "GET":
+            _require_readonly_url(url)
+        elif url != _TOKEN_URL:
+            raise PilotRejected("GMAIL_PILOT_ENDPOINT_REJECTED")
+        request = Request(url, data=body if method == "POST" else None, method=method)
+        if bearer is not None:
+            request.add_header("Authorization", "Bearer " + bearer)
+        try:
+            response = self._opener.open(request, timeout=30)
+        except PilotRejected:
+            raise
+        except ssl.SSLError:
+            raise PilotRejected("GMAIL_PILOT_TLS_REJECTED") from None
+        except TimeoutError:
+            self._transport_error(method)
+        except Exception:
+            self._transport_error(method)
+        else:
+            try:
+                status = int(response.status)
+                raw = response.read(_MAX_RESPONSE_BYTES + 1)
+            finally:
+                response.close()
+            return status, bounded_body(raw)
+
+    def _transport_error(self, method: str) -> NoReturn:
+        if method == "POST":
+            raise PilotRejected("GMAIL_PILOT_TOKEN_AMBIGUOUS")
+        raise PilotRejected("GMAIL_PILOT_TRANSPORT_REJECTED")
+
+
+def production_runtime_paths() -> RuntimePaths:
+    """Return the attended Windows paths. This does not create or read them."""
+
+    root = Path.home() / "AppData" / "Local" / "swing-trading" / "lane3" / "gmail"
+    return RuntimePaths(
+        grant_file=root / "standing-grant.json",
+        key_file=root / "grant-key.bin",
+        budget_dir=root / READONLY_CAMPAIGN,
+        client_file=root / "desktop-client.json",
+    )
+
+
+def initialize_protected_runtime_budget(paths: RuntimePaths, *, now: int) -> None:
+    """Create the first sealed budget after the grant authenticates. No provider call."""
+
+    _document, key = _authenticated_key(paths, now)
+    try:
+        store = SealedFileStore(paths.budget_dir)
+        if store.read() is not None:
+            raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+        establish_protected_budget(store, now, bytes(key))
+    finally:
+        _wipe(key)
+
+
+def execute_trusted_runtime(
+    paths: RuntimePaths,
+    *,
+    now: int,
+    transport: PilotTransport | None = None,
+    custody_factory: Callable[[], object] | None = None,
+) -> RuntimeInspection:
+    """Run one readonly refresh. A temp path cannot select the live opener."""
+
+    import sys
+
+    document, key = _authenticated_key(paths, now)
+    try:
+        client_id = _desktop_client_id(paths.client_file)
+        if transport is None:
+            if paths != production_runtime_paths() or sys.platform != "win32":
+                raise PilotRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+            active: PilotTransport = BoundOpenerTransport(cast(_HttpOpener, readonly_opener()))
+            mode = "live"
+        else:
+            active = transport
+            mode = "injected"
+        store = SealedFileStore(paths.budget_dir)
+        current = store.read()
+        if current is None:
+            raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+        _open_budget(current, bytes(key), now)
+        trusted = TrustedRuntime(campaign=READONLY_CAMPAIGN, proof=_TRUSTED)
+        if not standing_network_allowed(trusted):
+            raise PilotRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+        port = _custody_port(paths, trusted, custody_factory, mode)
+        material = bytearray()
+        try:
+            material.extend(_custody_bytes(port))
+            refresh = material.decode("ascii")
+            evidence = run_readonly_connection(
+                active,
+                capability="readonly",
+                client_id=client_id,
+                redirect_uri=loopback_redirect(1),
+                state=new_oauth_state(),
+                code_verifier=new_pkce_verifier(),
+                selectors=(str(document["selector"]),),
+                budget=ProtectedBudget(store, lambda: now, bytes(key)),
+                expected_mailbox="bound-by-hash",
+                expected_mailbox_hash=str(document["mailbox_hash"]),
+                refresh_token=refresh,
+            )
+        finally:
+            _wipe(material)
+            _release_port(port)
+        opened = _open_budget(store.read() or "", bytes(key), now)
+        return _inspection(evidence, opened, mode)
+    finally:
+        _wipe(key)
+
+
+def _authenticated_key(paths: RuntimePaths, now: int) -> tuple[dict[str, object], bytearray]:
+    loaded = _load_grant_envelope(paths.grant_file)
+    if loaded is None:
+        raise PilotRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+    document, mac = loaded
+    if type(now) is not int:
+        raise PilotRejected("GMAIL_PILOT_GRANT_REJECTED")
+    _require_grant_fields(document, now)
+    if not paths.key_file.is_file():
+        raise PilotRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+    key = bytearray(paths.key_file.read_bytes())
+    try:
+        if len(key) < 32 or len(key) > 256:
+            raise PilotRejected("GMAIL_PILOT_GRANT_REJECTED")
+        validate_operator_grant(document, mac, bytes(key), now)
+    except BaseException:
+        _wipe(key)
+        raise
+    return document, key
+
+
+def _load_grant_envelope(path: Path) -> tuple[dict[str, object], str] | None:
+    if not path.is_file():
+        return None
+    try:
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        raise PilotRejected("GMAIL_PILOT_GRANT_REJECTED") from None
+    if type(parsed) is not dict or set(parsed) != {"document", "mac"}:
+        raise PilotRejected("GMAIL_PILOT_GRANT_REJECTED")
+    document = parsed.get("document")
+    mac = parsed.get("mac")
+    if type(document) is not dict or type(mac) is not str:
+        raise PilotRejected("GMAIL_PILOT_GRANT_REJECTED")
+    return document, mac
+
+
+def _desktop_client_id(path: Path) -> str:
+    if not path.is_file():
+        raise PilotRejected("GMAIL_OAUTH_CLIENT_REJECTED")
+    try:
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        raise PilotRejected("GMAIL_OAUTH_CLIENT_REJECTED") from None
+    installed = parsed.get("installed") if type(parsed) is dict else None
+    client_id = installed.get("client_id") if type(installed) is dict else None
+    if type(client_id) is not str or client_id == "" or len(client_id) > 256:
+        raise PilotRejected("GMAIL_OAUTH_CLIENT_REJECTED")
+    return client_id
+
+
+def _custody_port(
+    paths: RuntimePaths,
+    trusted: TrustedRuntime,
+    factory: Callable[[], object] | None,
+    mode: str,
+) -> object:
+    if factory is not None:
+        return factory()
+    if mode == "live" and paths == production_runtime_paths():
+        return WindowsCredentialApi(trusted)
+    raise PilotRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+
+
+def _custody_bytes(port: object) -> bytes:
+    reader = getattr(port, "read", None)
+    if reader is None:
+        raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+    material = reader()
+    if type(material) is not bytes or material == b"" or len(material) > 4096:
+        raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+    if any(byte < 33 or byte > 126 for byte in material):
+        raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+    return bytes(material)
+
+
+def _release_port(port: object) -> None:
+    release = getattr(port, "release", None)
+    if release is None:
+        raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+    release()
+
+
+def _inspection(
+    evidence: PilotEvidence,
+    opened: Mapping[str, object],
+    mode: str,
+) -> RuntimeInspection:
+    tokens = opened.get("token_attempts")
+    gets = opened.get("read_gets")
+    if type(tokens) is not int or type(gets) is not int:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    if mode == "live":
+        code = (
+            "GMAIL_READONLY_SIGNAL_DISCOVERY_CONNECTED"
+            if evidence.messages
+            else "GMAIL_READONLY_CONNECTED_NO_MATCHING_SIGNALS"
+        )
+    else:
+        code = "READONLY_RUNTIME_INJECTED_PASS"
+    return RuntimeInspection(
+        code=code,
+        profile_matched=True,
+        message_count=len(evidence.messages),
+        classifications=tuple(message.classification for message in evidence.messages),
+        dispositions=tuple(message.disposition for message in evidence.messages),
+        token_attempts=tokens,
+        read_gets=gets,
+        transport_mode=mode,
+        economic_dispatch=evidence.economic_dispatch,
+    )
+
+
+def _wipe(buffer: bytearray) -> None:
+    for index in range(len(buffer)):
+        buffer[index] = 0
+
+
+class WindowsCredentialApi:
+    """Approved custody target. Constructed only after the local grant authenticates."""
+
+    def __init__(self, trusted: TrustedRuntime) -> None:
+        if type(trusted) is not TrustedRuntime or not standing_network_allowed(trusted):
+            raise PilotRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+        self._trusted = trusted
+
+    def read(self) -> bytes:
+        return native_credential_read(self._trusted)
+
+    def release(self) -> None:
+        return None
 
 
 def establish_protected_budget(store: BudgetStore, now: int, key: bytes) -> None:
@@ -1447,14 +1801,118 @@ def exercise_mock_custody(secret: object, port: object) -> str:
     return "CUSTODY_SHAPE_PASS"
 
 
-def native_credential_read() -> None:
-    """The native credential backend is not enabled."""
+def native_credential_read(trusted: object = None, bindings: object = None) -> bytes:
+    """Read the approved target only after the local grant authenticates."""
 
-    from swingtrade.gmail_credential.identity import NATIVE_BACKEND_ENABLED
+    from swingtrade.gmail_credential.identity import CANONICAL_TARGET, NATIVE_BACKEND_ENABLED
 
-    if NATIVE_BACKEND_ENABLED is not False or standing_network_allowed(None) is not False:
+    if NATIVE_BACKEND_ENABLED is not False or type(trusted) is not TrustedRuntime:
         raise PilotRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
-    raise PilotRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+    if not standing_network_allowed(trusted):
+        raise PilotRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+    if bindings is None:
+        return _windows_cred_read(CANONICAL_TARGET)
+    return read_native_credential(CANONICAL_TARGET, cast(_NativeBindings, bindings))
+
+
+class _NativeBindings(Protocol):
+    def cred_read(self, target: str, pointer: list[object]) -> bool: ...
+
+    def copy_blob(self, pointer: list[object]) -> bytes: ...
+
+    def cred_free(self, pointer: list[object]) -> None: ...
+
+
+def read_native_credential(target: str, bindings: _NativeBindings) -> bytes:
+    """Copy one credential blob and always release the native buffer."""
+
+    from swingtrade.gmail_credential.identity import CANONICAL_TARGET
+
+    if target != CANONICAL_TARGET:
+        raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+    pointer: list[object] = [None]
+    copied: bytes | None = None
+    failed = False
+    try:
+        if bindings.cred_read(target, pointer) is not True:
+            failed = True
+        else:
+            blob = bindings.copy_blob(pointer)
+            if type(blob) is not bytes or blob == b"" or len(blob) > 4096:
+                failed = True
+            elif any(byte < 33 or byte > 126 for byte in blob):
+                failed = True
+            else:
+                copied = bytes(blob)
+    except Exception:
+        failed = True
+    finally:
+        try:
+            bindings.cred_free(pointer)
+        except Exception:
+            failed = True
+            copied = None
+    if failed or copied is None:
+        raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+    return copied
+
+
+def _windows_cred_read(target: str) -> bytes:
+    import ctypes
+    import sys
+
+    from swingtrade.gmail_credential.identity import CANONICAL_TARGET
+
+    if target != CANONICAL_TARGET or sys.platform != "win32":
+        raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+
+    class _FileTime(ctypes.Structure):
+        _fields_ = [("low", ctypes.c_uint32), ("high", ctypes.c_uint32)]
+
+    class _Credential(ctypes.Structure):
+        _fields_ = [
+            ("flags", ctypes.c_uint32),
+            ("type", ctypes.c_uint32),
+            ("target_name", ctypes.c_wchar_p),
+            ("comment", ctypes.c_wchar_p),
+            ("last_written", _FileTime),
+            ("blob_size", ctypes.c_uint32),
+            ("blob", ctypes.POINTER(ctypes.c_ubyte)),
+            ("persist", ctypes.c_uint32),
+            ("attribute_count", ctypes.c_uint32),
+            ("attributes", ctypes.c_void_p),
+            ("target_alias", ctypes.c_wchar_p),
+            ("user_name", ctypes.c_wchar_p),
+        ]
+
+    library = ctypes.WinDLL("advapi32")
+    cred_read = library.CredReadW
+    cred_read.argtypes = [
+        ctypes.c_wchar_p,
+        ctypes.c_uint32,
+        ctypes.c_uint32,
+        ctypes.POINTER(ctypes.POINTER(_Credential)),
+    ]
+    cred_read.restype = ctypes.c_int
+    cred_free = library.CredFree
+    cred_free.argtypes = [ctypes.c_void_p]
+    cred_free.restype = None
+    holder = ctypes.POINTER(_Credential)()
+    copied: bytes | None = None
+    try:
+        if cred_read(target, 1, 0, ctypes.byref(holder)) == 0 or not holder:
+            raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+        size = int(holder.contents.blob_size)
+        if size < 1 or size > 4096 or not holder.contents.blob:
+            raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+        raw = ctypes.string_at(holder.contents.blob, size)
+        if any(byte < 33 or byte > 126 for byte in raw):
+            raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+        copied = bytes(raw)
+        return copied
+    finally:
+        if holder:
+            cred_free(holder)
 
 
 def _grant_bytes(document: object) -> bytes:
@@ -1468,7 +1926,9 @@ def _require_grant_fields(document: dict[str, object], now: int) -> None:
     from swingtrade.gmail_credential.identity import CANONICAL_TARGET
 
     if (
-        document.get("capability") != "readonly"
+        document.get("decision") != STANDING_DECISION
+        or document.get("scope") != READONLY_SCOPE
+        or document.get("capability") != "readonly"
         or document.get("campaign") != READONLY_CAMPAIGN
         or document.get("budget_id") != READONLY_CAMPAIGN
         or document.get("runtime") != "win32"
@@ -1476,6 +1936,8 @@ def _require_grant_fields(document: dict[str, object], now: int) -> None:
         or document.get("custody_target") != CANONICAL_TARGET
         or document.get("endpoints") != _GRANT_ENDPOINTS
         or document.get("methods") != _GRANT_METHODS
+        or type(document.get("selector")) is not str
+        or _SELECTOR.fullmatch(str(document.get("selector"))) is None
     ):
         raise PilotRejected("GMAIL_PILOT_GRANT_REJECTED")
     digest = document.get("mailbox_hash")

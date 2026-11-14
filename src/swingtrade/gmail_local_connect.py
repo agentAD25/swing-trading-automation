@@ -207,16 +207,59 @@ def run_offline_readonly_acquisition(
     )
 
 
-def run_local_windows_readonly_runtime(client_json_path: str) -> str:
-    """Refuse a live read-only run. The standing grant is not effective."""
+class ReadonlyRuntimeRejected(Exception):
+    """Sanitized readonly-runtime failure. The message is the stable code."""
 
-    if type(client_json_path) is not str or client_json_path == "":
-        raise LocalOAuthProbeRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+    def __init__(self, code: str) -> None:
+        self.code = code
+        super().__init__(code)
+
+
+def run_local_windows_readonly_runtime() -> str:
+    """Attended Windows readonly command. It takes no path, key, or mailbox.
+
+    A missing local grant returns before any credential read or provider call.
+    """
+
     if sys.platform != "win32":
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
-    from swingtrade.group4_email.gmail_readonly_pilot import assess_readonly_runtime
+    import time
 
-    raise LocalOAuthProbeRejected(assess_readonly_runtime(None, None, key=None, now=0))
+    from swingtrade.group4_email.gmail_readonly_pilot import (
+        PilotRejected,
+        execute_trusted_runtime,
+        production_runtime_paths,
+    )
+
+    try:
+        result = execute_trusted_runtime(production_runtime_paths(), now=int(time.time()))
+    except PilotRejected as rejected:
+        if rejected.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED":
+            raise LocalOAuthProbeRejected(rejected.code) from None
+        raise ReadonlyRuntimeRejected(rejected.code) from None
+    return result.code
+
+
+def initialize_windows_readonly_budget() -> str:
+    """Create the sealed budget after the local grant authenticates. No provider call."""
+
+    if sys.platform != "win32":
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+    import time
+
+    from swingtrade.group4_email.gmail_readonly_pilot import (
+        PilotRejected,
+        initialize_protected_runtime_budget,
+        production_runtime_paths,
+    )
+
+    try:
+        initialize_protected_runtime_budget(production_runtime_paths(), now=int(time.time()))
+    except PilotRejected as rejected:
+        if rejected.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED":
+            raise LocalOAuthProbeRejected(rejected.code) from None
+        raise ReadonlyRuntimeRejected(rejected.code) from None
+    return "READONLY_BUDGET_INITIALIZED"
 
 
 def run_offline_profile_shape(
