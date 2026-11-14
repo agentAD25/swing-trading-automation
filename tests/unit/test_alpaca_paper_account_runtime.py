@@ -1,46 +1,49 @@
-"""Dormant paper account-read runtime. No real credential or provider call."""
+"""Synthetic account-read attacks. No real credential or provider call."""
 
 from __future__ import annotations
 
 import ast
-import io
+import ctypes
+import hashlib
+import inspect
 import json
 import ssl
 import urllib.error
-from datetime import UTC, datetime
-from email.message import EmailMessage
+import urllib.request
+from ctypes import wintypes
 from pathlib import Path
 
 import pytest
 
-from swingtrade.alpaca_paper_account_read import (
-    ACCOUNT_URL,
-    AccountReadDecision,
-    ReadClassification,
-)
+from swingtrade import alpaca_paper_account_runtime as runtime
+from swingtrade.alpaca_paper_account_read import ACCOUNT_URL
 from swingtrade.alpaca_paper_account_runtime import (
-    MAX_BODY,
     AccountRuntimeError,
-    PaperGetTransport,
+    CredentialRecord,
+    DirectConnection,
     RedirectRefusal,
     RuntimeClassification,
     ScriptedCredentials,
     ScriptedTransport,
-    StandingGrant,
-    WindowsPaperCredentialAdapter,
-    inactive_grant,
+    account_request,
+    bind_credential_api,
+    build_controlled_opener,
+    consume_native_credential,
+    credential_field_offsets,
+    load_privileged_credentials,
+    observe_scripted,
     read_paper_account,
     require_verified_context,
-    run_account_read,
     verified_tls_context,
 )
-from swingtrade.alpaca_paper_boundary import LIVE_HOST, PAPER_HOST, evaluate_paper_boundary
+from swingtrade.alpaca_paper_boundary import LIVE_HOST, PAPER_HOST
 from swingtrade.alpaca_paper_custody import PAPER_KEY_ID_TARGET, PAPER_SECRET_TARGET
-from swingtrade.alpaca_paper_request_budget import DAILY_LIMIT, DurableRequestBudget
+from swingtrade.alpaca_paper_grant import current_windows_sid
+from swingtrade.alpaca_paper_request_budget import DAILY_LIMIT, BoundLedger
+from tests.unit.test_alpaca_paper_support import ACCOUNT, LEDGER, WHEN, issue, prepare
 
 _KEY = b"synthetic-paper-key"
 _SECRET = b"synthetic-paper-secret"
-_WHEN = datetime(2026, 11, 14, 15, 0, tzinfo=UTC)
 _FLAGS = (
     "connect_allowed",
     "network_permitted",
@@ -50,21 +53,273 @@ _FLAGS = (
     "resubmit_permitted",
     "safe_to_retry",
 )
-_SOURCE = Path(__file__).parents[2] / "src" / "swingtrade" / "alpaca_paper_account_runtime.py"
-_BUDGET_SOURCE = Path(__file__).parents[2] / "src" / "swingtrade" / "alpaca_paper_request_budget.py"
+_SOURCES = (
+    Path(__file__).parents[2] / "src" / "swingtrade" / "alpaca_paper_account_runtime.py",
+    Path(__file__).parents[2] / "src" / "swingtrade" / "alpaca_paper_request_budget.py",
+    Path(__file__).parents[2] / "src" / "swingtrade" / "alpaca_paper_grant.py",
+)
 
 
-def _grant(account: str | None = None) -> StandingGrant:
-    return StandingGrant(
-        "LANE1_ALPACA_STANDING_PAPER_ACCOUNT_READ_AUTHORIZED",
-        effective=True,
-        attended=True,
-        expected_account_id=account,
+def test_active_account_is_observed_and_not_trade_ready(tmp_path: Path) -> None:
+    decision = _read(tmp_path, _payload())
+    assert decision.classification is RuntimeClassification.ACCEPTED
+    assert decision.reason == "ACCOUNT_OBSERVED"
+    assert decision.trade_ready is False
+    _assert_flags(decision)
+    assert "PAPER0001" not in repr(decision)
+    assert ACCOUNT not in repr(decision)
+    decision = _read(tmp_path, _payload(buying_power="1.00"), ledger_id="ready0002")
+    assert decision.reason == "ACCOUNT_OBSERVED"
+    decision = _read(tmp_path, _payload(trading_blocked=True), ledger_id="ready0003")
+    assert decision.reason == "ACCOUNT_NOT_READY"
+    assert decision.trade_ready is False
+    decision = _read(tmp_path, _payload(status="REJECTED"), ledger_id="ready0004")
+    assert decision.reason == "ACCOUNT_NOT_READY"
+
+
+def test_binding_duplicate_and_incomplete_bodies_are_refused(tmp_path: Path) -> None:
+    _runtime_deny(tmp_path, _payload(account="other-account"), "ACCOUNT_BINDING_MISMATCH")
+    error = _runtime_deny(
+        tmp_path,
+        _duplicate_identity(),
+        "DUPLICATE_FIELD",
+        ledger_id="body0002",
     )
+    assert "other-account" not in str(error)
+    assert ACCOUNT not in str(error)
+    _runtime_deny(tmp_path, b'{"status":"ACTIVE"}', "INCOMPLETE_ACCOUNT", ledger_id="body0003")
 
 
-def _payload(account: str = "synthetic-account") -> bytes:
-    body = {
+def test_http_redirect_tls_timeout_and_ambiguous_results(tmp_path: Path) -> None:
+    cases = (
+        ((401, b"{}"), "HTTP_401", "NOT_RETRYABLE"),
+        ((403, b"{}"), "HTTP_403", "NOT_RETRYABLE"),
+        ((429, b"{}"), "HTTP_429", "SAME_HOST_ELIGIBLE"),
+        ((503, b"{}"), "HTTP_5XX", "SAME_HOST_ELIGIBLE"),
+        ((302, b"{}"), "REDIRECT_DENIED", "NOT_RETRYABLE"),
+    )
+    for index, (result, reason, disposition) in enumerate(cases, start=1):
+        transport = ScriptedTransport(result, redirected=result[0] == 302)
+        error = _fail(tmp_path, transport, f"http{index:04d}", reason)
+        assert error.decision.retry_disposition == disposition
+        assert error.decision.safe_to_retry is False
+        assert transport.calls == 1
+    timeout = ScriptedTransport(fault="timeout")
+    _fail(tmp_path, timeout, "timeout01", "TIMEOUT")
+    assert timeout.calls == 1
+    tls = ScriptedTransport(fault="tls")
+    _fail(tmp_path, tls, "tls00001", "TLS_FAILED")
+    lost = ScriptedTransport(fault="exception")
+    _fail(tmp_path, lost, "lost0001", "TRANSPORT_EXCEPTION")
+    assert lost.calls == 1
+    ambiguous = ScriptedTransport()
+    _fail(tmp_path, ambiguous, "ambig001", "AMBIGUOUS_RESPONSE")
+    assert ambiguous.calls == 1
+    grant = issue(ledger_id="ambig001")
+    ledger = BoundLedger(tmp_path / "ambig001")
+    assert ledger.spent(grant, WHEN) == 1
+    again = ScriptedTransport()
+    _fail(tmp_path, again, "ambig001", "AMBIGUOUS_RESPONSE", initialize=False)
+    assert again.calls == 1
+    assert ledger.spent(grant, WHEN) == 2
+
+
+def test_wrong_host_and_forbidden_routes_do_not_reserve(tmp_path: Path) -> None:
+    routes = (
+        (f"https://{LIVE_HOST}/v2/account", "LIVE_HOST_DENIED"),
+        (f"https://{PAPER_HOST}/v2/orders", "ORDER_ROUTE_DENIED"),
+        (f"https://{PAPER_HOST}/v2/positions", "POSITION_ROUTE_DENIED"),
+        (f"https://{PAPER_HOST}/v2/events", "STREAM_ROUTE_DENIED"),
+    )
+    for index, (url, reason) in enumerate(routes, start=1):
+        name = f"route{index:04d}"
+        transport = ScriptedTransport((_ok_body(),))
+        grant, _ledger = prepare(tmp_path / name, ledger_id=name)
+        with pytest.raises(AccountRuntimeError) as caught:
+            observe_scripted(
+                grant,
+                ScriptedCredentials(_KEY, _SECRET),
+                transport,
+                BoundLedger(tmp_path / name),
+                WHEN,
+                url=url,
+            )
+        assert caught.value.reason == reason
+        assert transport.calls == 0
+        assert BoundLedger(tmp_path / name).spent(grant, WHEN) == 0
+
+
+def test_budget_exhaustion_does_not_exchange(tmp_path: Path) -> None:
+    grant, ledger = prepare(tmp_path / LEDGER)
+    for _ in range(DAILY_LIMIT):
+        ledger.reserve(grant, WHEN)
+    transport = ScriptedTransport((_ok_status(), _payload()))
+    with pytest.raises(AccountRuntimeError) as caught:
+        observe_scripted(
+            grant,
+            ScriptedCredentials(_KEY, _SECRET),
+            transport,
+            ledger,
+            WHEN,
+        )
+    assert caught.value.reason == "BUDGET_EXHAUSTED"
+    assert transport.calls == 0
+
+
+def test_missing_credentials_do_not_reserve_or_exchange(tmp_path: Path) -> None:
+    grant, ledger = prepare(tmp_path / LEDGER)
+    transport = ScriptedTransport((_ok_status(), _payload()))
+    with pytest.raises(AccountRuntimeError) as caught:
+        observe_scripted(grant, ScriptedCredentials(None, None), transport, ledger, WHEN)
+    assert caught.value.reason == "CREDENTIAL_UNAVAILABLE"
+    assert transport.calls == 0
+    assert ledger.spent(grant, WHEN) == 0
+
+
+def test_privileged_entry_has_no_side_effect(monkeypatch: pytest.MonkeyPatch) -> None:
+    def denied(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("privileged io")
+
+    monkeypatch.setattr(
+        "swingtrade.alpaca_paper_account_runtime._cred_read_native",
+        denied,
+    )
+    monkeypatch.setattr(
+        "swingtrade.alpaca_paper_account_runtime._open_network",
+        denied,
+    )
+    monkeypatch.setattr(
+        "swingtrade.alpaca_paper_grant.current_windows_sid",
+        denied,
+    )
+    with pytest.raises(AccountRuntimeError) as caught:
+        read_paper_account()
+    assert caught.value.reason == "GRANT_ANCHOR_ABSENT"
+    with pytest.raises(AccountRuntimeError) as custody:
+        load_privileged_credentials()
+    assert custody.value.reason == "GRANT_ANCHOR_ABSENT"
+    assert runtime.PRIVILEGED_IO_ATTEMPTS == 0
+    assert current_windows_sid.__name__ == "current_windows_sid"
+
+
+def test_opener_disables_proxy_discovery_and_redirects(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def discovered() -> dict[str, str]:
+        raise AssertionError("proxy discovery")
+
+    monkeypatch.setattr(urllib.request, "getproxies", discovered)
+    opener = build_controlled_opener()
+    proxies = [handler for handler in opener.handlers if type(handler) is DirectConnection]
+    assert len(proxies) == 1
+    assert proxies[0].proxies == {}
+    assert any(type(handler) is RedirectRefusal for handler in opener.handlers)
+    assert not any(type(handler) is urllib.request.HTTPHandler for handler in opener.handlers)
+    assert not any(type(handler) is urllib.request.FileHandler for handler in opener.handlers)
+    https = next(
+        handler for handler in opener.handlers if type(handler) is urllib.request.HTTPSHandler
+    )
+    assert https._context.verify_mode == ssl.CERT_REQUIRED  # type: ignore[attr-defined]
+    assert https._context.check_hostname is True  # type: ignore[attr-defined]
+    context = verified_tls_context()
+    require_verified_context(context)
+    context.check_hostname = False
+    with pytest.raises(AccountRuntimeError) as caught:
+        require_verified_context(context)
+    assert caught.value.reason == "TLS_POLICY_DENIED"
+    with pytest.raises(AccountRuntimeError) as redirected:
+        RedirectRefusal().redirect_request(None, None, 302, None, None, "https://other")
+    assert redirected.value.reason == "REDIRECT_DENIED"
+
+
+def test_request_builder_does_not_open_and_hides_material() -> None:
+    request = account_request("GET", ACCOUNT_URL, (_KEY, _SECRET))
+    assert request.get_method() == "GET"
+    assert request.full_url == ACCOUNT_URL
+    header = request.get_header("Apca-api-key-id")
+    assert header is not None
+    assert hashlib.sha256(header.encode("ascii")).digest() == hashlib.sha256(_KEY).digest()
+    with pytest.raises(AccountRuntimeError) as caught:
+        account_request("POST", ACCOUNT_URL, (_KEY, _SECRET))
+    assert caught.value.reason == "ENDPOINT_DENIED"
+    assert _SECRET.decode("ascii") not in str(caught.value)
+
+
+def test_native_credential_contract_uses_a_fake_api() -> None:
+    offsets = credential_field_offsets()
+    if ctypes.sizeof(ctypes.c_void_p) == 8:
+        assert offsets["Flags"] == 0
+        assert offsets["Type"] == 4
+        assert offsets["LastWrittenLow"] == 24
+        assert offsets["LastWrittenHigh"] == 28
+        assert offsets["CredentialBlobSize"] == 32
+        assert offsets["CredentialBlob"] == 40
+        assert offsets["UserName"] == 72
+        assert ctypes.sizeof(CredentialRecord) == 80
+
+    class _Function:
+        def __init__(self) -> None:
+            self.argtypes: object = None
+            self.restype: object = None
+
+    class _Library:
+        def __init__(self) -> None:
+            self.CredReadW = _Function()
+            self.CredFree = _Function()
+
+    library = _Library()
+    bind_credential_api(library)
+    assert library.CredReadW.restype is wintypes.BOOL
+    assert library.CredFree.restype is None
+    assert len(library.CredReadW.argtypes) == 4  # type: ignore[arg-type]
+    reader = _FakeCredential(True, len(_KEY), _KEY)
+    assert consume_native_credential(reader, PAPER_KEY_ID_TARGET) == _KEY
+    assert reader.reads == 1
+    assert reader.releases == 1
+    assert reader.kind == 1
+    missing = _FakeCredential(False, 0, None)
+    with pytest.raises(AccountRuntimeError) as absent:
+        consume_native_credential(missing, PAPER_SECRET_TARGET)
+    assert absent.value.reason == "CREDENTIAL_UNAVAILABLE"
+    assert missing.releases == 0
+    null = _FakeCredential(True, 4, None)
+    with pytest.raises(AccountRuntimeError) as empty:
+        consume_native_credential(null, PAPER_SECRET_TARGET)
+    assert empty.value.reason == "CREDENTIAL_UNAVAILABLE"
+    assert null.releases == 1
+    oversized = _FakeCredential(True, 1025, b"a" * 1025)
+    with pytest.raises(AccountRuntimeError) as malformed:
+        consume_native_credential(oversized, PAPER_KEY_ID_TARGET)
+    assert malformed.value.reason == "MALFORMED_MATERIAL"
+    assert oversized.releases == 1
+    live = _FakeCredential(True, 4, b"live")
+    with pytest.raises(AccountRuntimeError) as denied:
+        consume_native_credential(live, "swing-trading/lane2/alpaca/live/secret")
+    assert denied.value.reason == "LIVE_TARGET_DENIED"
+    assert live.reads == 0
+    assert _SECRET.decode("ascii") not in str(malformed.value)
+
+
+def test_runtime_source_has_no_forbidden_token_or_retry_loop() -> None:
+    source = "\n".join(path.read_text(encoding="utf-8") for path in _SOURCES)
+    lowered = source.lower()
+    for token in ("requests.", "httpx.", "socket.", "tradestation", "place_order", "cancel_order"):
+        assert token not in lowered
+    assert "environ" not in lowered
+    assert "build_opener" not in source
+    assert "StandingGrant" not in source
+    for function in (observe_scripted, read_paper_account, load_privileged_credentials):
+        parsed = ast.parse(inspect.getsource(function)).body[0]
+        assert isinstance(parsed, ast.FunctionDef)
+        assert not any(isinstance(node, (ast.For, ast.While)) for node in ast.walk(parsed))
+    assert inspect.signature(read_paper_account).parameters == {}
+    assert inspect.signature(load_privileged_credentials).parameters == {}
+    assert PAPER_KEY_ID_TARGET
+    assert PAPER_SECRET_TARGET
+
+
+def _payload(account: str = ACCOUNT, **extra: object) -> bytes:
+    body: dict[str, object] = {
         "id": account,
         "account_number": "PAPER0001",
         "status": "ACTIVE",
@@ -73,290 +328,90 @@ def _payload(account: str = "synthetic-account") -> bytes:
         "account_blocked": False,
         "trade_suspended_by_user": False,
     }
+    body.update(extra)
     return json.dumps(body).encode("utf-8")
 
 
-def _ledger(tmp_path: Path, when: datetime = _WHEN) -> DurableRequestBudget:
-    return DurableRequestBudget(tmp_path / "budget.json", lambda: when)
+def _duplicate_identity() -> bytes:
+    body = _payload().decode("utf-8")
+    return body.replace('"id"', '"id":"other-account","id"', 1).encode("utf-8")
 
 
-def _denied(operation: object, reason: str) -> AccountRuntimeError:
-    with pytest.raises(AccountRuntimeError) as caught:
-        operation()  # type: ignore[operator]
-    error = caught.value
-    assert error.reason == reason
-    assert str(error) == reason
-    assert _SECRET.decode() not in str(error)
-    assert _SECRET.decode() not in repr(error.decision)
-    for name in _FLAGS:
-        assert getattr(error.decision, name) is False
-    return error
-
-
-def test_successful_account_response_keeps_flags_closed(tmp_path: Path) -> None:
-    transport = ScriptedTransport((200, _payload()))
-    decision = run_account_read(
-        _grant("synthetic-account"),
+def _read(tmp_path: Path, body: bytes, ledger_id: str = "ready0001") -> object:
+    grant, ledger = prepare(tmp_path / ledger_id, ledger_id=ledger_id)
+    decision = observe_scripted(
+        grant,
         ScriptedCredentials(_KEY, _SECRET),
-        transport,
-        _ledger(tmp_path),
+        ScriptedTransport((200, body)),
+        ledger,
+        WHEN,
     )
-    assert decision.classification is RuntimeClassification.ACCEPTED
-    assert decision.reason == "ACCOUNT_READ"
-    assert decision.retry_disposition == "NOT_REQUIRED"
-    assert decision.safe_to_retry is False
-    assert transport.calls == 1
+    return decision
+
+
+def _runtime_deny(
+    tmp_path: Path, body: bytes, reason: str, ledger_id: str = "body0001"
+) -> AccountRuntimeError:
+    grant, ledger = prepare(tmp_path / ledger_id, ledger_id=ledger_id)
+    with pytest.raises(AccountRuntimeError) as caught:
+        observe_scripted(
+            grant,
+            ScriptedCredentials(_KEY, _SECRET),
+            ScriptedTransport((200, body)),
+            ledger,
+            WHEN,
+        )
+    assert caught.value.reason == reason
+    assert _SECRET.decode("ascii") not in str(caught.value)
+    return caught.value
+
+
+def _fail(
+    tmp_path: Path,
+    transport: ScriptedTransport,
+    ledger_id: str,
+    reason: str,
+    *,
+    initialize: bool = True,
+) -> AccountRuntimeError:
+    if initialize:
+        grant, ledger = prepare(tmp_path / ledger_id, ledger_id=ledger_id)
+    else:
+        grant = issue(ledger_id=ledger_id)
+        ledger = BoundLedger(tmp_path / ledger_id)
+    with pytest.raises(AccountRuntimeError) as caught:
+        observe_scripted(grant, ScriptedCredentials(_KEY, _SECRET), transport, ledger, WHEN)
+    assert caught.value.reason == reason
+    return caught.value
+
+
+def _ok_status() -> int:
+    return 200
+
+
+def _ok_body() -> bytes:
+    return _payload()
+
+
+def _assert_flags(decision: object) -> None:
     for name in _FLAGS:
         assert getattr(decision, name) is False
-    assert "synthetic-account" not in repr(decision)
-    assert _SECRET.decode() not in repr(decision)
 
 
-def test_invalid_fields_and_binding_mismatch_are_refused(tmp_path: Path) -> None:
-    missing = _payload()
-    parsed = json.loads(missing)
-    del parsed["id"]
-    incomplete = json.dumps(parsed).encode("utf-8")
-    ledger = _ledger(tmp_path)
-    transport = ScriptedTransport((200, incomplete))
-    _denied(
-        lambda: run_account_read(_grant(), ScriptedCredentials(_KEY, _SECRET), transport, ledger),
-        "INCOMPLETE_ACCOUNT",
-    )
-    mismatched = ScriptedTransport((200, _payload("other-account")))
-    mismatch = _denied(
-        lambda: run_account_read(
-            _grant("synthetic-account"),
-            ScriptedCredentials(_KEY, _SECRET),
-            mismatched,
-            ledger,
-        ),
-        "ACCOUNT_BINDING_MISMATCH",
-    )
-    assert "other-account" not in str(mismatch)
-    assert "other-account" not in repr(mismatch.decision)
-    assert transport.calls == 1
-    assert mismatched.calls == 1
+class _FakeCredential:
+    def __init__(self, found: bool, size: int, blob: bytes | None) -> None:
+        self.found = found
+        self.size = size
+        self.blob = blob
+        self.reads = 0
+        self.releases = 0
+        self.kind = 0
 
+    def read(self, target: str, credential_type: int) -> tuple[bool, int, bytes | None]:
+        del target
+        self.reads += 1
+        self.kind = credential_type
+        return self.found, self.size, self.blob
 
-def test_http_statuses_redirects_tls_and_timeouts(tmp_path: Path) -> None:
-    cases = (
-        (ScriptedTransport((401, _SECRET)), "HTTP_401", "NOT_RETRYABLE"),
-        (ScriptedTransport((403, _SECRET)), "HTTP_403", "NOT_RETRYABLE"),
-        (ScriptedTransport((429, _SECRET)), "HTTP_429", "SAME_HOST_ELIGIBLE"),
-        (ScriptedTransport((503, _SECRET)), "HTTP_5XX", "SAME_HOST_ELIGIBLE"),
-        (ScriptedTransport((200, _payload()), redirected=True), "REDIRECT_DENIED", "NOT_RETRYABLE"),
-        (ScriptedTransport(fault="tls"), "TLS_FAILED", "NOT_RETRYABLE"),
-        (ScriptedTransport(fault="timeout"), "TIMEOUT", "NOT_RETRYABLE"),
-    )
-    for transport, reason, disposition in cases:
-        error = _denied(
-            lambda current=transport: run_account_read(
-                _grant(),
-                ScriptedCredentials(_KEY, _SECRET),
-                current,
-                _ledger(tmp_path),
-            ),
-            reason,
-        )
-        assert error.decision.retry_disposition == disposition
-        assert error.decision.safe_to_retry is False
-        assert transport.calls == 1
-
-
-def test_wrong_host_order_route_and_live_target_do_not_exchange(tmp_path: Path) -> None:
-    transport = ScriptedTransport((200, _payload()))
-    live = f"https://{LIVE_HOST}/v2/account"
-    orders = f"https://{PAPER_HOST}/v2/orders"
-    ledger = _ledger(tmp_path)
-    _denied(
-        lambda: run_account_read(
-            _grant(),
-            ScriptedCredentials(_KEY, _SECRET),
-            transport,
-            ledger,
-            url=live,
-        ),
-        "LIVE_HOST_DENIED",
-    )
-    _denied(
-        lambda: run_account_read(
-            _grant(),
-            ScriptedCredentials(_KEY, _SECRET),
-            transport,
-            ledger,
-            url=orders,
-        ),
-        "ORDER_ROUTE_DENIED",
-    )
-    assert transport.calls == 0
-    assert not (tmp_path / "budget.json").exists()
-    boundary = evaluate_paper_boundary(ACCOUNT_URL, "GET")
-    assert boundary.network_permitted is False
-    offline = AccountReadDecision(ReadClassification.ACCEPTED, "ACCOUNT_READ")
-    assert offline.connect_allowed is False
-    assert offline.safe_to_retry is False
-
-
-def test_budget_exhaustion_does_not_exchange(tmp_path: Path) -> None:
-    ledger = _ledger(tmp_path)
-    for _ in range(DAILY_LIMIT):
-        ledger.reserve()
-    transport = ScriptedTransport((200, _payload()))
-    _denied(
-        lambda: run_account_read(_grant(), ScriptedCredentials(_KEY, _SECRET), transport, ledger),
-        "BUDGET_EXHAUSTED",
-    )
-    assert transport.calls == 0
-    assert ledger.spent() == DAILY_LIMIT
-
-
-def test_credential_and_runtime_refusal_have_no_side_effect(tmp_path: Path) -> None:
-    calls = {"n": 0}
-
-    class _Tracking:
-        def load(self) -> tuple[bytes, bytes]:
-            calls["n"] += 1
-            return _KEY, _SECRET
-
-        def exchange(
-            self,
-            method: str,
-            url: str,
-            material: tuple[bytes, bytes],
-        ) -> tuple[int, bytes, bool]:
-            del method, url, material
-            calls["n"] += 1
-            return 200, _payload(), False
-
-    tracker = _Tracking()
-    ledger = _ledger(tmp_path)
-    _denied(lambda: run_account_read(inactive_grant(), tracker, tracker, ledger), "GRANT_INACTIVE")
-    _denied(read_paper_account, "GRANT_INACTIVE")
-    unavailable = ScriptedTransport((200, _payload()))
-    _denied(
-        lambda: run_account_read(
-            _grant(),
-            ScriptedCredentials(None, None),
-            unavailable,
-            ledger,
-        ),
-        "CREDENTIAL_UNAVAILABLE",
-    )
-    assert calls["n"] == 0
-    assert unavailable.calls == 0
-    assert not (tmp_path / "budget.json").exists()
-
-
-def test_native_paths_stay_closed_without_a_grant(monkeypatch: pytest.MonkeyPatch) -> None:
-    runtime = __import__(
-        "swingtrade.alpaca_paper_account_runtime",
-        fromlist=["alpaca_paper_account_runtime"],
-    )
-    assert runtime._IO_ATTEMPTS == 0
-
-    def _boom(*args: object, **kwargs: object) -> tuple[int, bytes, bool]:
-        del args, kwargs
-        raise AssertionError("native opener called")
-
-    monkeypatch.setattr(runtime, "_default_opener", _boom)
-    monkeypatch.setattr(runtime, "_cred_read_target", _boom)
-    _denied(
-        lambda: PaperGetTransport(inactive_grant()).exchange("GET", ACCOUNT_URL, (_KEY, _SECRET)),
-        "GRANT_INACTIVE",
-    )
-    reader_calls = {"n": 0}
-
-    def _reader() -> tuple[bytes, bytes]:
-        reader_calls["n"] += 1
-        return _KEY, _SECRET
-
-    _denied(
-        lambda: WindowsPaperCredentialAdapter(inactive_grant(), _reader).load(), "GRANT_INACTIVE"
-    )
-    assert reader_calls["n"] == 0
-    loaded = WindowsPaperCredentialAdapter(_grant(), _reader).load()
-    assert loaded == (_KEY, _SECRET)
-    assert reader_calls["n"] == 1
-    assert runtime._IO_ATTEMPTS == 0
-    refusal = RedirectRefusal()
-    _denied(
-        lambda: refusal.redirect_request(None, None, 302, "", EmailMessage(), "https://x"),
-        "REDIRECT_DENIED",
-    )
-    context = verified_tls_context()
-    assert context.check_hostname is True
-    assert context.verify_mode == ssl.CERT_REQUIRED
-    weakened = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    weakened.check_hostname = False
-    weakened.verify_mode = ssl.CERT_NONE
-    _denied(lambda: require_verified_context(weakened), "TLS_POLICY_DENIED")
-
-
-def test_injected_opener_reads_only_the_account_endpoint() -> None:
-    seen: dict[str, object] = {}
-
-    class _Response:
-        status = 200
-
-        def read(self, limit: int) -> bytes:
-            assert limit == MAX_BODY + 1
-            return _payload()
-
-        def __enter__(self) -> _Response:
-            return self
-
-        def __exit__(self, *args: object) -> bool:
-            del args
-            return False
-
-    class _Opener:
-        def open(self, request: urllib.request.Request, timeout: float) -> _Response:
-            seen["url"] = request.full_url
-            seen["method"] = request.get_method()
-            seen["timeout"] = timeout
-            seen["key"] = request.get_header("Apca-api-key-id")
-            return _Response()
-
-    transport = PaperGetTransport(_grant(), opener_factory=lambda: _Opener())  # type: ignore[arg-type]
-    status, body, redirected = transport.exchange("GET", ACCOUNT_URL, (_KEY, _SECRET))
-    assert status == 200
-    assert redirected is False
-    assert body == _payload()
-    assert seen == {
-        "url": ACCOUNT_URL,
-        "method": "GET",
-        "timeout": 10.0,
-        "key": _KEY.decode(),
-    }
-
-    class _Denied:
-        def open(self, request: urllib.request.Request, timeout: float) -> object:
-            del request, timeout
-            raise urllib.error.HTTPError(
-                ACCOUNT_URL,
-                401,
-                "denied",
-                EmailMessage(),
-                io.BytesIO(_SECRET),
-            )
-
-    denied = PaperGetTransport(_grant(), opener_factory=lambda: _Denied())  # type: ignore[arg-type]
-    code, payload, followed = denied.exchange("GET", ACCOUNT_URL, (_KEY, _SECRET))
-    assert code == 401
-    assert followed is False
-    assert payload == _SECRET
-
-
-def test_runtime_source_has_no_forbidden_token_or_retry_loop() -> None:
-    source = _SOURCE.read_text(encoding="utf-8")
-    budget = _BUDGET_SOURCE.read_text(encoding="utf-8")
-    lowered = (source + budget).lower()
-    for token in ("requests.", "httpx.", "socket.", "tradestation", "place_order", "cancel_order"):
-        assert token not in lowered
-    assert "environ" not in lowered
-    assert PAPER_KEY_ID_TARGET
-    assert PAPER_SECRET_TARGET
-    function = ast.parse(__import__("inspect").getsource(run_account_read)).body[0]
-    assert isinstance(function, ast.FunctionDef)
-    assert not any(isinstance(node, (ast.For, ast.While)) for node in ast.walk(function))
+    def release(self) -> None:
+        self.releases += 1

@@ -1,32 +1,35 @@
-"""Dormant paper account-read runtime. Importing it performs no side effect.
+"""Gated paper account-read runtime. Importing it performs no side effect.
 
-The ungranted entry refuses before custody, budget, or transport work.
-A caller-supplied standing grant is the only way past that refusal.
-Gate C2 flags on this result stay false. This module does not submit,
+Production entry points take no grant, path, key, clock, or transport.
+A caller-built boolean object cannot unlock Windows credentials or HTTPS.
+Gate C2 flags on every result stay false. This module does not submit,
 replace, cancel, or stream.
 """
 
 from __future__ import annotations
 
+import ctypes
 import json
 import ssl
 import sys
 import urllib.error
 import urllib.request
-from collections.abc import Callable
+from ctypes import wintypes
+from datetime import datetime
 from enum import StrEnum
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
 from swingtrade.alpaca_paper_account_read import ACCOUNT_URL, _body_reason, _request_reason
 from swingtrade.alpaca_paper_custody import PAPER_KEY_ID_TARGET, PAPER_SECRET_TARGET
-from swingtrade.alpaca_paper_request_budget import BudgetError, DurableRequestBudget
+from swingtrade.alpaca_paper_grant import GrantError, VerifiedGrant, authorize_production
+from swingtrade.alpaca_paper_request_budget import BoundLedger, BudgetError, reserve_for_production
 
-GRANT_NAME = "LANE1_ALPACA_STANDING_PAPER_ACCOUNT_READ_AUTHORIZED"
 TIMEOUT_SECONDS = 10.0
 MAX_BODY = 65536
+MAX_SECRET_BYTES = 1024
+PRIVILEGED_IO_ATTEMPTS = 0
 _SAME_HOST = frozenset({"HTTP_429", "HTTP_5XX"})
-_OPENER_FACTORY = Callable[[], urllib.request.OpenerDirector]
-_IO_ATTEMPTS = 0
+_PAPER_TARGETS = (PAPER_KEY_ID_TARGET, PAPER_SECRET_TARGET)
 
 
 class RuntimeClassification(StrEnum):
@@ -79,6 +82,10 @@ class RuntimeDecision:
     def safe_to_retry(self) -> bool:
         return False
 
+    @property
+    def trade_ready(self) -> bool:
+        return False
+
     def __repr__(self) -> str:
         return (
             f"RuntimeDecision({self.classification.value}, {self.reason}, {self.retry_disposition})"
@@ -101,31 +108,8 @@ class AccountRuntimeError(RuntimeError):
         super().__init__(reason)
 
 
-class StandingGrant:
-    """Explicit grant value. The inactive constructor is the production default."""
-
-    __slots__ = ("attended", "effective", "expected_account_id", "name")
-
-    def __init__(
-        self,
-        name: str,
-        *,
-        effective: bool,
-        attended: bool,
-        expected_account_id: str | None = None,
-    ) -> None:
-        self.name = name
-        self.effective = effective
-        self.attended = attended
-        self.expected_account_id = expected_account_id
-
-    def __repr__(self) -> str:
-        state = "effective" if self.effective and self.attended else "inactive"
-        return f"StandingGrant({state})"
-
-
 class ScriptedCredentials:
-    """Injected custody. Bytes are not included in text."""
+    """Synthetic custody. It cannot read Windows Credential Manager."""
 
     __slots__ = ("_key", "_secret")
 
@@ -144,31 +128,8 @@ class ScriptedCredentials:
         return "ScriptedCredentials()"
 
 
-class WindowsPaperCredentialAdapter:
-    """Paper-target adapter. Native retrieval runs only after an effective grant."""
-
-    __slots__ = ("_grant", "_reader")
-
-    def __init__(
-        self,
-        grant: StandingGrant,
-        reader: Callable[[], tuple[bytes, bytes]] | None = None,
-    ) -> None:
-        self._grant = grant
-        self._reader = reader
-
-    def load(self) -> tuple[bytes, bytes]:
-        _require_grant(self._grant)
-        if self._reader is not None:
-            return self._reader()
-        return _cred_read_native(self._grant)
-
-    def __repr__(self) -> str:
-        return "WindowsPaperCredentialAdapter()"
-
-
 class ScriptedTransport:
-    """Injected exchange. Credential bytes are not retained."""
+    """Synthetic exchange. It does not open a connection."""
 
     __slots__ = ("_fault", "_redirected", "_result", "calls")
 
@@ -207,96 +168,15 @@ class ScriptedTransport:
         return f"ScriptedTransport(calls={self.calls})"
 
 
-class PaperGetTransport:
-    """GET transport. The default opener stays unbuilt until a grant passes."""
+class DirectConnection(urllib.request.ProxyHandler):
+    """Proxy slot held empty. Process proxy settings are not consulted."""
 
-    __slots__ = ("_factory", "_grant")
+    def __init__(self) -> None:
+        urllib.request.ProxyHandler.__init__(self, {})
 
-    def __init__(
-        self,
-        grant: StandingGrant,
-        opener_factory: _OPENER_FACTORY | None = None,
-    ) -> None:
-        self._grant = grant
-        self._factory = opener_factory
-
-    def exchange(
-        self,
-        method: str,
-        url: str,
-        material: tuple[bytes, bytes],
-    ) -> tuple[int, bytes, bool]:
-        _require_grant(self._grant)
-        denied = _request_reason(method, url)
-        if denied is not None:
-            raise AccountRuntimeError(denied)
-        try:
-            if self._factory is not None:
-                return _exchange_with_factory(self._factory, method, url, material)
-            return _open_granted(self._grant, method, url, material)
-        except AccountRuntimeError:
-            raise
-        except TimeoutError:
-            raise AccountRuntimeError("TIMEOUT") from None
-        except ssl.SSLError:
-            raise AccountRuntimeError("TLS_FAILED") from None
-
-    def __repr__(self) -> str:
-        return "PaperGetTransport()"
-
-
-def inactive_grant() -> StandingGrant:
-    """The production default. It cannot pass the standing-grant check."""
-    return StandingGrant(GRANT_NAME, effective=False, attended=False)
-
-
-def read_paper_account() -> RuntimeDecision:
-    """Ungranted entry. It does not load custody, reserve budget, or connect."""
-    _require_grant(inactive_grant())
-    raise AccountRuntimeError("GRANT_INACTIVE")
-
-
-def run_account_read(
-    grant: StandingGrant,
-    credentials: object,
-    transport: object,
-    ledger: DurableRequestBudget,
-    *,
-    method: str = "GET",
-    url: str = ACCOUNT_URL,
-) -> RuntimeDecision:
-    """Read one scripted or injected account response after the grant check."""
-    _require_grant(grant)
-    _require_binding_shape(grant.expected_account_id)
-    denied = _request_reason(method, url)
-    if denied is not None:
-        raise AccountRuntimeError(denied)
-    material = _load_material(credentials)
-    _reserve(ledger)
-    try:
-        status, body, redirected = _exchange(transport, method, url, material)
-    except AccountRuntimeError:
-        raise
-    except TimeoutError:
-        raise AccountRuntimeError("TIMEOUT") from None
-    except ssl.SSLError:
-        raise AccountRuntimeError("TLS_FAILED") from None
-    except urllib.error.URLError:
-        raise AccountRuntimeError("TRANSPORT_EXCEPTION") from None
-    return _interpret(status, body, redirected, grant.expected_account_id)
-
-
-def verified_tls_context() -> ssl.SSLContext:
-    """Default certificate and hostname verification. This does not connect."""
-    context = ssl.create_default_context()
-    require_verified_context(context)
-    return context
-
-
-def require_verified_context(context: ssl.SSLContext) -> None:
-    """Refuse a context that does not verify the certificate and hostname."""
-    if context.verify_mode != ssl.CERT_REQUIRED or not context.check_hostname:
-        raise AccountRuntimeError("TLS_POLICY_DENIED")
+    def https_open(self, request: object) -> None:
+        del request
+        return None
 
 
 class RedirectRefusal(urllib.request.HTTPRedirectHandler):
@@ -315,33 +195,168 @@ class RedirectRefusal(urllib.request.HTTPRedirectHandler):
         raise AccountRuntimeError("REDIRECT_DENIED")
 
 
-def _require_grant(grant: object) -> StandingGrant:
-    if type(grant) is not StandingGrant:
-        raise AccountRuntimeError("GRANT_INACTIVE")
-    if grant.name != GRANT_NAME or grant.effective is not True or grant.attended is not True:
-        raise AccountRuntimeError("GRANT_INACTIVE")
-    return grant
+class CredentialRecord(ctypes.Structure):
+    """Natural x64 layout of Windows CREDENTIALW."""
+
+    _fields_ = (
+        ("Flags", wintypes.DWORD),
+        ("Type", wintypes.DWORD),
+        ("TargetName", wintypes.LPWSTR),
+        ("Comment", wintypes.LPWSTR),
+        ("LastWrittenLow", wintypes.DWORD),
+        ("LastWrittenHigh", wintypes.DWORD),
+        ("CredentialBlobSize", wintypes.DWORD),
+        ("CredentialBlob", ctypes.POINTER(ctypes.c_char)),
+        ("Persist", wintypes.DWORD),
+        ("AttributeCount", wintypes.DWORD),
+        ("Attributes", ctypes.c_void_p),
+        ("TargetAlias", wintypes.LPWSTR),
+        ("UserName", wintypes.LPWSTR),
+    )
 
 
-def _require_binding_shape(expected: object) -> None:
-    if expected is None:
-        return
-    if type(expected) is not str or expected == "" or expected != expected.strip():
-        raise AccountRuntimeError("MALFORMED_BINDING")
+class NativeCredentialReader(Protocol):
+    """Fake or native reader. The production path does not accept a caller reader."""
+
+    def read(self, target: str, credential_type: int) -> tuple[bool, int, bytes | None]:
+        """Return one credential blob. A false result means nothing was allocated."""
+
+    def release(self) -> None:
+        """Release one successful allocation."""
 
 
-def _load_material(credentials: object) -> tuple[bytes, bytes]:
-    load = getattr(credentials, "load", None)
-    if not callable(load):
-        raise AccountRuntimeError("CREDENTIAL_UNAVAILABLE")
-    loaded = load()
-    if (
-        type(loaded) is not tuple
-        or len(loaded) != 2
-        or type(loaded[0]) is not bytes
-        or type(loaded[1]) is not bytes
-    ):
-        raise AccountRuntimeError("CREDENTIAL_UNAVAILABLE")
+def read_paper_account() -> RuntimeDecision:
+    """Privileged account read. The caller cannot supply a grant or a transport."""
+    grant = _authorized_grant()
+    reserve_for_production()
+    material = _cred_read_native()
+    status, body, redirected = _open_network(material)
+    return _interpret(status, body, redirected, grant.account_id)
+
+
+def load_privileged_credentials() -> tuple[bytes, bytes]:
+    """Privileged custody read. A caller-selected reader is not accepted."""
+    _authorized_grant()
+    return _cred_read_native()
+
+
+def observe_scripted(
+    grant: VerifiedGrant,
+    credentials: ScriptedCredentials,
+    transport: ScriptedTransport,
+    ledger: BoundLedger,
+    now: datetime,
+    *,
+    method: str = "GET",
+    url: str = ACCOUNT_URL,
+) -> RuntimeDecision:
+    """Synthetic observation. This path cannot construct the production opener."""
+    if type(grant) is not VerifiedGrant:
+        raise AccountRuntimeError("GRANT_UNVERIFIED")
+    grant.ensure()
+    if type(credentials) is not ScriptedCredentials or type(transport) is not ScriptedTransport:
+        raise AccountRuntimeError("SYNTHETIC_BOUNDARY_REQUIRED")
+    if type(ledger) is not BoundLedger:
+        raise AccountRuntimeError("SYNTHETIC_BOUNDARY_REQUIRED")
+    denied = _request_reason(method, url)
+    if denied is not None:
+        raise AccountRuntimeError(denied)
+    material = _load_scripted(credentials)
+    _reserve(ledger, grant, now)
+    try:
+        status, body, redirected = transport.exchange(method, url, material)
+    except AccountRuntimeError:
+        raise
+    except TimeoutError:
+        raise AccountRuntimeError("TIMEOUT") from None
+    except ssl.SSLError:
+        raise AccountRuntimeError("TLS_FAILED") from None
+    except urllib.error.URLError:
+        raise AccountRuntimeError("TRANSPORT_EXCEPTION") from None
+    return _interpret(status, body, redirected, grant.account_id)
+
+
+def build_controlled_opener() -> urllib.request.OpenerDirector:
+    """HTTPS opener with an empty proxy map and no redirect follower."""
+    opener = urllib.request.OpenerDirector()
+    opener.add_handler(DirectConnection())
+    opener.add_handler(urllib.request.HTTPSHandler(context=verified_tls_context()))
+    opener.add_handler(RedirectRefusal())
+    opener.add_handler(urllib.request.HTTPErrorProcessor())
+    return opener
+
+
+def verified_tls_context() -> ssl.SSLContext:
+    """Default certificate and hostname verification. This does not connect."""
+    context = ssl.create_default_context()
+    require_verified_context(context)
+    return context
+
+
+def require_verified_context(context: ssl.SSLContext) -> None:
+    """Refuse a context that does not verify the certificate and hostname."""
+    if context.verify_mode != ssl.CERT_REQUIRED or not context.check_hostname:
+        raise AccountRuntimeError("TLS_POLICY_DENIED")
+
+
+def bind_credential_api(library: Any) -> None:
+    """Set CredReadW and CredFree prototypes. This does not call either function."""
+    library.CredReadW.argtypes = (
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.POINTER(ctypes.POINTER(CredentialRecord)),
+    )
+    library.CredReadW.restype = wintypes.BOOL
+    library.CredFree.argtypes = (ctypes.c_void_p,)
+    library.CredFree.restype = None
+
+
+def credential_field_offsets() -> dict[str, int]:
+    """Byte offsets of the local CREDENTIALW definition."""
+    return {
+        name: getattr(CredentialRecord, name).offset for name, _ctype in CredentialRecord._fields_
+    }
+
+
+def consume_native_credential(reader: NativeCredentialReader, target: str) -> bytes:
+    """Copy one mocked or native blob. Live targets are rejected before the read."""
+    if target not in _PAPER_TARGETS:
+        raise AccountRuntimeError("LIVE_TARGET_DENIED")
+    found, size, blob = reader.read(target, 1)
+    try:
+        if not found or blob is None:
+            raise AccountRuntimeError("CREDENTIAL_UNAVAILABLE")
+        if size <= 0 or size > MAX_SECRET_BYTES or size != len(blob):
+            raise AccountRuntimeError("MALFORMED_MATERIAL")
+        copied = bytes(blob)
+        _printable(copied)
+        return copied
+    finally:
+        if found:
+            reader.release()
+
+
+def account_request(method: str, url: str, material: tuple[bytes, bytes]) -> urllib.request.Request:
+    """Build the account GET. This function does not open the request."""
+    if method != "GET" or url != ACCOUNT_URL:
+        raise AccountRuntimeError("ENDPOINT_DENIED")
+    request = urllib.request.Request(url, method=method)
+    key, secret = material
+    request.add_header("APCA-API-KEY-ID", key.decode("ascii"))
+    request.add_header("APCA-API-SECRET-KEY", secret.decode("ascii"))
+    return request
+
+
+def _authorized_grant() -> VerifiedGrant:
+    try:
+        return authorize_production()
+    except GrantError as error:
+        raise AccountRuntimeError(error.reason) from None
+
+
+def _load_scripted(credentials: ScriptedCredentials) -> tuple[bytes, bytes]:
+    loaded = credentials.load()
     _printable(loaded[0])
     _printable(loaded[1])
     return loaded
@@ -352,39 +367,18 @@ def _printable(value: bytes) -> None:
         raise AccountRuntimeError("MALFORMED_MATERIAL")
 
 
-def _reserve(ledger: DurableRequestBudget) -> None:
+def _reserve(ledger: BoundLedger, grant: VerifiedGrant, now: datetime) -> None:
     try:
-        ledger.reserve()
+        ledger.reserve(grant, now)
     except BudgetError as error:
         raise AccountRuntimeError(error.reason) from None
-
-
-def _exchange(
-    transport: object,
-    method: str,
-    url: str,
-    material: tuple[bytes, bytes],
-) -> tuple[int, bytes, bool]:
-    exchange = getattr(transport, "exchange", None)
-    if not callable(exchange):
-        raise AccountRuntimeError("TRANSPORT_DENIED")
-    outcome = exchange(method, url, material)
-    if (
-        type(outcome) is not tuple
-        or len(outcome) != 3
-        or type(outcome[0]) is not int
-        or type(outcome[1]) is not bytes
-        or type(outcome[2]) is not bool
-    ):
-        raise AccountRuntimeError("AMBIGUOUS_RESPONSE")
-    return outcome
 
 
 def _interpret(
     status: int,
     body: bytes,
     redirected: bool,
-    expected_account_id: str | None,
+    expected_account_id: str,
 ) -> RuntimeDecision:
     if redirected or 300 <= status < 400:
         raise AccountRuntimeError("REDIRECT_DENIED")
@@ -395,9 +389,22 @@ def _interpret(
     if len(body) > MAX_BODY:
         raise AccountRuntimeError("RESPONSE_TOO_LARGE")
     parsed = _parsed_body(body)
-    if expected_account_id is not None and parsed.get("id") != expected_account_id:
+    if parsed.get("id") != expected_account_id:
         raise AccountRuntimeError("ACCOUNT_BINDING_MISMATCH")
-    return RuntimeDecision(RuntimeClassification.ACCEPTED, "ACCOUNT_READ", "NOT_REQUIRED")
+    observed = _account_reason(parsed)
+    return RuntimeDecision(RuntimeClassification.ACCEPTED, observed, "NOT_REQUIRED")
+
+
+def _account_reason(body: dict[str, object]) -> str:
+    blocked = (
+        body.get("status") != "ACTIVE"
+        or body.get("trading_blocked") is not False
+        or body.get("account_blocked") is not False
+        or body.get("trade_suspended_by_user") is not False
+    )
+    if blocked:
+        return "ACCOUNT_NOT_READY"
+    return "ACCOUNT_OBSERVED"
 
 
 def _status_reason(status: int) -> str | None:
@@ -416,7 +423,9 @@ def _status_reason(status: int) -> str | None:
 
 def _parsed_body(body: bytes) -> dict[str, object]:
     try:
-        parsed = json.loads(body.decode("utf-8"))
+        parsed = json.loads(body.decode("utf-8"), object_pairs_hook=_pairs)
+    except AccountRuntimeError:
+        raise
     except (UnicodeError, json.JSONDecodeError):
         raise AccountRuntimeError("MALFORMED_BODY") from None
     reason = _body_reason(parsed)
@@ -427,50 +436,61 @@ def _parsed_body(body: bytes) -> dict[str, object]:
     return parsed
 
 
-def _exchange_with_factory(
-    factory: _OPENER_FACTORY,
-    method: str,
-    url: str,
-    material: tuple[bytes, bytes],
-) -> tuple[int, bytes, bool]:
-    if method != "GET" or url != ACCOUNT_URL:
-        raise AccountRuntimeError("ENDPOINT_DENIED")
-    opener = factory()
-    return _read_opener(opener, method, url, material)
+def _pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    found: dict[str, object] = {}
+    for key, value in pairs:
+        if key in found:
+            raise AccountRuntimeError("DUPLICATE_FIELD")
+        found[key] = value
+    return found
 
 
-def _open_granted(
-    grant: StandingGrant,
-    method: str,
-    url: str,
-    material: tuple[bytes, bytes],
-) -> tuple[int, bytes, bool]:
-    _require_grant(grant)
+def _cred_read_native() -> tuple[bytes, bytes]:
+    _authorized_grant()
     if sys.platform != "win32":
         raise AccountRuntimeError("RUNTIME_PLATFORM_DENIED")
-    if method != "GET" or url != ACCOUNT_URL:
-        raise AccountRuntimeError("ENDPOINT_DENIED")
-    global _IO_ATTEMPTS
-    _IO_ATTEMPTS += 1
-    return _read_opener(_default_opener(), method, url, material)
+    global PRIVILEGED_IO_ATTEMPTS
+    PRIVILEGED_IO_ATTEMPTS += 1
+    library = _load_library()
+    key = _read_target(library, PAPER_KEY_ID_TARGET)
+    secret = _read_target(library, PAPER_SECRET_TARGET)
+    return key, secret
 
 
-def _default_opener() -> urllib.request.OpenerDirector:
-    context = verified_tls_context()
-    https_handler = urllib.request.HTTPSHandler(context=context)
-    return urllib.request.build_opener(https_handler, RedirectRefusal)
+def _load_library() -> Any:
+    library = cast(Any, ctypes).WinDLL("advapi32")
+    bind_credential_api(library)
+    return library
 
 
-def _read_opener(
-    opener: urllib.request.OpenerDirector,
-    method: str,
-    url: str,
-    material: tuple[bytes, bytes],
-) -> tuple[int, bytes, bool]:
-    request = urllib.request.Request(url, method=method)
-    key, secret = material
-    request.add_header("APCA-API-KEY-ID", key.decode("ascii"))
-    request.add_header("APCA-API-SECRET-KEY", secret.decode("ascii"))
+def _read_target(library: Any, target: str) -> bytes:
+    if target not in _PAPER_TARGETS:
+        raise AccountRuntimeError("LIVE_TARGET_DENIED")
+    pointer = ctypes.POINTER(CredentialRecord)()
+    found = library.CredReadW(target, 1, 0, ctypes.byref(pointer))
+    if not found or not pointer:
+        raise AccountRuntimeError("CREDENTIAL_UNAVAILABLE")
+    try:
+        record = pointer.contents
+        size = int(record.CredentialBlobSize)
+        blob = record.CredentialBlob
+        if size <= 0 or size > MAX_SECRET_BYTES or not blob:
+            raise AccountRuntimeError("MALFORMED_MATERIAL")
+        copied = ctypes.string_at(blob, size)
+        _printable(copied)
+        return copied
+    finally:
+        library.CredFree(pointer)
+
+
+def _open_network(material: tuple[bytes, bytes]) -> tuple[int, bytes, bool]:
+    _authorized_grant()
+    if sys.platform != "win32":
+        raise AccountRuntimeError("RUNTIME_PLATFORM_DENIED")
+    global PRIVILEGED_IO_ATTEMPTS
+    PRIVILEGED_IO_ATTEMPTS += 1
+    request = account_request("GET", ACCOUNT_URL, material)
+    opener = build_controlled_opener()
     try:
         response = opener.open(request, timeout=TIMEOUT_SECONDS)
     except AccountRuntimeError:
@@ -481,7 +501,7 @@ def _read_opener(
         raise AccountRuntimeError("TLS_FAILED") from None
     except urllib.error.HTTPError as error:
         payload = error.read(MAX_BODY + 1)
-        return error.code, payload, False
+        return int(error.code), payload, False
     except urllib.error.URLError as error:
         reason = error.reason
         if isinstance(reason, TimeoutError):
@@ -491,58 +511,7 @@ def _read_opener(
         raise AccountRuntimeError("TRANSPORT_EXCEPTION") from None
     with response:
         payload = response.read(MAX_BODY + 1)
-        status = response.status
+        status = int(response.status)
     if len(payload) > MAX_BODY:
         raise AccountRuntimeError("RESPONSE_TOO_LARGE")
     return status, payload, False
-
-
-def _cred_read_native(grant: StandingGrant) -> tuple[bytes, bytes]:
-    _require_grant(grant)
-    if sys.platform != "win32":
-        raise AccountRuntimeError("RUNTIME_PLATFORM_DENIED")
-    global _IO_ATTEMPTS
-    _IO_ATTEMPTS += 1
-    key = _cred_read_target(PAPER_KEY_ID_TARGET)
-    secret = _cred_read_target(PAPER_SECRET_TARGET)
-    _printable(key)
-    _printable(secret)
-    return key, secret
-
-
-def _cred_read_target(target: str) -> bytes:
-    if target != PAPER_KEY_ID_TARGET and target != PAPER_SECRET_TARGET:
-        raise AccountRuntimeError("LIVE_TARGET_DENIED")
-    import ctypes
-    from ctypes import wintypes
-
-    class _Credential(ctypes.Structure):
-        _fields_ = (
-            ("Flags", wintypes.DWORD),
-            ("Type", wintypes.DWORD),
-            ("TargetName", wintypes.LPWSTR),
-            ("Comment", wintypes.LPWSTR),
-            ("LastWrittenLow", wintypes.DWORD),
-            ("LastWrittenHigh", wintypes.DWORD),
-            ("CredentialBlobSize", wintypes.DWORD),
-            ("CredentialBlob", ctypes.POINTER(ctypes.c_char)),
-            ("Persist", wintypes.DWORD),
-            ("AttributeCount", wintypes.DWORD),
-            ("Attributes", ctypes.c_void_p),
-            ("TargetAlias", wintypes.LPWSTR),
-            ("UserName", wintypes.LPWSTR),
-        )
-
-    library = cast(Any, ctypes).WinDLL("advapi32")
-    pointer = ctypes.POINTER(_Credential)()
-    found = library.CredReadW(target, 1, 0, ctypes.byref(pointer))
-    if not found:
-        raise AccountRuntimeError("CREDENTIAL_UNAVAILABLE")
-    try:
-        record = pointer.contents
-        size = int(record.CredentialBlobSize)
-        if size <= 0 or not record.CredentialBlob:
-            raise AccountRuntimeError("CREDENTIAL_UNAVAILABLE")
-        return ctypes.string_at(record.CredentialBlob, size)
-    finally:
-        library.CredFree(pointer)
