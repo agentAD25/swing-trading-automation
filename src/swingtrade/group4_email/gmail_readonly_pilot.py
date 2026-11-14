@@ -11,21 +11,33 @@ import base64
 import json
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 
 from swingtrade.group4_email.contract import EMAIL_RETENTION_POLICY
+from swingtrade.group4_email.local_oauth_probe import (
+    LocalOAuthProbeRejected,
+    require_exact_granted_scope,
+)
+from swingtrade.group4_email.normalize import message_id_classification
 from swingtrade.group4_email.parse import MessageIdentityRegistry, parse_email
 
 READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
 DURABLE_STATE = "UNAVAILABLE"
 MAX_LIST_RESULTS = 10
+_MAX_TOKEN_ATTEMPTS = 20
+_MAX_READ_GETS = 50
+_TOKEN_URL = "https://oauth2.googleapis.com/token"
+_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
+_RETRY_STATUSES = frozenset({429, 500})
+_GET_ATTEMPTS = 3
 _API = "https://gmail.googleapis.com/gmail/v1/users/me/"
 _PROFILE = _API + "profile"
 _LABELS = _API + "labels"
 _MESSAGES = _API + "messages"
 _SELECTOR = re.compile(r"^(from|label):[A-Za-z0-9][A-Za-z0-9._+@-]{0,63}$")
 _MESSAGE_ID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+_PAGE_TOKEN = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 _HEADER_NAME = re.compile(r"^[A-Za-z0-9-]{1,64}$")
 
 
@@ -48,7 +60,7 @@ class PilotRejected(Exception):
 class PilotTransport(Protocol):
     """One injected exchange. The pilot calls it with GET only."""
 
-    def exchange(self, method: str, url: str) -> tuple[int, bytes]:
+    def exchange(self, method: str, url: str, body: bytes = b"") -> tuple[int, bytes]:
         """Return one HTTP status and raw body, or raise TimeoutError."""
 
 
@@ -64,6 +76,8 @@ class AcquiredMessage:
     provider_message_ref: str | None
     source_timestamp: str | None
     duplicate: bool
+    rfc_message_id: str | None = None
+    actionable: bool = False
 
 
 @dataclass(frozen=True)
@@ -86,10 +100,41 @@ class PilotEvidence:
             raise RuntimeError("pilot evidence retains no content")
         if self.scope != READONLY_SCOPE or self.retention_policy != EMAIL_RETENTION_POLICY:
             raise RuntimeError("pilot scope and retention are fixed")
-        if self.request_count < 0 or self.request_count > 3 + MAX_LIST_RESULTS:
+        if self.request_count < 0 or self.request_count > _MAX_READ_GETS:
             raise RuntimeError("pilot request count is outside the offline cap")
         if len(self.messages) > MAX_LIST_RESULTS:
             raise RuntimeError("pilot message count is outside the offline cap")
+
+
+@dataclass
+class ReadBudget:
+    """Caller-held request counts. A restart passes the same counts forward."""
+
+    token_attempts: int = 0
+    read_gets: int = 0
+
+    def __post_init__(self) -> None:
+        if type(self.token_attempts) is not int or type(self.read_gets) is not int:
+            raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
+        if not 0 <= self.token_attempts <= _MAX_TOKEN_ATTEMPTS:
+            raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
+        if not 0 <= self.read_gets <= _MAX_READ_GETS:
+            raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
+
+
+@dataclass
+class TokenGrant:
+    """In-memory grant. Ordinary repr omits both token values."""
+
+    scope: str
+    access_token: str = field(repr=False)
+    refresh_token: str | None = field(default=None, repr=False)
+
+    def __post_init__(self) -> None:
+        if self.scope != READONLY_SCOPE or self.access_token == "":
+            raise PilotRejected("GMAIL_PILOT_SCOPE_REJECTED")
+        if self.refresh_token is not None and self.refresh_token == "":
+            raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
 
 
 def acquire_readonly_messages(
@@ -99,6 +144,8 @@ def acquire_readonly_messages(
     limit: int = MAX_LIST_RESULTS,
     registry: MessageIdentityRegistry | None = None,
     seen_provider_ids: set[str] | None = None,
+    granted_scope: str = READONLY_SCOPE,
+    budget: ReadBudget | None = None,
 ) -> PilotEvidence:
     """Read at most ten messages through the injected transport.
 
@@ -118,25 +165,24 @@ def acquire_readonly_messages(
         raise PilotRejected("GMAIL_PILOT_TRANSPORT_REJECTED")
     if seen_provider_ids is not None and type(seen_provider_ids) is not set:
         raise PilotRejected("GMAIL_PILOT_TRANSPORT_REJECTED")
+    if granted_scope != READONLY_SCOPE:
+        raise PilotRejected("GMAIL_PILOT_SCOPE_REJECTED")
+    if budget is not None and type(budget) is not ReadBudget:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
     active_registry = MessageIdentityRegistry() if registry is None else registry
     seen = set() if seen_provider_ids is None else seen_provider_ids
-    session = _Session(transport)
+    seen_rfc: dict[str, str] = {}
+    session = _Session(transport, budget or ReadBudget())
     profile = session.get_object(_PROFILE)
     if type(profile.get("emailAddress")) is not str or profile.get("emailAddress") == "":
         raise PilotRejected("GMAIL_PILOT_MALFORMED")
     labels = session.get_object(_LABELS)
     if type(labels.get("labels")) is not list:
         raise PilotRejected("GMAIL_PILOT_MALFORMED")
-    listed = session.get_object(_list_url(selectors, limit))
-    rows = listed.get("messages", [])
-    if type(rows) is not list or len(rows) > limit:
-        raise PilotRejected("GMAIL_PILOT_MALFORMED")
+    rows = _collect_ids(session, selectors, limit)
     messages: list[AcquiredMessage] = []
     ignored = 0
-    for row in rows:
-        provider_id = row.get("id") if type(row) is dict else None
-        if type(provider_id) is not str or _MESSAGE_ID.fullmatch(provider_id) is None:
-            raise PilotRejected("GMAIL_PILOT_MALFORMED")
+    for provider_id in rows:
         if provider_id in seen:
             messages.append(_duplicate(provider_id))
             continue
@@ -151,21 +197,19 @@ def acquire_readonly_messages(
             messages.append(_partial(provider_id))
             continue
         outcome = parse_email(mime, active_registry)
-        instruction_ids = tuple(item.instruction_id for item in outcome.instructions)
-        if any(item == provider_id or item == outcome.message_id for item in instruction_ids):
+        kind, rfc_message_id = message_id_classification(mime)
+        acquired = _acquired(provider_id, outcome, kind, rfc_message_id)
+        if rfc_message_id is not None:
+            previous = seen_rfc.get(rfc_message_id)
+            if previous is None:
+                seen_rfc[rfc_message_id] = acquired.content_digest
+            elif previous == acquired.content_digest:
+                acquired = _duplicate(provider_id, rfc_message_id)
+            else:
+                acquired = _conflict(provider_id, rfc_message_id)
+        if any(item == provider_id or item == rfc_message_id for item in acquired.instruction_ids):
             raise PilotRejected("GMAIL_PILOT_IDENTITY_REJECTED")
-        messages.append(
-            AcquiredMessage(
-                provider_message_id=provider_id,
-                disposition=outcome.disposition.value,
-                reasons=tuple(outcome.reasons),
-                instruction_ids=instruction_ids,
-                content_digest=outcome.content_digest,
-                provider_message_ref=outcome.provenance.provider_message_ref,
-                source_timestamp=outcome.provenance.source_timestamp,
-                duplicate=False,
-            )
-        )
+        messages.append(acquired)
     return PilotEvidence(
         durable_state=DURABLE_STATE,
         economic_dispatch=False,
@@ -179,8 +223,9 @@ def acquire_readonly_messages(
 
 
 class _Session:
-    def __init__(self, transport: PilotTransport) -> None:
+    def __init__(self, transport: PilotTransport, budget: ReadBudget) -> None:
         self._transport = transport
+        self._budget = budget
         self.request_count = 0
 
     def get_object(self, url: str) -> dict[str, object]:
@@ -202,35 +247,109 @@ class _Session:
 
     def _exchange(self, url: str) -> tuple[int, dict[str, object] | None]:
         _require_readonly_url(url)
-        if self.request_count >= 3 + MAX_LIST_RESULTS:
-            raise PilotRejected("GMAIL_PILOT_LIMIT_REJECTED")
+        for attempt in range(_GET_ATTEMPTS):
+            self._consume_get()
+            status, raw = self._call("GET", url, b"", "GMAIL_PILOT_TIMEOUT")
+            if status in _REDIRECT_STATUSES:
+                raise PilotRejected("GMAIL_PILOT_REDIRECT_REJECTED")
+            if status in _RETRY_STATUSES and attempt + 1 < _GET_ATTEMPTS:
+                continue
+            if status in _RETRY_STATUSES:
+                raise PilotRejected("GMAIL_PILOT_RETRY_EXHAUSTED")
+            return _interpret_response(status, raw)
+        raise PilotRejected("GMAIL_PILOT_RETRY_EXHAUSTED")
+
+    def _consume_get(self) -> None:
+        if self._budget.read_gets >= _MAX_READ_GETS or self.request_count >= _MAX_READ_GETS:
+            raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
+        self._budget.read_gets += 1
+        self.request_count += 1
+
+    def _call(self, method: str, url: str, body: bytes, timeout_code: str) -> tuple[int, bytes]:
         try:
-            status, raw = self._transport.exchange("GET", url)
+            if method == "POST":
+                status, raw = self._transport.exchange(method, url, body)
+            else:
+                status, raw = self._transport.exchange(method, url)
         except PilotRejected:
             raise
         except TimeoutError:
-            raise PilotRejected("GMAIL_PILOT_TIMEOUT") from None
+            raise PilotRejected(timeout_code) from None
         except Exception:
+            if method == "POST":
+                raise PilotRejected("GMAIL_PILOT_TOKEN_AMBIGUOUS") from None
             raise PilotRejected("GMAIL_PILOT_TRANSPORT_REJECTED") from None
-        self.request_count += 1
         if type(status) is not int or type(raw) is not bytes:
             raise PilotRejected("GMAIL_PILOT_MALFORMED")
-        if status in {401, 403}:
-            raise PilotRejected("GMAIL_PILOT_DENIED")
-        if status not in {200, 404}:
-            raise PilotRejected("GMAIL_PILOT_PROVIDER_ERROR")
-        if status == 404:
-            return status, None
-        try:
-            parsed = json.loads(raw.decode("utf-8"))
-        except (UnicodeError, json.JSONDecodeError):
-            raise PilotRejected("GMAIL_PILOT_MALFORMED") from None
-        if type(parsed) is not dict:
-            raise PilotRejected("GMAIL_PILOT_MALFORMED")
-        return status, dict(parsed)
+        return status, raw
 
 
-def _duplicate(provider_id: str) -> AcquiredMessage:
+def _interpret_response(status: int, raw: bytes) -> tuple[int, dict[str, object] | None]:
+    if status in {401, 403}:
+        raise PilotRejected("GMAIL_PILOT_DENIED")
+    if status not in {200, 404}:
+        raise PilotRejected("GMAIL_PILOT_PROVIDER_ERROR")
+    if status == 404:
+        return status, None
+    try:
+        parsed = json.loads(raw.decode("utf-8"))
+    except (UnicodeError, json.JSONDecodeError):
+        raise PilotRejected("GMAIL_PILOT_MALFORMED") from None
+    if type(parsed) is not dict:
+        raise PilotRejected("GMAIL_PILOT_MALFORMED")
+    return status, dict(parsed)
+
+
+def _acquired(
+    provider_id: str,
+    outcome: object,
+    kind: str,
+    rfc_message_id: str | None,
+) -> AcquiredMessage:
+    from swingtrade.group4_email.contract import Disposition, ParseOutcome
+
+    if type(outcome) is not ParseOutcome:
+        raise PilotRejected("GMAIL_PILOT_MALFORMED")
+    disposition = outcome.disposition.value
+    reasons = tuple(outcome.reasons)
+    instruction_ids = tuple(item.instruction_id for item in outcome.instructions)
+    actionable = outcome.disposition is Disposition.ACCEPT and kind == "FIXTURE"
+    if kind != "FIXTURE":
+        actionable = False
+        instruction_ids = ()
+        if outcome.disposition is Disposition.ACCEPT:
+            disposition = "QUARANTINE"
+            reasons = tuple(dict.fromkeys((*reasons, "NON_FIXTURE_MESSAGE_ID")))
+    return AcquiredMessage(
+        provider_message_id=provider_id,
+        disposition=disposition,
+        reasons=reasons,
+        instruction_ids=instruction_ids,
+        content_digest=outcome.content_digest,
+        provider_message_ref=outcome.provenance.provider_message_ref,
+        source_timestamp=outcome.provenance.source_timestamp,
+        duplicate=False,
+        rfc_message_id=rfc_message_id,
+        actionable=actionable,
+    )
+
+
+def _conflict(provider_id: str, rfc_message_id: str) -> AcquiredMessage:
+    return AcquiredMessage(
+        provider_message_id=provider_id,
+        disposition="QUARANTINE",
+        reasons=("CONFLICTING_DUPLICATE",),
+        instruction_ids=(),
+        content_digest="",
+        provider_message_ref=None,
+        source_timestamp=None,
+        duplicate=False,
+        rfc_message_id=rfc_message_id,
+        actionable=False,
+    )
+
+
+def _duplicate(provider_id: str, rfc_message_id: str | None = None) -> AcquiredMessage:
     return AcquiredMessage(
         provider_message_id=provider_id,
         disposition="DUPLICATE",
@@ -240,6 +359,8 @@ def _duplicate(provider_id: str) -> AcquiredMessage:
         provider_message_ref=None,
         source_timestamp=None,
         duplicate=True,
+        rfc_message_id=rfc_message_id,
+        actionable=False,
     )
 
 
@@ -256,9 +377,36 @@ def _partial(provider_id: str) -> AcquiredMessage:
     )
 
 
-def _list_url(selectors: tuple[str, ...], limit: int) -> str:
+def _collect_ids(session: _Session, selectors: tuple[str, ...], limit: int) -> list[str]:
+    collected: list[str] = []
+    page_token: str | None = None
+    for _page in range(2):
+        listed = session.get_object(_list_url(selectors, limit, page_token))
+        rows = listed.get("messages", [])
+        if type(rows) is not list:
+            raise PilotRejected("GMAIL_PILOT_MALFORMED")
+        for row in rows:
+            provider_id = row.get("id") if type(row) is dict else None
+            if type(provider_id) is not str or _MESSAGE_ID.fullmatch(provider_id) is None:
+                raise PilotRejected("GMAIL_PILOT_MALFORMED")
+            collected.append(provider_id)
+            if len(collected) > limit:
+                raise PilotRejected("GMAIL_PILOT_MALFORMED")
+        token = listed.get("nextPageToken")
+        if len(collected) >= limit or token is None:
+            return collected
+        if type(token) is not str or _PAGE_TOKEN.fullmatch(token) is None:
+            raise PilotRejected("GMAIL_PILOT_MALFORMED")
+        page_token = token
+    return collected
+
+
+def _list_url(selectors: tuple[str, ...], limit: int, page_token: str | None = None) -> str:
     query = _quote(" ".join(selectors))
-    return f"{_MESSAGES}?maxResults={limit}&q={query}"
+    url = f"{_MESSAGES}?maxResults={limit}&q={query}"
+    if page_token is None:
+        return url
+    return url + "&pageToken=" + _quote(page_token)
 
 
 def _message_url(provider_id: str) -> str:
@@ -275,7 +423,7 @@ def _require_readonly_url(url: str) -> None:
     if path == "profile" or path == "labels":
         allowed = not pairs
     elif path == "messages":
-        allowed = len(pairs) == 2 and pairs[0][0] == "maxResults" and pairs[1][0] == "q"
+        allowed = _message_list_query(pairs)
     elif path.startswith("messages/"):
         message_id = path.removeprefix("messages/")
         allowed = (
@@ -286,6 +434,90 @@ def _require_readonly_url(url: str) -> None:
         allowed = False
     if not allowed:
         raise PilotRejected("GMAIL_PILOT_ENDPOINT_REJECTED")
+
+
+def _message_list_query(pairs: tuple[tuple[str, str], ...]) -> bool:
+    if len(pairs) == 2:
+        return pairs[0][0] == "maxResults" and pairs[1][0] == "q"
+    if len(pairs) != 3:
+        return False
+    return (
+        pairs[0][0] == "maxResults"
+        and pairs[1][0] == "q"
+        and pairs[2][0] == "pageToken"
+        and _PAGE_TOKEN.fullmatch(pairs[2][1]) is not None
+    )
+
+
+def exchange_readonly_grant(
+    transport: PilotTransport,
+    form: tuple[tuple[str, str], ...],
+    *,
+    budget: ReadBudget | None = None,
+) -> TokenGrant:
+    """Exchange or refresh one readonly grant. Ambiguous failures are not retried."""
+
+    active = budget if budget is not None else ReadBudget()
+    if type(active) is not ReadBudget:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
+    if active.token_attempts >= _MAX_TOKEN_ATTEMPTS:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
+    if type(form) is not tuple or any(type(item) is not tuple or len(item) != 2 for item in form):
+        raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
+    keys = tuple(key for key, _ in form)
+    forbidden = "client_" "secret"
+    untyped = any(type(key) is not str or type(value) is not str for key, value in form)
+    if forbidden in keys or untyped:
+        raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
+    if keys not in {
+        ("grant_type", "code", "code_verifier", "client_id", "redirect_uri"),
+        ("grant_type", "refresh_token", "client_id"),
+    }:
+        raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
+    grant = form[0]
+    code_grant = ("grant_type", "authorization_code")
+    refresh_grant = ("grant_type", "refresh_token")
+    if grant != code_grant and grant != refresh_grant:
+        raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
+    active.token_attempts += 1
+    encoded = "&".join(f"{_quote(key)}={_quote(value)}" for key, value in form).encode("ascii")
+    try:
+        status, raw = transport.exchange("POST", _TOKEN_URL, encoded)
+    except PilotRejected:
+        raise
+    except TimeoutError:
+        raise PilotRejected("GMAIL_PILOT_TOKEN_AMBIGUOUS") from None
+    except Exception:
+        raise PilotRejected("GMAIL_PILOT_TOKEN_AMBIGUOUS") from None
+    if type(status) is not int or type(raw) is not bytes:
+        raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
+    if status in _REDIRECT_STATUSES:
+        raise PilotRejected("GMAIL_PILOT_REDIRECT_REJECTED")
+    if status in {401, 403}:
+        raise PilotRejected("GMAIL_PILOT_DENIED")
+    if status != 200:
+        raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
+    try:
+        parsed = json.loads(raw.decode("utf-8"))
+    except (UnicodeError, json.JSONDecodeError):
+        raise PilotRejected("GMAIL_PILOT_MALFORMED") from None
+    if type(parsed) is not dict:
+        raise PilotRejected("GMAIL_PILOT_MALFORMED")
+    try:
+        require_exact_granted_scope(parsed.get("scope"), READONLY_SCOPE)
+    except LocalOAuthProbeRejected:
+        raise PilotRejected("GMAIL_PILOT_SCOPE_REJECTED") from None
+    access_token = parsed.get("access_token")
+    refresh_token = parsed.get("refresh_token")
+    if type(access_token) is not str or access_token == "":
+        raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
+    if refresh_token is not None and (type(refresh_token) is not str or refresh_token == ""):
+        raise PilotRejected("GMAIL_PILOT_TOKEN_REJECTED")
+    return TokenGrant(
+        scope=READONLY_SCOPE,
+        access_token=access_token,
+        refresh_token=refresh_token if type(refresh_token) is str else None,
+    )
 
 
 def _query(query: str) -> tuple[tuple[str, str], ...] | None:

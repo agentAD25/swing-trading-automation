@@ -11,8 +11,12 @@ import pytest
 from swingtrade.group4_email.gmail_readonly_pilot import (
     READONLY_SCOPE,
     PilotRejected,
+    ReadBudget,
+    _require_readonly_url,
     acquire_readonly_messages,
+    exchange_readonly_grant,
 )
+from swingtrade.group4_email.local_oauth_probe import build_refresh_request, build_token_request
 from swingtrade.group4_email.parse import MessageIdentityRegistry
 from tests.group4_email.conftest import body, plain_message
 
@@ -26,8 +30,9 @@ class Scripted:
         self.responses = list(responses)
         self.calls: list[tuple[str, str]] = []
 
-    def exchange(self, method: str, url: str) -> tuple[int, bytes]:
+    def exchange(self, method: str, url: str, body: bytes = b"") -> tuple[int, bytes]:
         self.calls.append((method, url))
+        self.body = body
         if not self.responses:
             raise AssertionError("unexpected request")
         return self.responses.pop(0)
@@ -302,3 +307,157 @@ def test_pilot_source_has_no_live_or_economic_path() -> None:
     assert "urlopen" not in source
     assert READONLY_SCOPE in source
     assert "gmail.metadata" not in source
+
+
+def _token_form() -> tuple[tuple[str, str], ...]:
+    request = build_token_request(
+        code="synthetic-code",
+        code_verifier="a" * 43,
+        client_id="synthetic-client",
+        redirect_uri="http://127.0.0.1:43123/",
+    )
+    return request.form
+
+
+def _grant_body(scope: str = READONLY_SCOPE, refresh: bool = False) -> bytes:
+    payload: dict[str, object] = {"access_token": "synthetic-access", "scope": scope}
+    if refresh:
+        payload["refresh_token"] = "synthetic-refresh"
+    return json.dumps(payload).encode("utf-8")
+
+
+def test_token_exchange_and_refresh_hide_tokens_and_reject_bad_results() -> None:
+    budget = ReadBudget()
+    success = Scripted([(200, _grant_body(refresh=True))])
+    grant = exchange_readonly_grant(success, _token_form(), budget=budget)
+    refresh = build_refresh_request(refresh_token="synthetic-refresh", client_id="synthetic-client")
+    refreshed = exchange_readonly_grant(
+        Scripted([(200, _grant_body())]),
+        refresh.form,
+        budget=budget,
+    )
+    denied = Scripted([(401, b"{}")])
+    rejected = Scripted([(500, b"{}"), (200, _grant_body())])
+    timed = TimeoutAt(0, [(200, _grant_body())])
+    redirected = Scripted([(302, b"")])
+    metadata = Scripted([(200, _grant_body("https://www.googleapis.com/auth/gmail.metadata"))])
+
+    with pytest.raises(PilotRejected) as denial:
+        exchange_readonly_grant(denied, _token_form(), budget=budget)
+    with pytest.raises(PilotRejected) as server:
+        exchange_readonly_grant(rejected, _token_form(), budget=budget)
+    with pytest.raises(PilotRejected) as ambiguous:
+        exchange_readonly_grant(timed, _token_form(), budget=budget)
+    with pytest.raises(PilotRejected) as redirect:
+        exchange_readonly_grant(redirected, _token_form(), budget=budget)
+    with pytest.raises(PilotRejected) as scope:
+        exchange_readonly_grant(metadata, _token_form(), budget=budget)
+
+    assert grant.scope == READONLY_SCOPE
+    assert refreshed.scope == READONLY_SCOPE
+    assert "synthetic-access" not in repr(grant)
+    assert "synthetic-refresh" not in repr(grant)
+    assert b"client_secret" not in success.body
+    assert success.calls == [("POST", "https://oauth2.googleapis.com/token")]
+    assert len(rejected.calls) == 1
+    assert denial.value.code == "GMAIL_PILOT_DENIED"
+    assert server.value.code == "GMAIL_PILOT_TOKEN_REJECTED"
+    assert ambiguous.value.code == "GMAIL_PILOT_TOKEN_AMBIGUOUS"
+    assert redirect.value.code == "GMAIL_PILOT_REDIRECT_REJECTED"
+    assert scope.value.code == "GMAIL_PILOT_SCOPE_REJECTED"
+    assert budget.token_attempts == 7
+    capped = ReadBudget(token_attempts=20)
+    with pytest.raises(PilotRejected) as stopped:
+        exchange_readonly_grant(Scripted([]), _token_form(), budget=capped)
+    assert stopped.value.code == "GMAIL_PILOT_BUDGET_EXHAUSTED"
+    assert capped.token_attempts == 20
+
+
+def test_metadata_scope_cannot_acquire_messages_and_budget_survives_restart() -> None:
+    budget = ReadBudget(read_gets=50)
+    transport = Scripted([])
+
+    with pytest.raises(PilotRejected) as scope:
+        acquire_readonly_messages(Scripted([]), ("label:synthetic",), granted_scope="metadata")
+    with pytest.raises(PilotRejected) as exhausted:
+        acquire_readonly_messages(transport, ("label:synthetic",), budget=budget)
+
+    assert scope.value.code == "GMAIL_PILOT_SCOPE_REJECTED"
+    assert exhausted.value.code == "GMAIL_PILOT_BUDGET_EXHAUSTED"
+    assert transport.calls == []
+    assert budget.read_gets == 50
+
+
+def test_retry_redirect_and_pagination_stay_inside_the_cap() -> None:
+    raw = plain_message("Entry: Buy stop $7.23.\n", "<pilot-page@example.invalid>")
+    retry = Scripted(
+        [
+            _profile(),
+            _labels(),
+            (429, b"{}"),
+            (200, _listed("provider-retry")[1]),
+            _rfc822("provider-retry", raw),
+        ]
+    )
+    evidence = acquire_readonly_messages(retry, ("label:synthetic",), limit=1)
+    redirected = Scripted([(302, b"https://evil.example/")])
+    with pytest.raises(PilotRejected) as redirect:
+        acquire_readonly_messages(redirected, ("label:synthetic",))
+    hostile = _reject_url("https://evil.example/gmail/v1/users/me/profile")
+    first, second = "provider-one", "provider-two"
+    pages = Scripted(
+        [
+            _profile(),
+            _labels(),
+            _json({"messages": [{"id": first}], "nextPageToken": "page-two"}),
+            _json({"messages": [{"id": second}], "nextPageToken": "page-three"}),
+            _rfc822(first, raw),
+            _rfc822(second, raw.replace(b"pilot-page", b"pilot-next")),
+        ]
+    )
+    paged = acquire_readonly_messages(pages, ("label:synthetic",), limit=2)
+    repeated = Scripted([(500, b"{}"), (500, b"{}"), (500, b"{}")])
+    with pytest.raises(PilotRejected) as failed:
+        acquire_readonly_messages(repeated, ("label:synthetic",))
+
+    assert evidence.messages[0].provider_message_id == "provider-retry"
+    assert evidence.request_count == 5
+    assert redirect.value.code == "GMAIL_PILOT_REDIRECT_REJECTED"
+    assert hostile == "GMAIL_PILOT_ENDPOINT_REJECTED"
+    assert [item.provider_message_id for item in paged.messages] == [first, second]
+    assert len([url for _, url in pages.calls if "pageToken=" in url]) == 1
+    assert "page-three" not in " ".join(url for _, url in pages.calls)
+    assert failed.value.code == "GMAIL_PILOT_RETRY_EXHAUSTED"
+    assert len(repeated.calls) == 3
+
+
+def test_realistic_message_id_stays_distinct_and_non_actionable() -> None:
+    raw = plain_message(body("tday_dated.txt"), "<abc123+tag@mail.example.com>")
+    changed = plain_message("Entry: Buy stop $7.23.\n", "<abc123+tag@mail.example.com>")
+    transport = Scripted(
+        _ready(
+            _listed("provider-real", "provider-copy"),
+            _rfc822("provider-real", raw),
+            _rfc822("provider-copy", changed),
+        )
+    )
+    evidence = acquire_readonly_messages(transport, ("label:synthetic",), limit=2)
+    first, second = evidence.messages
+
+    assert first.rfc_message_id == "<abc123+tag@mail.example.com>"
+    assert first.provider_message_id == "provider-real"
+    assert first.rfc_message_id not in first.instruction_ids
+    assert first.provider_message_id not in first.instruction_ids
+    assert first.actionable is False
+    assert first.disposition == "QUARANTINE"
+    assert "NON_FIXTURE_MESSAGE_ID" in first.reasons
+    assert second.reasons == ("CONFLICTING_DUPLICATE",)
+    assert second.instruction_ids == ()
+
+
+def _reject_url(url: str) -> str:
+    try:
+        _require_readonly_url(url)
+    except PilotRejected as rejected:
+        return rejected.code
+    return ""

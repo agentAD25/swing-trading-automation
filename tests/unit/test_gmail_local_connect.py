@@ -45,9 +45,9 @@ SECRET = "synthetic-client-secret-value"
 MODULE = Path("src/swingtrade/gmail_local_connect.py")
 _BLOBS = {
     "src/swingtrade/group4_email/local_oauth_probe.py": (
-        "618e510046178fa87c5fbb84a797c7b3f60d90e8"
+        "d763823e5d719ed2623c40531f93a5f207d6e742"
     ),
-    "tests/group4_email/test_local_oauth_probe.py": ("4f405e88a840c63e7e84f3b34e803fc4a13a3a2b"),
+    "tests/group4_email/test_local_oauth_probe.py": ("2857821ccffada300021dd519abaceaa9e4e81e6"),
     "tests/group4_email/test_attacks.py": "0997ba2237e8d0643061ec65e9a8032380abb611",
 }
 
@@ -1499,3 +1499,21 @@ def test_urllib_supplies_form_content_type_when_preparing_a_post() -> None:
     handler.do_request_(request)
     headers = dict(request.header_items())
     assert headers["Content-type"] == "application/x-www-form-urlencoded"
+
+
+def test_readonly_selection_does_not_upgrade_a_metadata_client() -> None:
+    metadata = desktop_client_from_document({"installed": {"client_id": CLIENT_ID}})
+    readonly = desktop_client_from_document(
+        {"installed": {"client_id": CLIENT_ID}},
+        capability="readonly",
+    )
+    upgraded = _reject(
+        lambda: desktop_client_from_document(
+            {"installed": {"client_id": CLIENT_ID, "scopes": [METADATA]}},
+            capability="readonly",
+        )
+    )
+
+    assert metadata.scopes == (METADATA,)
+    assert readonly.scopes == (_READONLY,)
+    assert upgraded.code == "GMAIL_OAUTH_SCOPE_REJECTED"

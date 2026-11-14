@@ -21,6 +21,7 @@ from swingtrade.group4_email.local_oauth_probe import (
     ProbeBrowser,
     ProbeClock,
     ProbeHttp,
+    oauth_capability_scope,
     orchestrate_profile_probe,
     validate_desktop_client,
 )
@@ -107,9 +108,15 @@ class _BoundSocket(Protocol):
         """Close the listener."""
 
 
-def desktop_client_from_document(document: object) -> DesktopClientConfig:
-    """Build a Desktop config. Secret custody fields are rejected."""
+def desktop_client_from_document(
+    document: object, *, capability: str = "metadata"
+) -> DesktopClientConfig:
+    """Build a Desktop config for one explicit capability.
 
+    The default remains metadata. A metadata declaration is not upgraded.
+    """
+
+    expected = oauth_capability_scope(capability)
     if type(document) is not dict or set(document) != {"installed"}:
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED")
     installed = document["installed"]
@@ -123,7 +130,7 @@ def desktop_client_from_document(document: object) -> DesktopClientConfig:
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_SCOPE_REJECTED")
     if "client_secret" in installed and type(installed.get("client_secret")) is not str:
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED")
-    if "scopes" in installed and not _scope_declaration(installed.get("scopes")):
+    if "scopes" in installed and not _declared_scope(installed.get("scopes"), expected):
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_SCOPE_REJECTED")
     _reject_redirects(installed.get("redirect_uris"))
     _reject_auth_declaration(installed)
@@ -135,15 +142,17 @@ def desktop_client_from_document(document: object) -> DesktopClientConfig:
         client_type="installed",
         redirect_host="127.0.0.1",
         redirect_path="/",
-        scopes=(_METADATA_SCOPE,),
+        scopes=(expected,),
         network_permitted=False,
         client_id=client_id if type(client_id) is str else "",
     )
-    validate_desktop_client(client)
+    validate_desktop_client(client, capability=capability)
     return client
 
 
-def desktop_client_from_json_text(text: str) -> DesktopClientConfig:
+def desktop_client_from_json_text(
+    text: str, *, capability: str = "metadata"
+) -> DesktopClientConfig:
     """Parse one in-memory Desktop client document."""
 
     if type(text) is not str or text.strip() == "" or len(text) > _MAX_CLIENT_BYTES:
@@ -152,7 +161,7 @@ def desktop_client_from_json_text(text: str) -> DesktopClientConfig:
         document = json.loads(text)
     except json.JSONDecodeError:
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED") from None
-    return desktop_client_from_document(document)
+    return desktop_client_from_document(document, capability=capability)
 
 
 def run_offline_profile_shape(
@@ -476,10 +485,14 @@ def run_local_windows_profile_proof(client_json_path: str) -> str:
     return _REAL_PASS
 
 
-def _scope_declaration(value: object) -> bool:
-    if value == _METADATA_SCOPE or value == (_METADATA_SCOPE,):
+def _declared_scope(value: object, expected: str) -> bool:
+    if value == expected or value == (expected,):
         return True
-    return type(value) is list and value == [_METADATA_SCOPE]
+    return type(value) is list and value == [expected]
+
+
+def _scope_declaration(value: object) -> bool:
+    return _declared_scope(value, _METADATA_SCOPE)
 
 
 def _accepted_redirect_declaration(item: object) -> bool:
