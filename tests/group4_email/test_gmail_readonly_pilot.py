@@ -844,7 +844,10 @@ def test_operator_grant_rejects_forgeries_and_cannot_enable_the_network(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    from swingtrade.gmail_local_connect import run_local_windows_readonly_runtime
+    from swingtrade.gmail_local_connect import (
+        ReadonlyRuntimeRejected,
+        run_local_windows_readonly_runtime,
+    )
     from swingtrade.group4_email.gmail_readonly_pilot import (
         READONLY_CAMPAIGN,
         OperatorGrant,
@@ -908,9 +911,16 @@ def test_operator_grant_rejects_forgeries_and_cannot_enable_the_network(
             empty / "desktop-client.json",
         ),
     )
-    with pytest.raises(LocalOAuthProbeRejected) as blocked:
-        run_local_windows_readonly_runtime()
-    assert blocked.value.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
+    import sys
+
+    if sys.platform == "win32":
+        with pytest.raises(ReadonlyRuntimeRejected) as blocked:
+            run_local_windows_readonly_runtime()
+        assert blocked.value.code == "GMAIL_PROVIDER_AUTHORIZATION_NOT_YET_EFFECTIVE"
+    else:
+        with pytest.raises(LocalOAuthProbeRejected) as blocked:
+            run_local_windows_readonly_runtime()
+        assert blocked.value.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
 
 
 def test_protected_budget_survives_restart_and_rejects_resets(tmp_path: Path) -> None:
@@ -1391,7 +1401,7 @@ def test_authorized_runtime_fails_closed_until_a_real_grant(tmp_path: Path) -> N
     assert budget.code == "GMAIL_PILOT_BUDGET_INVALID"  # type: ignore[attr-defined]
     assert corrupt.value.code == "GMAIL_PILOT_BUDGET_INVALID"
     assert corrupt_port.reads == 0
-    assert blocked_live.value.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
+    assert blocked_live.value.code == "GMAIL_PROVIDER_AUTHORIZATION_NOT_YET_EFFECTIVE"
     assert "ProxyHandler" not in names
     assert wrong_host.value.code == "GMAIL_PILOT_ENDPOINT_REJECTED"
     assert redirect.value.code == "GMAIL_PILOT_REDIRECT_REJECTED"
@@ -1407,6 +1417,11 @@ def test_authorized_runtime_fails_closed_until_a_real_grant(tmp_path: Path) -> N
     assert inspected.profile_matched is True  # type: ignore[attr-defined]
     assert inspected.message_count == 1  # type: ignore[attr-defined]
     assert inspected.classifications == ("NON_ACTIONABLE",)  # type: ignore[attr-defined]
+    assert inspected.senders == ("signals@example.invalid",)  # type: ignore[attr-defined]
+    assert inspected.subjects == ("Desk note",)  # type: ignore[attr-defined]
+    received = ("Sat, 14 Nov 2026 17:00:00 +0000",)
+    assert inspected.received_at == received  # type: ignore[attr-defined]
+    assert "not a signal" not in repr(inspected)
     assert inspected.token_attempts == 1  # type: ignore[attr-defined]
     assert inspected.read_gets == 4  # type: ignore[attr-defined]
     assert quiet.message_count == 0  # type: ignore[attr-defined]
@@ -1416,9 +1431,125 @@ def test_authorized_runtime_fails_closed_until_a_real_grant(tmp_path: Path) -> N
     assert denied.code == "GMAIL_PILOT_DENIED"  # type: ignore[attr-defined]
     assert failed_port.code == "GMAIL_PILOT_CUSTODY_REJECTED"  # type: ignore[attr-defined]
     rendered = repr(inspected)
-    assert MAILBOX not in rendered
+    assert inspected.senders == (MAILBOX,)  # type: ignore[attr-defined]
     assert "synthetic-access" not in rendered
     assert "synthetic-refresh" not in rendered
     assert all("attachments" not in url for _method, url in scripted.calls)
     assert scripted.calls[0][0] == "POST"
     assert [method for method, _url in scripted.calls].count("GET") == 4
+
+
+def test_attended_login_exchanges_once_without_canonical_access() -> None:
+    from swingtrade.gmail_local_connect import attend_readonly_login
+    from swingtrade.group4_email.gmail_readonly_pilot import (
+        DailyBudget,
+        MemoryBudgetStore,
+        canonical_standing_access_effective,
+        mailbox_hash,
+        seed_daily_budget,
+    )
+
+    assert canonical_standing_access_effective() is False
+
+    class _Browser:
+        def __init__(self) -> None:
+            self.requests: list[object] = []
+
+        def open(self, request: object) -> None:
+            self.requests.append(request)
+
+    class _Listener:
+        def __init__(self, browser: _Browser, *, mismatch: bool = False) -> None:
+            self.browser = browser
+            self.mismatch = mismatch
+
+        def bind(self) -> int:
+            return 8765
+
+        def wait(self, _timeout: int) -> tuple[tuple[str, str], ...]:
+            if self.mismatch:
+                return (("code", "synthetic-code"), ("state", "not-the-state"))
+            request = self.browser.requests[0]
+            state = dict(request.parameters)["state"]  # type: ignore[attr-defined]
+            return (("code", "synthetic-code"), ("state", state))
+
+        def close(self) -> None:
+            return None
+
+    class _Once(Scripted):
+        def exchange(
+            self,
+            method: str,
+            url: str,
+            body: bytes = b"",
+            bearer: str | None = None,
+        ) -> tuple[int, bytes]:
+            self.calls.append((method, url))
+            raise TimeoutError
+
+    stored: list[str] = []
+    browser = _Browser()
+    store = MemoryBudgetStore()
+    seed_daily_budget(store, FIXED)
+    budget = DailyBudget(store, lambda: FIXED)
+    scripted = Scripted(
+        [
+            _json(
+                {
+                    "access_token": "synthetic-access",
+                    "refresh_token": "synthetic-refresh",
+                    "scope": READONLY_SCOPE,
+                }
+            ),
+            _profile(),
+            _labels(),
+            _json({"messages": []}),
+        ]
+    )
+    evidence = attend_readonly_login(
+        client_id="synthetic-client",
+        listener=_Listener(browser),  # type: ignore[arg-type]
+        browser=browser,  # type: ignore[arg-type]
+        transport=scripted,
+        budget=budget,
+        selectors=("from:signals@example.invalid",),
+        expected_mailbox_hash=mailbox_hash(MAILBOX),
+        store_refresh=stored.append,
+    )
+    scope = dict(browser.requests[0].parameters)["scope"]  # type: ignore[attr-defined]
+    posts = [call for call in scripted.calls if call[0] == "POST"]
+    boom = _Once([])
+    browser_two = _Browser()
+    with pytest.raises(PilotRejected) as timed:
+        attend_readonly_login(
+            client_id="synthetic-client",
+            listener=_Listener(browser_two),  # type: ignore[arg-type]
+            browser=browser_two,  # type: ignore[arg-type]
+            transport=boom,
+            budget=budget,
+            selectors=("from:signals@example.invalid",),
+            expected_mailbox_hash=mailbox_hash(MAILBOX),
+            store_refresh=stored.append,
+        )
+    browser_three = _Browser()
+    quiet = Scripted([])
+    with pytest.raises(LocalOAuthProbeRejected):
+        attend_readonly_login(
+            client_id="synthetic-client",
+            listener=_Listener(browser_three, mismatch=True),  # type: ignore[arg-type]
+            browser=browser_three,  # type: ignore[arg-type]
+            transport=quiet,
+            budget=budget,
+            selectors=("from:signals@example.invalid",),
+            expected_mailbox_hash=mailbox_hash(MAILBOX),
+            store_refresh=stored.append,
+        )
+
+    assert scope == READONLY_SCOPE
+    assert len(posts) == 1
+    assert stored == ["synthetic-refresh"]
+    assert evidence.economic_dispatch is False
+    assert "synthetic-refresh" not in repr(evidence)
+    assert timed.value.code == "GMAIL_PILOT_TOKEN_AMBIGUOUS"
+    assert len(boom.calls) == 1
+    assert quiet.calls == []

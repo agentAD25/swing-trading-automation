@@ -103,6 +103,9 @@ class AcquiredMessage:
     rfc_message_id: str | None = None
     actionable: bool = False
     classification: str = "NON_ACTIONABLE"
+    sender: str = ""
+    subject: str = ""
+    received_at: str = ""
 
 
 @dataclass(frozen=True)
@@ -358,7 +361,16 @@ def acquire_readonly_messages(
             continue
         outcome = parse_email(mime, active_registry)
         kind, rfc_message_id = message_id_classification(mime)
-        acquired = _acquired(provider_id, outcome, kind, rfc_message_id)
+        sender, subject, received_at = _header_inventory(mime)
+        acquired = _acquired(
+            provider_id,
+            outcome,
+            kind,
+            rfc_message_id,
+            sender=sender,
+            subject=subject,
+            received_at=received_at,
+        )
         if rfc_message_id is not None:
             previous = seen_rfc.get(rfc_message_id)
             if previous is None:
@@ -479,11 +491,29 @@ def _classification(disposition: str, kind: str) -> str:
     return "QUARANTINE"
 
 
+def _header_inventory(mime: bytes) -> tuple[str, str, str]:
+    import email
+
+    message = email.message_from_bytes(mime)
+
+    def one(name: str) -> str:
+        value = message.get(name, "")
+        if type(value) is not str:
+            return ""
+        return " ".join(value.split())[:200]
+
+    return one("From"), one("Subject"), one("Date")
+
+
 def _acquired(
     provider_id: str,
     outcome: object,
     kind: str,
     rfc_message_id: str | None,
+    *,
+    sender: str = "",
+    subject: str = "",
+    received_at: str = "",
 ) -> AcquiredMessage:
     from swingtrade.group4_email.contract import Disposition, ParseOutcome
 
@@ -511,6 +541,9 @@ def _acquired(
         rfc_message_id=rfc_message_id,
         actionable=actionable,
         classification=_classification(disposition, kind),
+        sender=sender,
+        subject=subject,
+        received_at=received_at,
     )
 
 
@@ -719,6 +752,7 @@ def run_readonly_connection(
     expected_mailbox_hash: str | None = None,
     registry: MessageIdentityRegistry | None = None,
     seen_provider_ids: set[str] | None = None,
+    refresh_sink: Callable[[str], None] | None = None,
 ) -> PilotEvidence:
     """Connect one explicit readonly selection to injected Gmail reads.
 
@@ -764,6 +798,8 @@ def run_readonly_connection(
     if token_request.endpoint != _TOKEN_URL:
         raise PilotRejected("GMAIL_PILOT_ENDPOINT_REJECTED")
     issued = exchange_readonly_grant(transport, token_request.form, budget=active_budget)
+    if refresh_sink is not None and type(issued.refresh_token) is str:
+        refresh_sink(issued.refresh_token)
     return acquire_readonly_messages(
         transport,
         selectors,
@@ -1258,6 +1294,10 @@ class RuntimeInspection:
     message_count: int
     classifications: tuple[str, ...]
     dispositions: tuple[str, ...]
+    senders: tuple[str, ...]
+    subjects: tuple[str, ...]
+    received_at: tuple[str, ...]
+    reasons: tuple[str, ...]
     token_attempts: int
     read_gets: int
     transport_mode: str
@@ -1329,6 +1369,23 @@ class BoundOpenerTransport:
         raise PilotRejected("GMAIL_PILOT_TRANSPORT_REJECTED")
 
 
+_CANONICAL_GRANT_RECORD = (
+    "LANE1_GMAIL_STANDING_READONLY_CONNECTION_AUTHORIZED "
+    "EFFECTIVE campaign=GMAIL-READONLY-SIGNAL-DISCOVERY-20261114-R1"
+)
+
+
+def canonical_standing_access_effective() -> bool:
+    """Read the repository record. A local MAC file cannot satisfy this check."""
+
+    state = Path(__file__).resolve().parents[3] / "docs" / "CURRENT_STATE.md"
+    try:
+        text = state.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return _CANONICAL_GRANT_RECORD in text
+
+
 def production_runtime_paths() -> RuntimePaths:
     """Return the attended Windows paths. This does not create or read them."""
 
@@ -1360,11 +1417,15 @@ def execute_trusted_runtime(
     now: int,
     transport: PilotTransport | None = None,
     custody_factory: Callable[[], object] | None = None,
+    attended_login: Callable[[PilotTransport, object, str, str, str, object], PilotEvidence]
+    | None = None,
 ) -> RuntimeInspection:
-    """Run one readonly refresh. A temp path cannot select the live opener."""
+    """Run one readonly refresh or first login. A local MAC cannot open the network."""
 
     import sys
 
+    if transport is None and not canonical_standing_access_effective():
+        raise PilotRejected("GMAIL_PROVIDER_AUTHORIZATION_NOT_YET_EFFECTIVE")
     document, key = _authenticated_key(paths, now)
     try:
         client_id = _desktop_client_id(paths.client_file)
@@ -1385,23 +1446,37 @@ def execute_trusted_runtime(
         if not standing_network_allowed(trusted):
             raise PilotRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
         port = _custody_port(paths, trusted, custody_factory, mode)
+        budget = ProtectedBudget(store, lambda: now, bytes(key))
         material = bytearray()
         try:
-            material.extend(_custody_bytes(port))
-            refresh = material.decode("ascii")
-            evidence = run_readonly_connection(
-                active,
-                capability="readonly",
-                client_id=client_id,
-                redirect_uri=loopback_redirect(1),
-                state=new_oauth_state(),
-                code_verifier=new_pkce_verifier(),
-                selectors=(str(document["selector"]),),
-                budget=ProtectedBudget(store, lambda: now, bytes(key)),
-                expected_mailbox="bound-by-hash",
-                expected_mailbox_hash=str(document["mailbox_hash"]),
-                refresh_token=refresh,
-            )
+            try:
+                material.extend(_custody_bytes(port))
+            except PilotRejected as rejected:
+                if rejected.code != "GMAIL_PILOT_CUSTODY_REJECTED" or attended_login is None:
+                    raise
+                evidence = attended_login(
+                    active,
+                    budget,
+                    client_id,
+                    str(document["selector"]),
+                    str(document["mailbox_hash"]),
+                    port,
+                )
+            else:
+                refresh = material.decode("ascii")
+                evidence = run_readonly_connection(
+                    active,
+                    capability="readonly",
+                    client_id=client_id,
+                    redirect_uri=loopback_redirect(1),
+                    state=new_oauth_state(),
+                    code_verifier=new_pkce_verifier(),
+                    selectors=(str(document["selector"]),),
+                    budget=budget,
+                    expected_mailbox="bound-by-hash",
+                    expected_mailbox_hash=str(document["mailbox_hash"]),
+                    refresh_token=refresh,
+                )
         finally:
             _wipe(material)
             _release_port(port)
@@ -1517,6 +1592,10 @@ def _inspection(
         message_count=len(evidence.messages),
         classifications=tuple(message.classification for message in evidence.messages),
         dispositions=tuple(message.disposition for message in evidence.messages),
+        senders=tuple(message.sender for message in evidence.messages),
+        subjects=tuple(message.subject for message in evidence.messages),
+        received_at=tuple(message.received_at for message in evidence.messages),
+        reasons=tuple(",".join(message.reasons) for message in evidence.messages),
         token_attempts=tokens,
         read_gets=gets,
         transport_mode=mode,
@@ -1539,6 +1618,11 @@ class WindowsCredentialApi:
 
     def read(self) -> bytes:
         return native_credential_read(self._trusted)
+
+    def store(self, secret: str) -> None:
+        from swingtrade.gmail_credential.identity import CANONICAL_TARGET
+
+        _windows_cred_write(CANONICAL_TARGET, secret)
 
     def release(self) -> None:
         return None
@@ -1913,6 +1997,54 @@ def _windows_cred_read(target: str) -> bytes:
     finally:
         if holder:
             cred_free(holder)
+
+
+def _windows_cred_write(target: str, secret: str) -> None:
+    import ctypes
+    import sys
+
+    from swingtrade.gmail_credential.identity import CANONICAL_TARGET, CRED_PERSIST_LOCAL_MACHINE
+
+    if target != CANONICAL_TARGET or sys.platform != "win32":
+        raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+    if type(secret) is not str or secret == "" or len(secret) > 512:
+        raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+    if any(ord(char) < 33 or ord(char) > 126 for char in secret):
+        raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+
+    class _FileTime(ctypes.Structure):
+        _fields_ = [("low", ctypes.c_uint32), ("high", ctypes.c_uint32)]
+
+    class _Credential(ctypes.Structure):
+        _fields_ = [
+            ("flags", ctypes.c_uint32),
+            ("type", ctypes.c_uint32),
+            ("target_name", ctypes.c_wchar_p),
+            ("comment", ctypes.c_wchar_p),
+            ("last_written", _FileTime),
+            ("blob_size", ctypes.c_uint32),
+            ("blob", ctypes.POINTER(ctypes.c_ubyte)),
+            ("persist", ctypes.c_uint32),
+            ("attribute_count", ctypes.c_uint32),
+            ("attributes", ctypes.c_void_p),
+            ("target_alias", ctypes.c_wchar_p),
+            ("user_name", ctypes.c_wchar_p),
+        ]
+
+    raw = secret.encode("ascii")
+    buffer = ctypes.create_string_buffer(raw)
+    credential = _Credential()
+    credential.type = 1
+    credential.target_name = target
+    credential.blob_size = len(raw)
+    credential.blob = ctypes.cast(buffer, ctypes.POINTER(ctypes.c_ubyte))
+    credential.persist = CRED_PERSIST_LOCAL_MACHINE
+    library = ctypes.WinDLL("advapi32")
+    cred_write = library.CredWriteW
+    cred_write.argtypes = [ctypes.POINTER(_Credential), ctypes.c_uint32]
+    cred_write.restype = ctypes.c_int
+    if cred_write(ctypes.byref(credential), 0) == 0:
+        raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
 
 
 def _grant_bytes(document: object) -> bytes:
