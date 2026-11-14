@@ -495,7 +495,9 @@ def test_repository_revision_chain() -> None:
 
     script = ScriptDirectory.from_config(Config(str(ROOT / "alembic.ini")))
     pairs = [(rev.revision, rev.down_revision) for rev in script.walk_revisions()]
-    assert env.validate_revision_transition(None, "head", pairs) == HEAD
+    with pytest.raises(env.AlembicTargetRejected) as caught:
+        env.validate_revision_transition(None, "head", pairs)
+    assert caught.value.code == "revision_0004"
 
 
 def test_failed_identity_check(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -13,6 +13,12 @@ import sys
 from collections.abc import Callable, Mapping
 from typing import Protocol
 
+from swingtrade.group4_email.gmail_readonly_pilot import (
+    DailyBudget,
+    PilotEvidence,
+    PilotTransport,
+    run_readonly_connection,
+)
 from swingtrade.group4_email.local_oauth_probe import (
     AuthorizationRequest,
     DesktopClientConfig,
@@ -21,7 +27,13 @@ from swingtrade.group4_email.local_oauth_probe import (
     ProbeBrowser,
     ProbeClock,
     ProbeHttp,
+    build_scoped_authorization_request,
+    loopback_redirect,
+    new_oauth_state,
+    new_pkce_verifier,
+    oauth_capability_scope,
     orchestrate_profile_probe,
+    pkce_s256_challenge,
     validate_desktop_client,
 )
 
@@ -107,9 +119,15 @@ class _BoundSocket(Protocol):
         """Close the listener."""
 
 
-def desktop_client_from_document(document: object) -> DesktopClientConfig:
-    """Build a Desktop config. Secret custody fields are rejected."""
+def desktop_client_from_document(
+    document: object, *, capability: str = "metadata"
+) -> DesktopClientConfig:
+    """Build a Desktop config for one explicit capability.
 
+    The default remains metadata. A metadata declaration is not upgraded.
+    """
+
+    expected = oauth_capability_scope(capability)
     if type(document) is not dict or set(document) != {"installed"}:
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED")
     installed = document["installed"]
@@ -123,7 +141,7 @@ def desktop_client_from_document(document: object) -> DesktopClientConfig:
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_SCOPE_REJECTED")
     if "client_secret" in installed and type(installed.get("client_secret")) is not str:
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED")
-    if "scopes" in installed and not _scope_declaration(installed.get("scopes")):
+    if "scopes" in installed and not _declared_scope(installed.get("scopes"), expected):
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_SCOPE_REJECTED")
     _reject_redirects(installed.get("redirect_uris"))
     _reject_auth_declaration(installed)
@@ -135,15 +153,17 @@ def desktop_client_from_document(document: object) -> DesktopClientConfig:
         client_type="installed",
         redirect_host="127.0.0.1",
         redirect_path="/",
-        scopes=(_METADATA_SCOPE,),
+        scopes=(expected,),
         network_permitted=False,
         client_id=client_id if type(client_id) is str else "",
     )
-    validate_desktop_client(client)
+    validate_desktop_client(client, capability=capability)
     return client
 
 
-def desktop_client_from_json_text(text: str) -> DesktopClientConfig:
+def desktop_client_from_json_text(
+    text: str, *, capability: str = "metadata"
+) -> DesktopClientConfig:
     """Parse one in-memory Desktop client document."""
 
     if type(text) is not str or text.strip() == "" or len(text) > _MAX_CLIENT_BYTES:
@@ -152,7 +172,190 @@ def desktop_client_from_json_text(text: str) -> DesktopClientConfig:
         document = json.loads(text)
     except json.JSONDecodeError:
         raise LocalOAuthProbeRejected("GMAIL_OAUTH_TOKEN_PRE_EXCHANGE_REJECTED") from None
-    return desktop_client_from_document(document)
+    return desktop_client_from_document(document, capability=capability)
+
+
+def run_offline_readonly_acquisition(
+    document: object,
+    transport: PilotTransport,
+    *,
+    redirect_uri: str,
+    state: str,
+    code_verifier: str,
+    selectors: tuple[str, ...],
+    budget: DailyBudget,
+    expected_mailbox: str,
+    callback: tuple[tuple[str, str], ...] | None = None,
+    refresh_token: str | None = None,
+    limit: int = 10,
+) -> PilotEvidence:
+    """Run the readonly path with an injected transport and an in-memory client.
+
+    The Windows command remains the metadata profile proof and does not call
+    this function. No socket, browser, or credential file is opened here.
+    """
+
+    client = desktop_client_from_document(document, capability="readonly")
+    return run_readonly_connection(
+        transport,
+        capability="readonly",
+        client_id=client.client_id,
+        redirect_uri=redirect_uri,
+        state=state,
+        code_verifier=code_verifier,
+        selectors=selectors,
+        budget=budget,
+        expected_mailbox=expected_mailbox,
+        callback=callback,
+        refresh_token=refresh_token,
+        limit=limit,
+    )
+
+
+class ReadonlyRuntimeRejected(Exception):
+    """Sanitized readonly-runtime failure. The message is the stable code."""
+
+    def __init__(self, code: str) -> None:
+        self.code = code
+        super().__init__(code)
+
+
+def run_local_windows_readonly_runtime() -> str:
+    """Attended Windows readonly command. It takes no path, key, or mailbox.
+
+    Canonical authorization is checked before any credential read or provider call.
+    """
+
+    if sys.platform != "win32":
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+    import time
+
+    from swingtrade.group4_email.gmail_readonly_pilot import (
+        PilotRejected,
+        canonical_standing_access_effective,
+        execute_trusted_runtime,
+        production_runtime_paths,
+    )
+
+    if not canonical_standing_access_effective():
+        raise ReadonlyRuntimeRejected("GMAIL_PROVIDER_AUTHORIZATION_NOT_YET_EFFECTIVE")
+    try:
+        result = execute_trusted_runtime(
+            production_runtime_paths(),
+            now=int(time.time()),
+            attended_login=_attended_browser_login,
+        )
+    except PilotRejected as rejected:
+        if rejected.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED":
+            raise LocalOAuthProbeRejected(rejected.code) from None
+        raise ReadonlyRuntimeRejected(rejected.code) from None
+    return result.code
+
+
+def initialize_windows_readonly_budget() -> str:
+    """Create the sealed budget after canonical authorization. No provider call."""
+
+    if sys.platform != "win32":
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+    from swingtrade.group4_email.gmail_readonly_pilot import canonical_standing_access_effective
+
+    if not canonical_standing_access_effective():
+        raise ReadonlyRuntimeRejected("GMAIL_PROVIDER_AUTHORIZATION_NOT_YET_EFFECTIVE")
+    import time
+
+    from swingtrade.group4_email.gmail_readonly_pilot import (
+        PilotRejected,
+        initialize_protected_runtime_budget,
+        production_runtime_paths,
+    )
+
+    try:
+        initialize_protected_runtime_budget(production_runtime_paths(), now=int(time.time()))
+    except PilotRejected as rejected:
+        if rejected.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED":
+            raise LocalOAuthProbeRejected(rejected.code) from None
+        raise ReadonlyRuntimeRejected(rejected.code) from None
+    return "READONLY_BUDGET_INITIALIZED"
+
+
+def attend_readonly_login(
+    *,
+    client_id: str,
+    listener: ClosingListener,
+    browser: CommandBrowser,
+    transport: object,
+    budget: object,
+    selectors: tuple[str, ...],
+    expected_mailbox_hash: str,
+    store_refresh: Callable[[str], None],
+) -> PilotEvidence:
+    """Open one readonly consent flow and exchange the callback once."""
+
+    state = new_oauth_state()
+    verifier = new_pkce_verifier()
+    redirect_uri = loopback_redirect(listener.bind())
+    challenge = pkce_s256_challenge(verifier)
+    request = build_scoped_authorization_request(
+        capability="readonly",
+        client_id=client_id,
+        redirect_uri=redirect_uri,
+        state=state,
+        code_challenge=challenge,
+    )
+    browser.open(request)
+    callback = listener.wait(_MAX_CALLBACK_WAIT)
+    if callback is None:
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_CALLBACK_REJECTED")
+    return run_readonly_connection(
+        transport,  # type: ignore[arg-type]
+        capability="readonly",
+        client_id=client_id,
+        redirect_uri=redirect_uri,
+        state=state,
+        code_verifier=verifier,
+        selectors=selectors,
+        budget=budget,  # type: ignore[arg-type]
+        expected_mailbox="bound-by-hash",
+        expected_mailbox_hash=expected_mailbox_hash,
+        callback=callback,
+        refresh_sink=store_refresh,
+    )
+
+
+def _attended_browser_login(
+    transport: PilotTransport,
+    budget: object,
+    client_id: str,
+    selector: str,
+    mailbox_hash: str,
+    port: object,
+) -> PilotEvidence:
+    import socket
+    import webbrowser
+
+    listener = LoopbackListener(lambda: socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+    try:
+        return attend_readonly_login(
+            client_id=client_id,
+            listener=listener,
+            browser=CommandBrowser(webbrowser),
+            transport=transport,
+            budget=budget,
+            selectors=(selector,),
+            expected_mailbox_hash=mailbox_hash,
+            store_refresh=lambda token: _store_refresh(port, token),
+        )
+    finally:
+        listener.close()
+
+
+def _store_refresh(port: object, token: str) -> None:
+    from swingtrade.group4_email.gmail_readonly_pilot import PilotRejected
+
+    store = getattr(port, "store", None)
+    if store is None:
+        raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+    store(token)
 
 
 def run_offline_profile_shape(
@@ -476,10 +679,14 @@ def run_local_windows_profile_proof(client_json_path: str) -> str:
     return _REAL_PASS
 
 
-def _scope_declaration(value: object) -> bool:
-    if value == _METADATA_SCOPE or value == (_METADATA_SCOPE,):
+def _declared_scope(value: object, expected: str) -> bool:
+    if value == expected or value == (expected,):
         return True
-    return type(value) is list and value == [_METADATA_SCOPE]
+    return type(value) is list and value == [expected]
+
+
+def _scope_declaration(value: object) -> bool:
+    return _declared_scope(value, _METADATA_SCOPE)
 
 
 def _accepted_redirect_declaration(item: object) -> bool:

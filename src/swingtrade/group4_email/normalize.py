@@ -15,6 +15,12 @@ from html.parser import HTMLParser
 from swingtrade.group4_email.contract import MAX_EMAIL_BYTES, ReasonCode
 
 _FIXTURE_MESSAGE_ID = re.compile(r"^<[^<>\s@]+@example\.invalid>$")
+_RFC_ATOM = r"[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]{1,64}"
+_RFC_DOT_ATOM = rf"{_RFC_ATOM}(?:\.{_RFC_ATOM}){{0,8}}"
+_RFC_LABEL = r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+_RFC_DOMAIN = rf"{_RFC_LABEL}(?:\.{_RFC_LABEL}){{1,8}}"
+_RFC_MESSAGE_ID = re.compile(rf"^<{_RFC_DOT_ATOM}@{_RFC_DOMAIN}>$")
+_MAX_MESSAGE_ID_CHARS = 254
 _FORWARD_BANNER = re.compile(
     r"(?i)^(?:-+\s*forwarded message\s*-+|begin forwarded message)\s*$"
 )
@@ -203,6 +209,48 @@ def _rejected(
         source_timestamp=source_timestamp,
         visibility_failure=visibility_failure,
     )
+
+
+def classify_message_id(value: object) -> str:
+    """Classify one header value.
+
+    ``FIXTURE`` is the existing receipt identity. ``RECOGNIZED`` is a bounded
+    RFC Message-ID and is not sender authentication or permission to trade.
+    """
+
+    if value is None:
+        return "MISSING"
+    if not isinstance(value, str):
+        return "MALFORMED"
+    token = value.strip()
+    if token == "":
+        return "MISSING"
+    controls = any(ord(char) < 32 or ord(char) == 127 for char in token)
+    if len(token) > _MAX_MESSAGE_ID_CHARS or controls:
+        return "MALFORMED"
+    if _FIXTURE_MESSAGE_ID.fullmatch(token) is not None:
+        return "FIXTURE"
+    if _RFC_MESSAGE_ID.fullmatch(token) is not None:
+        return "RECOGNIZED"
+    return "MALFORMED"
+
+
+def recognized_message_id(value: object) -> str | None:
+    """Return a fixture or recognized id. Other values are not retained."""
+
+    if classify_message_id(value) not in {"FIXTURE", "RECOGNIZED"} or not isinstance(value, str):
+        return None
+    return value.strip()
+
+
+def message_id_classification(raw: bytes) -> tuple[str, str | None]:
+    """Read the RFC Message-ID from MIME bytes without making it a receipt key."""
+
+    if type(raw) is not bytes:
+        return "MALFORMED", None
+    message = BytesParser(policy=policy.default).parsebytes(raw)
+    kind = classify_message_id(message.get("Message-ID"))
+    return kind, recognized_message_id(message.get("Message-ID"))
 
 
 def _message_id(message: Message) -> tuple[str | None, str | None]:
