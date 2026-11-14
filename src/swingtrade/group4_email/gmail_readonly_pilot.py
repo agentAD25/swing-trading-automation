@@ -8,6 +8,8 @@ and then dropped. Evidence keeps hashes, dispositions, and identities.
 from __future__ import annotations
 
 import base64
+import hashlib
+import hmac
 import json
 import os
 import re
@@ -97,6 +99,7 @@ class AcquiredMessage:
     duplicate: bool
     rfc_message_id: str | None = None
     actionable: bool = False
+    classification: str = "NON_ACTIONABLE"
 
 
 @dataclass(frozen=True)
@@ -445,6 +448,16 @@ def _interpret_response(status: int, raw: bytes) -> tuple[int, dict[str, object]
     return status, dict(parsed)
 
 
+def _classification(disposition: str, kind: str) -> str:
+    if kind != "FIXTURE":
+        return "NON_ACTIONABLE"
+    if disposition == "ACCEPT":
+        return "ACCEPT"
+    if disposition == "REJECT":
+        return "REJECT"
+    return "QUARANTINE"
+
+
 def _acquired(
     provider_id: str,
     outcome: object,
@@ -476,6 +489,7 @@ def _acquired(
         duplicate=False,
         rfc_message_id=rfc_message_id,
         actionable=actionable,
+        classification=_classification(disposition, kind),
     )
 
 
@@ -519,6 +533,7 @@ def _partial(provider_id: str) -> AcquiredMessage:
         provider_message_ref=None,
         source_timestamp=None,
         duplicate=False,
+        classification="QUARANTINE",
     )
 
 
@@ -1032,3 +1047,513 @@ def _attachment(part: Mapping[str, object]) -> bool:
     if type(filename) is str and filename != "":
         return True
     return type(body) is dict and "attachmentId" in body
+
+
+READONLY_CAMPAIGN = "GMAIL-READONLY-SIGNAL-DISCOVERY-20261114-R1"
+_GRANT_KEYS = frozenset(
+    {
+        "budget_id",
+        "campaign",
+        "capability",
+        "custody_target",
+        "endpoints",
+        "expires_at",
+        "mailbox_hash",
+        "methods",
+        "not_before",
+        "revoked",
+        "runtime",
+    }
+)
+_GRANT_ENDPOINTS = [
+    "https://oauth2.googleapis.com/token",
+    "https://gmail.googleapis.com/gmail/v1/users/me/",
+]
+_GRANT_METHODS = ["GET", "POST"]
+_PROTECTED_KEYS = frozenset(
+    {"budget_id", "day", "read_gets", "recorded_at", "token_attempts", "version", "zone"}
+)
+_MAX_RESPONSE_BYTES = 65536
+
+
+class _Authorized:
+    """Private proof that a grant passed the local authenticator."""
+
+
+_AUTHORIZED = _Authorized()
+
+
+def standing_network_allowed(grant: object) -> bool:
+    """Caller flags cannot enable a provider call. The standing grant is inactive."""
+
+    if type(grant) is dict and (grant.get("effective") is True or grant.get("attended") is True):
+        return False
+    return False
+
+
+@dataclass(frozen=True)
+class OperatorGrant:
+    """Locally checked readonly grant. It does not enable the network by itself."""
+
+    capability: str
+    campaign: str
+    mailbox_hash: str = field(repr=False)
+    expires_at: int
+    proof: object = field(default=None, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        if self.proof is not _AUTHORIZED:
+            raise PilotRejected("GMAIL_PILOT_GRANT_UNVERIFIED")
+        if self.capability != "readonly" or self.campaign != READONLY_CAMPAIGN:
+            raise PilotRejected("GMAIL_PILOT_GRANT_REJECTED")
+
+
+@dataclass(frozen=True)
+class AcquisitionAudit:
+    """Sanitized handoff record. It has no body, token, or mailbox address."""
+
+    campaign: str
+    provider_message_id: str
+    content_digest: str
+    classification: str
+    reasons: tuple[str, ...]
+    receipt_key: str | None
+    replay_kind: str | None
+    correlation_id: str
+    source_timestamp: str | None
+
+    def __post_init__(self) -> None:
+        if self.campaign != READONLY_CAMPAIGN or self.classification not in {
+            "ACCEPT",
+            "REJECT",
+            "QUARANTINE",
+            "NON_ACTIONABLE",
+        }:
+            raise PilotRejected("GMAIL_PILOT_MALFORMED")
+        if len(self.correlation_id) != 64 or any(
+            character not in "0123456789abcdef" for character in self.correlation_id
+        ):
+            raise PilotRejected("GMAIL_PILOT_MALFORMED")
+
+
+def mailbox_hash(mailbox: str) -> str:
+    if type(mailbox) is not str or mailbox == "" or any(ord(char) < 33 for char in mailbox):
+        raise PilotRejected("GMAIL_PILOT_MAILBOX_REJECTED")
+    return hashlib.sha256(mailbox.encode("utf-8")).hexdigest()
+
+
+def grant_mac(document: Mapping[str, object], key: bytes) -> str:
+    return hmac.new(key, _grant_bytes(document), hashlib.sha256).hexdigest()
+
+
+def validate_operator_grant(
+    document: object,
+    mac: object,
+    key: object,
+    now: object,
+) -> OperatorGrant:
+    """Accept one canonical grant. A caller flag is not a signature."""
+
+    if type(key) is not bytes or len(key) < 32 or type(mac) is not str or type(now) is not int:
+        raise PilotRejected("GMAIL_PILOT_GRANT_REJECTED")
+    payload = _grant_bytes(document)
+    expected = hmac.new(key, payload, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected, mac):
+        raise PilotRejected("GMAIL_PILOT_GRANT_REJECTED")
+    if type(document) is not dict:
+        raise PilotRejected("GMAIL_PILOT_GRANT_REJECTED")
+    _require_grant_fields(document, now)
+    return OperatorGrant(
+        capability="readonly",
+        campaign=READONLY_CAMPAIGN,
+        mailbox_hash=str(document["mailbox_hash"]),
+        expires_at=int(document["expires_at"]),
+        proof=_AUTHORIZED,
+    )
+
+
+def assess_readonly_runtime(
+    document: object,
+    mac: object,
+    *,
+    key: object,
+    now: object,
+) -> str:
+    """Report the runtime gate. A valid grant still does not open the network."""
+
+    if standing_network_allowed(document) is not False or key is None:
+        return "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
+    try:
+        validate_operator_grant(document, mac, key, now)
+    except PilotRejected as rejected:
+        return rejected.code
+    return "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
+
+
+def establish_protected_budget(store: BudgetStore, now: int, key: bytes) -> None:
+    """Write the first sealed record. An existing or deleted-and-reused store is refused."""
+
+    if type(now) is not int or type(key) is not bytes or len(key) < 32:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    payload = _seal_budget(_protected_state(now, 0, 0), key)
+
+    def mutate(current: str | None) -> str:
+        if current is not None:
+            raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+        return payload
+
+    store.update(mutate)
+
+
+class SealedMemoryStore:
+    """Process-local sealed record. It does not interpret or reset counts."""
+
+    def __init__(self) -> None:
+        self._payload: str | None = None
+        self._lock = threading.Lock()
+
+    def read(self) -> str | None:
+        with self._lock:
+            return self._payload
+
+    def update(self, mutate: Callable[[str | None], str]) -> None:
+        with self._lock:
+            replacement = mutate(self._payload)
+            self._payload = _sealed_text(replacement)
+
+
+class SealedFileStore:
+    """Cross-process sealed record. The caller does not choose the file name."""
+
+    def __init__(self, directory: Path) -> None:
+        self._path = protected_budget_file(directory)
+        self._lock_path = self._path.with_name(self._path.name + ".lock")
+
+    def read(self) -> str | None:
+        descriptor = self._acquire()
+        try:
+            if not self._path.exists():
+                return None
+            return self._path.read_text(encoding="utf-8")
+        finally:
+            self._release(descriptor)
+
+    def update(self, mutate: Callable[[str | None], str]) -> None:
+        descriptor = self._acquire()
+        try:
+            current = self._path.read_text(encoding="utf-8") if self._path.exists() else None
+            payload = _sealed_text(mutate(current))
+            temporary = self._path.with_name(self._path.name + ".tmp")
+            temporary.write_text(payload, encoding="utf-8", newline="\n")
+            os.replace(temporary, self._path)
+        finally:
+            self._release(descriptor)
+
+    def _acquire(self) -> int:
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+        for _attempt in range(50):
+            try:
+                return os.open(self._lock_path, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+            except FileExistsError:
+                time.sleep(0.01)
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+
+    def _release(self, descriptor: int) -> None:
+        os.close(descriptor)
+        try:
+            os.remove(self._lock_path)
+        except OSError:
+            return
+
+
+def _sealed_text(payload: object) -> str:
+    if type(payload) is not str or payload == "" or "\x00" in payload or len(payload) > 1024:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    return payload
+
+
+class ProtectedBudget:
+    """Sealed New York counts. A clock change cannot restore allowance."""
+
+    def __init__(self, store: BudgetStore, now: Callable[[], int], key: bytes) -> None:
+        if type(key) is not bytes or len(key) < 32 or not callable(now):
+            raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+        self._store = store
+        self._now = now
+        self._key = key
+
+    def __repr__(self) -> str:
+        return "ProtectedBudget"
+
+    def consume_token(self) -> None:
+        self._consume("token_attempts", _MAX_TOKEN_ATTEMPTS)
+
+    def consume_get(self) -> None:
+        self._consume("read_gets", _MAX_READ_GETS)
+
+    def _consume(self, field: str, limit: int) -> None:
+        moment = self._now()
+        key = self._key
+
+        def mutate(current: str | None) -> str:
+            if current is None:
+                raise PilotRejected("GMAIL_PILOT_BUDGET_MISSING")
+            state = _open_budget(current, key, moment)
+            count = state[field]
+            if type(count) is not int or count >= limit:
+                raise PilotRejected("GMAIL_PILOT_BUDGET_EXHAUSTED")
+            state[field] = count + 1
+            state["recorded_at"] = moment
+            return _seal_budget(state, key)
+
+        self._store.update(mutate)
+
+
+def protected_budget_file(directory: Path) -> Path:
+    """Return the one filename used inside an approved directory."""
+
+    if not isinstance(directory, Path) or not directory.is_absolute():
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    if directory.name != READONLY_CAMPAIGN:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    return directory / "budget.json"
+
+
+def readonly_opener() -> object:
+    """Build an opener that ignores environment proxies and verifies TLS."""
+
+    import ssl
+    from http.client import HTTPResponse
+    from urllib.request import (
+        HTTPHandler,
+        HTTPRedirectHandler,
+        HTTPSHandler,
+        ProxyHandler,
+        Request,
+        build_opener,
+    )
+
+    context = ssl.create_default_context()
+    if context.check_hostname is not True or context.verify_mode != ssl.CERT_REQUIRED:
+        raise PilotRejected("GMAIL_PILOT_TRANSPORT_REJECTED")
+
+    class _NoEnvironmentProxy(ProxyHandler):
+        def __init__(self) -> None:
+            super().__init__(proxies={})
+
+    class _RefusePlain(HTTPHandler):
+        def http_open(self, req: Request) -> HTTPResponse:
+            raise PilotRejected("GMAIL_PILOT_ENDPOINT_REJECTED")
+
+    class _RefuseRedirect(HTTPRedirectHandler):
+        def redirect_request(
+            self,
+            req: object,
+            fp: object,
+            code: int,
+            msg: str,
+            headers: object,
+            newurl: str,
+        ) -> None:
+            raise PilotRejected("GMAIL_PILOT_REDIRECT_REJECTED")
+
+    class _PinnedHttps(HTTPSHandler):
+        def https_open(self, req: Request) -> HTTPResponse:
+            full_url = req.full_url
+            allowed = (
+                "https://gmail.googleapis.com/",
+                "https://oauth2.googleapis.com/",
+                "https://accounts.google.com/",
+            )
+            if not full_url.startswith(allowed):
+                raise PilotRejected("GMAIL_PILOT_ENDPOINT_REJECTED")
+            return super().https_open(req)
+
+    return build_opener(
+        _NoEnvironmentProxy(),
+        _RefusePlain(),
+        _RefuseRedirect(),
+        _PinnedHttps(context=context),
+    )
+
+
+def bounded_body(raw: object) -> bytes:
+    if type(raw) is not bytes or len(raw) > _MAX_RESPONSE_BYTES:
+        raise PilotRejected("GMAIL_PILOT_MALFORMED")
+    return raw
+
+
+def retry_class(status: object) -> str:
+    if type(status) is not int:
+        return "NO_RETRY"
+    if status in _RETRY_STATUSES:
+        return "RETRYABLE_GET"
+    if status in {401, 403}:
+        return "DENIED"
+    if status in _REDIRECT_STATUSES:
+        return "REDIRECT_REJECTED"
+    return "NO_RETRY"
+
+
+def handoff_mime(raw: bytes, provider_id: str, store: object) -> AcquisitionAudit:
+    """Project one parsed message. Non-fixture mail is not admitted."""
+
+    from swingtrade.instruction_receipt import InMemoryReceiptStore, admit_instruction_receipt
+
+    if type(raw) is not bytes or type(provider_id) is not str or provider_id == "":
+        raise PilotRejected("GMAIL_PILOT_MALFORMED")
+    if type(store) is not InMemoryReceiptStore:
+        raise PilotRejected("GMAIL_PILOT_TRANSPORT_REJECTED")
+    outcome = parse_email(raw, MessageIdentityRegistry())
+    kind, _rfc = message_id_classification(raw)
+    classification = _classification(outcome.disposition.value, kind)
+    receipt_key = None
+    replay_kind = None
+    if classification == "ACCEPT":
+        decision = admit_instruction_receipt(outcome, store)
+        receipt_key = decision.receipt.receipt_key
+        replay_kind = decision.kind.value
+    digest = outcome.content_digest
+    return AcquisitionAudit(
+        campaign=READONLY_CAMPAIGN,
+        provider_message_id=provider_id,
+        content_digest=digest,
+        classification=classification,
+        reasons=tuple(outcome.reasons),
+        receipt_key=receipt_key,
+        replay_kind=replay_kind,
+        correlation_id=_correlation(provider_id, digest),
+        source_timestamp=outcome.provenance.source_timestamp,
+    )
+
+
+def exercise_mock_custody(secret: object, port: object) -> str:
+    """Store and retrieve one synthetic secret. Native reads stay closed."""
+
+    from swingtrade.gmail_credential.adapter import GmailCredentialAdapter
+    from swingtrade.gmail_credential.identity import NATIVE_BACKEND_ENABLED
+    from swingtrade.gmail_credential.mock_port import MockCredentialPort
+    from swingtrade.gmail_credential.secret import SyntheticSecret
+
+    if NATIVE_BACKEND_ENABLED is not False or standing_network_allowed(None) is not False:
+        raise PilotRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+    if type(secret) is not SyntheticSecret or type(port) is not MockCredentialPort:
+        raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+    adapter = GmailCredentialAdapter(port)
+    adapter.store(secret)
+    view = adapter.retrieve()
+    if not view.matches(secret) or port.live_allocation_count() != 0:
+        raise PilotRejected("GMAIL_PILOT_CUSTODY_REJECTED")
+    return "CUSTODY_SHAPE_PASS"
+
+
+def native_credential_read() -> None:
+    """The native credential backend is not enabled."""
+
+    from swingtrade.gmail_credential.identity import NATIVE_BACKEND_ENABLED
+
+    if NATIVE_BACKEND_ENABLED is not False or standing_network_allowed(None) is not False:
+        raise PilotRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+    raise PilotRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+
+
+def _grant_bytes(document: object) -> bytes:
+    if type(document) is not dict or set(document) != _GRANT_KEYS:
+        raise PilotRejected("GMAIL_PILOT_GRANT_REJECTED")
+    ordered = {key: document[key] for key in sorted(_GRANT_KEYS)}
+    return json.dumps(ordered, separators=(",", ":")).encode("utf-8")
+
+
+def _require_grant_fields(document: dict[str, object], now: int) -> None:
+    from swingtrade.gmail_credential.identity import CANONICAL_TARGET
+
+    if (
+        document.get("capability") != "readonly"
+        or document.get("campaign") != READONLY_CAMPAIGN
+        or document.get("budget_id") != READONLY_CAMPAIGN
+        or document.get("runtime") != "win32"
+        or document.get("revoked") is not False
+        or document.get("custody_target") != CANONICAL_TARGET
+        or document.get("endpoints") != _GRANT_ENDPOINTS
+        or document.get("methods") != _GRANT_METHODS
+    ):
+        raise PilotRejected("GMAIL_PILOT_GRANT_REJECTED")
+    digest = document.get("mailbox_hash")
+    starts = document.get("not_before")
+    ends = document.get("expires_at")
+    if (
+        type(digest) is not str
+        or len(digest) != 64
+        or any(character not in "0123456789abcdef" for character in digest)
+        or type(starts) is not int
+        or type(ends) is not int
+        or starts > now
+        or now >= ends
+    ):
+        raise PilotRejected("GMAIL_PILOT_GRANT_REJECTED")
+
+
+def _protected_state(now: int, tokens: int, gets: int) -> dict[str, object]:
+    return {
+        "version": 1,
+        "zone": _BUDGET_ZONE,
+        "day": _ny_day(now),
+        "recorded_at": now,
+        "token_attempts": tokens,
+        "read_gets": gets,
+        "budget_id": READONLY_CAMPAIGN,
+    }
+
+
+def _seal_budget(state: Mapping[str, object], key: bytes) -> str:
+    if set(state) != _PROTECTED_KEYS:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    ordered = {name: state[name] for name in sorted(_PROTECTED_KEYS)}
+    raw = json.dumps(ordered, separators=(",", ":")).encode("utf-8")
+    sealed = dict(ordered)
+    sealed["seal"] = hmac.new(key, raw, hashlib.sha256).hexdigest()
+    return json.dumps(sealed, separators=(",", ":"), sort_keys=True)
+
+
+def _open_budget(current: str, key: bytes, now: object) -> dict[str, object]:
+    try:
+        parsed = json.loads(current)
+    except json.JSONDecodeError:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID") from None
+    if type(parsed) is not dict or set(parsed) != _PROTECTED_KEYS | {"seal"}:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    seal = parsed.get("seal")
+    body = {name: parsed[name] for name in sorted(_PROTECTED_KEYS)}
+    raw = json.dumps(body, separators=(",", ":")).encode("utf-8")
+    expected = hmac.new(key, raw, hashlib.sha256).hexdigest()
+    if type(seal) is not str or not hmac.compare_digest(expected, seal):
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    if type(now) is not int:
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    recorded = body["recorded_at"]
+    day = body["day"]
+    tokens = body["token_attempts"]
+    gets = body["read_gets"]
+    if (
+        body.get("budget_id") != READONLY_CAMPAIGN
+        or body.get("zone") != _BUDGET_ZONE
+        or body.get("version") != 1
+        or type(recorded) is not int
+        or type(day) is not str
+        or type(tokens) is not int
+        or type(gets) is not int
+        or now < recorded
+        or _ny_day(now) != day
+        or _ny_day(recorded) != day
+        or tokens < 0
+        or gets < 0
+        or tokens > _MAX_TOKEN_ATTEMPTS
+        or gets > _MAX_READ_GETS
+    ):
+        raise PilotRejected("GMAIL_PILOT_BUDGET_INVALID")
+    return body
+
+
+def _correlation(provider_id: str, digest: str) -> str:
+    material = f"{READONLY_CAMPAIGN}:{provider_id}:{digest}".encode()
+    return hashlib.sha256(material).hexdigest()

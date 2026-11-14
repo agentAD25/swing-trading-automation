@@ -207,6 +207,18 @@ def run_offline_readonly_acquisition(
     )
 
 
+def run_local_windows_readonly_runtime(client_json_path: str) -> str:
+    """Refuse a live read-only run. The standing grant is not effective."""
+
+    if type(client_json_path) is not str or client_json_path == "":
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+    if sys.platform != "win32":
+        raise LocalOAuthProbeRejected("GMAIL_OAUTH_LIVE_UNAUTHORIZED")
+    from swingtrade.group4_email.gmail_readonly_pilot import assess_readonly_runtime
+
+    raise LocalOAuthProbeRejected(assess_readonly_runtime(None, None, key=None, now=0))
+
+
 def run_offline_profile_shape(
     client: DesktopClientConfig,
     http: ProbeHttp,

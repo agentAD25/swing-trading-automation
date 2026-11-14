@@ -838,3 +838,231 @@ def test_budget_day_boundary_daylight_saving_and_concurrency(tmp_path: Path) -> 
     assert bad == ["GMAIL_PILOT_BUDGET_EXHAUSTED"] * 10
     assert len(file_ok) == 8
     assert json.loads((tmp_path / "shared.json").read_text(encoding="utf-8"))["read_gets"] == 8
+
+
+def test_operator_grant_rejects_forgeries_and_cannot_enable_the_network(tmp_path: Path) -> None:
+    from swingtrade.gmail_local_connect import run_local_windows_readonly_runtime
+    from swingtrade.group4_email.gmail_readonly_pilot import (
+        READONLY_CAMPAIGN,
+        OperatorGrant,
+        assess_readonly_runtime,
+        grant_mac,
+        mailbox_hash,
+        standing_network_allowed,
+        validate_operator_grant,
+    )
+
+    key = b"k" * 32
+    document = _grant_document()
+    mac = grant_mac(document, key)
+    grant = validate_operator_grant(document, mac, key, FIXED)
+    forged = dict(document)
+    forged["effective"] = True
+    forged["attended"] = True
+    revoked = dict(document)
+    revoked["revoked"] = True
+    expired = dict(document)
+    expired["expires_at"] = FIXED - 1
+
+    with pytest.raises(PilotRejected) as unverified:
+        OperatorGrant(
+            capability="readonly",
+            campaign=READONLY_CAMPAIGN,
+            mailbox_hash=mailbox_hash(MAILBOX),
+            expires_at=FIXED + 60,
+        )
+    with pytest.raises(PilotRejected) as extra:
+        validate_operator_grant(forged, grant_mac(forged, key), key, FIXED)
+    with pytest.raises(PilotRejected) as edited:
+        validate_operator_grant(revoked, mac, key, FIXED)
+    with pytest.raises(PilotRejected) as late:
+        validate_operator_grant(expired, grant_mac(expired, key), key, FIXED)
+
+    assert grant.capability == "readonly"
+    assert MAILBOX not in repr(grant)
+    assert unverified.value.code == "GMAIL_PILOT_GRANT_UNVERIFIED"
+    assert extra.value.code == "GMAIL_PILOT_GRANT_REJECTED"
+    assert edited.value.code == "GMAIL_PILOT_GRANT_REJECTED"
+    assert late.value.code == "GMAIL_PILOT_GRANT_REJECTED"
+    assert standing_network_allowed({"effective": True, "attended": True}) is False
+    assert standing_network_allowed(grant) is False
+    assert assess_readonly_runtime(document, mac, key=key, now=FIXED) == (
+        "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
+    )
+    assert assess_readonly_runtime(forged, mac, key=None, now=FIXED) == (
+        "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
+    )
+    with pytest.raises(LocalOAuthProbeRejected) as blocked:
+        run_local_windows_readonly_runtime(str(tmp_path / "client.json"))
+    assert blocked.value.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
+
+
+def test_protected_budget_survives_restart_and_rejects_resets(tmp_path: Path) -> None:
+    from swingtrade.group4_email.gmail_readonly_pilot import (
+        ProtectedBudget,
+        SealedFileStore,
+        SealedMemoryStore,
+        establish_protected_budget,
+        protected_budget_file,
+    )
+
+    key = b"b" * 32
+    directory = tmp_path / "GMAIL-READONLY-SIGNAL-DISCOVERY-20261114-R1"
+    store = SealedFileStore(directory)
+    establish_protected_budget(store, FIXED, key)
+    ProtectedBudget(store, lambda: FIXED, key).consume_token()
+    recorded = protected_budget_file(directory).read_text(encoding="utf-8")
+    restarted = ProtectedBudget(SealedFileStore(directory), lambda: FIXED, key)
+    restarted.consume_get()
+    later = int(datetime(2026, 11, 15, 0, 30, tzinfo=NY).timestamp())
+    with pytest.raises(PilotRejected) as forwarded:
+        ProtectedBudget(store, lambda: later, key).consume_token()
+    with pytest.raises(PilotRejected) as rolled:
+        ProtectedBudget(store, lambda: FIXED - 60, key).consume_get()
+    path = protected_budget_file(directory)
+    path.unlink()
+    with pytest.raises(PilotRejected) as missing:
+        ProtectedBudget(SealedFileStore(directory), lambda: FIXED, key).consume_token()
+    other = tmp_path / "other-budget.json"
+    other.write_text(recorded, encoding="utf-8")
+    with pytest.raises(PilotRejected) as caller_path:
+        protected_budget_file(tmp_path)
+    memory = SealedMemoryStore()
+    establish_protected_budget(memory, FIXED, key)
+    ProtectedBudget(memory, lambda: FIXED, key).consume_token()
+    tampered = json.loads(memory.read() or "")
+    tampered["token_attempts"] = 0
+    memory.update(lambda _current: json.dumps(tampered))
+    with pytest.raises(PilotRejected) as seal:
+        ProtectedBudget(memory, lambda: FIXED, key).consume_token()
+
+    assert json.loads(path.read_text(encoding="utf-8") if path.exists() else "{}") == {}
+    assert missing.value.code == "GMAIL_PILOT_BUDGET_MISSING"
+    assert path.exists() is False
+    assert forwarded.value.code == "GMAIL_PILOT_BUDGET_INVALID"
+    assert rolled.value.code == "GMAIL_PILOT_BUDGET_INVALID"
+    assert caller_path.value.code == "GMAIL_PILOT_BUDGET_INVALID"
+    assert seal.value.code == "GMAIL_PILOT_BUDGET_INVALID"
+    assert other.read_text(encoding="utf-8") == recorded
+    assert "token_attempts" in recorded
+
+
+def test_readonly_transport_ignores_proxies_and_verifies_tls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import ssl
+    from urllib.request import HTTPRedirectHandler, HTTPSHandler, Request
+
+    from swingtrade.group4_email.gmail_readonly_pilot import (
+        bounded_body,
+        readonly_opener,
+        retry_class,
+    )
+
+    monkeypatch.setenv("HTTP_PROXY", "http://127.0.0.1:9")
+    monkeypatch.setenv("HTTPS_PROXY", "http://127.0.0.1:9")
+    opener = readonly_opener()
+    rendered = " ".join(type(item).__name__ for item in opener.handlers)
+    https = [item for item in opener.handlers if isinstance(item, HTTPSHandler)]
+    redirects = [item for item in opener.handlers if isinstance(item, HTTPRedirectHandler)]
+    hostile = Request("https://evil.example/path")
+
+    assert "127.0.0.1:9" not in rendered
+    assert "ProxyHandler" not in rendered
+    assert https[0]._context is not None
+    assert https[0]._context.check_hostname is True
+    assert https[0]._context.verify_mode == ssl.CERT_REQUIRED
+    with pytest.raises(PilotRejected) as wrong_host:
+        https[0].https_open(hostile)
+    with pytest.raises(PilotRejected) as redirect:
+        redirects[0].redirect_request(hostile, None, 302, "moved", {}, "https://evil.example/")
+    assert wrong_host.value.code == "GMAIL_PILOT_ENDPOINT_REJECTED"
+    assert redirect.value.code == "GMAIL_PILOT_REDIRECT_REJECTED"
+    assert retry_class(429) == "RETRYABLE_GET"
+    assert retry_class(401) == "DENIED"
+    assert retry_class(302) == "REDIRECT_REJECTED"
+    with pytest.raises(PilotRejected) as oversized:
+        bounded_body(b"x" * 65537)
+    assert oversized.value.code == "GMAIL_PILOT_MALFORMED"
+    assert "urlopen" not in MODULE.read_text(encoding="utf-8")
+
+
+def test_mock_custody_releases_and_native_read_stays_closed() -> None:
+    from swingtrade.gmail_credential.errors import CredentialOperationError
+    from swingtrade.gmail_credential.mock_port import MockCredentialPort
+    from swingtrade.gmail_credential.secret import synthetic_fixture
+    from swingtrade.group4_email.gmail_readonly_pilot import (
+        exercise_mock_custody,
+        native_credential_read,
+    )
+
+    secret = synthetic_fixture(b"synthetic-refresh-material")
+    port = MockCredentialPort()
+    assert exercise_mock_custody(secret, port) == "CUSTODY_SHAPE_PASS"
+    assert port.live_allocation_count() == 0
+    assert port.release_count >= 1
+    port.raise_after_read = True
+    with pytest.raises(CredentialOperationError) as failed:
+        port.read_attempts = port.read_attempts
+        from swingtrade.gmail_credential.adapter import GmailCredentialAdapter
+
+        GmailCredentialAdapter(port).retrieve()
+    with pytest.raises(PilotRejected) as native:
+        native_credential_read()
+
+    assert failed.value.code == "read_consumer_failed"
+    assert "synthetic-refresh-material" not in f"{failed.value} {failed.value!r}"
+    assert native.value.code == "GMAIL_OAUTH_LIVE_UNAUTHORIZED"
+    assert port.live_allocation_count() == 0
+
+
+def test_fixture_receipt_handoff_does_not_admit_real_message_ids() -> None:
+    from swingtrade.group4_email.gmail_readonly_pilot import READONLY_CAMPAIGN, handoff_mime
+    from swingtrade.instruction_receipt import InMemoryReceiptStore
+
+    store = InMemoryReceiptStore()
+    accepted = plain_message(body("tday_dated.txt"), "<pilot-success@example.invalid>")
+    first = handoff_mime(accepted, "provider-success", store)
+    replay = handoff_mime(accepted, "provider-success", store)
+    recognized = plain_message(body("tday_dated.txt"), "<abc123+tag@mail.example.com>")
+    held = handoff_mime(recognized, "provider-real", store)
+    forwarded = plain_message(
+        "---------- Forwarded message ---------\n" + body("tday_undated.txt"),
+        "<forward@example.invalid>",
+    )
+    quarantine = handoff_mime(forwarded, "provider-forward", store)
+
+    assert first.classification == "ACCEPT"
+    assert first.replay_kind == "NEW"
+    assert first.campaign == READONLY_CAMPAIGN
+    assert replay.replay_kind == "REPLAY"
+    assert replay.receipt_key == first.receipt_key
+    assert held.classification == "NON_ACTIONABLE"
+    assert held.receipt_key is None
+    assert held.replay_kind is None
+    assert quarantine.classification == "QUARANTINE"
+    assert quarantine.receipt_key is None
+    assert len(store) == 1
+    assert MAILBOX not in repr(first)
+    assert "synthetic-access" not in repr(first)
+
+
+def _grant_document() -> dict[str, object]:
+    from swingtrade.group4_email.gmail_readonly_pilot import READONLY_CAMPAIGN, mailbox_hash
+
+    return {
+        "budget_id": READONLY_CAMPAIGN,
+        "campaign": READONLY_CAMPAIGN,
+        "capability": "readonly",
+        "custody_target": "swing-trading/lane3/gmail/dev/refresh-token",
+        "endpoints": [
+            "https://oauth2.googleapis.com/token",
+            "https://gmail.googleapis.com/gmail/v1/users/me/",
+        ],
+        "expires_at": FIXED + 3600,
+        "mailbox_hash": mailbox_hash(MAILBOX),
+        "methods": ["GET", "POST"],
+        "not_before": FIXED - 10,
+        "revoked": False,
+        "runtime": "win32",
+    }

@@ -34,6 +34,14 @@ def test_missing_malformed_and_adversarial_ids_are_not_retained() -> None:
     assert classify_message_id(huge) == "MALFORMED"
     assert recognized_message_id(injected) is None
     assert recognized_message_id(123) is None
+    non_ascii = "<caf\u00e9@mail.example.com>"
+    oversized = "<" + ("\U00010000" * 17000) + "@mail.example.com>"
+    encoded_length = len(oversized.encode())
+    assert classify_message_id(non_ascii) == "MALFORMED"
+    assert classify_message_id(oversized) == "MALFORMED"
+    assert encoded_length > 65536
+    assert recognized_message_id(non_ascii) is None
+    assert recognized_message_id(oversized) is None
 
 
 def test_recognized_header_does_not_become_an_economic_message_id() -> None:
