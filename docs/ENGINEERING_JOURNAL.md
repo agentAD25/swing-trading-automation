@@ -4870,3 +4870,32 @@ remains the only authorized trading mode. PR #66, PR #80, PR #88, and
 PR #90 are not amended. This entry does not call a provider, read a
 credential, connect to PostgreSQL, or submit an order. It does not
 embed its own hash.
+
+## 2026-11-14 — ADR-0010 autonomous specialist operating model proposed
+
+Operator direction
+`OPERATOR_AUTONOMOUS_LANES_2_3_4_RESTRUCTURING_PREPARATION_AUTHORIZED`
+authorizes this candidate only. Parent main is
+`6d50b3eb292d78fd6396fc6f0d35023d24b3290e`, tree
+`89f648d862f8831d78ba2b9de565934d4a8a7112`. ADR-0010 is Proposed.
+Its Decision is blank. Option A is not selected.
+
+The candidate defines standing development packages for Lanes 2, 3,
+and 4, including offline authorship of the three Item 30 paths.
+Running revision `0004` stays a separate decision. Standing Alpaca
+account-read, Gmail read-only, and receipt-cluster grants are defined
+and not issued. `DEP-GMAIL-001` still needs an OAuth-setup attestation
+and a named mailbox and campaign. The receipt-cluster grant still
+needs a same-connection identity proof. `DEP-CORE-001` and
+`DEP-CORE-002` still block paper orders.
+
+Option A becomes effective only when an independent verifier has
+passed the commit that contains this entry, Operator decision
+`OPERATOR_AUTONOMOUS_LANES_2_3_4_EXACT_INTEGRATION_AUTHORIZED` selects
+it, and that commit is an ancestor of canonical `main`. No second
+activation commit is required. Until then ADR-0009 remains the
+development rule. Pull requests #80, #90, #92, and #94 are not merged.
+`DRY_RUN` remains the only authorized trading mode. Campaign
+`GMAIL-METADATA-CAMPAIGN-0D571DEC` stays stopped. This entry does not
+call a provider, read a credential, connect to PostgreSQL, or submit
+an order. It does not embed its own hash.
