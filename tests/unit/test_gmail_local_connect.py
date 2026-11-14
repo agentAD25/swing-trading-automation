@@ -48,7 +48,7 @@ _BLOBS = {
         "618e510046178fa87c5fbb84a797c7b3f60d90e8"
     ),
     "tests/group4_email/test_local_oauth_probe.py": ("4f405e88a840c63e7e84f3b34e803fc4a13a3a2b"),
-    "tests/group4_email/test_attacks.py": "14b911ba29f16161f179c272c2e2f5e1be50922e",
+    "tests/group4_email/test_attacks.py": "0997ba2237e8d0643061ec65e9a8032380abb611",
 }
 
 
@@ -1480,3 +1480,22 @@ def test_token_diagnostic_oauth_request_fields_unchanged(monkeypatch: pytest.Mon
     assert "Content-Type" not in source
     assert "content-type" not in source.lower()
     assert _request_header_names() == ["Authorization"]
+
+
+def test_urllib_supplies_form_content_type_when_preparing_a_post() -> None:
+    """A constructed token request has no content type until urllib prepares it.
+
+    The historical GMAIL_OAUTH_TOKEN_REJECTED result remains unclassified.
+    This does not show that Google received an untyped body, and it does not
+    change the five-field token form.
+    """
+
+    from urllib.request import AbstractHTTPHandler, Request
+
+    request = Request(TOKEN, data=b"grant_type=authorization_code", method="POST")
+    handler = AbstractHTTPHandler()
+    handler.parent = type("Parent", (), {"addheaders": []})()
+    assert request.header_items() == []
+    handler.do_request_(request)
+    headers = dict(request.header_items())
+    assert headers["Content-type"] == "application/x-www-form-urlencoded"
