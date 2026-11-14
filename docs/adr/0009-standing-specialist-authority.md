@@ -1,6 +1,6 @@
 # ADR-0009: Standing specialist development authority
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-14
 - Sole Phase 1 decider: Human Operator
 - Scope: Development administration for Lanes 2, 3, and 4, and the shape of later standing provider grants
@@ -61,11 +61,15 @@ Keep the current item-by-item authorization practice. This option is the operati
 
 ## Decision
 
-The Decision stays blank while the status is Proposed. The Operator has not selected Option A or Option B.
+The Operator selected Option A on 2026-11-14 by decision `LANE1_ADR0009_OPTION_A_ACCEPTANCE_PREPARATION_AUTHORIZED`. Option B is not selected.
+
+The selected text is the Layer D and Layer P text in this record. Layer D becomes effective only when an independent verifier has returned `INDEPENDENT_EXACT_TREE_PASS` for the commit that contains this Decision and the current-state acceptance record, an Operator decision has authorized integration of that same commit, and that commit is canonical `main`. The pass of proposal `010acfa2ddd3aecc3889d8aae885a5717132323b` does not certify that commit. Until those three conditions are met, existing item grants remain the only implementation authority.
+
+Layer P stays inactive. This Decision authorizes no provider call, credential read, migration, paper order, or `LIVE` route. Class 1 and class 2 controls stay in force. `DRY_RUN` remains the only authorized trading mode. Open PR #66, PR #80, PR #88, and PR #90 are not closed or rewritten. This Decision does not embed the acceptance commit hash.
 
 ## Option A text
 
-This text is not authority while the Decision is blank.
+This text governs Layer D only after the acceptance commit that contains the Decision meets the three conditions in the Decision. Until then, existing item grants remain the implementation authority. Layer P stays inactive.
 
 ### Layer D — offline development packages
 
@@ -165,7 +169,7 @@ Lane 1 performs one integration review of each completed milestone. End-to-end i
 
 ## Consequences
 
-While Proposed, this record changes no specialist authority and amends no cursor rule. Existing effective grants continue. Open PR #66 at `de742e59b171bf85b5a31f61148b186347c641ed` and open PR #88 at `8e84f0511cffe310c76b8aeaa2b2a7c067fe9145` remain fast-forward candidates of current `main` and remain Operator choices. This proposal does not integrate or close them. After Layer D is effective, the scanner edit described for Lane 3 and the offline account-read files described for Lane 2 may proceed inside those packages, so those two pull requests do not need to be integrated first. Their text stays historical and is not revoked.
+Acceptance records Option A and amends no cursor rule. Layer D is not effective until the acceptance commit is independently verified, integration-authorized, and canonical `main`. Layer P stays inactive. Existing effective grants continue. Open PR #66 at `de742e59b171bf85b5a31f61148b186347c641ed` and open PR #88 at `8e84f0511cffe310c76b8aeaa2b2a7c067fe9145` remain fast-forward candidates of current `main` and remain Operator choices. This proposal does not integrate or close them. After Layer D is effective, the scanner edit described for Lane 3 and the offline account-read files described for Lane 2 may proceed inside those packages, so those two pull requests do not need to be integrated first. Their text stays historical and is not revoked.
 
 PR #80 and PR #90 do not contain current `main`. They stay open and are not reconciled by this proposal.
 
@@ -179,7 +183,7 @@ Failure signals are a provider call, a credential read, a migration, an order, a
 
 ## Unresolved questions
 
-The Operator has not selected an option. The paper-order numeric limits are unset on purpose. The Gmail mailbox and the new campaign identifier are unset on purpose. Stage E has no `PASS` record. Native Windows credential-store behavior is not certified here. The proposed daily budgets are proposals the activation decision may replace.
+The Operator selected Option A. Layer D is not effective until the acceptance commit is canonical. The paper-order numeric limits are unset on purpose. The Gmail mailbox and the new campaign identifier are unset on purpose. Stage E has no `PASS` record. Native Windows credential-store behavior is not certified here. The proposed daily budgets are proposals the activation decision may replace.
 
 ## Evidence
 

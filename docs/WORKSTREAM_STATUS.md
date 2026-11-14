@@ -79,6 +79,8 @@ Item 39 is effective, 2026-11-13. Commit `e52ad5e6e40e228ffba20199707a6c39d7fd4f
 
 ADR-0009 proposal, 2026-11-14. Parent main `afc6b76ec679b269e89e5478c5a8bf938a0dad2e`, tree `acc32eec762c1789254bbfa2c1515b32413cff29`. ADR-0009 is Proposed and its Decision is blank. Lanes 2, 3, and 4 must not treat the proposed packages as authority. Layer D and Layer P are inactive. Existing effective grants stay in force. All nine dependencies stay OPEN. ADR-0004 and ADR-0005 stay Proposed. ADR-0008 stays Accepted and is not widened. This descendant cannot embed its own hash.
 
+ADR-0009 Option A acceptance preparation, 2026-11-14. Operator decision `LANE1_ADR0009_OPTION_A_ACCEPTANCE_PREPARATION_AUTHORIZED` selects Option A. ADR-0009 status is Accepted. The pass of `010acfa2ddd3aecc3889d8aae885a5717132323b` does not certify this acceptance commit. Layer D becomes effective only when the commit that contains this paragraph is independently verified, integration-authorized, and canonical main. Until then the packages are not authority. Layer P stays inactive. PR #66, PR #80, PR #88, and PR #90 are not closed. All nine dependencies stay OPEN. ADR-0004 and ADR-0005 stay Proposed. ADR-0008 stays Accepted and is not widened. This descendant cannot embed its own hash.
+
 ## Controlled states
 
 Only these values are permitted for `Current state`:

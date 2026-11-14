@@ -4819,3 +4819,25 @@ overhead Option A would consolidate after acceptance. Class 4
 historical grants stay readable. This entry does not call a provider,
 read a credential, connect to PostgreSQL, or submit an order. It does
 not embed its own hash.
+
+## 2026-11-14 — ADR-0009 Option A acceptance preparation
+
+Operator decision `LANE1_ADR0009_OPTION_A_ACCEPTANCE_PREPARATION_AUTHORIZED`
+selects Option A. ADR-0009 status is Accepted. Its Decision names that
+decision. Option B is not selected. Proposal commit
+`010acfa2ddd3aecc3889d8aae885a5717132323b`, tree
+`fcb82c4becb814d632844700d2bd75ec48f74772`, was passed by verifier
+`bc-5b70ba13-fdd5-58be-9c8c-dc5736908571`. That pass does not certify
+this acceptance commit. Parent main remains
+`afc6b76ec679b269e89e5478c5a8bf938a0dad2e`, tree
+`acc32eec762c1789254bbfa2c1515b32413cff29`.
+
+Layer D becomes effective only when an independent verifier has passed
+the commit that contains this entry, an Operator decision has
+authorized integration of that commit, and that commit is canonical
+`main`. Until then existing item grants remain the only implementation
+authority. Layer P stays inactive. Class 1 and class 2 controls stay.
+`DRY_RUN` remains the only authorized trading mode. No cursor rule is
+edited. PR #66, PR #80, PR #88, and PR #90 are not closed or rewritten.
+This entry does not call a provider, read a credential, connect to
+PostgreSQL, or submit an order. It does not embed its own hash.
